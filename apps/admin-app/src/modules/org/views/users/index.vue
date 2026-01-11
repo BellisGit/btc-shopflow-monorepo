@@ -1,18 +1,18 @@
-﻿<template>
+<template>
   <div class="users-page">
     <BtcTableGroup
       ref="tableGroupRef"
-      :left-service="services.sysdepartment"
+      :left-service="services.sysdept"
       :right-service="services.sysuser"
       :table-columns="userColumns"
       :form-items="formItems"
       :op="{ buttons: ['edit', 'delete'] }"
       :on-info="handleUserInfo"
-      :left-title="t('org.dept.list')"
+      left-title="title.org.dept.list"
       :right-title="t('org.users.title')"
       :show-unassigned="true"
       :enable-key-search="true"
-      :left-size="'middle'"
+      :left-size="'small'"
       @load="handleLoad"
     />
   </div>
@@ -35,7 +35,7 @@ const pageConfig = getPageConfigFull('org.users');
 
 // 使用 config.ts 中定义的服务
 const services = {
-  sysdepartment: pageConfig?.service?.sysdepartment,
+  sysdept: pageConfig?.service?.sysdept,
   sysuser: usePageService('org.users', 'sysuser'),
 };
 

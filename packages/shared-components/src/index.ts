@@ -16,10 +16,14 @@ import './utils/resize';
 import * as ExcelPlugin from './plugins/excel';
 import * as CodePlugin from './plugins/code';
 
+// 直接导入插件组件，避免解构赋值导致的初始化顺序问题
+import BtcExportBtn from './plugins/excel/components/export-btn/index.vue';
+import BtcImportBtn from './plugins/excel/components/import-btn/index.vue';
+
 // 导入样式
-import './common/dialog/styles/index.scss';
-import './common/form/style.scss';
-import './common/view-group/styles/index.scss'; // btc-view-group 样式（btc-table-group 依赖）
+import './components/feedback/btc-dialog/styles/index.scss';
+import './components/form/btc-form/style.scss';
+import './components/layout/btc-view-group/styles/index.scss'; // btc-view-group 样式（btc-table-group 依赖）
 import './components/feedback/btc-message/styles.scss';
 import './components/feedback/btc-notification/styles.scss';
 import './components/basic/btc-icon-button/index.scss';
@@ -49,6 +53,7 @@ export { default as sharedLocalesEnUS } from './locales/en-US.json';
 
 // Basic 基础组件
 export { default as BtcButton } from './components/basic/btc-button/index.vue';
+export { default as BtcEmpty } from './components/basic/btc-empty/index.vue';
 export { BtcIconButton } from './components/basic/btc-icon-button';
 export { default as BtcTableButton } from './components/basic/btc-table-button/index.vue';
 export { default as BtcAvatar } from './components/basic/btc-avatar';
@@ -58,18 +63,19 @@ export { default as BtcTag } from './components/basic/btc-tag/index.vue';
 // Layout 布局组件
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
 export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
-export { default as AppLayout } from './components/layout/app-layout/index.vue';
-export { default as AppSkeleton } from './components/basic/app-skeleton/index.vue';
-export { default as GlobalSearch } from './components/layout/app-layout/global-search/index.vue';
+export { default as BtcSplitLayout } from './components/layout/btc-split-layout/index.vue';
+export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
+export { default as BtcAppSkeleton } from './components/basic/app-skeleton/index.vue';
+export { default as BtcGlobalSearch } from './components/layout/app-layout/global-search/index.vue';
 
 // Navigation 导航组件
 export { default as BtcTabs } from './components/navigation/btc-tabs/index.vue';
 export { default as BtcCascader } from './components/navigation/btc-cascader/index.vue';
 
 // Form 表单组件
-export { default as BtcForm } from './common/form/index.vue';
-export { default as BtcFormCard } from './common/form/components/form-card.vue';
-export { default as BtcFormTabs } from './common/form/components/form-tabs.vue';
+export { default as BtcForm } from './components/form/btc-form/index.vue';
+export { default as BtcFormCard } from './components/form/btc-form/components/form-card.vue';
+export { default as BtcFormTabs } from './components/form/btc-form/components/form-tabs.vue';
 export { default as BtcSelectButton } from './components/form/btc-select-button/index.vue';
 export { default as BtcColorPicker } from './components/form/btc-color-picker/index.vue';
 export { default as BtcUpload } from './components/form/btc-upload/index.vue';
@@ -77,18 +83,21 @@ export { default as BtcUpload } from './components/form/btc-upload/index.vue';
 // Data 数据展示组件
 export { default as BtcMasterList } from './components/data/btc-master-list/index.vue';
 export { default as BtcTableGroup } from './components/data/btc-table-group/index.vue';
-export { default as BtcDoubleGroup } from './components/data/btc-double-group/index.vue';
+export { default as BtcFilterGroup } from './components/data/btc-filter-group/index.vue';
+export { default as BtcDoubleLeftGroup } from './components/data/btc-double-group/index.vue';
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
-export { default as BtcChartDemo } from './components/data/btc-chart-demo/index.vue';
+export { default as BtcChartGallery } from './components/data/btc-chart-gallery/index.vue';
+export { default as BtcFilterList } from './components/data/btc-filterlist/index.vue';
+export type { FilterCategory, FilterOption, FilterResult } from './components/data/btc-filterlist/types';
 
 // Process 流程组件
 export { default as BtcProcessCountdown } from './components/process/btc-process-countdown/index.vue';
 export { default as BtcProcessCard } from './components/process/btc-process-card/index.vue';
 
 // Feedback 反馈组件
-export { default as BtcDialog } from './common/dialog/index';
+export { default as BtcDialog } from './components/feedback/btc-dialog/index';
 export { BtcMessage } from './components/feedback/btc-message';
 export { BtcNotification } from './components/feedback/btc-notification';
 export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
@@ -96,13 +105,13 @@ export { BtcBindingDialog } from './components/feedback/btc-binding-dialog';
 export { BtcMessageBox, BtcConfirm, BtcAlert, BtcPrompt } from './components/feedback/btc-message-box';
 
 // Loading 组件
-export { default as AppLoading } from './components/loading/app-loading/index.vue';
-export { default as RootLoading } from './components/loading/root-loading/index.vue';
+export { default as BtcAppLoading } from './components/loading/app-loading/index.vue';
+export { default as BtcRootLoading } from './components/loading/root-loading/index.vue';
 
 // Others 其他组件
-export { default as BtcSvg } from './components/others/btc-svg/index.vue';
-export { default as BtcViewGroup } from './common/view-group/index.vue';
-export { default as BtcSearch } from './components/others/btc-search/index.vue';
+export { default as BtcSvg } from './components/basic/btc-svg/index.vue';
+export { default as BtcMasterViewGroup } from './components/layout/btc-view-group/index.vue';
+export { default as BtcSearch } from './components/form/btc-search/index.vue';
 export { default as BtcDevTools } from './components/others/btc-dev-tools/index.vue';
 // 用户设置组件
 export { BtcUserSettingDrawer } from './components/others/btc-user-setting';
@@ -119,19 +128,20 @@ export { default as BtcRefreshBtn } from './crud/refresh-btn/index.vue';
 export { default as BtcMultiDeleteBtn } from './crud/multi-delete-btn/index.vue';
 export { default as BtcMultiUnbindBtn } from './crud/multi-unbind-btn/index.vue';
 export { default as BtcBindTransferBtn } from './crud/bind-transfer-btn/index.vue';
-export { default as BtcRow } from './crud/row/index.vue';
-export { default as BtcFlex1 } from './crud/flex1/index.vue';
-export { default as BtcSearchKey } from './crud/search-key/index.vue';
+export { default as BtcCrudRow } from './crud/crud-row/index.vue';
+export { default as BtcCrudFlex1 } from './crud/crud-flex1/index.vue';
+export { default as BtcCrudSearchKey } from './crud/crud-search-key/index.vue';
 export { default as BtcCrudActions } from './crud/actions/index.vue';
 export { default as BtcTableToolbar } from './crud/toolbar/inline.vue';
 // 导入导出组件已移动到 excel 插件
-export { default as BtcMenuExp } from './crud/menu-exp/index.vue';
+export { default as BtcMenuExport } from './crud/menu-export/index.vue';
 
 // 导出插件
 export { ExcelPlugin, CodePlugin };
 
 // 为了向后兼容，直接导出插件中的组件
-export const { BtcExportBtn, BtcImportBtn } = ExcelPlugin;
+// 使用直接导入而不是解构赋值，避免初始化顺序问题
+export { BtcExportBtn, BtcImportBtn };
 export const { BtcCodeJson } = CodePlugin;
 
 // 导入导出套装组件
@@ -152,7 +162,7 @@ export { useCurrentApp } from './composables/useCurrentApp';
 export { useGlobalBreakpoints, initGlobalBreakpoints } from './composables/useGlobalBreakpoints';
 export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from './store/process';
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry, type MenuItem } from './store/menuRegistry';
-export { useFormRenderer } from './common/form/composables/useFormRenderer';
+export { useFormRenderer } from './components/form/btc-form/composables/useFormRenderer';
 export { mountDevTools, unmountDevTools } from './utils/mount-dev-tools';
 export { autoMountDevTools } from './utils/auto-mount-dev-tools';
 export { default as mitt, globalMitt, Mitt } from './utils/mitt';
@@ -167,11 +177,11 @@ export type { VerifyPhoneApi, VerifyEmailApi } from './components/feedback/btc-i
 export type { SaveBindingApi } from './components/feedback/btc-binding-dialog/types';
 export type { TableColumn, OpButton, OpConfig } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
-export type { DialogProps } from './common/dialog/types';
-export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
+export type { DialogProps } from './components/feedback/btc-dialog/types';
+export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './components/form/btc-form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
-export type { DoubleGroupProps, DoubleGroupEmits, DoubleGroupExpose } from './components/data/btc-double-group/types';
+export type { DoubleGroupProps as BtcDoubleLeftGroupProps, DoubleGroupEmits as BtcDoubleLeftGroupEmits, DoubleGroupExpose as BtcDoubleLeftGroupExpose } from './components/data/btc-double-group/types';
 export type {
   TransferKey,
   TransferPanelProps,
@@ -184,6 +194,8 @@ export type {
 } from './components/data/btc-transfer-panel/types';
 export type { BtcContainerProps } from './components/layout/btc-container/types';
 export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
+export type { BtcSplitLayoutProps, BtcSplitLayoutEmits, BtcSplitLayoutExpose } from './components/layout/btc-split-layout/types';
+export type { BtcFilterGroupProps, BtcFilterGroupEmits, BtcFilterGroupExpose } from './components/data/btc-filter-group/types';
 export type {
   IconButtonConfig,
   IconButtonDropdown,

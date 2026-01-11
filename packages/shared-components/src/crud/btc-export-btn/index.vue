@@ -19,11 +19,11 @@ import { ref, computed, inject } from 'vue';
 
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-core/utils';
-import BtcForm from '@btc-common/form/index.vue';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcForm from '../../components/form/btc-form/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
 import type { TableColumn } from '../table/types';
-import type { BtcFormItem } from '@btc-common/form/types';
+import type { BtcFormItem } from '../../components/form/btc-form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 

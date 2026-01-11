@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <div class="file-preview-page">
-    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表">
+    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.preview.categories" right-title="title.data.files.preview.fileList">
       <!-- 左侧分类列表 -->
       <template #left>
         <div class="file-preview-left">

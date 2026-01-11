@@ -6,7 +6,7 @@
       :right-service="wrappedMaterialService"
       :table-columns="materialColumns"
       :form-items="materialFormItems"
-      :left-title="t('inventory.data_source.domain')"
+      left-title="title.inventory.dataSource.domains"
       :right-title="t('menu.inventory.data_source.list')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -175,6 +175,11 @@ const createWrappedService = (baseService: any) => {
   };
 };
 
+// 从 config.ts 读取配置（需要在创建服务之前读取）
+const { columns: baseColumns } = usePageColumns('data.inventory.list');
+const { formItems: baseFormItems } = usePageForms('data.inventory.list');
+const pageConfig = getPageConfigFull('data.inventory.list');
+
 // 物料信息表服务（右侧表），使用 config.ts 中定义的服务或创建包装服务
 const baseMaterialService = pageConfig?.service?.inventoryList || service.system?.base?.data;
 const wrappedMaterialService = createWrappedService(baseMaterialService);
@@ -212,7 +217,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       domainId = dataDomainIds[0];
     } else if (!domainId) {
       // 如果既没有选中域，数据中也没有 domainId，则提示错误
-      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域或在导入数据中包含域ID');
+      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域或在导入数据中包含域ID');
       done();
       return;
     }
@@ -264,11 +269,6 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     done();
   }
 };
-
-// 从 config.ts 读取配置
-const { columns: baseColumns } = usePageColumns('data.inventory.list');
-const { formItems: baseFormItems } = usePageForms('data.inventory.list');
-const pageConfig = getPageConfigFull('data.inventory.list');
 
 // 日期格式化函数
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) => {

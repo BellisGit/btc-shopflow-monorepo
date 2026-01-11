@@ -8,7 +8,7 @@ import {
   type NavigationGuardNext,
 } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { AppLayout as Layout } from '@btc/shared-components';
+import { BtcAppLayout as Layout } from '@btc/shared-components';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { createAuthGuard, createTitleGuard } from '@btc/shared-router';
 import { config } from '../config';
@@ -19,7 +19,7 @@ import { registerManifestTabsForApp, registerManifestMenusForApp } from '../micr
 import { systemRoutes } from './routes/system';
 import { getSystemRoutes } from './routes/system-routes';
 import { getCookie } from '@btc/shared-core/utils/cookie';
-import { appStorage } from '../utils/app-storage';
+import { storage } from '@btc/shared-utils';
 import { getTabsForNamespace } from '../store/tabRegistry';
 import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
@@ -254,7 +254,7 @@ router.onError((error: Error) => {
       setTimeout(() => {
         const loginUrl = getMainAppLoginUrl(currentRoute.fullPath);
         window.location.href = loginUrl;
-        
+
         // 移除 Loading 元素
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {
@@ -431,12 +431,12 @@ function isHomePage(to: RouteLocationNormalized): boolean {
   if (to.meta?.isHome === true) {
     return true;
   }
-  
+
   // 检查路径是否为根路径
   if (to.path === '/' || to.path === '') {
     return true;
   }
-  
+
   return false;
 }
 
@@ -446,7 +446,7 @@ function isHomePage(to: RouteLocationNormalized): boolean {
  */
 function getPageTitle(to: RouteLocationNormalized): string | null {
   const meta = to.meta || {};
-  
+
   // 1. 如果有 titleKey，尝试翻译
   if (meta.titleKey && typeof meta.titleKey === 'string') {
     const translated = tSync(meta.titleKey);
@@ -455,17 +455,17 @@ function getPageTitle(to: RouteLocationNormalized): string | null {
       return translated;
     }
   }
-  
+
   // 2. 如果有 title，直接使用
   if (meta.title && typeof meta.title === 'string') {
     return meta.title;
   }
-  
+
   // 3. 如果 titleKey 存在但没有翻译函数，返回 null（让 buildTitle 使用兜底逻辑）
   if (meta.titleKey && typeof meta.titleKey === 'string') {
     return null;
   }
-  
+
   return null;
 }
 
@@ -480,13 +480,13 @@ async function updateDocumentTitle(to: RouteLocationNormalized) {
     // 获取应用 ID
     const { getAppIdFromPath, setPageTitle } = await import('@btc/shared-core');
     const appId = getAppIdFromPath(to.path);
-    
+
     // 判断是否为首页
     const isHome = isHomePage(to);
-    
+
     // 获取页面标题
     const pageTitle = getPageTitle(to);
-    
+
     // 设置标题（传递翻译函数以支持应用名称国际化）
     await setPageTitle(appId, pageTitle, { isHome, sync: false, translate: tSync });
   } catch (error) {
@@ -526,8 +526,10 @@ export function setupI18nTitleWatcher() {
  */
 export function isAuthenticated(): boolean {
   // 首先检查 is_logged_in 标记（登录成功后立即设置，用于解决 cookie 同步时序问题）
+  // 关键：直接读取 settings 存储，不通过 appStorage.settings.get()，避免触发存储有效性检查导致反复重定向
   try {
-    const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+    const settingsKey = 'settings';
+    const currentSettings = (storage.get(settingsKey) as Record<string, any>) || {};
     if (currentSettings.is_logged_in === true) {
       // 如果标记存在，说明刚登录成功，即使 cookie 还没准备好，也认为已认证
       // 这样可以避免登录成功后立即跳转时被路由守卫重定向回登录页
@@ -542,7 +544,7 @@ export function isAuthenticated(): boolean {
 
   // 然后尝试检查 access_token cookie（如果后端没有设置 HttpOnly，可以读取）
   const cookieToken = getCookie('access_token');
-  
+
   // 如果 access_token cookie 存在，说明已认证（后端会管理 cookie 的生命周期）
   if (cookieToken) {
     return true;
@@ -691,12 +693,12 @@ router.beforeResolve(async (to) => {
   // 关键：如果是子应用路由，不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
   const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
   const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
-  
+
   // 子应用路由的loading由各自管理，不应该在这里处理
   if (isSubAppRoute) {
     return;
   }
-  
+
   if (!loadingClosed) {
     try {
       const loadingModule = await importSharedCore();
@@ -729,7 +731,7 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
   // system-app的#Loading（"拜里斯科技"）只应该在 system-app 路由时显示
   const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
   const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
-  
+
   // 关键：如果是子应用路由，立即隐藏system-app的#Loading（"拜里斯科技"）
   // 必须在路径规范化之前就隐藏，避免"拜里斯科技"loading被显示
   // 子应用的loading由appLoadingService统一管理
@@ -745,7 +747,7 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
       systemLoadingEl.style.setProperty('z-index', '-1', 'important');
       systemLoadingEl.classList.add('is-hide');
     }
-    
+
     // 关键：立即隐藏rootLoadingService（如果正在显示）
     // 使用同步方式，避免异步延迟导致"拜里斯科技"loading被显示
     try {
@@ -790,20 +792,20 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
       // 检查是否是已知的子应用前缀
       return knownSubAppPrefixes.some(prefix => prefix === `/${firstPart}`) ? firstPart : null;
     };
-    
+
     const fromAppName = _from.path ? getAppNameFromPath(_from.path) : null;
     const toAppName = getAppNameFromPath(to.path);
-    
+
     // 只有真正的应用切换时才显示全局应用loading：
     // 1. 从非子应用路由切换到子应用路由（首次进入子应用）
     // 2. 从一个子应用切换到另一个子应用（如从 admin 切换到 logistics）
     // 3. 从子应用路由切换到另一个子应用路由（应用名称不同）
     // 不应该触发的情况：
     // - 同一应用内的路由切换（如从 /admin/user 切换到 /admin/role）
-    const isRealAppSwitch = 
+    const isRealAppSwitch =
       (fromAppName === null && toAppName !== null) || // 从非子应用切换到子应用
       (fromAppName !== null && toAppName !== null && fromAppName !== toAppName); // 从一个子应用切换到另一个子应用
-    
+
     // 关键：只有真正的应用切换时才隐藏容器并显示应用级别loading
     // 同一应用内的路由切换不应该隐藏容器，让子应用自己处理路由切换
     if (isRealAppSwitch && toAppName) {
@@ -828,9 +830,9 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
         'personnel': '人事模块',
         'docs': '文档模块',
       };
-      
+
       const appDisplayName = appNameMap[toAppName] || toAppName;
-      
+
       // 如果应用名称有效且不是"应用"，立即显示应用级别loading
       if (appDisplayName && appDisplayName !== '应用' && appDisplayName !== toAppName) {
         // 异步显示应用级别loading，不阻塞路由导航
@@ -846,7 +848,7 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
       }
     }
   }
-  
+
   // 最优先：检查是否是静态 HTML 文件（duty 下的页面）
   // 这些页面应该由服务器直接提供，完全绕过 Vue Router
   if (to.path.startsWith('/duty/')) {
@@ -1104,7 +1106,7 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
         // 未认证，重定向到主应用登录页
         const loginUrl = getMainAppLoginUrl(to.fullPath);
         window.location.href = loginUrl;
-        
+
         // 移除 Loading 元素
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {
@@ -1300,6 +1302,27 @@ export const createSystemRouter = (): Router => {
 
   // 路由守卫：在生产环境子域名下规范化路径
   systemRouter.beforeEach((to: any, _from: any, next: any) => {
+    // 关键修复：在 qiankun 模式下，如果初始导航到根路径 `/`，但实际应该导航到其他路径
+    // 则立即重定向到正确的路径，避免 URL 短暂显示为 `/system`
+    if (qiankunWindow.__POWERED_BY_QIANKUN__ && to.path === '/' && _from.name === undefined) {
+      // 这是初始导航，检查实际应该导航到哪个路径
+      const { pathname } = window.location;
+      if (pathname.startsWith('/system/') && pathname !== '/system') {
+        // 提取子应用路径（去掉 /system 前缀）
+        const subAppPath = pathname.slice('/system'.length) || '/';
+        // 如果子应用路径不是 `/`，重定向到正确的路径
+        if (subAppPath !== '/') {
+          next({
+            path: subAppPath,
+            query: to.query,
+            hash: to.hash,
+            replace: true,
+          });
+          return;
+        }
+      }
+    }
+
     const normalizedPath = normalizePath(to.path);
 
     if (normalizedPath !== to.path) {
@@ -1327,8 +1350,8 @@ export const createSystemRouter = (): Router => {
           return false;
         }
         const style = window.getComputedStyle(appLoadingEl);
-        return style.display !== 'none' && 
-               style.visibility !== 'hidden' && 
+        return style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
                style.opacity !== '0' &&
                parseFloat(style.opacity) > 0;
       } catch (e) {
@@ -1360,7 +1383,7 @@ export const createSystemRouter = (): Router => {
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading
     try {
       const sharedCore = await importSharedCore();
@@ -1381,7 +1404,7 @@ export const createSystemRouter = (): Router => {
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading（如果正在显示）
     try {
       const sharedCore = await importSharedCore();
@@ -1401,7 +1424,7 @@ export const createSystemRouter = (): Router => {
         loadingEl.style.setProperty('opacity', '0', 'important');
         loadingEl.style.setProperty('pointer-events', 'none', 'important');
         loadingEl.classList.add('is-hide');
-        
+
         // 延迟移除 DOM 元素（不影响显示，只是清理）
         setTimeout(() => {
           try {
@@ -1410,7 +1433,7 @@ export const createSystemRouter = (): Router => {
             // 忽略移除错误
           }
         }, 350);
-        
+
         loadingClosed = true;
       }
     }

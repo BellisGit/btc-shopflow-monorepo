@@ -19,6 +19,7 @@
   "btc.table.style.zebra": "Zebra Striping",
   "btc.table.style.border": "Borders",
   "btc.table.style.headerBackground": "Header Background",
+  "btc.table.style.tagRound": "Tag Round",
   "ui.form.please_enter": "Please enter",
   "ui.form.please_select": "Please select",
   "ui.message.success": "Success",

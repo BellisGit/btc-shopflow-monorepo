@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="logs-page">
     <BtcTabs v-model="activeTab" :tabs="logTabs" @tab-change="handleTabChange">
       <!-- 操作日志 Tab -->
@@ -29,7 +29,7 @@
           </BtcRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
-          <el-empty :description="t('common.ops.logs.operation.service_unavailable')" />
+          <BtcEmpty :description="t('common.ops.logs.operation.service_unavailable')" />
         </div>
       </template>
 
@@ -61,7 +61,7 @@
           </BtcRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
-          <el-empty :description="t('common.ops.logs.request.service_unavailable')" />
+          <BtcEmpty :description="t('common.ops.logs.request.service_unavailable')" />
         </div>
       </template>
     </BtcTabs>
@@ -123,6 +123,7 @@ import {
   BtcPagination
 } from '@btc/shared-components';
 import { useI18n, usePageColumns, getPageConfigFull } from '@btc/shared-core';
+import { BtcEmpty } from '@btc/shared-components';
 
 defineOptions({
   name: 'OpsLogs'

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="action-node-config">
     <div class="config-header">
       <span>动作配置</span>
@@ -9,7 +9,7 @@
     </div>
 
     <div v-if="actions.length === 0" class="empty-state">
-      <el-empty description="暂无动作，请添加动作" :image-size="60" />
+      <BtcEmpty description="暂无动作，请添加动作" :image-size="60" />
     </div>
 
     <div v-else class="actions-list">
@@ -75,6 +75,7 @@ import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyAction } from '@/types/strategy';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
+import { BtcEmpty } from '@btc/shared-components';
 
 // Props
 interface Props {

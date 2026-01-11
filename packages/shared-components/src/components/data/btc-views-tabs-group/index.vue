@@ -23,22 +23,22 @@
               :on-before-refresh="handleBeforeRefresh"
               style="padding: 10px;"
             >
-              <BtcRow>
+              <BtcCrudRow>
                 <div class="btc-crud-primary-actions">
                   <BtcRefreshBtn />
                   <BtcAddBtn />
                   <BtcMultiDeleteBtn />
                 </div>
-                <BtcFlex1 />
-                <BtcSearchKey :placeholder="searchPlaceholder" />
-              </BtcRow>
-              <BtcRow>
+                <BtcCrudFlex1 />
+                <BtcCrudSearchKey :placeholder="searchPlaceholder" />
+              </BtcCrudRow>
+              <BtcCrudRow>
                 <BtcTable :columns="columns" :row-key="'id'" border />
-              </BtcRow>
-              <BtcRow>
-                <BtcFlex1 />
+              </BtcCrudRow>
+              <BtcCrudRow>
+                <BtcCrudFlex1 />
                 <BtcPagination />
-              </BtcRow>
+              </BtcCrudRow>
               <BtcUpsert
                 :items="computedFormItems"
                 :width="upsertWidth"
@@ -48,16 +48,16 @@
           </template>
         </BtcTabs>
       </template>
-    </BtcViewGroup>
+    </BtcMasterViewGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue';
 import { globalMitt } from '@btc/shared-components';
-import BtcViewGroup from '@btc-common/view-group/index.vue';
+import BtcMasterViewGroup from '../../layout/btc-view-group/index.vue';
 import BtcTabs from '@btc-components/navigation/btc-tabs/index.vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination } from '@btc/shared-components';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import type { BtcViewsTabsGroupConfig } from './types';
 import { useContentHeight } from '../../../composables/content-height';

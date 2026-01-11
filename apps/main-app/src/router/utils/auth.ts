@@ -1,5 +1,5 @@
 import { getCookie } from '@btc/shared-core/utils/cookie';
-import { appStorage } from '../../utils/app-storage';
+import { storage } from '@btc/shared-utils';
 
 /**
  * 检查用户是否已认证
@@ -27,11 +27,13 @@ export function isAuthenticated(): boolean {
       // 如果 btc_user cookie 也不存在，说明未登录
       // 关键：即使 is_logged_in 标记存在，如果 cookie 不存在，也认为未认证
       // 清除可能存在的 is_logged_in 标记（防止状态不一致）
+      // 直接操作存储，避免触发存储有效性检查
       try {
-        const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+        const settingsKey = 'settings';
+        const currentSettings = (storage.get(settingsKey) as Record<string, any>) || {};
         if (currentSettings.is_logged_in === true) {
           delete currentSettings.is_logged_in;
-          appStorage.settings.set(currentSettings);
+          storage.set(settingsKey, currentSettings);
         }
       } catch (error) {
         // 静默失败
@@ -45,8 +47,10 @@ export function isAuthenticated(): boolean {
 
     // 如果 cookie 存在，检查 is_logged_in 标记（用于解决登录后立即跳转时 cookie 可能还没准备好的问题）
     // 但只有在 cookie 也存在时才信任这个标记
+    // 关键：直接读取 settings 存储，不通过 appStorage.settings.get()，避免触发存储有效性检查导致反复重定向
     try {
-      const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+      const settingsKey = 'settings';
+      const currentSettings = (storage.get(settingsKey) as Record<string, any>) || {};
       if (currentSettings.is_logged_in === true) {
         // 如果标记存在且 cookie 也存在，说明刚登录成功，即使过期时间还没准备好，也认为已认证
         // 这样可以避免登录成功后立即跳转时被路由守卫重定向回登录页
@@ -58,12 +62,13 @@ export function isAuthenticated(): boolean {
 
     if (!credentialExpireTime) {
       // 如果没有过期时间，无法判断，保守返回 false
-      // 清除可能存在的 is_logged_in 标记
+      // 清除可能存在的 is_logged_in 标记（直接操作存储，避免触发检查）
       try {
-        const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+        const settingsKey = 'settings';
+        const currentSettings = (storage.get(settingsKey) as Record<string, any>) || {};
         if (currentSettings.is_logged_in === true) {
           delete currentSettings.is_logged_in;
-          appStorage.settings.set(currentSettings);
+          storage.set(settingsKey, currentSettings);
         }
       } catch (error) {
         // 静默失败
@@ -80,12 +85,13 @@ export function isAuthenticated(): boolean {
       return true;
     }
 
-    // 已过期，清除 is_logged_in 标记
+    // 已过期，清除 is_logged_in 标记（直接操作存储，避免触发检查）
     try {
-      const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+      const settingsKey = 'settings';
+      const currentSettings = (storage.get(settingsKey) as Record<string, any>) || {};
       if (currentSettings.is_logged_in === true) {
         delete currentSettings.is_logged_in;
-        appStorage.settings.set(currentSettings);
+        storage.set(settingsKey, currentSettings);
       }
     } catch (error) {
       // 静默失败
@@ -93,12 +99,13 @@ export function isAuthenticated(): boolean {
     return false;
   } catch (error) {
     // 解析失败，保守返回 false
-    // 清除可能存在的 is_logged_in 标记
+    // 清除可能存在的 is_logged_in 标记（直接操作存储，避免触发检查）
     try {
-      const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+      const settingsKey = 'settings';
+      const currentSettings = (storage.get(settingsKey) as Record<string, any>) || {};
       if (currentSettings.is_logged_in === true) {
         delete currentSettings.is_logged_in;
-        appStorage.settings.set(currentSettings);
+        storage.set(settingsKey, currentSettings);
       }
     } catch (e) {
       // 静默失败

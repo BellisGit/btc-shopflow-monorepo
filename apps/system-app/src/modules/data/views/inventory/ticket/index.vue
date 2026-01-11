@@ -6,7 +6,7 @@
       :right-service="wrappedTicketService"
       :table-columns="ticketColumns"
       :form-items="ticketFormItems"
-      :left-title="t('inventory.data_source.domain')"
+      left-title="title.inventory.dataSource.domains"
       :right-title="t('menu.inventory.data_source.ticket')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -177,7 +177,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
   try {
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域');
+      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域');
       done();
       return;
     }

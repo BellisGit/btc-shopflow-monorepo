@@ -95,7 +95,7 @@
     <template #empty>
       <div class="btc-table__empty">
         <slot name="empty">
-          <el-empty :image-size="100" :description="translatedEmptyText" />
+          <BtcEmpty :image-size="100" :description="translatedEmptyText" />
         </slot>
       </div>
     </template>
@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, toRefs, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, inject, provide, toRefs, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useAttrs } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
@@ -120,7 +120,8 @@ import {
 import TableColumnComponent from './components/table-column.vue';
 import BtcTableButton from '../../components/basic/btc-table-button/index.vue';
 import type { BtcTableButtonConfig } from '../../components/basic/btc-table-button/types';
-import BtcSvg from '../../components/others/btc-svg/index.vue';
+import BtcSvg from '../../components/basic/btc-svg/index.vue';
+import BtcEmpty from '../../components/basic/btc-empty/index.vue';
 import { crudLayoutKey, DEFAULT_OPERATION_WIDTH } from '@btc-crud/context/layout';
 
 defineOptions({
@@ -199,6 +200,7 @@ const preferences = useTablePreferences({
   defaultStripe: props.stripe ?? false,
   defaultBorder: props.border ?? true,
   defaultHeaderBackground: props.headerBackground ?? true,
+  defaultTagRound: false,
 });
 
 const isBorderControlled = computed(() => props.border !== undefined);
@@ -239,6 +241,13 @@ const currentSize = computed<TableSize>({
     if (props.size === undefined) {
       preferences.size.value = value;
     }
+  },
+});
+
+const currentTagRound = computed<boolean>({
+  get: () => preferences.tagRound.value,
+  set: (value) => {
+    preferences.tagRound.value = value;
   },
 });
 
@@ -292,6 +301,10 @@ const tableAttrs = computed(() => attrs);
 const tableRef = ref<TableInstance>();
 const crudLayout = inject(crudLayoutKey, null);
 
+// Provide tagRound 给子组件使用
+const tableTagRoundKey = Symbol.for('btc-table-tag-round');
+provide(tableTagRoundKey, currentTagRound);
+
 const { computedColumns } = useTableColumns(props as any);
 
 const getColumnKey = (column: TableColumn): string | undefined => {
@@ -334,6 +347,7 @@ const transformColumns = (columns: TableColumn[]): TableColumn[] => {
   return result;
 };
 
+// 使用计算后的列配置（列宽已在 useTableColumns 中统一处理）
 const visibleColumns = computed(() => transformColumns(computedColumns.value));
 
 interface ColumnOption {
@@ -457,6 +471,10 @@ const setHeaderBackground = (val: boolean) => {
   currentHeaderBackground.value = val;
 };
 
+const setTagRound = (val: boolean) => {
+  currentTagRound.value = val;
+};
+
 const toolbarMounted = ref(false);
 
 const toolbarBinding = {
@@ -472,6 +490,7 @@ const toolbarBinding = {
   currentStripe,
   currentBorder,
   currentHeaderBackground,
+  currentTagRound,
   isSizeControlled,
   isStripeControlled,
   isBorderControlled,
@@ -479,6 +498,7 @@ const toolbarBinding = {
   setStripe,
   setBorder,
   setHeaderBackground,
+  setTagRound,
   toolbarMounted,
 };
 

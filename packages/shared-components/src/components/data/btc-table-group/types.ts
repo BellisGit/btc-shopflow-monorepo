@@ -16,6 +16,9 @@ export interface RightOpField {
 export interface TableGroupProps {
   // 左侧服务（Master List）
   leftService: any;
+  // 左侧服务名（用于推断 code 字段名，如 'domain', 'dept', 'module' 等）
+  // 如果指定了此属性，将优先使用它来推断 code 字段；否则尝试从 leftService 对象推断
+  leftServiceName?: string;
   leftTitle?: string;
 
   // 右侧服务（CRUD）

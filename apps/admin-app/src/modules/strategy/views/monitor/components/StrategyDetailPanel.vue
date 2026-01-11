@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-detail-panel">
     <el-row :gutter="16">
       <!-- 基本信息 -->
@@ -66,7 +66,7 @@
               <div class="stat-label">最小执行时间</div>
             </div>
           </div>
-          <el-empty v-else description="暂无统计数据" :image-size="80" />
+          <BtcEmpty v-else description="暂无统计数据" :image-size="80" />
         </el-card>
       </el-col>
     </el-row>
@@ -189,7 +189,7 @@
                   </el-descriptions>
                 </div>
               </div>
-              <el-empty v-else description="暂无规则配置" :image-size="80" />
+              <BtcEmpty v-else description="暂无规则配置" :image-size="80" />
             </el-tab-pane>
 
             <el-tab-pane label="条件配置" name="conditions">
@@ -240,7 +240,7 @@
                   </el-descriptions>
                 </div>
               </div>
-              <el-empty v-else description="暂无动作配置" :image-size="80" />
+              <BtcEmpty v-else description="暂无动作配置" :image-size="80" />
             </el-tab-pane>
 
             <el-tab-pane label="执行配置" name="execution">
@@ -274,6 +274,7 @@ import {
 } from '@element-plus/icons-vue';
 import type { Strategy, StrategyMonitorStats } from '@/types/strategy';
 import { StrategyType, StrategyStatus } from '@/types/strategy';
+import { BtcEmpty } from '@btc/shared-components';
 
 // Props
 interface Props {

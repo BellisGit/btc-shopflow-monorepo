@@ -203,6 +203,17 @@ export function useLogout(options: UseLogoutOptions = {}) {
       if (appStorage) {
         const currentSettings = (appStorage.settings?.get() as Record<string, any>) || {};
         appStorage.settings?.set({ ...currentSettings, is_logged_in: true });
+        
+        // 记录登录时间，用于存储有效性检查的宽限期
+        try {
+          import('../utils/storage-validity-check').then(({ recordLoginTime }) => {
+            recordLoginTime();
+          }).catch(() => {
+            // 静默失败，不影响登录流程
+          });
+        } catch (error) {
+          // 静默失败，不影响登录流程
+        }
       }
 
       // 启动用户检查轮询

@@ -14,7 +14,7 @@ export function useFinanceInventoryColumns() {
   const columns = computed<TableColumn[]>(() => [
     { type: 'selection', width: 48 },
     { type: 'index', label: t('common.index'), width: 60 },
-    { label: t('finance.inventory.result.fields.material_code'), prop: 'materialCode', minWidth: 120, showOverflowTooltip: true },
+    { label: t('finance.inventory.result.fields.material_code'), prop: 'materialCode', showOverflowTooltip: true },
     { label: t('finance.inventory.result.fields.position'), prop: 'position', width: 80, showOverflowTooltip: true },
     { label: `${t('finance.inventory.result.fields.unit_cost')} ($)`, prop: 'unitCost', width: 100, align: 'right', formatter: formatNumber },
     { label: t('finance.inventory.result.fields.book_qty'), prop: 'bookQty', width: 100, align: 'right', formatter: formatNumber },

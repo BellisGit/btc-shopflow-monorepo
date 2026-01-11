@@ -130,7 +130,7 @@
     <!-- 全局 Loading 组件（仅主应用显示） -->
     <!-- 注意：不能使用 v-show，因为 AppLoading 的根节点是 teleport（不是 DOM 元素） -->
     <!-- 使用 v-if 控制组件是否创建，组件内部通过 visible prop 控制显示/隐藏 -->
-    <AppLoading
+    <BtcAppLoading
       v-if="shouldShowAppLoading"
       :visible="appLoadingVisible"
       :title="appLoadingTitle"
@@ -163,7 +163,7 @@ import BtcUserSettingDrawer from '../../others/btc-user-setting/components/prefe
 import { provideContentHeight } from '../../../composables/content-height';
 import { getSubApps, getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
-import AppLoading from '../../loading/app-loading/index.vue';
+import BtcAppLoading from '../../loading/app-loading/index.vue';
 
 // 创建事件总线
 // 关键：如果全局事件总线已存在（由 layout-app 初始化时创建），则使用它；否则创建新的

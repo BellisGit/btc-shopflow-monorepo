@@ -80,12 +80,6 @@ function wrapProfileInfo(originalInfo: any): any {
   }
   
   return function(...args: any[]) {
-    if (import.meta.env.DEV) {
-      console.warn('[EPS Service] ⚠️ profile.info() 被直接调用！');
-      console.warn('[EPS Service] 调用栈:', new Error().stack);
-      console.warn('[EPS Service] 参数:', args);
-      console.warn('[EPS Service] 提示: 应该使用 getProfileInfoFromCache() 从缓存读取，或使用 loadProfileInfoOnLogin() 在登录时调用');
-    }
     // 继续执行原始调用
     return originalInfo.apply(this, args);
   };

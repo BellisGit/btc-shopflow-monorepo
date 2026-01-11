@@ -76,7 +76,6 @@
         </template>
         <div class="btc-table-toolbar__style">
         <el-checkbox
-          v-if="!isStripeControlled"
           :model-value="currentStripe"
           :id="`btc-table-style-stripe-${instanceId}`"
           :name="`btc-table-style-stripe-${instanceId}`"
@@ -85,22 +84,20 @@
           {{ t('btc.table.style.zebra') }}
         </el-checkbox>
         <el-checkbox
-          v-if="!isBorderControlled"
-          :model-value="currentBorder"
-          :id="`btc-table-style-border-${instanceId}`"
-          :name="`btc-table-style-border-${instanceId}`"
-          @change="(value: unknown) => handleBorderChange(value === true)"
-        >
-          {{ t('btc.table.style.border') }}
-        </el-checkbox>
-        <el-checkbox
-          v-if="!isHeaderBackgroundControlled"
           :model-value="currentHeaderBackground"
           :id="`btc-table-style-header-${instanceId}`"
           :name="`btc-table-style-header-${instanceId}`"
           @change="(value: unknown) => handleHeaderBackgroundChange(value === true)"
         >
           {{ t('btc.table.style.headerBackground') }}
+        </el-checkbox>
+        <el-checkbox
+          :model-value="currentTagRound"
+          :id="`btc-table-style-tag-round-${instanceId}`"
+          :name="`btc-table-style-tag-round-${instanceId}`"
+          @change="(value: unknown) => handleTagRoundChange(value === true)"
+        >
+          {{ t('btc.table.style.tagRound') }}
         </el-checkbox>
         </div>
       </el-popover>
@@ -117,6 +114,7 @@ import {
   watch,
   inject,
   toValue,
+  unref,
 } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import { useCrudLayout } from '../context/layout';
@@ -143,8 +141,32 @@ const binding = computed(() => {
 
 const resolveBindingProp = <T,>(prop: unknown, fallback: T): T => {
   if (prop === undefined || prop === null) return fallback;
-  const value = toValue(prop as any);
-  return value === undefined || value === null ? fallback : value;
+  try {
+    // 优先使用 unref 解包 ref/computed ref
+    let value = unref(prop as any);
+    // 如果 unref 返回的仍然是对象（可能是嵌套的 ref），尝试再次解包
+    if (value && typeof value === 'object' && 'value' in value && typeof (value as any).value !== 'function') {
+      value = (value as any).value;
+    }
+    return value === undefined || value === null ? fallback : value;
+  } catch (e) {
+    // 如果 unref 失败，尝试使用 toValue
+    try {
+      let value = toValue(prop as any);
+      // 如果 toValue 返回的仍然是对象，尝试访问 .value
+      if (value && typeof value === 'object' && 'value' in value && typeof (value as any).value !== 'function') {
+        value = (value as any).value;
+      }
+      return value === undefined || value === null ? fallback : value;
+    } catch {
+      // 最后尝试直接访问 .value 属性
+      if (prop && typeof prop === 'object' && 'value' in prop && typeof (prop as any).value !== 'function') {
+        const value = (prop as any).value;
+        return value === undefined || value === null ? fallback : value;
+      }
+      return fallback;
+    }
+  }
 };
 
 const toolbarRef = ref<HTMLElement | null>(null);
@@ -301,6 +323,15 @@ const currentHeaderBackground = computed({
     }
   },
 });
+const currentTagRound = computed({
+  get: () => resolveBindingProp<boolean>(binding.value?.currentTagRound, false),
+  set: (val) => {
+    const target = binding.value?.currentTagRound;
+    if (target && typeof target === 'object' && 'value' in target) {
+      target.value = val;
+    }
+  },
+});
 
 const sizeDropdownOptions = computed(() => [
   { value: 'small', label: t('btc.table.size.small') },
@@ -337,6 +368,14 @@ const handleHeaderBackgroundChange = (val: boolean) => {
     binding.value.setHeaderBackground(val);
   } else if (binding.value?.currentHeaderBackground && 'value' in binding.value.currentHeaderBackground) {
     binding.value.currentHeaderBackground.value = val;
+  }
+};
+
+const handleTagRoundChange = (val: boolean) => {
+  if (binding.value?.setTagRound) {
+    binding.value.setTagRound(val);
+  } else if (binding.value?.currentTagRound && 'value' in binding.value.currentTagRound) {
+    binding.value.currentTagRound.value = val;
   }
 };
 

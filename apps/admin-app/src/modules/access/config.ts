@@ -25,6 +25,8 @@ export default {
       'menu.access.user_role_bind': '角色绑定',
       'menu.access.role_assign': '角色分配',
       'menu.access.role_permission_bind': '权限绑定',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.access.roles.domains': '域列表',
       // 字段配置
       'access.actions.fields.action_name_cn': '行为名称',
       'access.actions.fields.action_code': '行为编码',
@@ -146,6 +148,8 @@ export default {
       'menu.access.user_role_bind': 'Role Binding',
       'menu.access.role_assign': 'Role Assignment',
       'menu.access.role_permission_bind': 'Permission Binding',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.access.roles.domains': 'Domain List',
       // 字段配置
       'access.actions.fields.action_name_cn': 'Action Name',
       'access.actions.fields.action_code': 'Action Code',
@@ -257,8 +261,8 @@ export default {
   // 表格列配置
   columns: {
     'access.actions': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
       { prop: 'actionNameCn', label: 'access.actions.fields.action_name_cn' },
       { prop: 'actionCode', label: 'access.actions.fields.action_code' },
       { prop: 'actionType', label: 'access.actions.fields.action_type' },
@@ -267,26 +271,25 @@ export default {
     ] as TableColumn[],
 
     'access.permissions': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'permName', label: 'access.permissions.fields.perm_name', minWidth: 150, showOverflowTooltip: true },
-      { prop: 'permCode', label: 'access.permissions.fields.perm_code', minWidth: 150, showOverflowTooltip: true },
-      { prop: 'permType', label: 'access.permissions.fields.perm_type', minWidth: 100 },
-      { prop: 'permCategory', label: 'access.permissions.fields.perm_category', minWidth: 100 },
-      { prop: 'moduleId', label: 'platform.module.name', minWidth: 120 },
-      { prop: 'pluginId', label: 'platform.plugin.name', minWidth: 120 },
-      { prop: 'description', label: 'common.description', minWidth: 150, showOverflowTooltip: true },
-      { prop: 'createdAt', label: 'common.create_time', minWidth: 160, formatter: (row: any) => row.createdAt ? new Date(row.createdAt).toLocaleString() : '-' },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'permName', label: 'access.permissions.fields.perm_name', showOverflowTooltip: true },
+      { prop: 'permCode', label: 'access.permissions.fields.perm_code', showOverflowTooltip: true },
+      { prop: 'permType', label: 'access.permissions.fields.perm_type' },
+      { prop: 'permCategory', label: 'access.permissions.fields.perm_category' },
+      { prop: 'moduleId', label: 'platform.module.name' },
+      { prop: 'pluginId', label: 'platform.plugin.name' },
+      { prop: 'description', label: 'common.description', showOverflowTooltip: true },
+      { prop: 'createdAt', label: 'common.create_time', formatter: (row: any) => row.createdAt ? new Date(row.createdAt).toLocaleString() : '-' },
     ] as TableColumn[],
 
     'access.resources': [
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'resourceNameCn', label: 'access.resources.fields.resource_name_cn', minWidth: 150 },
-      { prop: 'resourceCode', label: 'access.resources.fields.resource_code', minWidth: 150 },
+      { type: 'index', label: 'common.index' },
+      { prop: 'resourceNameCn', label: 'access.resources.fields.resource_name_cn' },
+      { prop: 'resourceCode', label: 'access.resources.fields.resource_code' },
       {
         prop: 'resourceType',
         label: 'access.resources.fields.resource_type',
-        width: 120,
         dict: [
           { label: 'access.resources.types.file', value: 'FILE', type: 'info' },
           { label: 'access.resources.types.api', value: 'API', type: 'warning' },
@@ -294,25 +297,23 @@ export default {
         ],
         dictColor: true,
       },
-      { prop: 'description', label: 'common.description', minWidth: 200 },
+      { prop: 'description', label: 'common.description' },
     ] as TableColumn[],
 
     'access.roles': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'roleName', label: 'access.roles.fields.role_name', minWidth: 150 },
-      { prop: 'roleCode', label: 'access.roles.fields.role_code', width: 180 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'roleName', label: 'access.roles.fields.role_name' },
+      { prop: 'roleCode', label: 'access.roles.fields.role_code' },
       {
         prop: 'roleType',
         label: 'access.roles.fields.role_type',
-        width: 100,
         // 字典数据通过 useDictData Hook 动态获取，不再硬编码
         dictColor: true,
       },
       {
         prop: 'parentId',
         label: 'access.roles.fields.parent_id',
-        width: 100,
         formatter: (row: any) => {
           // formatter 需要在页面中动态处理
           return row.parentId === '0' ? 'access.none' : row.parentId;
@@ -321,14 +322,13 @@ export default {
       {
         prop: 'domainId',
         label: 'access.roles.fields.domain_id',
-        width: 100,
         formatter: (row: any) => {
           // formatter 需要在页面中动态处理
           return row.domainId || 'access.unassigned';
         },
       },
-      { prop: 'description', label: 'common.description', minWidth: 200, showOverflowTooltip: true },
-      { prop: 'createdAt', label: 'common.create_time', width: 160, sortable: true },
+      { prop: 'description', label: 'common.description', showOverflowTooltip: true },
+      { prop: 'createdAt', label: 'common.create_time', sortable: true },
     ] as TableColumn[],
   },
 

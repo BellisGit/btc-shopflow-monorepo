@@ -8,6 +8,10 @@
   .btc-grid-group {
     height: 100%;
     flex: 1;
+
+    &__header {
+      padding: 10px;
+    }
   }
 
   .canvas-controls {

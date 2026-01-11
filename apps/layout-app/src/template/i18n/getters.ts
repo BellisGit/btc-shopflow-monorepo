@@ -1,3 +1,5 @@
+import { setupAppI18n, SUPPORTED_LOCALES, DEFAULT_LOCALE, FALLBACK_LOCALE } from '@btc/shared-core';
+import type { SupportedLocale, LocaleMessages } from '@btc/shared-core';
 import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/locales/en-US';
 import sharedComponentsZh from '@btc/shared-components/locales/zh-CN.json';
@@ -5,21 +7,20 @@ import sharedComponentsEn from '@btc/shared-components/locales/en-US.json';
 import zhCN from '../locales/zh-CN.json';
 import enUS from '../locales/en-US.json';
 
-const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => Object.assign({}, ...sources);
+const configFiles = {};
 
-export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const;
-export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-
-export const DEFAULT_LOCALE: SupportedLocale = 'zh-CN';
-export const FALLBACK_LOCALE: SupportedLocale = 'zh-CN';
-
-export const getLocaleMessages = () => ({
-  'zh-CN': mergeMessages(sharedCoreZh, sharedComponentsZh as Record<string, any>, zhCN),
-  'en-US': mergeMessages(sharedCoreEn, sharedComponentsEn as Record<string, any>, enUS),
+export const { getLocaleMessages, normalizeLocale, clearLocaleMessagesCache, tSync } = setupAppI18n({
+  configFiles,
+  sharedCoreZh,
+  sharedCoreEn,
+  sharedComponentsZh,
+  sharedComponentsEn,
+  appZhCN: zhCN,
+  appEnUS: enUS,
+  needsTSync: true,
+  autoRegisterConfigs: false,
+  autoRegisterSubAppI18n: false,
 });
 
-export const normalizeLocale = (locale?: string) => {
-  if (!locale) return DEFAULT_LOCALE;
-  return (SUPPORTED_LOCALES as readonly string[]).includes(locale) ? (locale as SupportedLocale) : DEFAULT_LOCALE;
-};
-
+export type { SupportedLocale, LocaleMessages };
+export { SUPPORTED_LOCALES, DEFAULT_LOCALE, FALLBACK_LOCALE };

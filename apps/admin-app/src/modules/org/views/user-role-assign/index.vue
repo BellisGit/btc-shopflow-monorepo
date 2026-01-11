@@ -6,7 +6,7 @@
       :right-service="wrappedUserRoleService"
       :table-columns="roleColumns"
       :form-items="[]"
-      :left-title="t('org.user_role_assign.left_title')"
+      left-title="title.org.userRoleAssign.domains"
       :right-title="t('org.user_role_assign.right_title')"
       :search-placeholder="t('org.user_role_assign.search_placeholder')"
       :show-unassigned="true"

@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { AppLayout } from '@btc/shared-components';
+import { BtcAppLayout } from '@btc/shared-components';
 import { systemRoutes } from './system';
 
 /**

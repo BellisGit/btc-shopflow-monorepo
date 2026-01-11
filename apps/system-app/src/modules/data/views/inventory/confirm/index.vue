@@ -7,7 +7,7 @@
       :table-columns="approvalColumns"
       :form-items="approvalFormItems"
       :op="opConfig"
-      :left-title="t('inventory.check.list')"
+      left-title="title.inventory.check.list"
       :right-title="t('inventory.confirm.title')"
       :search-placeholder="t('inventory.confirm.search_placeholder')"
       :show-unassigned="false"

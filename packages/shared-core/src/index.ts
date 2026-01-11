@@ -44,8 +44,17 @@ export type { UseLogoutOptions } from './composables/useLogout';
 export { useServiceWithConfirm } from './composables/useServiceWithConfirm';
 export { logoutCore } from './auth/logoutCore';
 export type { LogoutCoreOptions } from './auth/logoutCore';
-export { checkStorageValidity, triggerAutoLogout } from './utils/storage-validity-check';
+export { checkStorageValidity, triggerAutoLogout, recordLoginTime } from './utils/storage-validity-check';
 export { registerSubAppI18n } from './composables/subapp-i18n/registerSubAppI18n';
+// 导出国际化工具函数（供各应用使用，统一处理逻辑）
+export { mergeConfigFiles, deepMerge, unflattenObject, flattenObject, isObject, mergeMessages } from './utils/i18n/locale-utils';
+export { createLocaleGetters } from './utils/i18n/create-locale-getters';
+export type { CreateLocaleGettersOptions, LocaleGetters, LocaleMessages, SupportedLocale } from './utils/i18n/create-locale-getters';
+export { SUPPORTED_LOCALES, DEFAULT_LOCALE, FALLBACK_LOCALE } from './utils/i18n/create-locale-getters';
+export { createTSync } from './utils/i18n/create-tsync';
+export type { CreateTSyncOptions } from './utils/i18n/create-tsync';
+export { setupAppI18n } from './utils/i18n/setup-app-i18n';
+export type { SetupAppI18nOptions } from './utils/i18n/setup-app-i18n';
 export { useCrossDomainBridge, broadcastLoginMessage } from './composables/useCrossDomainBridge';
 export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';

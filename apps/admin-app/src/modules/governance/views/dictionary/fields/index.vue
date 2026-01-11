@@ -10,7 +10,7 @@
       :show-add-btn="false"
       :show-multi-delete-btn="false"
       :show-create-time="false"
-      :left-title="t('menu.access.resources')"
+      left-title="title.governance.dictionary.fields.resources"
       :right-title="t('data.dictionary.field.list')"
       :search-placeholder="t('data.dictionary.field.search_placeholder')"
       :show-unassigned="false"

@@ -52,7 +52,7 @@
       />
 
       <!-- 全局搜索（移动端隐藏，且设置中启用，顶部菜单模式下也显示） -->
-      <GlobalSearch v-if="!browser.isMini && showGlobalSearch" />
+      <BtcGlobalSearch v-if="!browser.isMini && showGlobalSearch" />
 
       <!-- 顶部菜单（仅顶部菜单模式显示，在搜索框右侧） -->
       <TopMenu v-if="props.menuType === 'top'" />
@@ -92,7 +92,7 @@ import { useBrowser } from '../../../../composables/useBrowser';
 import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 import { getAppById } from '@btc/shared-core/configs/app-scanner';
 import { getIsMainAppFn } from '../utils';
-import GlobalSearch from '../global-search/index.vue';
+import BtcGlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
 import UserInfo from '../user-info/index.vue';

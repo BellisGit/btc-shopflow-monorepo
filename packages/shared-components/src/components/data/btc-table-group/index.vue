@@ -1,6 +1,6 @@
 <template>
   <div class="btc-table-group">
-  <BtcViewGroup
+  <BtcMasterViewGroup
     ref="viewGroupRef"
     :left-service="leftService"
     :right-service="rightService"
@@ -60,7 +60,7 @@
         :on-before-refresh="handleBeforeRefresh"
         style="padding: 10px;"
       >
-        <BtcRow>
+        <BtcCrudRow>
           <div class="btc-crud-primary-actions">
             <BtcRefreshBtn />
             <slot name="after-refresh-btn" />
@@ -71,9 +71,9 @@
               <BtcMultiDeleteBtn v-if="props.showMultiDeleteBtn" />
             </slot>
           </div>
-          <BtcFlex1 />
+          <BtcCrudFlex1 />
           <slot name="search">
-            <BtcSearchKey v-if="props.showSearchKey" v-bind="searchPlaceholder ? { placeholder: searchPlaceholder } : {}" />
+            <BtcCrudSearchKey v-if="props.showSearchKey" v-bind="searchPlaceholder ? { placeholder: searchPlaceholder } : {}" />
           </slot>
           <BtcCrudActions v-if="props.showToolbar" :show-toolbar="true">
             <template #default>
@@ -88,19 +88,19 @@
               />
             </template>
           </BtcCrudActions>
-        </BtcRow>
-        <BtcRow>
+        </BtcCrudRow>
+        <BtcCrudRow>
           <BtcTable
             :columns="tableColumns"
             v-bind="op ? { op } : {}"
             :disable-auto-created-at="disableAutoCreatedAt"
-            border
+            :border="true"
           />
-        </BtcRow>
-        <BtcRow>
-          <BtcFlex1 />
+        </BtcCrudRow>
+        <BtcCrudRow>
+          <BtcCrudFlex1 />
           <BtcPagination />
-        </BtcRow>
+        </BtcCrudRow>
         <BtcUpsert
           :items="computedFormItems"
           v-bind="{
@@ -110,23 +110,23 @@
         />
       </BtcCrud>
     </template>
-  </BtcViewGroup>
+  </BtcMasterViewGroup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, toRaw, markRaw } from 'vue';
 import { globalMitt } from '@btc/shared-components';
-import BtcViewGroup from '@btc-common/view-group/index.vue';
+import BtcMasterViewGroup from '../../layout/btc-view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';
 import BtcPagination from '@btc-crud/pagination/index.vue';
 import BtcAddBtn from '@btc-crud/add-btn/index.vue';
 import BtcRefreshBtn from '@btc-crud/refresh-btn/index.vue';
 import BtcMultiDeleteBtn from '@btc-crud/multi-delete-btn/index.vue';
-import BtcRow from '@btc-crud/row/index.vue';
-import BtcFlex1 from '@btc-crud/flex1/index.vue';
-import BtcSearchKey from '@btc-crud/search-key/index.vue';
+import BtcCrudRow from '@btc-crud/crud-row/index.vue';
+import BtcCrudFlex1 from '@btc-crud/crud-flex1/index.vue';
+import BtcCrudSearchKey from '@btc-crud/crud-search-key/index.vue';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import BtcCrudActions from '@btc-crud/actions/index.vue';
 import { useContentHeight } from '../../../composables/content-height';
@@ -136,16 +136,16 @@ defineOptions({
   name: 'BtcTableGroup',
   inheritAttrs: false,
   components: {
-    BtcViewGroup,
+    BtcMasterViewGroup,
     BtcCrud,
     BtcTable,
     BtcPagination,
     BtcAddBtn,
     BtcRefreshBtn,
     BtcMultiDeleteBtn,
-    BtcRow,
-    BtcFlex1,
-    BtcSearchKey,
+    BtcCrudRow,
+    BtcCrudFlex1,
+    BtcCrudSearchKey,
     BtcUpsert,
     BtcCrudActions
   }
@@ -206,7 +206,7 @@ const disableAutoCreatedAt = computed(() => !props.showCreateTime);
 // BtcViewGroup 的绑定属性
 const viewGroupBindProps = computed(() => {
   const bindProps: Record<string, any> = {};
-  
+
   if (props.leftSize) {
     bindProps['left-size'] = props.leftSize;
   }
@@ -232,7 +232,7 @@ const viewGroupBindProps = computed(() => {
   if (props.parentField !== undefined) {
     bindProps['parent-field'] = props.parentField;
   }
-  
+
   return bindProps;
 });
 
@@ -316,7 +316,7 @@ const computedFormItems = computed(() => {
   }
   // 创建左侧数据的浅拷贝，避免循环引用
   const leftData = Array.isArray(leftListData.value) ? [...leftListData.value] : [];
-  
+
   return props.formItems.map(item => {
     // 如果是级联选择器，注入左侧列表数据
     if (item.component?.name === 'btc-cascader') {
@@ -347,7 +347,145 @@ function handleSelect(item: any, keyword: any) {
   });
 }
 
-// 处理刷新前钩子 - 注入 keyword 参数，统一将 ids 处理为数组
+// 缓存推断结果，避免重复计算和循环引用问题
+const codeFieldCache = new WeakMap<any, string | null>();
+
+// 服务名到 code 字段名的映射表
+const SERVICE_CODE_MAP: Record<string, string> = {
+  module: 'moduleCode',
+  domain: 'domainCode',
+  menu: 'menuCode',
+  tenant: 'tenantCode',
+  user: 'userCode',
+  role: 'roleCode',
+  permission: 'permissionCode',
+  resource: 'resourceCode',
+  action: 'actionCode',
+  dept: 'deptCode',
+  department: 'deptCode', // department 也映射到 deptCode
+};
+
+// 从 selectedItem 反推 code 字段名（备选方案）
+function inferCodeFieldFromSelectedItem(selectedItem: any): string | null {
+  if (!selectedItem || typeof selectedItem !== 'object') return null;
+
+  // 检查 selectedItem 中是否有映射表中的 code 字段
+  // 按照优先级检查：domainCode, deptCode, moduleCode, menuCode, tenantCode, userCode, roleCode, permissionCode, resourceCode, actionCode
+  const codeFields = [
+    'domainCode', 'deptCode', 'moduleCode', 'menuCode', 'tenantCode',
+    'userCode', 'roleCode', 'permissionCode', 'resourceCode', 'actionCode'
+  ];
+
+  for (const codeField of codeFields) {
+    if (selectedItem[codeField] !== undefined && selectedItem[codeField] !== null && selectedItem[codeField] !== '') {
+      return codeField;
+    }
+  }
+
+  return null;
+}
+
+// 从左侧服务对象推断 code 字段名
+// 必须严格按照服务名匹配映射表，否则返回 null
+// 如果无法从服务对象推断，可以传入 selectedItem 作为备选方案
+// 如果提供了明确的服务名（serviceName），优先使用它
+function inferCodeFieldFromService(service: any, selectedItem?: any, serviceName?: string): string | null {
+  // 如果提供了明确的服务名，优先使用它
+  if (serviceName && typeof serviceName === 'string') {
+    const normalizedName = serviceName
+      .toLowerCase()
+      .replace(/^sys/, '')  // 移除 sys 前缀
+      .replace(/service$|api$|client$/, '')  // 移除常见后缀
+      .trim();
+
+    if (normalizedName && SERVICE_CODE_MAP[normalizedName]) {
+      return SERVICE_CODE_MAP[normalizedName];
+    }
+  }
+
+  if (!service) {
+    // 如果服务对象不存在，尝试从 selectedItem 反推
+    if (selectedItem) {
+      return inferCodeFieldFromSelectedItem(selectedItem);
+    }
+    return null;
+  }
+
+  // 检查缓存（注意：缓存键只包含 service，不包含 selectedItem）
+  if (codeFieldCache.has(service)) {
+    const cached = codeFieldCache.get(service);
+    if (cached) return cached;
+    // 如果缓存结果是 null，且提供了 selectedItem，尝试从 selectedItem 反推
+    if (!cached && selectedItem) {
+      return inferCodeFieldFromSelectedItem(selectedItem);
+    }
+    return null;
+  }
+
+  let result: string | null = null;
+
+  try {
+    // 检查服务对象是否有 list 方法（这是左侧服务的特征）
+    if (typeof service === 'object' && typeof service.list === 'function') {
+      // 服务对象有 list 方法，说明这是左侧服务
+      // 安全地尝试从服务对象的属性中获取服务名
+      let serviceName: string | null = null;
+
+      try {
+        // 方法1: 尝试从服务对象的属性中获取服务名
+        if (Object.prototype.hasOwnProperty.call(service, '_serviceName') && typeof service._serviceName === 'string') {
+          serviceName = service._serviceName;
+        } else if (Object.prototype.hasOwnProperty.call(service, 'name') && typeof service.name === 'string') {
+          serviceName = service.name;
+        } else if (Object.prototype.hasOwnProperty.call(service, 'serviceName') && typeof service.serviceName === 'string') {
+          serviceName = service.serviceName;
+        }
+
+        // 方法2: 如果方法1失败，尝试从服务对象的构造函数名推断
+        if (!serviceName && service.constructor && service.constructor.name) {
+          const constructorName = service.constructor.name.toLowerCase();
+          // 移除常见的后缀（如 Service, Api 等）
+          serviceName = constructorName.replace(/service$|api$|client$/, '').trim() || null;
+        }
+      } catch (e) {
+        // 如果访问属性时出错（可能是循环引用），跳过
+      }
+
+      // 如果找到了服务名，规范化后匹配映射表
+      if (serviceName) {
+        // 规范化服务名：移除 sys 前缀和 service/api/client 后缀
+        const normalizedName = serviceName
+          .toLowerCase()
+          .replace(/^sys/, '')  // 移除 sys 前缀
+          .replace(/service$|api$|client$/, '')  // 移除常见后缀
+          .trim();
+
+        // 严格按照映射表匹配
+        if (normalizedName && SERVICE_CODE_MAP[normalizedName]) {
+          result = SERVICE_CODE_MAP[normalizedName];
+        } else {
+          // 无法匹配映射表，返回 null
+          result = null;
+        }
+      }
+    }
+  } catch (e) {
+    // 如果推断过程中出错（可能是循环引用），返回 null
+    result = null;
+  }
+
+  // 缓存结果
+  codeFieldCache.set(service, result);
+
+  // 如果从服务对象推断失败，且提供了 selectedItem，尝试从 selectedItem 反推
+  if (!result && selectedItem) {
+    result = inferCodeFieldFromSelectedItem(selectedItem);
+  }
+
+  return result;
+}
+
+// 处理刷新前钩子 - 注入 keyword 参数，将左侧选中的 code 传递到右侧
 function handleBeforeRefresh(params: Record<string, unknown>) {
   const viewGroup = viewGroupRef.value;
   const selectedKeyword = viewGroup?.selectedKeyword;
@@ -367,28 +505,43 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
     return params;
   }
 
-  // 只有当 selectedKeyword 有值时才注入 keyword 参数
-  // 不传递 null 值
+  // 只有当 selectedKeyword 有值时才注入 keyword 参数（page 查询，放在 keyword 对象中）
+  // 必须严格按照服务推断 code 字段名，只有推断成功才传递
   if (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '') {
-    // 统一封装：页面侧的 selectedKeyword（字符串/数组/对象）
-    // - 对象：统一处理其中的 ids 字段为数组
-    // - 其他：封装到 { ids: [...] }，统一为数组格式
-    if (typeof selectedKeyword === 'object' && selectedKeyword !== null && !Array.isArray(selectedKeyword)) {
-      // 如果是对象，统一处理其中的 ids 字段为数组，并合并到现有 keyword
-      if ('ids' in selectedKeyword) {
-        const normalizedIds = Array.isArray(selectedKeyword.ids)
-          ? selectedKeyword.ids
-          : (selectedKeyword.ids !== undefined && selectedKeyword.ids !== null && selectedKeyword.ids !== '' ? [selectedKeyword.ids] : []);
-        (params as any).keyword = { ...existingKeyword, ...selectedKeyword, ids: normalizedIds };
-      } else {
+    // 从左侧服务推断 code 字段名
+    let codeField: string | null = null;
+    try {
+      // 使用 toRaw 获取原始对象，避免触发 Vue 的响应式系统
+      const rawService = toRaw(props.leftService);
+      codeField = inferCodeFieldFromService(rawService, selectedItem, props.leftServiceName);
+    } catch (e) {
+      // 如果推断失败，使用 null（不传递 code 字段）
+      codeField = null;
+    }
+
+    // 只有推断成功才传递 code 字段
+    if (codeField) {
+      // 如果 selectedKeyword 是字符串（code 值），放在 keyword 对象中对应的 code 字段属性中
+      if (typeof selectedKeyword === 'string' && selectedKeyword !== '') {
+        (params as any).keyword = { ...existingKeyword, [codeField]: selectedKeyword };
+      } else if (Array.isArray(selectedKeyword) && selectedKeyword.length > 0) {
+        // 如果是数组，使用第一个 code 值
+        const firstCode = selectedKeyword[0];
+        if (firstCode !== undefined && firstCode !== null && firstCode !== '') {
+          (params as any).keyword = { ...existingKeyword, [codeField]: firstCode };
+        } else if (Object.keys(existingKeyword).length > 0) {
+          // 无法获取有效的 code 值，只保留现有的 keyword
+          (params as any).keyword = existingKeyword;
+        }
+      } else if (typeof selectedKeyword === 'object' && selectedKeyword !== null && !Array.isArray(selectedKeyword)) {
+        // 如果是对象，直接合并（可能已经包含 code 字段）
         (params as any).keyword = { ...existingKeyword, ...selectedKeyword };
       }
     } else {
-      // 字符串或数组，统一转换为数组格式，并合并到现有 keyword
-      const normalizedIds = Array.isArray(selectedKeyword)
-        ? selectedKeyword
-        : (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '' ? [selectedKeyword] : []);
-      (params as any).keyword = { ...existingKeyword, ids: normalizedIds };
+      // 无法推断 code 字段名，不传递，只保留现有的 keyword
+      if (Object.keys(existingKeyword).length > 0) {
+        (params as any).keyword = existingKeyword;
+      }
     }
   } else {
     // 如果没有 selectedKeyword，但已有 keyword 对象，保留现有的 keyword
@@ -425,14 +578,43 @@ function handleRightOpSearch(field: any) {
   }
 }
 
-// 表单提交 - 自动注入选中的 ID
+// 表单提交 - 自动注入左侧选中的 code 字段（add 操作，放在表单数据中）
 async function handleFormSubmit(data: any, event: any) {
   const viewGroup = viewGroupRef.value;
   const selectedItem = viewGroup?.selectedItem;
+  const selectedKeyword = viewGroup?.selectedKeyword;
 
-  // 自动注入部门ID（如果有选中且不是未分配）
+  // 自动注入选中项的 code 字段（如果有选中且不是未分配）
+  // 必须严格按照服务推断，只有推断成功才传递
   if (selectedItem && !selectedItem.isUnassigned) {
-    data.deptId = selectedItem.id;
+    try {
+      // 从左侧服务推断 code 字段名（优先使用明确指定的 leftServiceName，如果无法从服务推断，会尝试从 selectedItem 反推）
+      const rawService = toRaw(props.leftService);
+      const codeField = inferCodeFieldFromService(rawService, selectedItem, props.leftServiceName);
+
+      // 只有推断成功才传递
+      if (codeField) {
+        // 优先从 selectedItem 中获取对应的 code 字段值
+        if (selectedItem[codeField] !== undefined && selectedItem[codeField] !== null && selectedItem[codeField] !== '') {
+          data[codeField] = selectedItem[codeField];
+        } else if (selectedItem.code !== undefined && selectedItem.code !== null && selectedItem.code !== '') {
+          // 如果没有对应的 code 字段，但有通用的 code 字段，也传递
+          data[codeField] = selectedItem.code;
+        } else if (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '') {
+          // 如果 selectedItem 中没有 code 字段，尝试从 selectedKeyword 获取（page 查询时使用的值）
+          if (typeof selectedKeyword === 'string') {
+            data[codeField] = selectedKeyword;
+          } else if (Array.isArray(selectedKeyword) && selectedKeyword.length > 0) {
+            data[codeField] = selectedKeyword[0];
+          }
+        }
+      }
+    } catch (e) {
+      // 推断失败，不传递
+      if (import.meta.env.DEV) {
+        console.error('[BtcTableGroup] handleFormSubmit 推断失败:', e);
+      }
+    }
   }
 
   // 触发事件

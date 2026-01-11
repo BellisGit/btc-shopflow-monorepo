@@ -213,6 +213,17 @@ export class Http {
           // 登录成功，设置登录状态标记到统一的 settings 存储中
           const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
           appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+          
+          // 记录登录时间，用于存储有效性检查的宽限期
+          try {
+            import('@btc/shared-core/utils/storage-validity-check').then(({ recordLoginTime }) => {
+              recordLoginTime();
+            }).catch(() => {
+              // 静默失败，不影响登录流程
+            });
+          } catch (error) {
+            // 静默失败，不影响登录流程
+          }
 
           // 关键：登录成功后，清除 sessionStorage 中的旧轮询状态
           // 这样启动轮询时会立即调用一次 user-check，获取最新的剩余时间

@@ -96,7 +96,7 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n, setGlobalState } from '@btc/shared-core';
 import { BtcConfirm } from '@btc/shared-components';
@@ -705,11 +705,34 @@ function handleTabCommand(command: string) {
 
     case 'close-all': {
       // 关闭所有标签（只在当前应用内）
+      // 优先使用全局状态更新（通过统一中间层）
+      const currentTabbarList = globalTabbarList.value || [];
+      const newTabList = currentTabbarList.filter((tab: any) => tab.appName !== currentApp);
+      const homePath = getAppHomePath(currentApp);
+
+      // 同时更新 processStore（兼容性处理）
       processStore.closeAll(currentApp);
 
-      // 跳转到当前应用首页（使用全局配置）
-      const homePath = getAppHomePath(currentApp);
-      router.push(homePath);
+      // 立即更新本地响应式变量（确保组件立即看到更新，不等待全局状态监听器）
+      globalTabbarList.value = newTabList;
+      globalActiveTabKey.value = homePath;
+
+      // 更新全局状态（同步到其他应用）
+      setGlobalState({
+        tabbarList: newTabList,
+        activeTabKey: homePath,
+        currentApp: currentApp,
+      }, false).then(() => {
+        // 等待响应式更新完成后再跳转
+        nextTick(() => {
+          router.push(homePath).catch(() => {});
+        });
+      }).catch(() => {
+        // 如果全局状态更新失败，仍然跳转（本地状态已经更新）
+        nextTick(() => {
+          router.push(homePath).catch(() => {});
+        });
+      });
       break;
     }
   }

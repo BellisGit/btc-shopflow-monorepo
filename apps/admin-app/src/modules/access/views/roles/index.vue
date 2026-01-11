@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="roles-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -8,7 +8,7 @@
       :form-items="formItems"
       :op="{ buttons: ['edit', 'delete'] }"
       :on-info="handleRoleInfo"
-      :left-title="t('access.roles.fields.domain_id')"
+      left-title="title.access.roles.domains"
       :right-title="t('access.roles.fields.role_name')"
       :show-unassigned="true"
       :enable-key-search="true"

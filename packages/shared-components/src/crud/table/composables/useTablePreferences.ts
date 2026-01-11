@@ -9,6 +9,7 @@ export interface TablePreferenceOptions {
   defaultStripe?: boolean;
   defaultBorder?: boolean;
   defaultHeaderBackground?: boolean;
+  defaultTagRound?: boolean;
   defaultHiddenColumns?: string[];
 }
 
@@ -17,6 +18,7 @@ interface PersistedPreferences {
   stripe?: boolean;
   border?: boolean;
   headerBackground?: boolean;
+  tagRound?: boolean;
   hiddenColumns?: string[];
 }
 
@@ -61,6 +63,7 @@ export function useTablePreferences(options: TablePreferenceOptions = {}) {
   const headerBackground = ref<boolean>(
     stored.headerBackground ?? options.defaultHeaderBackground ?? true,
   );
+  const tagRound = ref<boolean>(stored.tagRound ?? options.defaultTagRound ?? false);
   const hiddenColumns = ref<string[]>(
     stored.hiddenColumns ?? options.defaultHiddenColumns ?? [],
   );
@@ -73,11 +76,12 @@ export function useTablePreferences(options: TablePreferenceOptions = {}) {
       stripe: stripe.value,
       border: border.value,
       headerBackground: headerBackground.value,
+      tagRound: tagRound.value,
       hiddenColumns: hiddenColumns.value,
     });
   };
 
-  watch([size, stripe, border, headerBackground, hiddenColumns], persist, {
+  watch([size, stripe, border, headerBackground, tagRound, hiddenColumns], persist, {
     deep: true,
   });
 
@@ -102,6 +106,7 @@ export function useTablePreferences(options: TablePreferenceOptions = {}) {
     stripe.value = options.defaultStripe ?? false;
     border.value = options.defaultBorder ?? true;
     headerBackground.value = options.defaultHeaderBackground ?? true;
+    tagRound.value = options.defaultTagRound ?? false;
     hiddenColumns.value = options.defaultHiddenColumns ?? [];
   };
 
@@ -110,6 +115,7 @@ export function useTablePreferences(options: TablePreferenceOptions = {}) {
     stripe,
     border,
     headerBackground,
+    tagRound,
     hiddenColumns,
     isColumnHidden,
     setColumnVisibility,

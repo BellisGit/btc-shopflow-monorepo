@@ -1,9 +1,114 @@
-import { computed, toValue } from 'vue';
+import { computed, toValue, inject } from 'vue';
 import type { TableProps } from '../types';
 import { autoFormatTableColumns } from '../utils/formatters';
 import { CommonColumns } from '../utils/common-columns';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, type UseCrudReturn } from '@btc/shared-core';
 import { useCrudLayout, DEFAULT_CRUD_GAP } from '../../context/layout';
+
+/**
+ * 获取表格单元格的实际字体样式
+ */
+function getTableCellFont(): { fontSize: number; fontFamily: string } {
+  if (typeof document !== 'undefined') {
+    const table = document.querySelector('.el-table');
+    if (table) {
+      const computedStyle = window.getComputedStyle(table);
+      const fontSize = parseInt(computedStyle.fontSize) || 14;
+      const fontFamily = computedStyle.fontFamily || 'Arial';
+      // 安全处理：使用可选链和空值合并，确保不会出现 undefined
+      const firstFont = fontFamily.split(',')[0]?.trim().replace(/['"]/g, '') || 'Arial';
+      return { fontSize, fontFamily: firstFont };
+    }
+  }
+  return { fontSize: 14, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' };
+}
+
+/**
+ * 测量文本宽度的工具函数
+ */
+function measureTextWidth(text: string, fontSize?: number, fontFamily?: string): number {
+  if (!text) return 0;
+  const font = getTableCellFont();
+  const actualFontSize = fontSize || font.fontSize;
+  const actualFontFamily = fontFamily || font.fontFamily;
+
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.font = `${actualFontSize}px ${actualFontFamily}`;
+      return context.measureText(text).width;
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    const span = document.createElement('span');
+    span.style.visibility = 'hidden';
+    span.style.position = 'absolute';
+    span.style.whiteSpace = 'nowrap';
+    span.style.fontSize = `${actualFontSize}px`;
+    span.style.fontFamily = actualFontFamily;
+    span.style.fontWeight = 'normal';
+    span.style.letterSpacing = 'normal';
+    span.textContent = text;
+    document.body.appendChild(span);
+    const width = span.offsetWidth;
+    document.body.removeChild(span);
+    return width;
+  }
+
+  let width = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    // 安全处理：确保 char 不是 undefined
+    if (char !== undefined) {
+      if (/[\u4e00-\u9fa5]/.test(char)) {
+        width += actualFontSize * 1.0;
+      } else {
+        width += actualFontSize * 0.55;
+      }
+    }
+  }
+  return width;
+}
+
+/**
+ * 获取单元格的显示文本（用于列宽计算）
+ */
+function getCellTextForWidth(column: any, row: any): string {
+  if (!column.prop) return '';
+  const value = row[column.prop];
+  if (value === null || value === undefined || value === '') return '';
+
+  if (column.formatter) {
+    try {
+      const formatted = column.formatter(row, column, value, 0);
+      return String(formatted || '');
+    } catch (error) {
+      console.warn('[useTableColumns] Formatter error:', error);
+    }
+  }
+
+  if (column._dictFormatter) {
+    try {
+      const dict = column._dictFormatter(row);
+      return String(dict?.label || value || '');
+    } catch (error) {
+      console.warn('[useTableColumns] Dict formatter error:', error);
+    }
+  }
+
+  if (column._codeTagFormatter) {
+    try {
+      const tagInfo = column._codeTagFormatter(row);
+      return String(tagInfo?.label || value || '');
+    } catch (error) {
+      console.warn('[useTableColumns] Code tag formatter error:', error);
+    }
+  }
+
+  return String(value);
+}
 
 /**
  * 表格列配置处理
@@ -13,6 +118,14 @@ export function useTableColumns(props: TableProps) {
   const crudLayout = useCrudLayout();
   const gap = crudLayout?.gap?.value ?? DEFAULT_CRUD_GAP;
 
+  // 尝试从 inject 获取 crud（用于访问 tableData）
+  let crud: UseCrudReturn<any> | null = null;
+  try {
+    const injected = inject<UseCrudReturn<any>>('btc-crud');
+    crud = injected || null;
+  } catch (error) {
+    // 如果 inject 失败，继续执行（可能不在 crud 上下文中）
+  }
   /**
    * 安全的翻译函数，确保返回字符串类型，避免循环引用
    */
@@ -219,6 +332,11 @@ export function useTableColumns(props: TableProps) {
       // 处理列的国际化标签
       // 优先处理特殊类型列（index、op）的国际化
       if (column.type === 'index') {
+        // 序号列：如果没有设置 width，使用默认宽度（70px）
+        if (!config.width && !config.minWidth) {
+          const defaultIndexColumn = CommonColumns.index();
+          config.width = defaultIndexColumn.width;
+        }
         // 序号列：如果 label 是国际化 key，翻译；否则使用默认的国际化标签
         if (column.label && typeof column.label === 'string' && isI18nKey(column.label)) {
             config.label = t(column.label);
@@ -276,19 +394,6 @@ export function useTableColumns(props: TableProps) {
         } else if (!config.width && !config.minWidth) {
           // 如果没有设置宽度，使用默认宽度 + gap
           config.width = 220 + gap;
-        }
-      }
-
-      // 智能列宽：非固定列自动转换为 minWidth 以实现灵活布局
-      if (!isFixedWidthColumn && !column.minWidth) {
-        // 对于内容列，优先使用 minWidth 而不是 width
-        if (column.width) {
-          config.minWidth = column.width;
-          delete config.width;
-        } else {
-          // 没有指定宽度时，根据标签长度估算合理的 minWidth
-          const labelLength = column.label?.length || 0;
-          config.minWidth = Math.max(100, labelLength * 20);
         }
       }
 
@@ -354,21 +459,21 @@ export function useTableColumns(props: TableProps) {
           // 根据字段类型和值生成不同的颜色
           config._codeTagFormatter = (row: any) => {
             const value = row[column.prop!];
-            
+
             // 处理空值
             if (value === null || value === undefined || value === '') {
               return { label: '', type: 'info' };
             }
 
             const valueStr = String(value);
-            
+
             // 根据字段类型选择颜色方案（支持 btc-tag 的所有类型）
-            let colorType: 
+            let colorType:
               | 'primary' | 'success' | 'warning' | 'danger' | 'info'
               | 'purple' | 'pink' | 'cyan' | 'teal' | 'indigo'
-              | 'orange' | 'brown' | 'gray' | 'lime' | 'olive' | 'navy' | 'maroon' 
+              | 'orange' | 'brown' | 'gray' | 'lime' | 'olive' | 'navy' | 'maroon'
               = 'info';
-            
+
             if (isStatusField) {
               // status 字段：根据值的内容判断
               const statusLower = valueStr.toLowerCase();
@@ -398,6 +503,202 @@ export function useTableColumns(props: TableProps) {
       }
 
       return config;
+    }).map((column, index, columns) => {
+      // 检查当前列是否需要渲染标签
+      const hasTag = !!(column._dictFormatter || column._codeTagFormatter);
+
+      if (hasTag) {
+        // 找出所有连续的标签列
+        let tagGroupStart = index;
+        let tagGroupEnd = index;
+
+        // 向前查找连续的标签列
+        while (tagGroupStart > 0 && (columns[tagGroupStart - 1]._dictFormatter || columns[tagGroupStart - 1]._codeTagFormatter)) {
+          tagGroupStart--;
+        }
+
+        // 向后查找连续的标签列
+        while (tagGroupEnd < columns.length - 1 && (columns[tagGroupEnd + 1]._dictFormatter || columns[tagGroupEnd + 1]._codeTagFormatter)) {
+          tagGroupEnd++;
+        }
+
+        // 在当前连续组中的位置（从0开始）
+        const positionInGroup = index - tagGroupStart;
+
+        // 交替使用 light 和 plain
+        const tagEffect = positionInGroup % 2 === 0 ? 'light' : 'plain';
+
+        // 确保 _tagEffect 被正确设置到返回的对象中
+        return {
+          ...column,
+          _tagEffect: tagEffect,
+        };
+      }
+
+      return column;
+    }).map((column) => {
+      // ========== 统一的列宽分配逻辑 ==========
+      const isFixedWidthColumn = column.type === 'selection' || column.type === 'index' || column.type === 'op';
+
+      // 1. 固定宽度列：保持原样（selection: 60, index: 60, op: 根据按钮数量计算）
+      if (isFixedWidthColumn) {
+        return column;
+      }
+
+      // 2. 识别列类型
+      const propName = column.prop?.toLowerCase() || '';
+      const isCodeField = propName.includes('code');
+      const isTimeField = propName.includes('time') || propName.includes('at') ||
+                         column.prop === 'createdAt' || column.prop === 'updatedAt' ||
+                         column.prop === 'createTime' || column.prop === 'updateTime' ||
+                         column.prop === 'deleteTime' || column.prop === 'deletedAt';
+      const isJsonField = column.component?.name === 'BtcCodeJson' || column.component?.name === 'btc-code-json';
+      const hasDictFormatter = !!column._dictFormatter; // 字典格式化器
+      const hasCodeTagFormatter = !!column._codeTagFormatter; // Code 标签格式化器
+      const hasTagFormatter = hasDictFormatter || hasCodeTagFormatter; // 是否有任何标签格式化器
+
+      // 3. 用户配置中只能使用 width（作为兜底值），不能使用 minWidth
+      // minWidth 完全由 composables 自动计算
+      // width 作为最小值兜底，如果用户配置了 width，则使用它作为最小值；否则完全自动计算
+      const userWidth = column.width;
+
+      // 5. 获取表格数据（用于基于实际内容计算列宽）
+      const tableData = crud?.tableData?.value || [];
+      const sampleSize = 5; // 采样前5条数据
+      const sampleData = tableData.slice(0, Math.min(sampleSize, tableData.length));
+
+      // 6. 测量列标题宽度
+      const labelText = column.label || '';
+      const labelWidth = measureTextWidth(labelText);
+
+      // 7. 预先计算最大内容宽度（用于后续计算，提升到外层作用域）
+      let maxContentWidth = 0;
+      let hasContent = false;
+      for (const row of sampleData) {
+        const cellText = getCellTextForWidth(column, row);
+        if (cellText && cellText.trim()) {
+          hasContent = true;
+          let textWidth = measureTextWidth(cellText);
+          // 对于 code 列和时间列，测量可能偏大，应用调整系数使其更接近实际渲染
+          if (isCodeField || isTimeField) {
+            textWidth = textWidth * 0.9; // 应用 0.9 的调整系数，使测量更接近实际渲染宽度
+          }
+          maxContentWidth = Math.max(maxContentWidth, textWidth);
+        }
+      }
+
+      // 8. 根据列类型设置不同的宽度策略
+      // 注意：Element Plus 表格单元格本身有默认的 padding（左右各 12px，共 24px）
+      // 所以这里只使用文本宽度，不额外添加 padding，让 Element Plus 自动处理单元格的 padding
+      let calculatedWidth = 0;
+
+      if (isTimeField) {
+        // 时间列：基于实际时间格式内容宽度计算（"YYYY-MM-DD HH:mm:ss" 格式，19个字符）
+        // 优先使用实际数据宽度，如果没有数据，使用标准时间格式宽度
+        // 注意：Element Plus 表格单元格有默认 padding（左右各 12px，共 24px）
+        // 但实际测量可能偏大，所以使用较小的 padding 值
+        const cellPadding = 18; // Element Plus 单元格 padding（进一步减小到 18px）
+        const standardTimeWidth = measureTextWidth('2025-10-18 09:35:55') * 0.9; // 标准时间格式宽度，应用调整系数
+        if (hasContent && maxContentWidth > 0) {
+          // 使用实际数据宽度 + 单元格 padding
+          calculatedWidth = maxContentWidth + cellPadding;
+        } else {
+          // 没有数据时，使用标准时间格式宽度 + 单元格 padding，不考虑表头宽度（避免表头过长导致过宽）
+          calculatedWidth = standardTimeWidth + cellPadding;
+        }
+      } else if (isJsonField) {
+        // JSON 列：固定宽度 200px（JSON 数据通常较长）
+        calculatedWidth = 200;
+      } else if (isCodeField) {
+        // Code 列：优先使用实际数据宽度，不考虑表头宽度（代码通常比表头长）
+        // 注意：Element Plus 表格单元格有默认 padding（左右各 12px，共 24px）
+        // 标签组件在单元格内，也有 padding（2px * 2 = 4px）
+        // 但实际测量可能偏大，所以使用较小的 padding 值
+        const cellPadding = 18; // Element Plus 单元格 padding（进一步减小到 18px）
+        const tagPadding = hasCodeTagFormatter ? 2 : 0; // 标签组件 padding（2px）
+        const totalExtraPadding = cellPadding + tagPadding; // 总共 20px（code 列）或 18px（非标签 code 列）
+
+        if (hasContent && maxContentWidth > 0) {
+          // 使用实际数据宽度 + 单元格和标签的 padding
+          calculatedWidth = maxContentWidth + totalExtraPadding;
+        } else {
+          // 没有数据时，使用表头宽度（但不要太大）
+          calculatedWidth = Math.min(labelWidth, 200) + totalExtraPadding; // 表头宽度上限 200px
+        }
+        // 确保不小于最小宽度（code 列最小宽度降低到 120px，加上 padding）
+        calculatedWidth = Math.max(120 + totalExtraPadding, calculatedWidth);
+        // 对于 code 列，设置最大宽度限制，避免过宽
+        if (hasContent && maxContentWidth > 0) {
+          const maxAllowedWidth = maxContentWidth + totalExtraPadding;
+          calculatedWidth = Math.min(calculatedWidth, maxAllowedWidth);
+        }
+      } else if (hasTagFormatter) {
+        // 标签列：基于实际数据内容计算，优先使用数据宽度
+        // 注意：Element Plus 表格单元格有默认 padding（左右各 12px，共 24px）
+        const cellPadding = 24; // Element Plus 单元格 padding
+        if (hasContent && maxContentWidth > 0) {
+          // 如果数据宽度超过表头，使用数据宽度；否则使用表头宽度
+          calculatedWidth = Math.max(labelWidth, maxContentWidth) + cellPadding;
+        } else {
+          calculatedWidth = labelWidth + cellPadding;
+        }
+      } else {
+        // 普通列：如果数据内容都不超过表头宽度，则只需要保证能放下表头即可
+        // 注意：Element Plus 表格单元格有默认 padding（左右各 12px，共 24px）
+        const cellPadding = 24; // Element Plus 单元格 padding
+        if (hasContent && maxContentWidth > 0) {
+          // 如果数据宽度不超过表头，使用表头宽度
+          // 如果数据宽度超过表头，使用数据宽度
+          if (maxContentWidth <= labelWidth) {
+            // 数据都不超过表头，只需保证表头能放下
+            calculatedWidth = labelWidth + cellPadding;
+          } else {
+            // 数据超过表头，使用数据宽度
+            calculatedWidth = maxContentWidth + cellPadding;
+          }
+        } else {
+          // 没有数据内容时，使用表头宽度
+          calculatedWidth = labelWidth + cellPadding;
+        }
+      }
+
+      // 9. 设置最小宽度限制（包含单元格 padding，使用较小的 padding 值）
+      const cellPadding = 20; // Element Plus 单元格 padding（减小到 20px）
+      let minWidth: number;
+      if (isCodeField) {
+        const tagPadding = hasCodeTagFormatter ? 2 : 0; // 标签组件 padding（减小到 2px）
+        minWidth = 120 + cellPadding + tagPadding; // code 列最小宽度降低到 120px，加上 padding
+      } else if (isTimeField) {
+        // 时间列：使用标准时间格式宽度，不考虑表头宽度（避免表头过长导致过宽）
+        const standardTimeWidth = measureTextWidth('2025-10-18 09:35:55');
+        // 使用标准时间宽度 + 单元格 padding
+        minWidth = Math.max(80, standardTimeWidth) + cellPadding;
+      } else if (hasTagFormatter || isJsonField) {
+        // 标签列、JSON列：使用表头宽度 + 单元格 padding
+        minWidth = Math.max(80, labelWidth) + cellPadding;
+      } else {
+        // 普通列：最小宽度 = 表头宽度 + 单元格 padding
+        minWidth = Math.max(80, labelWidth) + cellPadding;
+      }
+
+      // 10. 最终宽度计算：优先使用自动计算的值，用户配置的 width 作为最小值兜底
+      // 如果用户配置了 width，使用它作为最小值；否则使用计算出的 minWidth
+      let finalWidth: number;
+
+      // 计算最终的最小宽度：用户配置的 width（兜底）或自动计算的最小宽度
+      const finalMinWidth = userWidth
+        ? Math.max(minWidth, userWidth) // 用户配置的 width 作为最小值兜底
+        : minWidth; // 没有配置 width，使用自动计算的最小宽度
+
+      // 最终宽度 = 计算出的宽度和最小宽度的较大值
+      finalWidth = Math.max(calculatedWidth, finalMinWidth);
+
+      // 11. 返回更新后的列配置（统一使用 minWidth，width 设置为 undefined）
+      return {
+        ...column,
+        minWidth: finalWidth,
+        width: undefined, // 统一使用 minWidth，width 交给 Element Plus 处理
+      };
     });
   });
 

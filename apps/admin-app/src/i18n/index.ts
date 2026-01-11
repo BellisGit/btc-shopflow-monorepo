@@ -6,6 +6,7 @@
 import { createAppI18n, getLocaleFromStorage, isValidLocale, type AppLocale } from '@btc/i18n';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { createI18nPlugin } from '@btc/shared-core';
+import { deepMerge } from '@btc/shared-core';
 import { sharedLocalesZhCN, sharedLocalesEnUS } from '@btc/shared-components';
 import { getLocaleMessages } from './getters';
 
@@ -26,17 +27,25 @@ export function initAdminI18n(props?: {
     // 获取管理应用的语言包
     const adminMessages = getLocaleMessages();
     
-    // 合并全局+业务词条（包括 shared-components 的语言包）
-    i18n.global.setLocaleMessage('zh-CN', {
-      ...i18n.global.getLocaleMessage('zh-CN'),
-      ...(sharedLocalesZhCN as Record<string, any>),
-      ...adminMessages['zh-CN'],
-    });
-    i18n.global.setLocaleMessage('en-US', {
-      ...i18n.global.getLocaleMessage('en-US'),
-      ...(sharedLocalesEnUS as Record<string, any>),
-      ...adminMessages['en-US'],
-    });
+    // 深度合并全局+业务词条（包括 shared-components 的语言包）
+    // 使用深度合并确保嵌套结构（如 title.platform.domains）正确合并
+    const mergedZhCN = deepMerge(
+      deepMerge(
+        i18n.global.getLocaleMessage('zh-CN') || {},
+        sharedLocalesZhCN as Record<string, any>
+      ),
+      adminMessages['zh-CN'] || {}
+    );
+    const mergedEnUS = deepMerge(
+      deepMerge(
+        i18n.global.getLocaleMessage('en-US') || {},
+        sharedLocalesEnUS as Record<string, any>
+      ),
+      adminMessages['en-US'] || {}
+    );
+    
+    i18n.global.setLocaleMessage('zh-CN', mergedZhCN);
+    i18n.global.setLocaleMessage('en-US', mergedEnUS);
     
     // 设置当前语言
     if (locale && isValidLocale(locale)) {
@@ -65,15 +74,20 @@ export function initAdminI18n(props?: {
   // 独立运行模式：自己初始化 i18n
   const defaultLocale = getLocaleFromStorage();
   const adminMessages = getLocaleMessages();
+  
+  // 深度合并 shared-components 和 admin-app 的语言包
+  const mergedZhCN = deepMerge(
+    sharedLocalesZhCN as Record<string, any>,
+    adminMessages['zh-CN'] || {}
+  );
+  const mergedEnUS = deepMerge(
+    sharedLocalesEnUS as Record<string, any>,
+    adminMessages['en-US'] || {}
+  );
+  
   const i18nInstance = createAppI18n(defaultLocale, {
-    'zh-CN': {
-      ...(sharedLocalesZhCN as Record<string, any>),
-      ...adminMessages['zh-CN'],
-    },
-    'en-US': {
-      ...(sharedLocalesEnUS as Record<string, any>),
-      ...adminMessages['en-US'],
-    },
+    'zh-CN': mergedZhCN,
+    'en-US': mergedEnUS,
   });
   
   // 包装为插件格式（与 createI18nPlugin 的返回格式兼容）

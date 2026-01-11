@@ -19,6 +19,7 @@
   "btc.table.style.zebra": "斑马纹",
   "btc.table.style.border": "边框",
   "btc.table.style.headerBackground": "表头背景",
+  "btc.table.style.tagRound": "标签圆角",
   "ui.form.please_enter": "请输入",
   "ui.form.please_select": "请选择",
   "ui.message.success": "操作成功",

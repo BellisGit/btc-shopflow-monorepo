@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     class="btc-search-key"
     :class="containerClasses"
@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { ref, inject, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import type { InputInstance } from 'element-plus';
 const DEFAULT_SEARCH_WIDTH = 200;
 

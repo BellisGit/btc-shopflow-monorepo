@@ -99,12 +99,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, defineComponent } from 'vue';
+import { ref, computed, onMounted, nextTick, defineComponent, getCurrentInstance } from 'vue';
 
 import { useI18n } from '@btc/shared-core';
 import { Check, Close, MoreFilled, Search } from '@element-plus/icons-vue';
 // Refresh 未使用
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import { BtcMessage } from '@btc/shared-components';
 
 // 空图标组件，用于隐藏展开/折叠图标
@@ -179,6 +179,7 @@ interface Props {
   childrenField?: string;
   enableKeySearch?: boolean;
   hideExpandIcon?: boolean; // 是否隐藏展开/折叠图标
+  codeField?: string; // 指定 code 字段名（如 deptCode, domainCode 等），如果不指定则自动推断
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -192,6 +193,7 @@ const props = withDefaults(defineProps<Props>(), {
   childrenField: 'children',
   enableKeySearch: false,
   hideExpandIcon: false,
+  codeField: undefined,
 });
 
 defineOptions({
@@ -202,17 +204,89 @@ const emit = defineEmits(['refresh', 'select', 'add', 'edit', 'delete', 'load'])
 
 const { t } = useI18n();
 
+// 获取 Vue I18n 实例（在 computed 外部获取）
+const instance = getCurrentInstance();
+const getI18nMessages = () => {
+  if (!instance) return null;
+  try {
+    const app = instance.appContext.app;
+    const i18nInstance = (app as any).config?.globalProperties?.$i18n || (app as any)._context?.provides?.i18n;
+    if (i18nInstance) {
+      const i18nGlobal = i18nInstance.global || i18nInstance;
+      const currentLocale = i18nGlobal.locale?.value || i18nGlobal.locale || 'zh-CN';
+      return i18nGlobal.getLocaleMessage(currentLocale) || {};
+    }
+  } catch {
+    // 静默失败
+  }
+  return null;
+};
+
 // 计算显示标题（支持国际化 key）
 const displayTitle = computed(() => {
-  // 如果 title 包含点号，可能是国际化 key，尝试翻译
-  if (props.title && props.title.includes('.')) {
-    const translated = t(props.title);
-    // 如果翻译成功（返回值不是 key 本身），使用翻译结果
-    if (translated && translated !== props.title) {
-      return translated;
+  if (!props.title) {
+    return '';
+  }
+  
+  // 如果 title 看起来像国际化 key（包含点号且不包含中文字符），尝试翻译
+  // 检查是否包含中文字符，如果包含则可能是已翻译的文本
+  const hasChinese = /[\u4e00-\u9fa5]/.test(props.title);
+  if (!hasChinese && props.title.includes('.')) {
+    try {
+      // 优先级1：直接使用 t() 函数（它应该能够访问 Vue I18n 实例）
+      try {
+        const translated = t(props.title);
+        // 如果返回的是对象且包含 _ 键，使用 _ 键的值
+        let finalTranslated = translated;
+        if (translated && typeof translated === 'object' && translated !== null && !Array.isArray(translated) && '_' in translated) {
+          finalTranslated = (translated as any)._;
+        }
+        if (finalTranslated && typeof finalTranslated === 'string' && finalTranslated !== props.title && finalTranslated.trim() !== '') {
+          return finalTranslated;
+        }
+      } catch {
+        // t() 函数调用失败，尝试其他方法
+      }
+      
+      // 优先级2：通过 getI18nMessages 获取消息对象，然后按路径访问嵌套结构
+      const messages = getI18nMessages();
+      if (messages) {
+        // 按路径访问嵌套结构
+        const keys = props.title.split('.');
+        let nestedValue: any = messages;
+        for (const k of keys) {
+          if (nestedValue && typeof nestedValue === 'object' && k in nestedValue) {
+            nestedValue = nestedValue[k];
+          } else {
+            nestedValue = undefined;
+            break;
+          }
+        }
+        if (nestedValue !== undefined) {
+          // 如果值是对象且包含 _ 键，使用 _ 键的值（Vue I18n 的约定）
+          if (typeof nestedValue === 'object' && nestedValue !== null && !Array.isArray(nestedValue) && '_' in nestedValue) {
+            nestedValue = nestedValue._;
+          }
+          if (typeof nestedValue === 'string' && nestedValue.trim() !== '' && nestedValue !== props.title) {
+            return nestedValue;
+          } else if (typeof nestedValue === 'function') {
+            try {
+              const result = nestedValue({ normalize: (arr: any[]) => arr[0] });
+              if (typeof result === 'string' && result.trim() !== '' && result !== props.title) {
+                return result;
+              }
+            } catch {
+              // 如果函数调用失败，继续使用其他方法
+            }
+          }
+        }
+      }
+    } catch {
+      // 翻译失败，继续使用原 title
     }
   }
-  // 否则直接使用 title（可能是已翻译的文本或普通文本）
+  
+  // 否则直接使用 title（可能是已翻译的文本或普通文本，或者是找不到翻译的 key）
   return props.title;
 });
 
@@ -319,6 +393,25 @@ async function refresh() {
   }
 }
 
+// 自动推断 code 字段名
+function inferCodeField(item: any): string | null {
+  // 如果通过 props 指定了 codeField，直接使用
+  if (props.codeField) {
+    return props.codeField;
+  }
+
+  // 自动检测常见的 code 字段
+  const commonCodeFields = ['deptCode', 'domainCode', 'roleCode', 'code'];
+  for (const field of commonCodeFields) {
+    if (item[field] !== undefined && item[field] !== null && item[field] !== '') {
+      return field;
+    }
+  }
+
+  // 如果没找到，返回 null，使用 id
+  return null;
+}
+
 // 处理节点点击
 function handleNodeClick(item: any) {
   selectedItem.value = item;
@@ -330,37 +423,83 @@ function handleNodeClick(item: any) {
     }
   });
 
-  // 计算 keyword 参数 - 统一返回数组格式
+  // 计算 keyword 参数 - 优先使用 code 字段，否则使用 id
   let keyword: any;
   if (item.isUnassigned) {
     keyword = undefined; // 未分配不传 keyword
-  } else if (item.children && item.children.length > 0) {
-    // 有子级：返回所有子级 ID 数组
-    const ids = revDeepTree(item.children).map(e => e.id);
-    ids.unshift(item.id);
-    keyword = ids;
   } else {
-    // 单层：统一返回数组格式（即使只有一个ID）
-    keyword = [item.id];
+    // 尝试获取 code 字段名
+    const codeField = inferCodeField(item);
+
+    if (codeField) {
+      // 使用 code 字段
+      if (item.children && item.children.length > 0) {
+        // 有子级：返回所有子级的 code 数组
+        const codes = revDeepTree(item.children)
+          .map(e => e[codeField])
+          .filter((code: any) => code !== undefined && code !== null && code !== '');
+        if (item[codeField]) {
+          codes.unshift(item[codeField]);
+        }
+        keyword = codes.length > 0 ? codes : undefined;
+      } else {
+        // 单层：返回 code（单个值，不是数组）
+        keyword = item[codeField] || undefined;
+      }
+    } else {
+      // 没有 code 字段，使用 id（向后兼容）
+      if (item.children && item.children.length > 0) {
+        // 有子级：返回所有子级 ID 数组
+        const ids = revDeepTree(item.children).map(e => e.id);
+        ids.unshift(item.id);
+        keyword = ids;
+      } else {
+        // 单层：统一返回数组格式（即使只有一个ID）
+        keyword = [item.id];
+      }
+    }
   }
 
   // 导出选中参数
   emit('select', item, keyword);
 }
 
-// 计算当前选中项的 keyword - 统一返回数组格式
+// 计算当前选中项的 keyword - 优先使用 code 字段
 function calculateKeyword(item: any): any {
   if (!item) return undefined;
 
   if (item.isUnassigned) {
     return undefined;
-  } else if (item.children && item.children.length > 0) {
-    const ids = revDeepTree(item.children).map(e => e.id);
-    ids.unshift(item.id);
-    return ids;
   } else {
-    // 统一返回数组格式（即使只有一个ID）
-    return [item.id];
+    // 尝试获取 code 字段名
+    const codeField = inferCodeField(item);
+
+    if (codeField) {
+      // 使用 code 字段
+      if (item.children && item.children.length > 0) {
+        // 有子级：返回所有子级的 code 数组
+        const codes = revDeepTree(item.children)
+          .map(e => e[codeField])
+          .filter((code: any) => code !== undefined && code !== null && code !== '');
+        if (item[codeField]) {
+          codes.unshift(item[codeField]);
+        }
+        return codes.length > 0 ? codes : undefined;
+      } else {
+        // 单层：返回 code（单个值，不是数组）
+        return item[codeField] || undefined;
+      }
+    } else {
+      // 没有 code 字段，使用 id（向后兼容）
+      if (item.children && item.children.length > 0) {
+        const ids = revDeepTree(item.children).map(e => e.id);
+        ids.unshift(item.id);
+        return ids;
+      } else {
+        // 统一返回数组格式（即使只有一个ID）
+        return [item.id];
+      }
+    }
   }
 }
 

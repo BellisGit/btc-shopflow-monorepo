@@ -611,12 +611,15 @@ export async function mountSubApp(
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
     
-    // 关键优化：如果初始路由不是首页（'/'），立即进行导航，避免先匹配到首页
-    // 这样可以避免刷新浏览器时先显示首页再跳转的问题
+    // 关键修复：在应用挂载前就设置初始路由，避免路由初始化时先匹配到根路径
+    // 这样可以避免刷新浏览器时 URL 短暂变成 /system 再恢复的问题
     if (initialRoute !== '/') {
-      // 立即导航到正确的路由，不等待 router.isReady()
-      // 这样可以避免路由初始化时先匹配到首页
-      context.router.replace(initialRoute).catch((error: unknown) => {
+      // 关键：在应用挂载前就设置初始路由，使用 replace 避免在历史记录中留下中间状态
+      // 这样可以避免 Vue Router 在初始化时先匹配到根路径
+      try {
+        // 使用 router.replace 立即设置路由状态，避免先匹配到根路径
+        await context.router.replace(initialRoute);
+      } catch (error: unknown) {
         // 如果立即导航失败（可能路由还未准备好），等待路由准备好后再导航
         Promise.race([
           context.router.isReady(),
@@ -633,7 +636,7 @@ export async function mountSubApp(
         }).catch((readyError: unknown) => {
           console.warn(`[${options.appId}-app] 路由就绪检查失败:`, readyError);
         });
-      });
+      }
     } else {
       // 如果初始路由是首页，等待路由准备好后再进行导航（保持原有逻辑）
       Promise.race([

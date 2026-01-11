@@ -3,7 +3,7 @@
     <BtcViewGroup
       ref="tableGroupRef"
       :left-service="checkService"
-      :left-title="t('inventory.check.list')"
+      left-title="title.logistics.inventory.check.list"
       :right-title="t('menu.inventory_management.result')"
       :show-unassigned="false"
       :enable-key-search="true"

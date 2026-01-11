@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
 import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-button/types';
 

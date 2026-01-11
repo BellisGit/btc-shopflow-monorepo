@@ -13,6 +13,20 @@ let isLoggingOut = false;
 // Profile 信息存储键名（与 profile-info-cache.ts 保持一致）
 const PROFILE_INFO_STORAGE_KEY = 'btc_profile_info_data';
 
+// 登录后的宽限期（毫秒），在宽限期内不进行存储有效性检查
+// 因为登录成功后，profile 信息是异步加载的（延迟 500ms），需要给足够的时间
+const LOGIN_GRACE_PERIOD = 3000; // 3 秒宽限期
+
+// 记录最近一次设置 is_logged_in 的时间
+let lastLoginTime: number | null = null;
+
+/**
+ * 记录登录时间（在设置 is_logged_in 时调用）
+ */
+export function recordLoginTime(): void {
+  lastLoginTime = Date.now();
+}
+
 /**
  * 检查是否在登录页
  */
@@ -25,15 +39,34 @@ function isLoginPage(): boolean {
 }
 
 /**
+ * 检查是否在登录后的宽限期内
+ */
+function isInLoginGracePeriod(): boolean {
+  if (lastLoginTime === null) {
+    return false;
+  }
+  const now = Date.now();
+  const elapsed = now - lastLoginTime;
+  return elapsed < LOGIN_GRACE_PERIOD;
+}
+
+/**
  * 检查认证存储的有效性
  * 只检查顶栏用户个人信息 profile 存储的 key 是否存在
  * 如果不存在，说明存储被清除，需要退出
  * 
- * 注意：在登录页不进行检查，避免循环重定向
+ * 注意：
+ * 1. 在登录页不进行检查，避免循环重定向
+ * 2. 在登录后的宽限期内不进行检查，因为 profile 信息是异步加载的
  */
 export function checkStorageValidity(): boolean {
   // 如果在登录页，直接返回 true，不进行检查（避免循环重定向）
   if (isLoginPage()) {
+    return true;
+  }
+
+  // 如果在登录后的宽限期内，暂时不检查（给 profile 信息加载时间）
+  if (isInLoginGracePeriod()) {
     return true;
   }
 

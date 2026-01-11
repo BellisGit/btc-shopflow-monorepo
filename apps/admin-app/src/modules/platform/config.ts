@@ -22,6 +22,8 @@ export default {
       'menu.platform.domains': '域列表',
       'menu.platform.modules': '模块列表',
       'menu.platform.plugins': '插件列表',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.platform.domains': '域列表',
       // 模块元数据
       'platform.label': '平台治理',
       'platform.description': '域、租户、模块、插件管理',
@@ -53,6 +55,8 @@ export default {
       'menu.platform.domains': 'Domain List',
       'menu.platform.modules': 'Module List',
       'menu.platform.plugins': 'Plugin List',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.platform.domains': 'Domain List',
       // 模块元数据
       'platform.label': 'Platform Governance',
       'platform.description': 'Domain, tenant, module, and plugin management',
@@ -82,36 +86,35 @@ export default {
 
   columns: {
     'platform.domains': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'name', label: 'platform.domains.fields.domain_name', minWidth: 150 },
-      { prop: 'domainCode', label: 'platform.domains.fields.domain_code', width: 120 },
-      { prop: 'domainType', label: 'platform.domains.fields.domain_type', width: 120 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'name', label: 'platform.domains.fields.domain_name' },
+      { prop: 'domainCode', label: 'platform.domains.fields.domain_code' },
+      { prop: 'domainType', label: 'platform.domains.fields.domain_type' },
       {
         prop: 'tenantCode',
         label: 'platform.domains.fields.tenant_id',
-        width: 150,
       },
-      { prop: 'description', label: 'platform.domains.fields.description', minWidth: 200 },
+      { prop: 'description', label: 'platform.domains.fields.description' },
     ] as TableColumn[],
 
     'platform.modules': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'moduleName', label: 'platform.modules.fields.module_name', minWidth: 150 },
-      { prop: 'moduleCode', label: 'platform.modules.fields.module_code', minWidth: 150 },
-      { prop: 'moduleType', label: 'platform.modules.fields.module_type', width: 100 },
-      { prop: 'description', label: 'platform.modules.fields.description', minWidth: 200 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'moduleName', label: 'platform.modules.fields.module_name' },
+      { prop: 'moduleCode', label: 'platform.modules.fields.module_code' },
+      { prop: 'moduleType', label: 'platform.modules.fields.module_type' },
+      { prop: 'description', label: 'platform.modules.fields.description' },
     ] as TableColumn[],
 
     'platform.plugins': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'pluginName', label: 'platform.plugins.fields.plugin_name', minWidth: 150 },
-      { prop: 'pluginCode', label: 'platform.plugins.fields.plugin_code', minWidth: 150 },
-      { prop: 'version', label: 'platform.plugins.fields.version', width: 100 },
-      { prop: 'status', label: 'platform.plugins.fields.status', width: 100 },
-      { prop: 'description', label: 'platform.plugins.fields.description', minWidth: 200 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'pluginName', label: 'platform.plugins.fields.plugin_name' },
+      { prop: 'pluginCode', label: 'platform.plugins.fields.plugin_code' },
+      { prop: 'version', label: 'platform.plugins.fields.version' },
+      { prop: 'status', label: 'platform.plugins.fields.status' },
+      { prop: 'description', label: 'platform.plugins.fields.description' },
     ] as TableColumn[],
   },
 
@@ -172,6 +175,7 @@ export default {
     plugin: service.admin?.iam?.plugin,
     // BtcTableGroup 需要的域服务（左侧服务）
     domainService: {
+      _serviceName: 'domain', // 标识服务名，用于推断 code 字段名
       list: (params?: any) => {
         const finalParams = params || {};
         return service.admin?.iam?.domain?.list(finalParams);

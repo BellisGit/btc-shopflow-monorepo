@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="properties-panel">
     <div class="panel-header">
       <h3>属性配置</h3>
@@ -110,7 +110,7 @@
 
       <!-- 默认提示 -->
       <div v-else class="empty-state">
-        <el-empty description="请选择一个节点或连接线" />
+        <BtcEmpty description="请选择一个节点或连接线" />
       </div>
     </div>
   </div>
@@ -126,6 +126,7 @@ import ActionNodeConfig from './ActionNodeConfig.vue';
 import ConditionNodeConfig from './ConditionNodeConfig.vue';
 import DecisionNodeConfig from './DecisionNodeConfig.vue';
 import GatewayNodeConfig from './GatewayNodeConfig.vue';
+import { BtcEmpty } from '@btc/shared-components';
 
 interface Props {
   selectedNode: StrategyNode | null;
