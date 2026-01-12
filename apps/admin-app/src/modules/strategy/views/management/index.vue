@@ -2,7 +2,7 @@
   <div class="strategy-management">
     <!-- 策略列表 -->
     <BtcCrud ref="crudRef" :service="wrappedService" :on-before-refresh="onBeforeRefresh" class="strategy-crud">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
@@ -25,12 +25,12 @@
           />
         </el-select>
 
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable
           ref="tableRef"
           :columns="columns"
@@ -92,12 +92,12 @@
             </el-button>
           </template>
         </BtcTable>
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <!-- 策略编辑表单 -->
       <BtcUpsert ref="upsertRef" :items="formItems" width="1200px" />
@@ -197,7 +197,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import type {
@@ -324,7 +324,7 @@ const handleStatusFilter = () => {
 };
 
 function onBeforeRefresh(params: Record<string, unknown>) {
-  // 仅注入状态筛选；关键字由 BtcSearchKey 注入 params.keyword（对象或空对象）
+  // 仅注入状态筛选；关键字由 BtcCrudSearchKey 注入 params.keyword（对象或空对象）
   const next = { ...params };
   if (statusFilter.value) {
     (next as any).status = statusFilter.value;

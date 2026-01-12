@@ -1,6 +1,6 @@
 <template>
   <div class="btc-views-tabs-group">
-    <BtcViewGroup
+    <BtcMasterViewGroup
       ref="viewGroupRef"
       :left-service="viewGroupOptions.leftService"
       v-bind="{

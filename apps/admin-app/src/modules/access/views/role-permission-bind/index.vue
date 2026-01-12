@@ -1,22 +1,22 @@
 <template>
   <BtcCrud ref="crudRef" :service="rolePermissionService">
-    <BtcRow>
+    <BtcCrudRow>
       <div class="btc-crud-primary-actions">
         <BtcRefreshBtn />
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
       </div>
-      <BtcFlex1 />
-      <BtcSearchKey placeholder="搜索角色权限绑定..." />
+      <BtcCrudFlex1 />
+      <BtcCrudSearchKey placeholder="搜索角色权限绑定..." />
       <BtcCrudActions />
-    </BtcRow>
-    <BtcRow>
+    </BtcCrudRow>
+    <BtcCrudRow>
       <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-    </BtcRow>
-    <BtcRow>
-      <BtcFlex1 />
+    </BtcCrudRow>
+    <BtcCrudRow>
+      <BtcCrudFlex1 />
       <BtcPagination />
-    </BtcRow>
+    </BtcCrudRow>
     <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
   </BtcCrud>
 </template>
@@ -25,12 +25,12 @@
 import { ref, computed, onMounted } from 'vue';
 import {
   BtcCrud,
-  BtcRow,
+  BtcCrudRow,
   BtcRefreshBtn,
   BtcAddBtn,
   BtcMultiDeleteBtn,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcCrudActions,
   BtcTable,
   BtcPagination,

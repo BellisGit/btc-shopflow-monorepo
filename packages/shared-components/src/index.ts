@@ -89,8 +89,10 @@ export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-g
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
 export { default as BtcChartGallery } from './components/data/btc-chart-gallery/index.vue';
-export { default as BtcFilterList } from './components/data/btc-filterlist/index.vue';
-export type { FilterCategory, FilterOption, FilterResult } from './components/data/btc-filterlist/types';
+export { default as BtcFilterList } from './components/data/btc-filter-list/index.vue';
+export type { FilterCategory, FilterOption, FilterResult } from './components/data/btc-filter-list/types';
+export { default as BtcFilterTableGroup } from './components/data/btc-filter-table-group/index.vue';
+export type { BtcFilterTableGroupProps, BtcFilterTableGroupEmits, BtcFilterTableGroupExpose } from './components/data/btc-filter-table-group/types';
 
 // Process 流程组件
 export { default as BtcProcessCountdown } from './components/process/btc-process-countdown/index.vue';
@@ -112,6 +114,7 @@ export { default as BtcRootLoading } from './components/loading/root-loading/ind
 export { default as BtcSvg } from './components/basic/btc-svg/index.vue';
 export { default as BtcMasterViewGroup } from './components/layout/btc-view-group/index.vue';
 export { default as BtcSearch } from './components/form/btc-search/index.vue';
+export { default as BtcInput } from './components/form/btc-input/index.vue';
 export { default as BtcDevTools } from './components/others/btc-dev-tools/index.vue';
 // 用户设置组件
 export { BtcUserSettingDrawer } from './components/others/btc-user-setting';

@@ -1,25 +1,25 @@
 <template>
   <div class="baseline-page">
     <BtcCrud ref="crudRef" :service="wrappedBaselineService || baselineService">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
           <BtcMultiDeleteBtn />
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey :placeholder="t('ops.baseline.search_placeholder')" />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey :placeholder="t('ops.baseline.search_placeholder')" />
         <BtcCrudActions />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable ref="tableRef" :columns="baselineColumns" :op="{ buttons: ['edit', 'delete'] }" border />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <BtcUpsert ref="upsertRef" :items="baselineFormItems" width="800px" />
     </BtcCrud>
@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { createMockCrudService } from '@utils/http';
 

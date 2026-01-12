@@ -9,12 +9,12 @@
           :service="logServices.operationLog"
           style="padding: 10px;"
         >
-          <BtcRow>
+          <BtcCrudRow>
             <BtcRefreshBtn />
-            <BtcFlex1 />
-            <BtcSearchKey placeholder="搜索操作日志..." />
-          </BtcRow>
-          <BtcRow>
+            <BtcCrudFlex1 />
+            <BtcCrudSearchKey placeholder="搜索操作日志..." />
+          </BtcCrudRow>
+          <BtcCrudRow>
             <BtcTable
               :columns="operationLogColumns"
               border
@@ -22,11 +22,11 @@
               :auto-height="true"
               @button-click="handleButtonClick"
             />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
+          </BtcCrudRow>
+          <BtcCrudRow>
+            <BtcCrudFlex1 />
             <BtcPagination />
-          </BtcRow>
+          </BtcCrudRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
           <BtcEmpty :description="t('common.ops.logs.operation.service_unavailable')" />
@@ -41,12 +41,12 @@
           :service="logServices.requestLog"
           style="padding: 10px;"
         >
-          <BtcRow>
+          <BtcCrudRow>
             <BtcRefreshBtn />
-            <BtcFlex1 />
-            <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
-          </BtcRow>
-          <BtcRow>
+            <BtcCrudFlex1 />
+            <BtcCrudSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
+          </BtcCrudRow>
+          <BtcCrudRow>
             <BtcTable
               :columns="requestLogColumns"
               border
@@ -54,11 +54,11 @@
               :auto-height="true"
               @button-click="handleButtonClick"
             />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
+          </BtcCrudRow>
+          <BtcCrudRow>
+            <BtcCrudFlex1 />
             <BtcPagination />
-          </BtcRow>
+          </BtcCrudRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
           <BtcEmpty :description="t('common.ops.logs.request.service_unavailable')" />
@@ -115,10 +115,10 @@ import { ref, computed, nextTick, watch } from 'vue';
 import {
   BtcTabs,
   BtcCrud,
-  BtcRow,
+  BtcCrudRow,
   BtcRefreshBtn,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcTable,
   BtcPagination
 } from '@btc/shared-components';

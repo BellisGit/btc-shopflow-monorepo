@@ -1,8 +1,8 @@
 <template>
   <div class="test-center-page">
     <!-- 搜索栏 -->
-    <BtcRow class="search-row">
-      <BtcFlex1 />
+    <BtcCrudRow class="search-row">
+      <BtcCrudFlex1 />
       <el-input
         v-model="searchKeyword"
         placeholder="搜索测试功能..."
@@ -14,7 +14,7 @@
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
-    </BtcRow>
+    </BtcCrudRow>
 
     <!-- 测试实例卡片网格 -->
     <div class="test-grid">
@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, markRaw, shallowRef } from 'vue';
 import { Search } from '@element-plus/icons-vue';
-import { BtcMessage, BtcRow, BtcFlex1 } from '@btc/shared-components';
+import { BtcMessage, BtcCrudRow, BtcCrudFlex1 } from '@btc/shared-components';
 import { BtcDialog } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import {

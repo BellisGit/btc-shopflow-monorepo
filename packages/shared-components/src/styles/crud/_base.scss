@@ -40,7 +40,7 @@
 }
 
 .btc-crud-row > .btc-search-key {
-	margin-right: -10px;
+	margin-right: 0; // 移除负边距，让搜索框和表格右侧对齐
 
 	&:first-child {
 		margin-left: -10px;

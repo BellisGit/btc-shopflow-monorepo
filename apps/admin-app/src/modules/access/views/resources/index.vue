@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <div class="resources-page">
     <BtcCrud ref="crudRef" :service="crudResourceService">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <el-button
@@ -16,19 +16,19 @@
             </span>
           </el-button>
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable :columns="columns" border />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <BtcUpsert :items="formItems" />
     </BtcCrud>
@@ -45,9 +45,9 @@ import {
   BtcUpsert,
   BtcPagination,
   BtcRefreshBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcCrudActions,
 } from '@btc/shared-components';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';

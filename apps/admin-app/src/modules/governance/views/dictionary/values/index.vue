@@ -4,7 +4,7 @@
       ref="crudRef"
       :service="dictionaryValueService"
     >
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
@@ -14,21 +14,21 @@
             :on-submit="handleImport"
           />
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey :placeholder="t('data.dictionary.value.search_placeholder')" />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey :placeholder="t('data.dictionary.value.search_placeholder')" />
         <BtcCrudActions />
-      </BtcRow>
-      <BtcRow>
+      </BtcCrudRow>
+      <BtcCrudRow>
         <BtcTable
           :columns="dictionaryValueColumns"
           :op="{ buttons: ['edit', 'delete'] }"
           border
         />
-      </BtcRow>
-      <BtcRow>
-        <BtcFlex1 />
+      </BtcCrudRow>
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
       <BtcUpsert
         :items="dictionaryValueFormItems"
         width="800px"
@@ -50,9 +50,9 @@ import {
   BtcRefreshBtn,
   BtcMultiDeleteBtn,
   BtcImportBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcCrudActions,
 } from '@btc/shared-components';
 import { service } from '@services/eps';

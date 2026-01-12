@@ -89,7 +89,8 @@ module.exports = {
         ],
       },
     ],
-    'import/no-cycle': 'error',
+    'import/no-cycle': ['error', { maxDepth: 10, ignoreExternal: true }],
+    'import/no-self-import': 'error',
     // 禁止直接使用存储 API，必须使用统一工具
     'no-restricted-syntax': [
       'error',

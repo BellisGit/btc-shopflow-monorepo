@@ -26,12 +26,12 @@ import type { ComponentPublicInstance } from 'vue';
 
 import { useI18n, exportTableToExcel, useThemePlugin } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-core/utils';
-import BtcForm from '../../../components/form/btc-form/index.vue';
+import BtcForm from '@btc-components/form/btc-form/index.vue';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
 import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-button/types';
 import type { TableColumn } from '@btc-crud/table/types';
-import type { BtcFormItem } from '../../../components/form/btc-form/types';
+import type { BtcFormItem } from '@btc-components/form/btc-form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import { useCrudLayout } from '@btc-crud/context/layout';

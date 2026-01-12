@@ -1,5 +1,5 @@
 /**
- * btc-filterlist 组件类型定义
+ * btc-filter-list 组件类型定义
  */
 
 export interface FilterOption {
@@ -18,6 +18,8 @@ export interface FilterResult {
   value: any[]; // 选中的选项值数组
 }
 
+export type BtcFilterListSize = 'large' | 'small' | 'default';
+
 export interface BtcFilterListProps {
   // 数据来源：EPS 服务或直接数据
   service?: {
@@ -30,9 +32,12 @@ export interface BtcFilterListProps {
   enableSearch?: boolean;
   defaultExpandedCount?: number; // 默认展开的分类数量
   multiple?: boolean; // 是否支持多选（默认 true）
+  size?: BtcFilterListSize; // 组件尺寸：large（450px）、small（200px）、default（当前宽度）
+  storageKey?: string; // 存储 key，用于区分不同页面的尺寸设置（如果不提供，则不存储）
 }
 
 export interface BtcFilterListEmits {
   change: [result: FilterResult[]];
   'update:modelValue': [result: FilterResult[]];
+  'update:size': [size: BtcFilterListSize];
 }

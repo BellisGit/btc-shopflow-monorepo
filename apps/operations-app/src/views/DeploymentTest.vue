@@ -2,11 +2,11 @@
   <div class="deployment-test-page">
     <div class="deployment-test-container">
       <!-- 测试配置工具栏 -->
-      <BtcRow class="config-toolbar">
-        <BtcFlex1 />
+      <BtcCrudRow class="config-toolbar">
+        <BtcCrudFlex1 />
         <BtcTableButton :config="startTestButtonConfig" />
         <BtcTableButton v-if="testing" :config="stopTestButtonConfig" />
-      </BtcRow>
+      </BtcCrudRow>
 
       <!-- 应用选择 -->
       <el-table
@@ -40,18 +40,18 @@
             :stroke-width="20"
             :show-text="true"
           />
-          <BtcRow class="progress-details-row">
+          <BtcCrudRow class="progress-details-row">
             <el-icon class="progress-icon" :size="16">
               <Loading />
             </el-icon>
             <span class="progress-text">
               {{ currentTestApp ? t('monitor.deploymentTest.progress.testing', { app: getAppLabel(currentTestApp) }) : t('monitor.deploymentTest.progress.preparing') }}
             </span>
-            <BtcFlex1 />
+            <BtcCrudFlex1 />
             <span class="progress-stats">
               {{ testResults.length }} / {{ selectedApps.length }} {{ t('monitor.deploymentTest.results.app') }}
             </span>
-          </BtcRow>
+          </BtcCrudRow>
         </div>
 
         <!-- 测试结果表格 -->
@@ -162,7 +162,7 @@
 
       <!-- 测试摘要 -->
       <div v-if="testSummary.total > 0">
-        <BtcRow class="summary-stats-row">
+        <BtcCrudRow class="summary-stats-row">
           <div class="stat-item">
             <div class="stat-label">{{ t('monitor.deploymentTest.summary.total') }}</div>
             <div class="stat-value">{{ testSummary.total }}</div>
@@ -181,7 +181,7 @@
               {{ passRate }}%
             </div>
           </div>
-        </BtcRow>
+        </BtcCrudRow>
       </div>
 
       <!-- 详情对话框 -->
@@ -245,7 +245,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { BtcRow, BtcFlex1, BtcTableButton, BtcEmpty } from '@btc/shared-components';
+import { BtcCrudRow, BtcCrudFlex1, BtcTableButton, BtcEmpty } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
 import { ElMessage, ElMessageBox, ElTable } from 'element-plus';
 import { Check, Close, View, Download, Loading, Warning } from '@element-plus/icons-vue';

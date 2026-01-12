@@ -20,7 +20,7 @@
       <!-- 如果配置了 rightOpFields，则根据配置渲染搜索字段；否则使用插槽内容 -->
       <div v-if="rightOpFieldsList.length > 0" class="custom-search-fields" style="display: flex; align-items: center; gap: 10px;">
         <template v-for="(field, index) in rightOpFieldsList" :key="index">
-            <el-input
+            <BtcInput
               v-if="field.type === 'input'"
               :model-value="props.rightOpFieldsValue?.[field.prop]"
               @update:model-value="(val: any) => handleRightOpFieldChange(field.prop, val)"
@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, toRaw, markRaw } from 'vue';
-import { globalMitt } from '@btc/shared-components';
+import { globalMitt, BtcInput } from '@btc/shared-components';
 import BtcMasterViewGroup from '../../layout/btc-view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';

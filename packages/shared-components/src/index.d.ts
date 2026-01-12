@@ -48,6 +48,7 @@ export { BtcMessageBox, BtcConfirm, BtcAlert, BtcPrompt } from './components/fee
 export { default as BtcSvg } from './components/basic/btc-svg/index.vue';
 export { default as BtcMasterViewGroup } from './components/layout/btc-view-group/index.vue';
 export { default as BtcSearch } from './components/form/btc-search/index.vue';
+export { default as BtcInput } from './components/form/btc-input/index.vue';
 export { default as BtcAppLoading } from './components/loading/app-loading/index.vue';
 export { default as BtcRootLoading } from './components/loading/root-loading/index.vue';
 export { default as BtcCrud } from './crud/context/index.vue';

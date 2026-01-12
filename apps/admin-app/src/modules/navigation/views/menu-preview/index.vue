@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <div class="menu-preview-page">
     <div class="preview-container">
       <!-- ???? -->
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <el-select
           v-model="selectedRole"
           :placeholder="t('navigation.preview.select_role')"
@@ -21,7 +21,7 @@
           <el-icon><Refresh /></el-icon>
           {{ t('navigation.preview.refresh') }}
         </el-button>
-      </BtcRow>
+      </BtcCrudRow>
 
       <!-- ???? -->
       <div class="menu-preview" v-if="selectedRole && filteredMenus.length > 0">

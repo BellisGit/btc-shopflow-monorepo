@@ -3,7 +3,7 @@
     ref="crudRef"
     :service="wrappedDeptService"
   >
-    <BtcRow>
+    <BtcCrudRow>
       <div class="btc-crud-primary-actions">
         <BtcRefreshBtn />
         <BtcAddBtn />
@@ -14,14 +14,14 @@
           :on-submit="handleImport"
         />
       </div>
-      <BtcFlex1 />
-      <BtcSearchKey placeholder="搜索部门" />
+      <BtcCrudFlex1 />
+      <BtcCrudSearchKey placeholder="搜索部门" />
       <BtcCrudActions>
         <BtcExportBtn :filename="t('org.departments.title')" />
       </BtcCrudActions>
-    </BtcRow>
+    </BtcCrudRow>
 
-    <BtcRow>
+    <BtcCrudRow>
       <BtcTable
         ref="tableRef"
         :columns="columns"
@@ -29,12 +29,12 @@
         :context-menu="['refresh']"
         border
       />
-    </BtcRow>
+    </BtcCrudRow>
 
-    <BtcRow>
-      <BtcFlex1 />
+    <BtcCrudRow>
+      <BtcCrudFlex1 />
       <BtcPagination />
-    </BtcRow>
+    </BtcCrudRow>
 
     <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
   </BtcCrud>
@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn, CommonColumns } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn, CommonColumns } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';

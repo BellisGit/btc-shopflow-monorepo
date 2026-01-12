@@ -26,7 +26,7 @@ packages/shared-components/src/
 │   │   ├── btc-master-list/
 │   │   ├── btc-table-group/
 │   │   ├── btc-filter-group/
-│   │   ├── btc-filterlist/
+│   │   ├── btc-filter-list/
 │   │   ├── btc-double-group/
 │   │   ├── btc-views-tabs-group/
 │   │   ├── btc-transfer-panel/
@@ -105,7 +105,7 @@ Element Plus 标准分类：
 - `btc-master-list` ✅
 - `btc-table-group` ✅
 - `btc-filter-group` ✅
-- `btc-filterlist` ✅
+- `btc-filter-list` ✅
 - `btc-double-group` ✅
 - `btc-views-tabs-group` ✅
 - `btc-transfer-panel` ✅
@@ -463,7 +463,7 @@ components/
 │   ├── btc-master-list/
 │   ├── btc-table-group/
 │   ├── btc-filter-group/
-│   ├── btc-filterlist/
+│   ├── btc-filter-list/
 │   ├── btc-double-group/
 │   ├── btc-views-tabs-group/
 │   ├── btc-transfer-panel/

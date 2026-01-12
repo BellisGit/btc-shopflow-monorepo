@@ -7,7 +7,26 @@
     <div class="btc-split-layout__wrap">
       <!-- 左侧 -->
       <div class="btc-split-layout__left">
-        <slot name="left" :is-expand="isExpand" :expand="expand" />
+        <!-- 左侧头部（可选） -->
+        <div v-if="hasLeftHeader" class="btc-split-layout__left-header">
+          <slot name="left-header" :is-expand="isExpand" :expand="expand">
+            <!-- 如果提供了 left-header 插槽，则完全自定义；否则使用默认结构 -->
+            <!-- 标题区域（只有当提供了 left-title 插槽时才渲染） -->
+            <div v-if="hasLeftTitleSlot" class="left-header-title">
+              <slot name="left-title" :is-expand="isExpand" />
+            </div>
+
+            <!-- 左侧操作区 -->
+            <div class="left-header-actions">
+              <slot name="left-actions" :is-expand="isExpand" />
+            </div>
+          </slot>
+        </div>
+
+        <!-- 左侧内容 -->
+        <div class="btc-split-layout__left-content" :class="{ 'has-header': hasLeftHeader }">
+          <slot name="left" :is-expand="isExpand" :expand="expand" />
+        </div>
 
         <!-- 收起按钮（移动端） -->
         <div v-if="isMobile && showMobileCollapseBtn" class="collapse-btn" @click="expand(false)">
@@ -78,6 +97,9 @@ defineSlots<{
   header?: (props: { isExpand: boolean; expand: (value?: boolean) => void }) => any;
   title?: (props: { isExpand: boolean }) => any;
   actions?: (props: { isExpand: boolean }) => any;
+  'left-header'?: (props: { isExpand: boolean; expand: (value?: boolean) => void }) => any;
+  'left-title'?: (props: { isExpand: boolean }) => any;
+  'left-actions'?: (props: { isExpand: boolean }) => any;
 }>();
 
 const slots = useSlots();
@@ -114,6 +136,16 @@ const isMobile = computed(() => window.innerWidth <= 768);
 // 是否显示右侧头部（如果提供了 header、title 或 actions 插槽）
 const hasRightHeader = computed(() => {
   return !!(slots.header || slots.title || slots.actions);
+});
+
+// 是否显示左侧头部（如果提供了 left-header、left-title 或 left-actions 插槽）
+const hasLeftHeader = computed(() => {
+  return !!(slots['left-header'] || slots['left-title'] || slots['left-actions']);
+});
+
+// 是否提供了 left-title 插槽
+const hasLeftTitleSlot = computed(() => {
+  return !!slots['left-title'];
 });
 
 // 是否显示移动端折叠按钮
@@ -196,6 +228,49 @@ defineExpose<BtcSplitLayoutExpose>({
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: width;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    &-header {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--el-border-color-extra-light);
+      flex-shrink: 0;
+      padding: 0 10px;
+
+      .left-header-title {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        font-size: 15px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0; // 允许收缩，避免空内容时占据空间
+      }
+
+      .left-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    &-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-sizing: border-box;
+
+      &.has-header {
+        height: calc(100% - 40px);
+      }
+    }
 
     .collapse-btn {
       display: flex;

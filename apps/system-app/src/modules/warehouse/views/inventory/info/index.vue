@@ -1,20 +1,20 @@
 <template>
   <div class="logistics-crud-wrapper">
     <BtcCrud ref="crudRef" :service="inventoryInfoService">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
           <BtcMultiDeleteBtn />
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions>
           <BtcExportBtn :filename="t('menu.logistics.inventoryManagement.info')" />
         </BtcCrudActions>
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable
           ref="tableRef"
           :columns="columns"
@@ -22,12 +22,12 @@
           border
           :op="{ buttons: ['edit', 'delete'] }"
         />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <BtcUpsert ref="upsertRef" :items="formItems" width="680px" />
     </BtcCrud>
@@ -38,7 +38,7 @@
 import { computed, ref, onMounted, nextTick } from 'vue';
 import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { formatDateTime } from '@btc/shared-utils';
 
 defineOptions({

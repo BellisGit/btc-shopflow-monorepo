@@ -19,30 +19,30 @@
           :on-before-refresh="handleBeforeRefresh"
           style="padding: 10px;"
         >
-          <BtcRow>
+          <BtcCrudRow>
             <div class="btc-crud-primary-actions">
               <BtcRefreshBtn />
             </div>
-            <BtcFlex1 />
-            <BtcSearchKey :placeholder="t('finance.inventory.result.search_placeholder')" />
+            <BtcCrudFlex1 />
+            <BtcCrudSearchKey :placeholder="t('finance.inventory.result.search_placeholder')" />
             <BtcCrudActions>
               <el-button type="info" @click="handleExport" :loading="exportLoading">
                 <BtcSvg name="export" class="mr-[5px]" />
                 {{ t('ui.export') }}
               </el-button>
             </BtcCrudActions>
-          </BtcRow>
-          <BtcRow>
+          </BtcCrudRow>
+          <BtcCrudRow>
             <BtcTable
               :columns="columns"
               :disable-auto-created-at="true"
               border
             />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
+          </BtcCrudRow>
+          <BtcCrudRow>
+            <BtcCrudFlex1 />
             <BtcPagination />
-          </BtcRow>
+          </BtcCrudRow>
           <BtcUpsert
             :items="formItems"
             width="640px"
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
 import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
-import { BtcSvg, BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
+import { BtcSvg, BtcViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
 import { useFinanceInventoryExport } from './composables/useFinanceInventoryExport';
 
 defineOptions({

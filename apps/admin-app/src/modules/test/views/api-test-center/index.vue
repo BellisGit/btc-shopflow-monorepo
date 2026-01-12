@@ -1,7 +1,7 @@
 <template>
   <div class="api-test-center">
-    <BtcRow class="search-row">
-      <BtcFlex1 />
+    <BtcCrudRow class="search-row">
+      <BtcCrudFlex1 />
       <el-input
         v-model="searchKeyword"
         placeholder="搜索错误码..."
@@ -13,7 +13,7 @@
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
-    </BtcRow>
+    </BtcCrudRow>
 
     <div class="test-table">
       <el-table
@@ -79,8 +79,8 @@
         </el-table>
 
       <!-- 分页组件 -->
-      <BtcRow class="pagination-row">
-        <BtcFlex1 />
+      <BtcCrudRow class="pagination-row">
+        <BtcCrudFlex1 />
         <el-config-provider :locale="elLocale">
         <el-pagination
           v-model:current-page="currentPage"
@@ -91,7 +91,7 @@
           background
         />
         </el-config-provider>
-      </BtcRow>
+      </BtcCrudRow>
     </div>
   </div>
 </template>

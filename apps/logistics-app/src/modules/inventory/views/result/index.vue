@@ -19,30 +19,30 @@
           :on-before-refresh="handleBeforeRefresh"
           style="padding: 10px;"
         >
-          <BtcRow>
+          <BtcCrudRow>
             <div class="btc-crud-primary-actions">
               <BtcRefreshBtn />
             </div>
-            <BtcFlex1 />
-            <BtcSearchKey :placeholder="t('logistics.inventory.result.search_placeholder')" />
+            <BtcCrudFlex1 />
+            <BtcCrudSearchKey :placeholder="t('logistics.inventory.result.search_placeholder')" />
             <BtcCrudActions>
               <el-button type="info" @click="handleExport" :loading="exportLoading">
                 <BtcSvg name="export" class="mr-[5px]" />
                 {{ t('ui.export') }}
               </el-button>
             </BtcCrudActions>
-          </BtcRow>
-          <BtcRow>
+          </BtcCrudRow>
+          <BtcCrudRow>
             <BtcTable
               :columns="columns"
               :disable-auto-created-at="true"
               border
             />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
+          </BtcCrudRow>
+          <BtcCrudRow>
+            <BtcCrudFlex1 />
             <BtcPagination />
-          </BtcRow>
+          </BtcCrudRow>
           <BtcUpsert
             :items="formItems"
             width="640px"
@@ -57,7 +57,7 @@
 import { computed, ref, onBeforeUnmount } from 'vue';
 import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
+import { BtcViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 import { formatTableNumber } from '@btc/shared-utils';
 import { service } from '@services/eps';

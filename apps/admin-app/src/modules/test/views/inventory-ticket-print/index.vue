@@ -25,7 +25,7 @@
           />
 
           <BtcCrud ref="crudRef" :service="ticketService" :auto-load="false">
-            <BtcRow>
+            <BtcCrudRow>
               <div ref="printContentRef" style="width: 100%">
                 <BtcTable
                   :columns="tableColumns"
@@ -34,14 +34,14 @@
                   :disable-auto-created-at="true"
                 />
               </div>
-            </BtcRow>
+            </BtcCrudRow>
 
-            <BtcRow>
+            <BtcCrudRow>
               <btc-flex1 />
               <el-config-provider :locale="elLocale">
                 <BtcPagination />
               </el-config-provider>
-            </BtcRow>
+            </BtcCrudRow>
           </BtcCrud>
         </div>
       </template>
@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { BtcViewGroup, BtcFlex1, BtcRow, BtcTable, BtcCrud, BtcPagination } from '@btc/shared-components';
+import { BtcViewGroup, BtcCrudFlex1, BtcCrudRow, BtcTable, BtcCrud, BtcPagination } from '@btc/shared-components';
 import { ElConfigProvider } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';

@@ -23,7 +23,7 @@
     "dev": "node scripts/dev-all.mjs",
     "dev:app": "node scripts/turbo.js run dev --filter=$npm_config_app",
     "dev:all": "node scripts/dev-all-with-check.mjs",
-    "predev:all": "node scripts/turbo.js run build --filter=@btc/vite-plugin --filter=@btc/shared-core --filter=@btc/shared-components --filter=@btc/shared-router --force",
+    "predev:all": "node scripts/clean-vite-cache.mjs && node scripts/turbo.js run build --filter=@btc/vite-plugin --filter=@btc/shared-core --filter=@btc/shared-components --filter=@btc/shared-router --force",
     "build:share": "node scripts/turbo.js run build --filter=@btc/vite-plugin --filter=@btc/shared-core --filter=@btc/shared-components --filter=@btc/shared-router --force",
     "prebuild:all": "node scripts/clean-cache.mjs",
     "prebuild": "pnpm check:circular",

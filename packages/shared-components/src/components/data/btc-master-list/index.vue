@@ -44,7 +44,7 @@
     </div>
 
     <div v-if="enableKeySearch" class="btc-master-list__search">
-      <el-input
+      <BtcInput
         v-model="keyWord"
         placeholder="搜索关键字"
         clearable
@@ -105,7 +105,7 @@ import { useI18n } from '@btc/shared-core';
 import { Check, Close, MoreFilled, Search } from '@element-plus/icons-vue';
 // Refresh 未使用
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage, BtcInput } from '@btc/shared-components';
 
 // 空图标组件，用于隐藏展开/折叠图标
 const EmptyIcon = defineComponent({

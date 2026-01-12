@@ -1,21 +1,21 @@
 <template>
   <div class="action-list">
     <BtcCrud ref="crudRef" :service="actionService">
-      <BtcRow>
+      <BtcCrudRow>
         <BtcRefreshBtn />
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions />
-      </BtcRow>
-      <BtcRow>
+      </BtcCrudRow>
+      <BtcCrudRow>
         <BtcTable ref="tableRef" :columns="columns" border />
-      </BtcRow>
-      <BtcRow>
-        <BtcFlex1 />
+      </BtcCrudRow>
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
       <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
     </BtcCrud>
   </div>
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 
 const crudRef = ref();

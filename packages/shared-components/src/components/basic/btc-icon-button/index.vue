@@ -72,7 +72,7 @@ defineOptions({
 import { ref } from 'vue';
 import type { IconButtonConfig } from './types';
 import IconButtonInner from './icon-button-inner.vue';
-import BtcSvg from '../../others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 
 const props = defineProps<{
   config: IconButtonConfig;

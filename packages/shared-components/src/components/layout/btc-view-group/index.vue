@@ -72,7 +72,7 @@ import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
 import BtcEmpty from '@btc-components/basic/btc-empty/index.vue';
 // useViewGroupData 和 useViewGroupActions 未使用，已移除导入
-import { useContentHeight } from '../../composables/content-height';
+import { useContentHeight } from '../../../composables/content-height';
 import { useI18n } from '@btc/shared-core';
 
 defineOptions({

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="logs-root">
   <BtcCrud
     ref="requestCrudRef"
@@ -7,7 +7,7 @@
     :auto-load="true"
     :on-before-refresh="onBeforeRefresh"
   >
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
 
@@ -30,12 +30,12 @@
           />
         </div>
 
-        <BtcFlex1 />
-        <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
         <BtcCrudActions />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
       <BtcTable
         ref="tableRef"
         :columns="requestColumns"
@@ -43,12 +43,12 @@
         :auto-height="true"
         border
       />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
     </BtcCrud>
   </div>
 </template>
@@ -62,9 +62,9 @@ import {
   BtcTable,
   BtcPagination,
   BtcRefreshBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcCrudActions,
 } from '@btc/shared-components';
 import { usePageColumns, getPageConfigFull, useI18n } from '@btc/shared-core';

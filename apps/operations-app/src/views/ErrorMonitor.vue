@@ -3,8 +3,8 @@
     <div class="error-monitor-container">
       <BtcCrud :service="emptyService" :auto-load="false" padding="0">
         <!-- Toolbar -->
-        <BtcRow class="error-monitor-toolbar">
-          <BtcFlex1 />
+        <BtcCrudRow class="error-monitor-toolbar">
+          <BtcCrudFlex1 />
           <el-button @click="clearError" type="danger">{{ t('monitor.clear') }}</el-button>
           <el-select v-model="cleanupPeriod" style="width: 130px;" @change="handleCleanupPeriodChange">
             <el-option :label="t('monitor.cleanup.today')" value="today" />
@@ -34,10 +34,10 @@
             :get-app-display-name="getAppDisplayName"
             :get-error-type-display-name="getErrorTypeDisplayName"
           />
-        </BtcRow>
+        </BtcCrudRow>
 
         <!-- Table -->
-        <BtcRow>
+        <BtcCrudRow>
           <div class="error-monitor-table">
             <BtcErrorMonitor
               ref="errorMonitorRef"
@@ -46,7 +46,7 @@
               @clear="clearError"
             />
           </div>
-        </BtcRow>
+        </BtcCrudRow>
       </BtcCrud>
     </div>
   </div>
@@ -56,7 +56,7 @@
 import { storage } from '@btc/shared-utils';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { clearErrorList, getErrorListSync, onErrorListUpdate, setCleanupPeriod, type CleanupPeriod } from '@btc/shared-utils/error-monitor';
-import { BtcCrud, BtcRow, BtcFlex1 } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcCrudFlex1 } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import BtcErrorMonitor from '../components/BtcErrorMonitor.vue';
 import BtcErrorMonitorExport from '../components/BtcErrorMonitorExport.vue';

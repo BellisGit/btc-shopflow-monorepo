@@ -3,7 +3,7 @@
  */
 
 import type { Ref, ComputedRef } from 'vue';
-import type { FilterCategory, FilterResult } from '../btc-filterlist/types';
+import type { FilterCategory, FilterResult } from '../btc-filter-list/types';
 
 export interface BtcFilterGroupProps {
   // 左侧 FilterList 配置
@@ -59,6 +59,11 @@ export interface BtcFilterGroupProps {
    * 移动端自动收起
    */
   autoCollapseOnMobile?: boolean;
+
+  /**
+   * 存储 key，用于区分不同页面的尺寸设置（如果不提供，则不存储）
+   */
+  storageKey?: string;
 }
 
 export interface BtcFilterGroupEmits {

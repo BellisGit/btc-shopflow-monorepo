@@ -19,7 +19,7 @@ type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
 // 增加初始化状态标记，解决异步竞态
 let isInitializing = false;
 let vueApp: App | null = null;
-// 明确类型：RootLoading 组件实例（包含暴露的更新方法）
+// 明确类型：BtcRootLoading 组件实例（包含暴露的更新方法）
 let rootLoadingInstance: (ComponentPublicInstance & {
   updateTitle?: (text: string) => void;
   updateSubTitle?: (text: string) => void;
@@ -30,7 +30,7 @@ let rootLoadingInstance: (ComponentPublicInstance & {
  * 全局根级 Loading 服务
  * 使用 Vue 组件挂载实现
  */
-class RootLoadingService {
+class BtcRootLoadingService {
   // 响应式管理状态（同步 Vue 组件和降级 DOM）
   private state = {
     title: '正在加载资源',
@@ -84,9 +84,9 @@ class RootLoadingService {
         import('@btc/shared-components'),
       ]);
 
-      const RootLoading = sharedComponents.RootLoading;
-      if (!RootLoading) {
-        throw new Error('RootLoading component not found in @btc/shared-components');
+      const BtcRootLoading = sharedComponents.BtcRootLoading;
+      if (!BtcRootLoading) {
+        throw new Error('BtcRootLoading component not found in @btc/shared-components');
       }
 
       const el = document.getElementById('Loading');
@@ -102,7 +102,7 @@ class RootLoadingService {
         el2.style.removeProperty('background-color');
         el2.classList.remove('is-hide'); // 初始化时先显示
 
-        vueApp = createApp(RootLoading, {
+        vueApp = createApp(BtcRootLoading, {
           title: this.state.title,
           subTitle: this.state.subTitle,
           initialLoadingStyle: this.state.style,
@@ -121,7 +121,7 @@ class RootLoadingService {
         el.classList.remove('is-hide'); // 初始化时先显示
 
         // 创建 Vue 应用：传入初始状态
-        vueApp = createApp(RootLoading, {
+        vueApp = createApp(BtcRootLoading, {
           title: this.state.title,
           subTitle: this.state.subTitle,
           initialLoadingStyle: this.state.style,
@@ -209,7 +209,7 @@ class RootLoadingService {
       return;
     }
 
-    // 统一 DOM 结构（和 RootLoading 组件一致）
+    // 统一 DOM 结构（和 BtcRootLoading 组件一致）
     // 为 progress 样式生成特殊的 HTML 结构
     const loadingHTML = this.state.style === 'progress'
       ? `<div class="preload__loading loading-style-${this.state.style}">
@@ -450,4 +450,4 @@ class RootLoadingService {
 }
 
 // 导出单例实例
-export const rootLoadingService = new RootLoadingService();
+export const rootLoadingService = new BtcRootLoadingService();

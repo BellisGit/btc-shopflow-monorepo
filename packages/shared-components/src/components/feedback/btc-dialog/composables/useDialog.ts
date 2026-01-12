@@ -1,6 +1,6 @@
 import { ref, watch, computed, provide } from 'vue';
 import type { DialogProps } from '../types';
-import { useBrowser } from '../../../composables/useBrowser';
+import { useBrowser } from '../../../../composables/useBrowser';
 
 /**
  * 对话框状态管理

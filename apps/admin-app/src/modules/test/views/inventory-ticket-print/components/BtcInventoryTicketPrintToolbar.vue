@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-import { BtcTableButton, BtcFlex1 } from '@btc/shared-components';
+import { BtcTableButton, BtcCrudFlex1 } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { ElInput, ElIcon, ElButton } from 'element-plus';
