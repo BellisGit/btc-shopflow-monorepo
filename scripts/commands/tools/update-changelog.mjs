@@ -15,6 +15,7 @@ import { logger } from '../../utils/logger.mjs';
 
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { getRootDir } from '../../utils/path-helper.mjs';
 
 const rootDir = getRootDir();
