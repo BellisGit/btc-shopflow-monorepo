@@ -3,7 +3,7 @@
     <!-- 策略详情视图 -->
     <div class="strategy-details">
       <BtcCrud ref="crudRef" :service="wrappedService" :on-before-refresh="onBeforeRefresh" class="strategy-monitor-crud">
-        <BtcRow>
+        <BtcCrudRow>
           <BtcRefreshBtn />
 
           <!-- 策略状态筛选 -->
@@ -14,12 +14,12 @@
             <el-option label="测试中" value="TESTING" />
           </el-select>
 
-          <BtcFlex1 />
-          <BtcSearchKey />
+          <BtcCrudFlex1 />
+          <BtcCrudSearchKey />
           <BtcCrudActions />
-        </BtcRow>
+        </BtcCrudRow>
 
-        <BtcRow>
+        <BtcCrudRow>
           <BtcTable
             ref="tableRef"
             :columns="columns"
@@ -57,12 +57,12 @@
               </el-button>
             </template>
           </BtcTable>
-        </BtcRow>
+        </BtcCrudRow>
 
-        <BtcRow>
-          <BtcFlex1 />
+        <BtcCrudRow>
+          <BtcCrudFlex1 />
           <BtcPagination />
-        </BtcRow>
+        </BtcCrudRow>
       </BtcCrud>
     </div>
 
@@ -95,9 +95,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, usePageColumns, usePageService } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageService, logger } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';
 import type {
   Strategy,
@@ -170,7 +170,7 @@ const handleStatusFilter = () => {
 };
 
 function onBeforeRefresh(params: Record<string, unknown>) {
-  // 仅注入状态筛选；关键字由 BtcSearchKey 注入 keyword
+  // 仅注入状态筛选；关键字由 BtcCrudSearchKey 注入 keyword
   const next = { ...params };
   if (selectedStatus.value) {
     (next as any).status = selectedStatus.value;
@@ -182,7 +182,7 @@ const viewStrategyDetail = async (strategy: Strategy) => {
   try {
     selectedStrategyStats.value = await strategyService.getStrategyStats(strategy.id);
   } catch (error) {
-    console.error('Failed to load strategy stats:', error);
+    logger.error('Failed to load strategy stats:', error);
   }
   showDetailDialog.value = true;
 };

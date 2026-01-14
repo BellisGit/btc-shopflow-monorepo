@@ -1,11 +1,11 @@
 <template>
-  <div class="login-page">
-    <div class="login-page__container">
+  <div class="page">
+    <div class="login__container">
       <!-- Logo 和标题 -->
       <BtcLoginHeader />
 
       <!-- 主登录区域 -->
-      <div class="login-page__form">
+      <div class="login__form">
         <!-- 初始按钮状态 -->
         <template v-if="!showSmsForm">
           <van-button
@@ -14,7 +14,7 @@
             round
             :loading="oneClickLoading"
             @click="handleOneClickLogin"
-            class="login-page__submit-btn"
+            class="login__submit-btn"
           >
             本机号码一键登录
           </van-button>
@@ -24,13 +24,13 @@
             block
             round
             plain
-            class="login-page__secondary-btn"
+            class="login__secondary-btn"
             @click="showSmsForm = true"
           >
             其他手机号登录
           </van-button>
 
-          <p v-if="!canUseOneClick" class="login-page__hint">
+          <p v-if="!canUseOneClick" class="login__hint">
             检测到当前网络环境可能无法使用一键登录，请使用其他手机号登录。
           </p>
         </template>
@@ -48,7 +48,7 @@
             block
             round
             plain
-            class="login-page__back-btn"
+            class="login__back-btn"
             @click="showSmsForm = false"
           >
             返回
@@ -62,16 +62,16 @@
       <!-- 底部操作按钮 -->
       <div
         v-show="showBottomActions"
-        class="login-page__bottom-actions"
+        class="login__bottom-actions"
       >
         <button
-          class="login-page__action-btn login-page__action-btn--add-account"
+          class="login__action-btn login__action-btn--add-account"
           @click="showAccountMenu = true"
         >
           <van-icon name="user-o" size="20" />
         </button>
         <button
-          class="login-page__action-btn login-page__action-btn--register"
+          class="login__action-btn login__action-btn--register"
           @click="handleRegister"
         >
           <van-icon name="plus" size="20" />
@@ -340,7 +340,7 @@ const handleRegister = () => {
 
 <style lang="scss" scoped>
 // 统一间距：Logo -> 表单 -> 协议
-.login-page__form {
+.login__form {
   margin-top: 24px !important; // Logo 到按钮区域的间距
   margin-bottom: 24px !important; // 按钮区域到协议的间距
 }
@@ -351,12 +351,12 @@ const handleRegister = () => {
 }
 
 // 移除第一个按钮的多余上边距
-.login-page__submit-btn {
+.login__submit-btn {
   margin-top: 0 !important;
 }
 
 // 额外的按钮样式
-.login-page__secondary-btn {
+.login__secondary-btn {
   margin-top: 12px;
   height: 48px;
   background: rgba(255, 255, 255, 0.15) !important;
@@ -374,7 +374,7 @@ const handleRegister = () => {
   }
 }
 
-.login-page__back-btn {
+.login__back-btn {
   margin-top: 16px;
   height: 44px;
   background: rgba(255, 255, 255, 0.1) !important;
@@ -391,7 +391,7 @@ const handleRegister = () => {
   }
 }
 
-.login-page__hint {
+.login__hint {
   margin-top: 16px;
   font-size: 12px;
   color: rgba(255, 200, 200, 0.9);
@@ -406,8 +406,8 @@ const handleRegister = () => {
 [class*="aliyun"],
 [id*="numberAuth"],
 [class*="numberAuth"],
-[class*="auth-page"],
-[id*="auth-page"],
+[class*="page"],
+[id*="page"],
 .dialog-type-container {
   z-index: 9999 !important;
   position: fixed !important;

@@ -1,6 +1,6 @@
 <template>
-  <div class="menus-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="domainService"
       :right-service="wrappedMenuService"
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { BtcTableGroup } from '@btc/shared-components';
+import { BtcMasterTableGroup } from '@btc/shared-components';
 import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n } from '@btc/shared-core';
 
 defineOptions({
@@ -52,8 +52,5 @@ const onDomainSelect = (domain: any) => {
 </script>
 
 <style lang="scss" scoped>
-.menus-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

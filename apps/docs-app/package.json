@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev",
+    "sync": "node ../../scripts/sync-docs-to-vitepress.mjs",
+    "dev": "pnpm run sync && vitepress dev",
     "dev:clean": "node scripts/kill-port.mjs",
-    "build": "vitepress build",
+    "build": "pnpm run sync && vitepress build",
     "preview": "vitepress preview",
     "migrate": "tsx scripts/migrate-docs.ts",
     "add-frontmatter-batch": "tsx scripts/add-frontmatter-batch.ts",

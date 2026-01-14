@@ -2,6 +2,7 @@
  * HTTP 请求工具 - 简化版本
  * 主要用于 DevTools 等工具，主应用本身不直接使用 HTTP 请求
  */
+import { logger } from '@btc/shared-core';
 
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
@@ -24,13 +25,13 @@ export class Http {
     // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (baseURL.startsWith('http://')) {
-        console.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
+        logger.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
         baseURL = '/api';
         // 清理 storage 中的 HTTP URL
         storage.remove('dev_api_base_url');
       } else if (baseURL && baseURL !== '/api') {
         // HTTPS 页面下，如果不是 /api，也强制使用 /api
-        console.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
+        logger.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
         baseURL = '/api';
       }
     }
@@ -56,7 +57,7 @@ export class Http {
           // HTTPS 页面：强制清理 storage 并返回 /api
           const stored = storage.get<string>('dev_api_base_url');
           if (stored && stored !== '/api') {
-            console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+            logger.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
             storage.remove('dev_api_base_url');
           }
           // 强制使用 /api，忽略任何其他值
@@ -73,7 +74,7 @@ export class Http {
 
           // 最终验证：确保 baseURL 不是 HTTP
           if (config.baseURL && config.baseURL.startsWith('http://')) {
-            console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+            logger.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
             config.baseURL = '/api';
             this.axiosInstance.defaults.baseURL = '/api';
           }
@@ -200,7 +201,7 @@ export class Http {
             }).catch((error) => {
               // 如果导入失败，静默处理
               if (import.meta.env.DEV) {
-                console.warn('[http] Failed to start user check polling after login:', error);
+                logger.warn('[http] Failed to start user check polling after login:', error);
               }
             });
           } catch (error) {
@@ -220,7 +221,7 @@ export class Http {
               } catch (error) {
                 // 静默失败，不影响登录流程
                 if (import.meta.env.DEV) {
-                  console.warn('[http] Failed to load domain list after login:', error);
+                  logger.warn('[http] Failed to load domain list after login:', error);
                 }
               }
             }, 500); // 延迟 500ms 确保 EPS 服务已初始化
@@ -241,7 +242,7 @@ export class Http {
               } catch (error) {
                 // 静默失败，不影响登录流程
                 if (import.meta.env.DEV) {
-                  console.warn('[http] Failed to load profile info after login:', error);
+                  logger.warn('[http] Failed to load profile info after login:', error);
                 }
               }
             }, 500); // 延迟 500ms 确保 EPS 服务已初始化
@@ -256,7 +257,7 @@ export class Http {
             }).catch((error) => {
               // 如果导入失败，静默处理
               if (import.meta.env.DEV) {
-                console.warn('[http] Failed to broadcast login message:', error);
+                logger.warn('[http] Failed to broadcast login message:', error);
               }
             });
           } catch (error) {
@@ -358,13 +359,13 @@ export class Http {
     // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (baseURL.startsWith('http://')) {
-        console.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
+        logger.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
         baseURL = '/api';
         // 清理 storage 中的 HTTP URL
         storage.remove('dev_api_base_url');
       } else if (baseURL !== '/api') {
         // HTTPS 页面下，如果不是 /api，也强制使用 /api
-        console.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
+        logger.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
         baseURL = '/api';
       }
     }
@@ -394,7 +395,7 @@ function getDynamicBaseURL(): string {
     // HTTPS 页面：强制清理 storage 并返回 /api
     const stored = storage.get<string>('dev_api_base_url');
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+      logger.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
       storage.remove('dev_api_base_url');
     }
     return '/api';
@@ -405,7 +406,7 @@ function getDynamicBaseURL(): string {
     const stored = storage.get<string>('dev_api_base_url');
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+      logger.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
       storage.remove('dev_api_base_url');
     }
   }
@@ -421,11 +422,11 @@ function getInitialBaseURL(): string {
   // 最终验证：在 HTTPS 页面下，绝对不允许 HTTP URL
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (baseURL.startsWith('http://')) {
-      console.error('[HTTP] 初始化：检测到 HTTPS 页面，强制修复 HTTP baseURL:', baseURL);
+      logger.error('[HTTP] 初始化：检测到 HTTPS 页面，强制修复 HTTP baseURL:', baseURL);
       return '/api';
     }
     if (baseURL && baseURL !== '/api') {
-      console.warn('[HTTP] 初始化：检测到 HTTPS 页面，强制使用 /api，忽略 baseURL:', baseURL);
+      logger.warn('[HTTP] 初始化：检测到 HTTPS 页面，强制使用 /api，忽略 baseURL:', baseURL);
       return '/api';
     }
   }

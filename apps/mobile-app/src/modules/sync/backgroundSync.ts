@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
 import { db } from '@/db';
 import { getDeviceInfo } from '@/utils/device';
@@ -27,17 +28,17 @@ function startPollingSync() {
   }
   
   const deviceInfo = getDeviceInfo();
-  console.log('[BackgroundSync] Starting polling sync for', deviceInfo.brand, deviceInfo.browser);
+  logger.info('[BackgroundSync] Starting polling sync for', deviceInfo.brand, deviceInfo.browser);
   
   // 立即执行一次
   processQueue().catch(err => {
-    console.warn('[BackgroundSync] Polling sync error:', err);
+    logger.warn('[BackgroundSync] Polling sync error:', err);
   });
   
   // 设置定期轮询
   pollTimer = setInterval(() => {
     processQueue().catch(err => {
-      console.warn('[BackgroundSync] Polling sync error:', err);
+      logger.warn('[BackgroundSync] Polling sync error:', err);
     });
   }, POLL_INTERVAL) as unknown as number;
 }
@@ -64,7 +65,7 @@ function setupVisibilitySync() {
       if (!document.hidden) {
         // 页面变为可见时，立即处理队列
         processQueue().catch(err => {
-          console.warn('[BackgroundSync] Visibility sync error:', err);
+          logger.warn('[BackgroundSync] Visibility sync error:', err);
         });
       }
     });
@@ -72,7 +73,7 @@ function setupVisibilitySync() {
     // 页面聚焦时也触发同步
     window.addEventListener('focus', () => {
       processQueue().catch(err => {
-        console.warn('[BackgroundSync] Focus sync error:', err);
+        logger.warn('[BackgroundSync] Focus sync error:', err);
       });
     });
   }
@@ -99,17 +100,17 @@ export async function enqueueOp(op: { type: string; payload: any }) {
       const registration = await navigator.serviceWorker.ready;
       if ('sync' in registration) {
         await (registration as any).sync.register('sync-pending-ops');
-        console.log('[BackgroundSync] Background sync registered');
+        logger.info('[BackgroundSync] Background sync registered');
         return;
       }
     } catch (error) {
-      console.warn('[BackgroundSync] Failed to register background sync:', error);
+      logger.warn('[BackgroundSync] Failed to register background sync:', error);
     }
   }
   
   // 降级方案：使用轮询或立即处理（iOS和其他不支持Background Sync的设备）
   if (deviceInfo.isIOS || !deviceInfo.supportsBackgroundSync) {
-    console.log('[BackgroundSync] Using fallback sync method for', deviceInfo.brand);
+    logger.info('[BackgroundSync] Using fallback sync method for', deviceInfo.brand);
     
     // 启动轮询（如果尚未启动）
     startPollingSync();
@@ -117,7 +118,7 @@ export async function enqueueOp(op: { type: string; payload: any }) {
     // 立即尝试处理一次（如果网络可用）
     if (navigator.onLine) {
       processQueue().catch(err => {
-        console.warn('[BackgroundSync] Immediate sync error:', err);
+        logger.warn('[BackgroundSync] Immediate sync error:', err);
       });
     }
   }
@@ -131,7 +132,7 @@ export async function processQueue() {
       await syncOp(op);
       await db.pending_ops.delete(op.id!);
     } catch (error) {
-      console.error(`[BackgroundSync] Failed to sync op ${op.id}:`, error);
+      logger.error(`[BackgroundSync] Failed to sync op ${op.id}:`, error);
       await db.pending_ops.update(op.id!, {
         retries: (op.retries || 0) + 1,
       });

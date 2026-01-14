@@ -37,6 +37,8 @@ const messageConfig = computed(() => ({
   icon: 'msg',
   tooltip: t('common.tooltip.message'),
   class: hasUnread ? 'btc-icon-button--breath btc-icon-button--breath--success' : '',
+  iconAnimation: 'grow' as const,
+  iconAnimationTrigger: 'hover' as const,
   popover: {
     component: BtcMessagePanel,
     width: 360,

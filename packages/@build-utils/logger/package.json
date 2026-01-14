@@ -1,0 +1,29 @@
+{
+  "name": "@build-utils/logger",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "构建工具包 - 日志工具，专门用于构建阶段脚本，不依赖任何业务包",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,7 +1,7 @@
 <template>
-  <div class="warehouse-page">
+  <div class="page">
     <router-view v-slot="{ Component }">
-      <div class="warehouse-page__content">
+      <div class="page__body">
         <component :is="Component" />
       </div>
     </router-view>
@@ -15,17 +15,9 @@ defineOptions({
 </script>
 
 <style scoped lang="scss">
-.warehouse-page {
-  height: 100%;
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-}
 
-.warehouse-page__content {
+
+.page__body {
   flex: 1;
   height: 100%;
   min-height: 0;
@@ -34,7 +26,7 @@ defineOptions({
   flex-direction: column;
 }
 
-.warehouse-page__content > * {
+.page__body > * {
   flex: 1 1 auto;
   min-width: 0;
 }

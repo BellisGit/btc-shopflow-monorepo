@@ -24,14 +24,14 @@
 import { ref, computed, inject, watch, onBeforeUnmount } from 'vue';
 import type { ComponentPublicInstance } from 'vue';
 
-import { useI18n, exportTableToExcel, useThemePlugin } from '@btc/shared-core';
+import { useI18n, exportTableToExcel, useThemePlugin, logger } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-core/utils';
-import BtcForm from '../../../components/form/btc-form/index.vue';
+import BtcForm from '@btc-components/form/btc-form/index.vue';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
 import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-button/types';
 import type { TableColumn } from '@btc-crud/table/types';
-import type { BtcFormItem } from '../../../components/form/btc-form/types';
+import type { BtcFormItem } from '@btc-components/form/btc-form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import { useCrudLayout } from '@btc-crud/context/layout';
@@ -199,7 +199,7 @@ const fetchDataTimeRange = async () => {
       max: formatDate(dates[dates.length - 1], 'YYYY-MM-DD')
     };
   } catch (error) {
-    console.warn('获取数据时间范围失败:', error);
+    logger.warn('获取数据时间范围失败:', error);
     return null;
   }
 };
@@ -471,7 +471,7 @@ const exportableColumns = computed(() => {
       BtcMessage.success(t('platform.common.export_success'));
       close();
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       BtcMessage.error(t('platform.common.export_failed'));
     } finally {
       loading.value = false;

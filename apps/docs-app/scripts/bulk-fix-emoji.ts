@@ -2,6 +2,7 @@
  * 批量修复文档中损坏的 emoji
  * 使用简单的映射规则
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -152,20 +153,20 @@ async function fixFile(filePath: string): Promise<number> {
 
     if (fixCount > 0) {
       fs.writeFileSync(fullPath, content, 'utf-8');
-      console.log(`✅ ${filePath} - 修复了 ${fixCount} 处`);
+      logger.info(`✅ ${filePath} - 修复了 ${fixCount} 处`);
     } else {
-      console.log(`⏭️  ${filePath} - 无需修复`);
+      logger.info(`⏭️  ${filePath} - 无需修复`);
     }
 
     return fixCount;
   } catch (error) {
-    console.error(`❌ ${filePath} - ${error}`);
+    logger.error(`❌ ${filePath} - ${error}`);
     return 0;
   }
 }
 
 async function main() {
-  console.log('开始批量修复 emoji...\n');
+  logger.info('开始批量修复 emoji...\n');
 
   let totalFixes = 0;
   let fixedFiles = 0;
@@ -178,10 +179,10 @@ async function main() {
     }
   }
 
-  console.log(`\n修复完成！`);
-  console.log(`- 修复文件数：${fixedFiles}`);
-  console.log(`- 修复总数：${totalFixes}`);
-  console.log(`\n💡 请刷新浏览器（Ctrl+F5）查看效果`);
+  logger.info(`\n修复完成！`);
+  logger.info(`- 修复文件数：${fixedFiles}`);
+  logger.info(`- 修复总数：${totalFixes}`);
+  logger.info(`\n💡 请刷新浏览器（Ctrl+F5）查看效果`);
 }
 
 main().catch(console.error);

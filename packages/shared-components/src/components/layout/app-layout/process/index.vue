@@ -98,7 +98,7 @@ defineOptions({
 
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n, setGlobalState } from '@btc/shared-core';
+import { useI18n, setGlobalState, logger } from '@btc/shared-core';
 import { BtcConfirm } from '@btc/shared-components';
 import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 // BtcMessage 未使用
@@ -162,7 +162,7 @@ try {
   });
 } catch (error) {
   // 如果 useSettingsState() 初始化失败，使用默认值（已经设置）
-  console.warn('[Process] useSettingsState 初始化失败，使用默认值', error);
+  logger.warn('[Process] useSettingsState 初始化失败，使用默认值', error);
 }
 
 // 标签页样式类

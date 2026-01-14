@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '../../../../composables/useUser';
 
@@ -217,7 +218,7 @@ export function useUserInfo() {
     } catch (error) {
       // 静默失败，不影响页面显示
       if (import.meta.env.DEV) {
-        console.warn('加载用户信息失败:', error);
+        logger.warn('加载用户信息失败:', error);
       }
     }
   };

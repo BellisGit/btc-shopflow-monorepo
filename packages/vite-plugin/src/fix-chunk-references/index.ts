@@ -5,6 +5,7 @@
  * 这个插件解决了移除 forceNewHashPlugin 和 fixDynamicImportHashPlugin 后出现的 404 问题
  * 同时避免了修改第三方库代码导致的 __vccOpts 未定义错误
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 
@@ -85,15 +86,15 @@ export function fixChunkReferencesPlugin(): Plugin {
           if (trimmedCode && trimmedCode.length > 0) {
             chunk.code = newCode;
             totalCleanups++;
-            console.log(`[fix-chunk-references] 已清理 ${fileName} 中的旧引用`);
+            logger.info(`[fix-chunk-references] 已清理 ${fileName} 中的旧引用`);
           } else {
-            console.warn(`[fix-chunk-references] 跳过清理 ${fileName}，避免破坏文件`);
+            logger.warn(`[fix-chunk-references] 跳过清理 ${fileName}，避免破坏文件`);
           }
         }
       }
 
       if (totalCleanups > 0) {
-        console.log(`[fix-chunk-references] 共清理了 ${totalCleanups} 个文件中的旧引用`);
+        logger.info(`[fix-chunk-references] 共清理了 ${totalCleanups} 个文件中的旧引用`);
       }
     },
   } as unknown as Plugin;

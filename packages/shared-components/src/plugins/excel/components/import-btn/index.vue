@@ -161,7 +161,7 @@ import { ref, reactive, computed, inject, type PropType } from 'vue';
 
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-import BtcForm from '../../../components/form/btc-form/index.vue';
+import BtcForm from '@btc-components/form/btc-form/index.vue';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
 import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-button/types';

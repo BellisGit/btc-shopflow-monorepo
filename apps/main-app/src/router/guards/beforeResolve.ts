@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import type { Router } from 'vue-router';
 import { KNOWN_SUB_APP_PREFIXES } from '../constants';
 
@@ -36,7 +37,7 @@ export function setupBeforeResolveGuard(router: Router) {
           throw new Error('rootLoadingService 未定义或方法不存在');
         }
       } catch (error) {
-        console.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
+        logger.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
         // 备用方案：直接操作 DOM（向后兼容）
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {

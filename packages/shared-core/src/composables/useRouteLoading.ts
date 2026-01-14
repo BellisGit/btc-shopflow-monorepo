@@ -2,6 +2,7 @@
  * 路由级 Loading Composable
  * 管理覆盖单个页面/路由视图区域的 loading
  */
+import { logger } from '../utils/logger';
 
 import { ref, onUnmounted } from 'vue';
 import { LOADING_Z_INDEX, LOADING_TIMEOUT } from '../btc/utils/loading.config';
@@ -115,7 +116,7 @@ export function useRouteLoading(containerSelector?: string) {
     // 查找容器
     const container = findContainer();
     if (!container) {
-      console.warn('[useRouteLoading] 无法找到路由视图容器');
+      logger.warn('[useRouteLoading] 无法找到路由视图容器');
       return;
     }
 
@@ -149,7 +150,7 @@ export function useRouteLoading(containerSelector?: string) {
 
     // 设置超时关闭（5秒）
     instance.timeoutId = setTimeout(() => {
-      console.warn('[useRouteLoading] 路由 loading 超时自动关闭（5秒）');
+      logger.warn('[useRouteLoading] 路由 loading 超时自动关闭（5秒）');
       hide();
     }, LOADING_TIMEOUT.ROUTE);
   };

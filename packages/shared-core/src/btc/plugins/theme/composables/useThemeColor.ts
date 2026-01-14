@@ -1,3 +1,4 @@
+import { logger } from '../../../../utils/logger';
 import { mixColor } from '../../../composables/useTheme';
 
 /**
@@ -40,7 +41,7 @@ export function colorToHex(color: string): string {
   }
 
   // 如果无法解析，返回默认颜色
-  console.warn('[Theme] Unable to parse color format:', color);
+  logger.warn('[Theme] Unable to parse color format:', color);
   return '#409eff';
 }
 
@@ -125,7 +126,7 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
 
     // 确保 hexColor 是有效的十六进制格式（必须是 #RRGGBB 格式，长度为 7）
     if (!hexColor.startsWith('#') || hexColor.length !== 7) {
-      console.error('[Theme] Invalid color format after conversion:', {
+      logger.error('[Theme] Invalid color format after conversion:', {
         original: color,
         converted: hexColor,
         expected: 'format like #RRGGBB'
@@ -161,8 +162,8 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
         el.style.setProperty(darkVarName, darkColor);
       }
     } catch (error) {
-      console.error('[Theme] Error setting theme color variables:', error);
-      console.error('[Theme] Details:', {
+      logger.error('[Theme] Error setting theme color variables:', error);
+      logger.error('[Theme] Details:', {
         originalColor: color,
         convertedHex: hexColor,
         hexColorLength: hexColor?.length,
@@ -199,7 +200,7 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
         }
       } catch (error) {
         // 如果出错，至少设置主颜色
-        console.warn('[Theme] Error setting theme color to container:', error);
+        logger.warn('[Theme] Error setting theme color to container:', error);
       }
     };
 

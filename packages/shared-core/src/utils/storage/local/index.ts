@@ -2,6 +2,7 @@
  * LocalStorage 工具类
  * 提供统一的 localStorage 操作接口，支持过期时间、前缀等
  */
+import { logger } from '../../logger';
 import { syncSettingsToCookie, syncUserToCookie, getCookieDomain } from '../cross-domain';
 
 class LocalStorageUtil {
@@ -58,7 +59,7 @@ class LocalStorageUtil {
       ];
 
       if (unifiedStorageKeys.includes(key)) {
-        console.error(`[Storage] 禁止创建独立的 ${key} 键！请使用统一的 settings 存储`);
+        logger.error(`[Storage] 禁止创建独立的 ${key} 键！请使用统一的 settings 存储`);
         console.trace('调用堆栈：');
         return;
       }
@@ -74,7 +75,7 @@ class LocalStorageUtil {
           syncUserToCookie(value as Record<string, any>);
         }
       } catch (error) {
-        console.error('[Storage] 同步到 Cookie 失败:', error);
+        logger.error('[Storage] 同步到 Cookie 失败:', error);
       }
 
       // 清理旧的 localStorage 备份（如果存在）
@@ -220,7 +221,7 @@ class LocalStorageUtil {
 
         document.cookie = cookieString;
       } catch (error) {
-        console.error('[Storage] 清除 Cookie 失败:', error);
+        logger.error('[Storage] 清除 Cookie 失败:', error);
       }
 
       // 清理 localStorage 中的旧数据（向后兼容）
@@ -276,7 +277,7 @@ class LocalStorageUtil {
         }
       }
     } catch (error) {
-      console.warn('[Storage] 获取所有数据失败:', error);
+      logger.warn('[Storage] 获取所有数据失败:', error);
     }
 
     return data;

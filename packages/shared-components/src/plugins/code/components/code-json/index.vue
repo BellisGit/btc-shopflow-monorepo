@@ -38,6 +38,8 @@ import type { TooltipTriggerType } from 'element-plus';
 import { computed, defineComponent, h, type PropType } from 'vue';
 import { isObject, isString } from 'lodash-es';
 import { BtcMessage } from '@btc/shared-components';
+import { logger } from '@btc/shared-core';
+
 
 const props = defineProps({
 	content: null,
@@ -114,7 +116,7 @@ const copyToClipboard = async (text: string) => {
 			BtcMessage.error('复制失败');
 		}
 	} catch (error) {
-		console.error('复制失败:', error);
+		logger.error('复制失败:', error);
 		BtcMessage.error('复制失败');
 	}
 };

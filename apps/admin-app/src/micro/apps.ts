@@ -1,4 +1,4 @@
-import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getAppConfig, logger } from '@btc/shared-core/configs/app-env.config';
 import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
 
 /**
@@ -34,7 +34,7 @@ const getAppEntry = (appName: string): string => {
   const appConfig = getAppConfig(`${appName}-app`);
 
   if (!appConfig) {
-    console.warn(`[apps.ts] Application config not found: ${appName}-app`);
+    logger.warn(`[apps.ts] Application config not found: ${appName}-app`);
     return `/${appName}/`;
   }
 

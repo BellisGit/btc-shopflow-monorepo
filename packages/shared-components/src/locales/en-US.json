@@ -223,6 +223,7 @@
   "sys.message.loading": "Loading...",
   "sys.message.confirm_delete": "Are you sure you want to delete?",
   "menu.home": "Home",
+  "menu.test_features.multi_column_layout_test": "Multi Column Layout Test",
   "notice.title": "Notifications",
   "notice.btnRead": "Mark all as read",
   "notice.viewAll": "View all",
@@ -290,5 +291,11 @@
   "auth.message.sms_code_send_failed": "Failed to send verification code",
   "auth.message.phone_required_for_sms": "Please enter phone number first",
   "auth.message.phone_format_error": "Invalid phone number format",
-  "auth.message.reset_password_success": "Password reset successful"
+  "auth.message.reset_password_success": "Password reset successful",
+  "btc.filterList.size": "Size",
+  "btc.filterList.size.small": "Small",
+  "btc.filterList.size.default": "Default",
+  "btc.filterList.size.large": "Large",
+  "btc.filterList.tooltip.settings": "Settings",
+  "btc.filterList.tooltip.clear": "Clear all filters"
 }

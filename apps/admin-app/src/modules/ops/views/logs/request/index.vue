@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="logs-root">
   <BtcCrud
     ref="requestCrudRef"
@@ -7,7 +7,7 @@
     :auto-load="true"
     :on-before-refresh="onBeforeRefresh"
   >
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
 
@@ -30,12 +30,12 @@
           />
         </div>
 
-        <BtcFlex1 />
-        <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
         <BtcCrudActions />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
       <BtcTable
         ref="tableRef"
         :columns="requestColumns"
@@ -43,12 +43,12 @@
         :auto-height="true"
         border
       />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
     </BtcCrud>
   </div>
 </template>
@@ -62,12 +62,12 @@ import {
   BtcTable,
   BtcPagination,
   BtcRefreshBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcCrudActions,
 } from '@btc/shared-components';
-import { usePageColumns, getPageConfigFull, useI18n } from '@btc/shared-core';
+import { usePageColumns, getPageConfigFull, useI18n, logger } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -203,7 +203,7 @@ const requestColumns = computed(() => {
             const ipStr = row.ip.length > 1000 ? row.ip.substring(0, 1000) + '...' : row.ip;
             return ipStr.split(',').map((ip: string) => ip.trim()).filter((ip: any) => ip).join(', ');
           } catch (error) {
-            console.error('IP field format error:', error);
+            logger.error('IP field format error:', error);
             return '-';
           }
         }
@@ -248,7 +248,7 @@ onMounted(async () => {
     // const res = await requestService.getKeep();
     // keepDays.value = Number(res);
   } catch (err) {
-    console.error('Failed to get log retention days', err);
+    logger.error('Failed to get log retention days', err);
   }
   await nextTick();
   try {

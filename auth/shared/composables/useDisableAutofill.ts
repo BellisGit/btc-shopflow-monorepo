@@ -2,6 +2,7 @@
  * 禁用自动填充的组合式函数
  * 使用多种方法确保彻底禁用浏览器自动填充
  */
+import { logger } from '@btc/shared-core';
 
 import { onMounted, onUnmounted, ref } from 'vue';
 
@@ -102,7 +103,7 @@ export function useDisableAutofill() {
     const container = document.querySelector(containerSelector) as HTMLElement;
     
     if (!container) {
-      console.warn(`Container ${containerSelector} not found`);
+      logger.warn(`Container ${containerSelector} not found`);
       return;
     }
     

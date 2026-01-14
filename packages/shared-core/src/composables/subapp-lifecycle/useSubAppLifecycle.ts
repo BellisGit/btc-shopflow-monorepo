@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 import { createApp } from 'vue';
 import type { App as VueApp } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
@@ -47,7 +48,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
       // DOM 操作错误，可能是容器在更新时被移除
       // 静默处理，避免影响用户体验
       if (import.meta.env.DEV) {
-        console.warn(`[${appId}-app] DOM 操作错误已捕获（应用可能正在卸载）:`, err.message);
+        logger.warn(`[${appId}-app] DOM 操作错误已捕获（应用可能正在卸载）:`, err.message);
       }
       return;
     }
@@ -65,7 +66,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
       err.message.includes('BtcCrud')
     )) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      console.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
+      logger.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
       // 继续执行，不阻止错误传播
     }
 
@@ -75,7 +76,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
     } catch (e) {
       // 静默失败
     }
-    console.error(`[${appId}-app] Vue errorHandler 捕获到错误:`, err, { info, instance });
+    logger.error(`[${appId}-app] Vue errorHandler 捕获到错误:`, err, { info, instance });
   };
 
   // 同理：warn 也至少在控制台可见（生产环境默认可能被忽略）
@@ -85,7 +86,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
     } catch (e) {
       // 静默失败
     }
-    console.warn(`[${appId}-app] Vue warn:`, msg, { trace, instance });
+    logger.warn(`[${appId}-app] Vue warn:`, msg, { trace, instance });
   };
 }
 
@@ -243,7 +244,7 @@ async function waitForContainer(
           if (import.meta.env.PROD && typeof window !== 'undefined') {
             const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
             const isLayoutApp = !!(window as any).__IS_LAYOUT_APP__;
-            console.warn('[waitForContainer] 容器准备就绪', {
+            logger.warn('[waitForContainer] 容器准备就绪', {
               selector,
               isUsingLayoutApp,
               isLayoutApp,
@@ -262,7 +263,7 @@ async function waitForContainer(
       } else {
         // 超时后输出诊断信息
         if (import.meta.env.PROD && typeof window !== 'undefined') {
-          console.warn('[waitForContainer] 容器查找超时', {
+          logger.warn('[waitForContainer] 容器查找超时', {
             selector,
             retryCount,
             maxRetries,
@@ -399,7 +400,7 @@ export async function mountSubApp(
       mountPoint = await waitForContainer('#subapp-viewport', 80, 50); // 增加重试次数和延迟
       if (!mountPoint) {
         const errorMsg = `[${options.appId}-app] 使用 layout-app 但未找到 #subapp-viewport 元素`;
-        console.error(errorMsg, {
+        logger.error(errorMsg, {
           __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
           hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
           documentBody: typeof document !== 'undefined' ? document.body : null,
@@ -457,7 +458,7 @@ export async function mountSubApp(
     if (existingApp && existingApp.children.length > 0) {
       // qiankun 已经挂载了子应用，不应该再次挂载
       if (import.meta.env.DEV) {
-        console.warn(`[${options.appId}-app] 检测到 qiankun 已挂载，跳过重复挂载`);
+        logger.warn(`[${options.appId}-app] 检测到 qiankun 已挂载，跳过重复挂载`);
       }
       return; // 直接返回，不执行挂载
     }
@@ -628,13 +629,13 @@ export async function mountSubApp(
           try {
             await context.router.replace(initialRoute);
           } catch (navError: unknown) {
-            console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+            logger.error(`[${options.appId}-app] 路由导航失败:`, navError, {
               initialRoute,
               currentPath: window.location.pathname,
             });
           }
         }).catch((readyError: unknown) => {
-          console.warn(`[${options.appId}-app] 路由就绪检查失败:`, readyError);
+          logger.warn(`[${options.appId}-app] 路由就绪检查失败:`, readyError);
         });
       }
     } else {
@@ -670,7 +671,7 @@ export async function mountSubApp(
           });
         } catch (error: unknown) {
           // 路由导航失败时输出错误信息
-          console.error(`[${options.appId}-app] 路由导航失败:`, error, {
+          logger.error(`[${options.appId}-app] 路由导航失败:`, error, {
             initialRoute,
             currentPath: window.location.pathname,
             routerReady: 'ready',
@@ -678,7 +679,7 @@ export async function mountSubApp(
         }
       }).catch(async (error: unknown) => {
         // 路由就绪超时或失败，仍然尝试导航（兼容性处理）
-        console.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
+        logger.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
         try {
           await context.router.replace(initialRoute);
           
@@ -693,7 +694,7 @@ export async function mountSubApp(
             });
           });
         } catch (navError: unknown) {
-          console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+          logger.error(`[${options.appId}-app] 路由导航失败:`, navError, {
             initialRoute,
             currentPath: window.location.pathname,
             routerReady: 'timeout',

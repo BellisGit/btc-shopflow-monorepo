@@ -68,6 +68,8 @@ import { BtcMessage } from '@btc/shared-components';
 import { useRegister } from './composables/useRegister';
 import { useAuthTabs } from '../shared/composables/useAuthTabs';
 import { useQrLogin } from '../login/composables/useQrLogin';
+import { logger } from '@btc/shared-core';
+
 import '../shared/styles/index.scss';
 
 defineOptions({
@@ -138,7 +140,7 @@ const handleSubmit = async () => {
     }
   await register(formRef.value.formRef);
   } catch (error) {
-    console.error('注册错误:', error);
+    logger.error('注册错误:', error);
     // 错误已在 useRegister 中处理，这里只是防止未捕获的错误
   }
 };

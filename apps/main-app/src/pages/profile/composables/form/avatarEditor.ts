@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import type { Ref } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { service } from '@services/eps';
@@ -66,7 +67,7 @@ export function useAvatarEditor({
             close();
             await loadUserInfo(showFullInfo.value);
           } catch (error: any) {
-            console.error('保存用户信息失败:', error);
+            logger.error('保存用户信息失败:', error);
             BtcMessage.error(error?.message || '保存失败');
             done();
           }

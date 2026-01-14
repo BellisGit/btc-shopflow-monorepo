@@ -427,6 +427,30 @@
         { "labelKey": "menu.test_features", "icon": "Tools" },
         { "labelKey": "menu.test_features.filter_list_test", "icon": "Filter" }
       ]
+    },
+    {
+      "path": "/test/column-layout-test",
+      "labelKey": "menu.test_features.column_layout_test",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.test_features.column_layout_test"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.test_features", "icon": "Tools" },
+        { "labelKey": "menu.test_features.column_layout_test", "icon": "Layout" }
+      ]
+    },
+    {
+      "path": "/test/multi-column-layout-test",
+      "labelKey": "menu.test_features.multi_column_layout_test",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.test_features.double_layout_test"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.test_features", "icon": "Tools" },
+        { "labelKey": "menu.test_features.double_layout_test", "icon": "Layout" }
+      ]
     }
   ],
   "menus": [
@@ -547,7 +571,9 @@
         { "index": "/test/components", "labelKey": "menu.test_features.components" },
         { "index": "/test/api-test-center", "labelKey": "menu.test_features.api_test_center" },
         { "index": "/test/inventory-ticket-print", "labelKey": "menu.test_features.inventory_ticket_print" },
-        { "index": "/test/filter-list-test", "labelKey": "menu.test_features.filter_list_test" }
+        { "index": "/test/filter-list-test", "labelKey": "menu.test_features.filter_list_test" },
+        { "index": "/test/column-layout-test", "labelKey": "menu.test_features.column_layout_test" },
+        { "index": "/test/multi-column-layout-test", "labelKey": "menu.test_features.multi_column_layout_test" }
       ]
     }
   ]

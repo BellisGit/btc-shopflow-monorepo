@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="perm-compose perm-compose-page">
+  <div class="perm-compose page">
     <!-- 权限组合页面头部 -->
     <div class="perm-compose-header">
       <div class="header-left">

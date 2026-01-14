@@ -59,6 +59,8 @@ export default defineConfig({
     },
     // 关键：确保 Vite 能够正确解析 .tsx 和 .jsx 文件
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+    // 确保只有一个 Vue 实例和插件实例，避免依赖解析问题和循环引用
+    dedupe: ['vue', '@vitejs/plugin-vue'],
   },
   plugins: [
     vue(),

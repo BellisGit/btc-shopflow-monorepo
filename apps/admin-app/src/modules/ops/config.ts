@@ -3,11 +3,66 @@
  * 包含日志管理、API列表、基线配置等页面的配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'ops',
+  label: 'common.module.ops.label',
+  order: 35,
+
+  // 路由配置
+  views: [
+    {
+      path: '/ops/logs/operation',
+      name: 'AdminOperationLog',
+      component: () => import('./views/logs/operation/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.ops.operation_log',
+      },
+    },
+    {
+      path: '/ops/logs/request',
+      name: 'AdminRequestLog',
+      component: () => import('./views/logs/request/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.ops.request_log',
+      },
+    },
+    {
+      path: '/ops/api-list',
+      name: 'AdminApiList',
+      component: () => import('./views/api-list/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.ops.api_list',
+      },
+    },
+    {
+      path: '/ops/baseline',
+      name: 'AdminBaseline',
+      component: () => import('./views/baseline/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.ops.baseline',
+      },
+    },
+    {
+      path: '/ops/simulator',
+      name: 'AdminSimulator',
+      component: () => import('./views/simulator/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.ops.simulator',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -18,7 +73,7 @@ export default {
       'menu.ops.request_log': '请求日志',
       'menu.ops.api_list': '接口列表',
       'menu.ops.baseline': '基线配置',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.ops.apiList.controller': '控制器列表',
       'menu.ops.simulator': '模拟器',
       // 基线相关
@@ -118,7 +173,7 @@ export default {
       'menu.ops.api_list': 'API List',
       'menu.ops.baseline': 'Baseline Configuration',
       'menu.ops.simulator': 'Simulator',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.ops.apiList.controller': 'Controller List',
       // 基线相关
       'ops.baseline.search_placeholder': 'Search baseline...',
@@ -304,4 +359,4 @@ export default {
     operation: service.admin?.log?.operation,
     request: service.admin?.log?.request,
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

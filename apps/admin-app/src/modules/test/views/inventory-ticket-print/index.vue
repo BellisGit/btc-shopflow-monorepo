@@ -1,6 +1,6 @@
 <template>
-  <div class="inventory-ticket-print-page">
-    <BtcViewGroup
+  <div class="page">
+    <BtcMasterViewGroup
       ref="viewGroupRef"
       :left-service="domainService"
       left-title="title.inventory.dataSource.domains"
@@ -25,7 +25,7 @@
           />
 
           <BtcCrud ref="crudRef" :service="ticketService" :auto-load="false">
-            <BtcRow>
+            <BtcCrudRow>
               <div ref="printContentRef" style="width: 100%">
                 <BtcTable
                   :columns="tableColumns"
@@ -34,18 +34,18 @@
                   :disable-auto-created-at="true"
                 />
               </div>
-            </BtcRow>
+            </BtcCrudRow>
 
-            <BtcRow>
-              <btc-flex1 />
+            <BtcCrudRow>
+              <BtcCrudFlex1 />
               <el-config-provider :locale="elLocale">
                 <BtcPagination />
               </el-config-provider>
-            </BtcRow>
+            </BtcCrudRow>
           </BtcCrud>
         </div>
       </template>
-    </BtcViewGroup>
+    </BtcMasterViewGroup>
 
     <!-- 打印范围选择对话框 -->
     <PrintRangeDialog
@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { BtcViewGroup, BtcFlex1, BtcRow, BtcTable, BtcCrud, BtcPagination } from '@btc/shared-components';
+import { BtcMasterViewGroup, BtcCrudFlex1, BtcCrudRow, BtcTable, BtcCrud, BtcPagination } from '@btc/shared-components';
 import { ElConfigProvider } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
@@ -277,7 +277,7 @@ const handleRefresh = () => {
 
 // 组件挂载时初始化打印时间
 onMounted(() => {
-  // BtcViewGroup 会在加载完左侧列表后自动选中第一项，触发 @select 事件
+  // BtcMasterViewGroup 会在加载完左侧列表后自动选中第一项，触发 @select 事件
   // 不需要在这里手动加载数据，因为 @select 事件会自动触发数据加载
 });
 </script>

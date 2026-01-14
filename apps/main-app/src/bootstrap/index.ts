@@ -4,6 +4,7 @@
  *
  * 参考 cool-admin 的架构设计，采用模块化目录结构
  */
+import { logger } from '@btc/shared-core';
 
 import type { App } from 'vue';
 
@@ -96,7 +97,7 @@ export async function bootstrap(app: App) {
     import('../modules/api-services/auth').then(({ authApi }) => {
       (window as any).__APP_AUTH_API__ = authApi;
     }).catch((error) => {
-      console.warn('[bootstrap] Failed to expose authApi globally:', error);
+      logger.warn('[bootstrap] Failed to expose authApi globally:', error);
     });
   }
 
@@ -158,13 +159,13 @@ export async function bootstrap(app: App) {
               BtcMessage.success(message);
             }
           } catch (error) {
-            console.warn('[bootstrap] Failed to show logout success message:', error);
+            logger.warn('[bootstrap] Failed to show logout success message:', error);
           }
         },
       });
       
       if (!success) {
-        console.error('[bootstrap] Logout core failed');
+        logger.error('[bootstrap] Logout core failed');
         // 即使失败，也执行兜底逻辑
         appStorage.auth?.clear();
         appStorage.user?.clear();
@@ -186,7 +187,7 @@ export async function bootstrap(app: App) {
         window.location.href = `/login?oauth_callback=${encodeURIComponent(currentPath)}`;
       }
     } catch (error) {
-      console.error('[bootstrap] Failed to execute logout:', error);
+      logger.error('[bootstrap] Failed to execute logout:', error);
       // 简单的兜底逻辑
       try {
         const authApi = (window as any).__APP_AUTH_API__;
@@ -213,7 +214,7 @@ export async function bootstrap(app: App) {
           startUserCheckPollingIfLoggedIn();
         }).catch((error) => {
           if (import.meta.env.DEV) {
-            console.warn('[bootstrap] Failed to start user check polling:', error);
+            logger.warn('[bootstrap] Failed to start user check polling:', error);
           }
         });
       } catch (error) {

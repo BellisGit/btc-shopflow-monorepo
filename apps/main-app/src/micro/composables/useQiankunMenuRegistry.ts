@@ -3,7 +3,7 @@
  * 负责处理子应用的菜单和标签页注册逻辑
  */
 
-import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
+import { getManifestTabs, getManifestMenus, logger } from '@btc/shared-core/manifest';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import { tSync } from '../../i18n/getters';
 import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
@@ -186,7 +186,7 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
           }
 
           if (!hasKey && !isWaitingForGlobalState) {
-            console.warn(`[MenuRegistry] ⚠️ Translation key "${labelKey}" not found in main app i18n (${currentLocale}):`, {
+            logger.warn(`[MenuRegistry] ⚠️ Translation key "${labelKey}" not found in main app i18n (${currentLocale}):`, {
               labelKey,
               hasKey,
               totalKeys: Object.keys(messages).length,
@@ -195,7 +195,7 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
           } else if (!hasKey && isWaitingForGlobalState) {
             // 正在等待 globalState 消息，不打印警告（key 可能会在消息到达后可用）
           } else if (hasKey) {
-            console.warn(`[MenuRegistry] ⚠️ Translation key "${labelKey}" exists but translation failed:`, {
+            logger.warn(`[MenuRegistry] ⚠️ Translation key "${labelKey}" exists but translation failed:`, {
               labelKey,
               value: messages[labelKey],
               valueType: typeof messages[labelKey],

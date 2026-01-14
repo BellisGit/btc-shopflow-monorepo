@@ -1,5 +1,5 @@
 <template>
-  <div class="not-found-page">
+  <div class="page">
     <Empty description="页面不存在" />
   </div>
 </template>

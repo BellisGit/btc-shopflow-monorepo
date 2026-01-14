@@ -3,12 +3,49 @@
  * 包含 material、config 等页面配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 
 export default {
+  // ModuleConfig 字段
+  name: 'warehouse',
+  label: 'common.module.warehouse.label',
+  order: 10,
+
+  // 路由配置
+  views: [
+    {
+      path: '/warehouse',
+      name: 'LogisticsWarehouse',
+      component: () => import('./views/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.warehouse',
+      },
+    },
+    {
+      path: '/warehouse/material',
+      name: 'LogisticsWarehouseMaterial',
+      component: () => import('./views/material/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.warehouse.material',
+      },
+    },
+    {
+      path: '/inventory/storage-location',
+      name: 'LogisticsInventoryStorageLocation',
+      component: () => import('./views/config/storage-location/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory_management.storage_location',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 菜单配置
@@ -66,4 +103,4 @@ export default {
   service: {
     material: createCrudServiceFromEps(['logistics', 'warehouse', 'material'], service),
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

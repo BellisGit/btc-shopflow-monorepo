@@ -1,11 +1,21 @@
 // ==================== CRUD 基础样式 ====================
 // 容器和行布局
 
+// 引入 layout mixin 以复用 .container 核心样式
+@use '../layout' as *;
+
 .btc-crud {
-	height: 100%;
-	overflow: hidden auto;
+	// .container 已经强制设置了 height: 100%，这里不需要重复设置
+	// height: 100%; // 移除，由 .container 强制设置
+
+	// .container 已经通过 el-scrollbar 处理了滚动，这里不应该再设置滚动
+	// overflow: hidden auto; // 移除，不应该手动定义滚动
+
 	position: relative;
 	box-sizing: border-box;
+	display: flex; // 使用 flex 布局
+	flex-direction: column; // 垂直布局
+	min-height: 0; // 允许收缩
 
 	&.is-border {
 		border: 1px solid var(--el-border-color);
@@ -13,15 +23,55 @@
 	}
 
 	> .btc-crud-row {
-		width: 100%;
+		width: 100%; // .container 已强制设置，这里显式设置
+		flex-shrink: 0; // 关键：操作行不收缩，保持固定高度
 
 		.btc-flex1 {
 			margin-right: 0;
 		}
 	}
 
-	> .btc-crud-row > .btc-table {
+	// 表格行：占据剩余空间，复用 .container 核心样式
+	> .btc-crud-row:has(.btc-table) {
+		// 表格区域样式（自适应 + 高度约束 + 滚动基础）
 		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		position: relative;
+		box-sizing: border-box;
+		flex: 1; // 关键：表格区域占据剩余空间
+		// 注意：滚动由内部的 el-scrollbar 处理，这里只负责布局约束
+
+		.btc-table {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+
+			// el-table 需要设置 height: 100%
+			:deep(.el-table) {
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+			}
+
+			// el-table 的滚动容器
+			// 注意：由于 .container 已经处理了滚动，这里不应该再设置 overflow-y: auto
+			:deep(.el-table__inner) {
+				flex: 1;
+				min-height: 0;
+				// overflow-y: auto; // 移除，由 .container 统一处理滚动
+			}
+		}
+	}
+
+	// 分页器行：紧跟在表格后面
+	> .btc-crud-row:has(.el-pagination) {
+		flex-shrink: 0; // 关键：分页器不收缩
+		// margin-top: auto 会导致分页器在加载时跳到页面底部，移除
 	}
 
 	> .btc-crud-row + .btc-crud-row {
@@ -40,7 +90,7 @@
 }
 
 .btc-crud-row > .btc-search-key {
-	margin-right: -10px;
+	margin-right: 0; // 移除负边距，让搜索框和表格右侧对齐
 
 	&:first-child {
 		margin-left: -10px;

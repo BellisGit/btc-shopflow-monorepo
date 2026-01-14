@@ -2,6 +2,7 @@
  * IndexedDB 数据库初始化和管理
  * 基于 Dexie.js 封装
  */
+import { logger } from '../../logger';
 
 import Dexie, { type Table } from 'dexie';
 import type { DatabaseConfig, DashboardDataItem } from './types';
@@ -50,7 +51,7 @@ export function createDashboardDB(): DashboardDatabase {
     const db = new DashboardDatabase();
     return db;
   } catch (error) {
-    console.error('[IndexedDB] 创建数据库失败:', error);
+    logger.error('[IndexedDB] 创建数据库失败:', error);
     throw error;
   }
 }
@@ -86,7 +87,7 @@ export function createIndexedDB(dbName: string, config: DatabaseConfig): Dexie {
     // @ts-expect-error - Dexie 类型系统导致的类型推断过深问题
     return new CustomDatabase() as Dexie;
   } catch (error) {
-    console.error(`[IndexedDB] 创建数据库 "${dbName}" 失败:`, error);
+    logger.error(`[IndexedDB] 创建数据库 "${dbName}" 失败:`, error);
     throw error;
   }
 }

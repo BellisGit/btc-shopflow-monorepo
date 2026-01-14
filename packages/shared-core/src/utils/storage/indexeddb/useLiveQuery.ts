@@ -3,6 +3,7 @@
  * 手动实现 dexie-vue-addon 的 useLiveQuery 功能
  * 让 Dexie 查询结果自动成为响应式数据
  */
+import { logger } from '../../logger';
 
 import { ref, watch, onMounted, type Ref } from 'vue';
 import type { PromiseExtended } from 'dexie';
@@ -42,7 +43,7 @@ export function useLiveQuery<T = any>(
       result.value = data as T;
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err));
-      console.error('[useLiveQuery] 查询失败:', err);
+      logger.error('[useLiveQuery] 查询失败:', err);
     } finally {
       isLoading.value = false;
     }
@@ -95,7 +96,7 @@ export function useLiveQueryWithState<T = any>(
       result.value = data as T;
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err));
-      console.error('[useLiveQuery] 查询失败:', err);
+      logger.error('[useLiveQuery] 查询失败:', err);
     } finally {
       isLoading.value = false;
     }

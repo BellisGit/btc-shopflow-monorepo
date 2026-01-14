@@ -1,5 +1,5 @@
 <template>
-  <div class="help-page">
+  <div class="page">
     <!-- 主内容区 -->
     <section class="main-content">
       <!-- SVG几何背景 -->

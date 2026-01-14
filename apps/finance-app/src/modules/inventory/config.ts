@@ -3,12 +3,49 @@
  * 包含 result 等页面配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 
 export default {
+  // ModuleConfig 字段
+  name: 'inventory',
+  label: 'common.module.inventory.label',
+  order: 50,
+
+  // 路由配置
+  views: [
+    {
+      path: '/inventory',
+      name: 'FinanceInventory',
+      component: () => import('./views/index.vue'),
+      meta: {
+        isPage: true,
+        labelKey: 'menu.finance.inventory_management',
+        breadcrumbs: [
+          { labelKey: 'menu.finance.inventory_management', icon: 'Box' },
+        ],
+        tabLabelKey: 'menu.finance.inventory_management',
+      },
+    },
+    {
+      path: '/inventory/result',
+      name: 'FinanceInventoryResult',
+      component: () => import('./views/result/index.vue'),
+      meta: {
+        isPage: true,
+        labelKey: 'menu.finance.inventory_management.result',
+        breadcrumbs: [
+          { labelKey: 'menu.finance.inventory_management', icon: 'Box' },
+          { labelKey: 'menu.finance.inventory_management.result', icon: 'List' },
+        ],
+        tabLabelKey: 'menu.finance.inventory_management.result',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 菜单配置
@@ -26,7 +63,7 @@ export default {
       'finance.inventory.result.search_placeholder': '搜索盘点结果',
       'finance.placeholder.inventory_management': '盘点管理页面内容待建设',
       'inventory.check.list': '盘点列表',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.finance.inventory.check.list': '盘点列表',
       // common 配置
       'common.inventory.result.fields.material_code': '物料编码',
@@ -53,7 +90,7 @@ export default {
       'finance.inventory.result.search_placeholder': 'Search inventory results',
       'finance.placeholder.inventory_management': 'Inventory management page is under construction',
       'inventory.check.list': 'Check List',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title  and right-title）
+      // 标题配置（用于BtcMasterTableGroup 的 left-title  and right-title）
       'title.finance.inventory.check.list': 'Check List',
       // common 配置
       'common.inventory.result.fields.material_code': 'Material Code',
@@ -163,5 +200,5 @@ export default {
     financeResult: createCrudServiceFromEps(['finance', 'base', 'financeResult'], service),
     checkList: service.logistics?.warehouse?.check,
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;
 

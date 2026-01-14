@@ -6,8 +6,8 @@ import {
   ElCheckboxGroup, ElCheckbox, ElSwitch, ElDatePicker, ElTimePicker,
   ElCascader, ElTreeSelect, /* ElColorPicker, */ ElRate, ElSlider, ElUpload
 } from 'element-plus';
-import BtcDialog from '../dialog/index';
-import BtcUpload from '../../components/form/btc-upload/index.vue';
+import BtcDialog from '../../feedback/btc-dialog/index';
+import BtcUpload from '../btc-upload/index.vue';
 import { useFormSetup, useFormActions, useFormItemActions, isBoolean, parseHidden, collapseItem } from './composables';
 
 // 组件映射表

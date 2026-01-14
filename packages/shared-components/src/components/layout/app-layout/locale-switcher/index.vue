@@ -36,7 +36,7 @@ defineOptions({
 import { ref } from 'vue';
 // computed 未使用，已移除
 import { storage } from '@btc/shared-core/utils/storage';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 
 const { locale, t } = useI18n();
@@ -60,7 +60,7 @@ const handleCommand = (value: string) => {
       pluginAPI.i18n.changeLocale(value);
       return;
     } catch (error) {
-      console.warn('[LocaleSwitcher] 调用插件API失败:', error);
+      logger.warn('[LocaleSwitcher] 调用插件API失败:', error);
     }
   }
 

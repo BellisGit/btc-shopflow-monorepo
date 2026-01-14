@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, computed, watch } from 'vue';
 import { storage } from '@btc/shared-core/utils';
 
@@ -35,7 +36,7 @@ function loadPreferences(key: string): PersistedPreferences {
     const allPreferences = settings.tablePreferences || {};
     return allPreferences[key] || {};
   } catch (error) {
-    console.warn('[BtcTable] Failed to parse table preferences:', error);
+    logger.warn('[BtcTable] Failed to parse table preferences:', error);
     return {};
   }
 }
@@ -49,7 +50,7 @@ function persistPreferences(key: string, value: PersistedPreferences) {
     settings.tablePreferences = allPreferences;
     storage.set('settings', settings);
   } catch (error) {
-    console.warn('[BtcTable] Failed to save table preferences:', error);
+    logger.warn('[BtcTable] Failed to save table preferences:', error);
   }
 }
 

@@ -1,49 +1,49 @@
 <template>
-  <div class="scanner-page">
+  <div class="page">
     <!-- 顶部导航栏 -->
-    <div class="scanner-page__header">
-      <button class="scanner-page__close-btn" @click="handleClose">
+    <div class="scanner__header">
+      <button class="scanner__close-btn" @click="handleClose">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <h1 class="scanner-page__title">扫一扫</h1>
-      <div class="scanner-page__placeholder"></div>
+      <h1 class="scanner__title">扫一扫</h1>
+      <div class="scanner__placeholder"></div>
     </div>
 
     <!-- 摄像头画面区域 -->
-    <div class="scanner-page__content">
-      <div ref="scanContainerRef" id="html5-qrcode-container" class="scanner-page__camera"></div>
+    <div class="scanner__content">
+      <div ref="scanContainerRef" id="html5-qrcode-container" class="scanner__camera"></div>
 
       <!-- 扫描框 -->
-      <div class="scanner-page__scan-frame">
-        <div class="scanner-page__scan-corner scanner-page__scan-corner--top-left"></div>
-        <div class="scanner-page__scan-corner scanner-page__scan-corner--top-right"></div>
-        <div class="scanner-page__scan-corner scanner-page__scan-corner--bottom-left"></div>
-        <div class="scanner-page__scan-corner scanner-page__scan-corner--bottom-right"></div>
-        <div class="scanner-page__scan-line"></div>
+      <div class="scanner__scan-frame">
+        <div class="scanner__scan-corner scanner__scan-corner--top-left"></div>
+        <div class="scanner__scan-corner scanner__scan-corner--top-right"></div>
+        <div class="scanner__scan-corner scanner__scan-corner--bottom-left"></div>
+        <div class="scanner__scan-corner scanner__scan-corner--bottom-right"></div>
+        <div class="scanner__scan-line"></div>
       </div>
 
       <!-- 提示文字 -->
-      <div class="scanner-page__hint">
+      <div class="scanner__hint">
         将二维码放入框内，即可自动扫描
       </div>
     </div>
 
     <!-- 底部操作栏 -->
-    <div class="scanner-page__footer">
+    <div class="scanner__footer">
       <!-- 始终显示手电筒按钮，让用户可以手动控制 -->
       <div
-        class="scanner-page__flashlight"
+        class="scanner__flashlight"
         @click="toggleFlashlight"
       >
-        <img :src="flashlightIcon" class="scanner-page__flashlight-icon" alt="手电筒" />
-        <span class="scanner-page__flashlight-text">{{ isFlashlightOn ? '关闭闪光灯' : '打开闪光灯' }}</span>
+        <img :src="flashlightIcon" class="scanner__flashlight-icon" alt="手电筒" />
+        <span class="scanner__flashlight-text">{{ isFlashlightOn ? '关闭闪光灯' : '打开闪光灯' }}</span>
       </div>
     </div>
 
     <!-- 加载提示 -->
-    <van-loading v-if="loading" class="scanner-page__loading" type="spinner" color="#ffffff">
+    <van-loading v-if="loading" class="scanner__loading" type="spinner" color="#ffffff">
       正在启动摄像头...
     </van-loading>
   </div>
@@ -55,6 +55,8 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast, showDialog, Loading } from 'vant';
 import flashlightIcon from '@/assets/flashlight.svg';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'BtcMobileInventoryScanner',
@@ -191,8 +193,8 @@ const startCamera = async () => {
   } catch (error: any) {
     loading.value = false;
     scanning.value = false;
-    console.error('启动摄像头失败:', error);
-    console.error('错误详情:', {
+    logger.error('启动摄像头失败:', error);
+    logger.error('错误详情:', {
       name: error.name,
       message: error.message,
       stack: error.stack
@@ -265,7 +267,7 @@ const stopScan = async () => {
       html5QrCode.clear();
       scanning.value = false;
     } catch (error) {
-      console.error('停止扫码失败:', error);
+      logger.error('停止扫码失败:', error);
     }
   }
 
@@ -316,7 +318,7 @@ const toggleFlashlight = async () => {
       showToast('当前设备不支持闪光灯');
     }
   } catch (error) {
-    console.error('切换闪光灯失败:', error);
+    logger.error('切换闪光灯失败:', error);
     showToast('切换闪光灯失败');
   }
 };
@@ -362,17 +364,9 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 @use '@/styles/index.scss' as *;
 
-.scanner-page {
-  width: 100vw;
-  height: 100vh;
-  background: #000000;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
 
-.scanner-page__header {
+
+.scanner__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -384,7 +378,7 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
-.scanner-page__close-btn {
+.scanner__close-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -408,7 +402,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.scanner-page__title {
+.scanner__title {
   flex: 1;
   text-align: center;
   color: #ffffff;
@@ -417,11 +411,11 @@ onBeforeUnmount(() => {
   margin: 0;
 }
 
-.scanner-page__placeholder {
+.scanner__placeholder {
   width: 40px;
 }
 
-.scanner-page__content {
+.scanner__content {
   flex: 1;
   position: relative;
   display: flex;
@@ -430,7 +424,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.scanner-page__camera {
+.scanner__camera {
   width: 100%;
   height: 100%;
   position: relative;
@@ -454,7 +448,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.scanner-page__scan-frame {
+.scanner__scan-frame {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -465,7 +459,7 @@ onBeforeUnmount(() => {
   z-index: 2;
 }
 
-.scanner-page__scan-corner {
+.scanner__scan-corner {
   position: absolute;
   width: 30px;
   height: 30px;
@@ -500,7 +494,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.scanner-page__scan-line {
+.scanner__scan-line {
   position: absolute;
   top: 0;
   left: 0;
@@ -529,7 +523,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.scanner-page__hint {
+.scanner__hint {
   position: absolute;
   bottom: 120px;
   left: 50%;
@@ -544,7 +538,7 @@ onBeforeUnmount(() => {
   z-index: 3;
 }
 
-.scanner-page__footer {
+.scanner__footer {
   padding: 20px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.5);
@@ -555,7 +549,7 @@ onBeforeUnmount(() => {
   justify-content: center;
 }
 
-.scanner-page__flashlight {
+.scanner__flashlight {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -572,16 +566,16 @@ onBeforeUnmount(() => {
   }
 }
 
-.scanner-page__flashlight-icon {
+.scanner__flashlight-icon {
   width: 32px;
   height: 32px;
 }
 
-.scanner-page__flashlight-text {
+.scanner__flashlight-text {
   font-size: 12px;
 }
 
-.scanner-page__loading {
+.scanner__loading {
   position: absolute;
   top: 50%;
   left: 50%;

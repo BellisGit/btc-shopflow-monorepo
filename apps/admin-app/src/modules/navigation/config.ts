@@ -3,11 +3,48 @@
  * 包含菜单管理相关页面的配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'navigation',
+  label: 'common.module.navigation.label',
+  order: 40,
+
+  // 路由配置
+  views: [
+    {
+      path: '/navigation/menus',
+      name: 'AdminMenus',
+      component: () => import('./views/menus/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.navigation.menus',
+      },
+    },
+    {
+      path: '/navigation/menus/:id/permissions',
+      name: 'AdminMenuPermBind',
+      component: () => import('./views/menu-perm-bind/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.navigation.menu_perm_bind',
+      },
+    },
+    {
+      path: '/navigation/menus/preview',
+      name: 'AdminMenuPreview',
+      component: () => import('./views/menu-preview/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.navigation.menu_preview',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -16,7 +53,7 @@ export default {
       'menu.navigation.menus': '菜单列表',
       'menu.navigation.menu_perm_bind': '菜单权限绑定',
       'menu.navigation.menu_preview': '菜单预览',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.navigation.menus.domains': '域列表',
       // 导航相关配置
       'navigation.menu.name': '菜单名称',
@@ -46,6 +83,9 @@ export default {
       'platform.navigation.description': '菜单、权限绑定、预览管理',
       'platform.navigation.menu.load_menu_info_failed': '加载菜单信息失败',
       'platform.navigation.menu.load_permissions_failed': '加载权限列表失败',
+      // 菜单预览
+      'navigation.preview.select_role': '选择角色',
+      'navigation.preview.refresh': '刷新',
     },
     'en-US': {
       // 菜单配置
@@ -53,7 +93,7 @@ export default {
       'menu.navigation.menus': 'Menu List',
       'menu.navigation.menu_perm_bind': 'Menu Permission Binding',
       'menu.navigation.menu_preview': 'Menu Preview',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.navigation.menus.domains': 'Domain List',
       // 导航相关配置
       'navigation.menu.name': 'Menu Name',
@@ -83,6 +123,9 @@ export default {
       'platform.navigation.description': 'Menu, permission binding, and preview management',
       'platform.navigation.menu.load_menu_info_failed': 'Failed to load menu info',
       'platform.navigation.menu.load_permissions_failed': 'Failed to load permissions list',
+      // Menu Preview
+      'navigation.preview.select_role': 'Select Role',
+      'navigation.preview.refresh': 'Refresh',
     },
   },
 
@@ -262,7 +305,7 @@ export default {
   service: {
     menu: service.admin?.iam?.menu,
     domain: service.admin?.iam?.domain,
-    // BtcTableGroup 需要的域服务（左侧服务）
+    // BtcMasterTableGroup 需要的域服务（左侧服务）
     domainService: {
       list: (params?: any) => {
         const finalParams = params || {};
@@ -270,4 +313,4 @@ export default {
       }
     },
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

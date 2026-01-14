@@ -2,6 +2,7 @@
  * Qiankun 设置 Composable
  * 组装所有配置并初始化 qiankun
  */
+import { logger } from '@btc/shared-core';
 
 import { registerMicroApps, start, initGlobalState } from 'qiankun';
 import { microApps } from '../apps';
@@ -26,7 +27,7 @@ export function setupQiankun() {
   // 防止重复注册：如果已经初始化过，直接返回
   if ((window as any).__qiankun_setup__) {
     if (import.meta.env.DEV) {
-      console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
+      logger.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
     }
     return getGlobalState();
   }
@@ -128,7 +129,7 @@ export function setupQiankun() {
                 await registerManifestMenusForApp(appId).catch(console.error);
                 await registerManifestTabsForApp(appId).catch(console.error);
               } catch (error) {
-                console.warn(`[QiankunSetup] 合并 ${appId} 的国际化消息失败:`, error);
+                logger.warn(`[QiankunSetup] 合并 ${appId} 的国际化消息失败:`, error);
               }
             }
           }
@@ -226,7 +227,7 @@ export function setupQiankun() {
             // 超过最大重试次数，仍然找不到容器
             // 记录警告但继续启动（beforeLoad 钩子会处理）
             if (import.meta.env.DEV) {
-              console.warn('[qiankun] 启动前未找到 #subapp-viewport 容器，将在 beforeLoad 中重试');
+              logger.warn('[qiankun] 启动前未找到 #subapp-viewport 容器，将在 beforeLoad 中重试');
             }
             resolve(); // 仍然 resolve，让 qiankun 启动，beforeLoad 钩子会处理
           }
@@ -274,7 +275,7 @@ export function setupQiankun() {
   }).catch((error) => {
     // 如果等待容器失败，仍然启动 qiankun（beforeLoad 钩子会处理）
     if (import.meta.env.DEV) {
-      console.warn('[qiankun] 等待容器时出错，仍然启动 qiankun:', error);
+      logger.warn('[qiankun] 等待容器时出错，仍然启动 qiankun:', error);
     }
 
     start({

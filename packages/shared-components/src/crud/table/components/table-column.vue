@@ -30,7 +30,7 @@ import { h, getCurrentInstance, toRaw, resolveComponent, inject, computed, unref
 import type { TableColumn } from '../types';
 import { BtcCodeJson } from '@btc/shared-components/plugins/code';
 import BtcTag from '../../../components/basic/btc-tag/index.vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 
 defineOptions({
   name: 'TableColumn',
@@ -85,7 +85,7 @@ function safeTranslate(key: string): string {
     return String(result || key);
   } catch (error) {
     // 翻译失败，返回原 key
-    console.warn('[table-column] Translation failed:', error);
+    logger.warn('[table-column] Translation failed:', error);
     return key;
   }
 }

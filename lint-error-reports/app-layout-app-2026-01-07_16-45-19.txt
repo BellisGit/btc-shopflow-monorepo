@@ -1,7 +1,0 @@
-﻿
-C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\runtime\main.ts: line 348, col 21, Error - Using Chinese characters: '[layout-app] 菜单注册表初始化失败:' (i18n/no-chinese-character)
-C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\runtime\main.ts: line 913, col 23, Error - Using Chinese characters: 布局容器 ID 不正确: 期望 #app 或 #layout-container，实际为 # (i18n/no-chinese-character)
-C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\runtime\main.ts: line 1100, col 27, Error - Using Chinese characters: [layout-app] 挂载目标  (i18n/no-chinese-character)
-C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\runtime\main.ts: line 1100, col 59, Error - Using Chinese characters:  不存在，且无法找到 #app 容器 (i18n/no-chinese-character)
-
-

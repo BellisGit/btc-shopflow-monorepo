@@ -2,6 +2,7 @@
  * 消息处理器模块
  * 负责管理 BtcMessage 的显示、徽章创建和生命周期管理
  */
+import { logger } from '@btc/shared-core';
 
 import { BtcMessage } from '@btc/shared-components';
 import type { MessageHandler } from 'element-plus';
@@ -91,12 +92,12 @@ export const initGlobalMessageObserver = () => {
  * 为消息创建徽章
  */
 export const createBadgeForMessage = (messageInstance: any, badgeCount: number, messageElement: HTMLElement) => {
-  console.log('[createBadgeForMessage] Called with:', { messageInstance, badgeCount, messageElement });
+  logger.info('[createBadgeForMessage] Called with:', { messageInstance, badgeCount, messageElement });
   const extendedInstance = messageInstance as ExtendedMessageInstance;
 
   if (extendedInstance.badgeElement) {
     // 如果徽章已经存在，直接更新数字
-    console.log('[createBadgeForMessage] Badge already exists, updating count');
+    logger.info('[createBadgeForMessage] Badge already exists, updating count');
     extendedInstance.badgeElement.textContent = badgeCount.toString();
     return;
   }
@@ -138,7 +139,7 @@ export const createBadgeForMessage = (messageInstance: any, badgeCount: number, 
   messageElement.style.position = 'relative';
   messageElement.appendChild(badgeContainer);
 
-  console.log('[createBadgeForMessage] Badge created and added to message element:', {
+  logger.info('[createBadgeForMessage] Badge created and added to message element:', {
     badgeContainer,
     badgeElement,
     messageElement
@@ -223,7 +224,7 @@ export const handleMessage = (type: 'success' | 'error' | 'warning' | 'info', me
     }
   } catch (error) {
     const { t } = useI18n();
-    console.warn(t('common.error.override_message_close_failed'), error);
+    logger.warn(t('common.error.override_message_close_failed'), error);
   }
 
   // 将消息添加到待处理列表

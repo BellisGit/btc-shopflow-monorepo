@@ -81,6 +81,8 @@ import { useUser } from '@/composables/useUser';
 import { useLogout } from '@/composables/useLogout';
 import { User } from '@element-plus/icons-vue';
 import { useUserInfo } from './index';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'UserInfo'
@@ -137,15 +139,15 @@ const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement;
   const failedUrl = img.src;
   
-  console.warn('[UserInfo] 头像加载失败:', failedUrl);
+  logger.warn('[UserInfo] 头像加载失败:', failedUrl);
   
   // 标记已处理
   errorHandled.value = true;
   
   // 如果失败的是 logo.png，不再重试
   if (failedUrl.includes('logo.png')) {
-    console.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
-    console.error('[UserInfo] URL:', failedUrl);
+    logger.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
+    logger.error('[UserInfo] URL:', failedUrl);
     return;
   }
   

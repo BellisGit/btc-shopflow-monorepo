@@ -1,4 +1,4 @@
-import { getCookie } from '@btc/shared-core/utils/cookie';
+import { getCookie, logger } from '@btc/shared-core/utils/cookie';
 import { storage } from '@btc/shared-utils';
 
 /**
@@ -110,7 +110,7 @@ export function isAuthenticated(): boolean {
     } catch (e) {
       // 静默失败
     }
-    console.warn('[isAuthenticated] Failed to check credential expire time:', error);
+    logger.warn('[isAuthenticated] Failed to check credential expire time:', error);
     return false;
   }
 }

@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { readdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -27,7 +28,7 @@ async function collectAppConfigs() {
       const appConfigPath = join(appsDir, appDir, 'src', 'app.ts');
       
       if (!existsSync(appConfigPath)) {
-        console.warn(`[collect-app-configs] ⚠️  应用 ${appDir} 的配置文件不存在: ${appConfigPath}`);
+        logger.warn(`[collect-app-configs] ⚠️  应用 ${appDir} 的配置文件不存在: ${appConfigPath}`);
         continue;
       }
 
@@ -45,7 +46,7 @@ async function collectAppConfigs() {
           }
         } catch (importError) {
           // 如果导入失败（可能是因为依赖问题），尝试读取源文件并解析
-          console.warn(`[collect-app-configs] ⚠️  应用 ${appDir} 配置导入失败，尝试读取源文件:`, importError.message);
+          logger.warn(`[collect-app-configs] ⚠️  应用 ${appDir} 配置导入失败，尝试读取源文件:`, importError.message);
           
           const sourceCode = readFileSync(appConfigPath, 'utf-8');
           
@@ -86,15 +87,15 @@ async function collectAppConfigs() {
           relativePath,
           configJson,
         });
-        console.log(`[collect-app-configs] ✓ 成功收集应用配置: ${appDir}`);
+        logger.info(`[collect-app-configs] ✓ 成功收集应用配置: ${appDir}`);
       } catch (error) {
         const errorMsg = error.message || String(error);
         errors.push({ appDir, error: errorMsg });
-        console.error(`[collect-app-configs] ❌ 收集应用 ${appDir} 配置失败:`, errorMsg);
+        logger.error(`[collect-app-configs] ❌ 收集应用 ${appDir} 配置失败:`, errorMsg);
       }
     }
   } catch (error) {
-    console.error(`[collect-app-configs] ❌ 扫描应用目录失败:`, error.message);
+    logger.error(`[collect-app-configs] ❌ 扫描应用目录失败:`, error.message);
     process.exit(1);
   }
 
@@ -141,18 +142,18 @@ export const appConfigsMap: Record<string, AppIdentity> = Object.fromEntries(
 `;
 
   writeFileSync(outputFile, output, 'utf-8');
-  console.log(`[collect-app-configs] ✅ 已生成应用配置文件: ${outputFile}`);
-  console.log(`[collect-app-configs] 📊 统计: 成功收集 ${appConfigs.length} 个应用配置`);
+  logger.info(`[collect-app-configs] ✅ 已生成应用配置文件: ${outputFile}`);
+  logger.info(`[collect-app-configs] 📊 统计: 成功收集 ${appConfigs.length} 个应用配置`);
 
   if (errors.length > 0) {
-    console.warn(`[collect-app-configs] ⚠️  以下应用配置收集失败:`);
+    logger.warn(`[collect-app-configs] ⚠️  以下应用配置收集失败:`);
     errors.forEach(({ appDir, error }) => {
-      console.warn(`  - ${appDir}: ${error}`);
+      logger.warn(`  - ${appDir}: ${error}`);
     });
   }
 }
 
 collectAppConfigs().catch(error => {
-  console.error(`[collect-app-configs] ❌ 执行失败:`, error);
+  logger.error(`[collect-app-configs] ❌ 执行失败:`, error);
   process.exit(1);
 });

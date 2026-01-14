@@ -2,6 +2,7 @@
  * Chunk 相关插件
  * 包括 chunk 验证和优化
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import type { OutputOptions, OutputBundle } from 'rollup';
@@ -13,15 +14,15 @@ export function chunkVerifyPlugin(): Plugin {
   return {
     name: 'chunk-verify-plugin',
     writeBundle(_options: OutputOptions, bundle: OutputBundle) {
-      console.log('\n[chunk-verify-plugin] ✅ 生成的所有 chunk 文件：');
+      logger.info('\n[chunk-verify-plugin] ✅ 生成的所有 chunk 文件：');
       const jsChunks = Object.keys(bundle).filter(file => file.endsWith('.js'));
       const cssChunks = Object.keys(bundle).filter(file => file.endsWith('.css'));
 
-      console.log(`\nJS chunk（共 ${jsChunks.length} 个）：`);
-      jsChunks.forEach(chunk => console.log(`  - ${chunk}`));
+      logger.info(`\nJS chunk（共 ${jsChunks.length} 个）：`);
+      jsChunks.forEach(chunk => logger.info(`  - ${chunk}`));
 
-      console.log(`\nCSS chunk（共 ${cssChunks.length} 个）：`);
-      cssChunks.forEach(chunk => console.log(`  - ${chunk}`));
+      logger.info(`\nCSS chunk（共 ${cssChunks.length} 个）：`);
+      cssChunks.forEach(chunk => logger.info(`  - ${chunk}`));
 
       const indexChunk = jsChunks.find(jsChunk => jsChunk.includes('index-'));
       const indexSize = indexChunk ? (bundle[indexChunk] as any)?.code?.length || 0 : 0;
@@ -39,28 +40,28 @@ export function chunkVerifyPlugin(): Plugin {
       const hasLibMonaco = jsChunks.some(jsChunk => jsChunk.includes('lib-monaco'));
       const hasLibThree = jsChunks.some(jsChunk => jsChunk.includes('lib-three'));
 
-      console.log(`\n[chunk-verify-plugin] 📦 构建情况（平衡拆分策略）：`);
+      logger.info(`\n[chunk-verify-plugin] 📦 构建情况（平衡拆分策略）：`);
       if (indexChunk) {
-        console.log(`  ✅ index: 主文件（Vue生态 + Element Plus + 业务代码，体积~${indexSizeMB.toFixed(2)}MB 未压缩，gzip后~${(indexSizeMB * 0.3).toFixed(2)}MB）`);
+        logger.info(`  ✅ index: 主文件（Vue生态 + Element Plus + 业务代码，体积~${indexSizeMB.toFixed(2)}MB 未压缩，gzip后~${(indexSizeMB * 0.3).toFixed(2)}MB）`);
       } else {
-        console.log(`  ❌ 入口文件不存在`);
+        logger.info(`  ❌ 入口文件不存在`);
       }
-      if (hasEpsService) console.log(`  ✅ eps-service: EPS 服务（所有应用共享，单独打包）`);
-      if (hasAuthApi) console.log(`  ✅ auth-api: Auth API（所有应用共享，单独打包，由 system-app 提供）`);
-      if (hasEchartsVendor) console.log(`  ✅ echarts-vendor: ECharts + zrender（独立大库，无依赖问题）`);
-      if (hasLibMonaco) console.log(`  ✅ lib-monaco: Monaco Editor（独立大库）`);
-      if (hasLibThree) console.log(`  ✅ lib-three: Three.js（独立大库）`);
-      console.log(`  ℹ️  业务代码和 Vue 生态合并到主文件，避免初始化顺序问题`);
+      if (hasEpsService) logger.info(`  ✅ eps-service: EPS 服务（所有应用共享，单独打包）`);
+      if (hasAuthApi) logger.info(`  ✅ auth-api: Auth API（所有应用共享，单独打包，由 system-app 提供）`);
+      if (hasEchartsVendor) logger.info(`  ✅ echarts-vendor: ECharts + zrender（独立大库，无依赖问题）`);
+      if (hasLibMonaco) logger.info(`  ✅ lib-monaco: Monaco Editor（独立大库）`);
+      if (hasLibThree) logger.info(`  ✅ lib-three: Three.js（独立大库）`);
+      logger.info(`  ℹ️  业务代码和 Vue 生态合并到主文件，避免初始化顺序问题`);
 
       if (missingRequiredChunks.length > 0) {
-        console.error(`\n[chunk-verify-plugin] ❌ 缺失核心 chunk：`, missingRequiredChunks);
+        logger.error(`\n[chunk-verify-plugin] ❌ 缺失核心 chunk：`, missingRequiredChunks);
         throw new Error(`核心 chunk 缺失，构建失败！`);
       } else {
-        console.log(`\n[chunk-verify-plugin] ✅ 核心 chunk 全部存在`);
+        logger.info(`\n[chunk-verify-plugin] ✅ 核心 chunk 全部存在`);
       }
 
       // 验证资源引用一致性
-      console.log('\n[chunk-verify-plugin] 🔍 验证资源引用一致性...');
+      logger.info('\n[chunk-verify-plugin] 🔍 验证资源引用一致性...');
       const allChunkFiles = new Set([...jsChunks, ...cssChunks]);
       const referencedFiles = new Map<string, string[]>();
       const missingFiles: Array<{ file: string; referencedBy: string[]; possibleMatches: string[] }> = [];
@@ -124,14 +125,14 @@ export function chunkVerifyPlugin(): Plugin {
       }
 
       if (missingFiles.length > 0) {
-        console.error(`\n[chunk-verify-plugin] ❌ 发现 ${missingFiles.length} 个引用的资源文件不存在：`);
+        logger.error(`\n[chunk-verify-plugin] ❌ 发现 ${missingFiles.length} 个引用的资源文件不存在：`);
         if (missingFiles.length <= 5) {
-          console.warn(`\n[chunk-verify-plugin] ⚠️  警告：发现 ${missingFiles.length} 个引用的资源文件不存在，但继续构建`);
+          logger.warn(`\n[chunk-verify-plugin] ⚠️  警告：发现 ${missingFiles.length} 个引用的资源文件不存在，但继续构建`);
         } else {
           throw new Error(`资源引用不一致，构建失败！有 ${missingFiles.length} 个引用的文件不存在`);
         }
       } else {
-        console.log(`\n[chunk-verify-plugin] ✅ 所有资源引用都正确（共验证 ${referencedFiles.size} 个引用）`);
+        logger.info(`\n[chunk-verify-plugin] ✅ 所有资源引用都正确（共验证 ${referencedFiles.size} 个引用）`);
       }
     },
   } as Plugin;
@@ -176,7 +177,7 @@ export function optimizeChunksPlugin(): Plugin {
           if (chunk && (chunk as any).type === 'chunk') {
             (chunk as any).code = 'export {}';
             chunksToKeep.push(emptyChunk);
-            console.log(`[optimize-chunks] 保留被引用的空 chunk: ${emptyChunk} (被 ${referencedBy.length} 个 chunk 引用，已添加占位符)`);
+            logger.info(`[optimize-chunks] 保留被引用的空 chunk: ${emptyChunk} (被 ${referencedBy.length} 个 chunk 引用，已添加占位符)`);
           }
         } else {
           chunksToRemove.push(emptyChunk);
@@ -185,10 +186,10 @@ export function optimizeChunksPlugin(): Plugin {
       }
 
       if (chunksToRemove.length > 0) {
-        console.log(`[optimize-chunks] 移除了 ${chunksToRemove.length} 个未被引用的空 chunk:`, chunksToRemove);
+        logger.info(`[optimize-chunks] 移除了 ${chunksToRemove.length} 个未被引用的空 chunk:`, chunksToRemove);
       }
       if (chunksToKeep.length > 0) {
-        console.log(`[optimize-chunks] 保留了 ${chunksToKeep.length} 个被引用的空 chunk（已添加占位符）:`, chunksToKeep);
+        logger.info(`[optimize-chunks] 保留了 ${chunksToKeep.length} 个被引用的空 chunk（已添加占位符）:`, chunksToKeep);
       }
     },
   } as Plugin;

@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ﻿import type { Plugin } from 'vite';
 import fs from 'fs';
 import axios from 'axios';
@@ -106,12 +107,12 @@ export function ctxPlugin(): Plugin {
 			ctxData = await createCtx();
 
 			if (ctxData.modules && ctxData.modules.length > 0) {
-				console.info(
+				logger.info(
 					`[btc:ctx] 找到 ${ctxData.modules.length} 个模块: ${ctxData.modules.join(', ')}`
 				);
 			}
 
-			console.info(`[btc:ctx] 服务语言: ${ctxData.serviceLang}`);
+			logger.info(`[btc:ctx] 服务语言: ${ctxData.serviceLang}`);
 		},
 
     resolveId(id: string) {

@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
@@ -17,18 +18,18 @@ function question(prompt: string): Promise<string> {
 }
 
 async function main() {
-  console.log('=== 创建新文档 ===\n');
+  logger.info('=== 创建新文档 ===\n');
 
   // 1. 选择文档类型
-  console.log('文档类型:');
-  console.log('  1. guide - 功能指南');
-  console.log('  2. api - API 文档');
-  console.log('  3. decision - 架构决策');
-  console.log('  4. howto - 操作手册');
-  console.log('  5. summary - 总结归纳');
-  console.log('  6. rca - 问题根因分析');
-  console.log('  7. retro - 复盘回顾');
-  console.log('  8. checklist - 检查清单\n');
+  logger.info('文档类型:');
+  logger.info('  1. guide - 功能指南');
+  logger.info('  2. api - API 文档');
+  logger.info('  3. decision - 架构决策');
+  logger.info('  4. howto - 操作手册');
+  logger.info('  5. summary - 总结归纳');
+  logger.info('  6. rca - 问题根因分析');
+  logger.info('  7. retro - 复盘回顾');
+  logger.info('  8. checklist - 检查清单\n');
 
   const typeChoice = await question('选择类型 (1-8): ');
   const types = ['guide', 'api', 'decision', 'howto', 'summary', 'rca', 'retro', 'checklist'];
@@ -213,23 +214,23 @@ example();
 
   // 检查文件是否已存在
   if (await fs.pathExists(targetPath)) {
-    console.log(`\n❌ 文件已存在: ${targetPath}`);
+    logger.info(`\n❌ 文件已存在: ${targetPath}`);
     process.exit(1);
   }
 
   // 写入文件
   await fs.writeFile(targetPath, docContent);
 
-  console.log('\n✅ 文档创建成功!');
-  console.log(`   位置: ${path.relative(process.cwd(), targetPath)}`);
-  console.log(`   类型: ${type}`);
-  console.log(`   项目: ${project}`);
-  console.log(`   发布: ${publish ? '是' : '否'}`);
-  console.log('\n💡 提示: 编辑完成后运行 `pnpm --filter docs-site-app ingest` 来收录文档');
+  logger.info('\n✅ 文档创建成功!');
+  logger.info(`   位置: ${path.relative(process.cwd(), targetPath)}`);
+  logger.info(`   类型: ${type}`);
+  logger.info(`   项目: ${project}`);
+  logger.info(`   发布: ${publish ? '是' : '否'}`);
+  logger.info('\n💡 提示: 编辑完成后运行 `pnpm --filter docs-site-app ingest` 来收录文档');
 }
 
 main().catch(error => {
-  console.error('创建失败:', error);
+  logger.error('创建失败:', error);
   rl.close();
   process.exit(1);
 });

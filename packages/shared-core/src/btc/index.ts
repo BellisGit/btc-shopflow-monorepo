@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger';
 import type { App } from 'vue';
 import { ServiceBuilder, type DynamicService, type EpsData } from './service/builder';
 
@@ -25,11 +26,11 @@ export function useCore() {
         const builder = new ServiceBuilder();
         serviceInstance = builder.build(epsData);
       } else {
-        console.warn('[useCore] EPS data not available. Service will be empty.');
+        logger.warn('[useCore] EPS data not available. Service will be empty.');
         serviceInstance = {};
       }
     } catch (error) {
-      console.error('[useCore] Failed to build service:', error);
+      logger.error('[useCore] Failed to build service:', error);
       serviceInstance = {};
     }
   }
@@ -51,7 +52,7 @@ export function initEpsData(epsData: EpsData) {
 
 export function installBtc(app: App, options?: BtcOptions) {
   // 后续实现插件安装逻辑
-  console.log('BTC Framework installed', options);
+  logger.info('BTC Framework installed', options);
 
   // 全局属性
   app.config.globalProperties.$btc = {

@@ -8,6 +8,7 @@
 // 导入 Zod 验证工具（可选）
 import { createApiResponseSchema, safeValidateResponse } from './schemas';
 import { z } from 'zod';
+import { logger } from '../logger';
 
 // 消息显示接口，由外部实现
 export interface MessageHandler {
@@ -272,13 +273,13 @@ export class ResponseInterceptor {
         const errorMessage = `[HTTP响应验证] 响应数据不符合预期格式: ${error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`;
         
         if (import.meta.env.DEV) {
-          console.warn(errorMessage, {
+          logger.warn(errorMessage, {
             errors: error.errors,
             response,
           });
         } else {
           // 生产环境：记录警告并上报
-          console.warn(errorMessage);
+          logger.warn(errorMessage);
           // 上报验证失败（异步，不阻塞）
           import('../zod/reporting').then(({ reportValidationError }) => {
             // 构建上下文对象，只在属性存在时才添加（避免 undefined，符合 exactOptionalPropertyTypes）
@@ -387,8 +388,8 @@ export class ResponseInterceptor {
         if (globalMessageHandler && globalMessageHandler.error) {
           globalMessageHandler.error('数据暂时无法获取，请联系管理员Jarvis');
         } else {
-          // 最后的兜底：使用 console.error
-          console.error('数据暂时无法获取，请联系管理员Jarvis');
+          // 最后的兜底：使用 logger.error
+          logger.error('数据暂时无法获取，请联系管理员Jarvis');
         }
       }
       return Promise.reject(error);

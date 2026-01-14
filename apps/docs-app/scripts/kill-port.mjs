@@ -3,6 +3,7 @@
  * 清理指定端口的脚本
  * 用于在启动开发服务器前清理可能残留的进程
  */
+import { logger } from '@btc/shared-core';
 
 import { execSync } from 'child_process';
 
@@ -20,7 +21,7 @@ function killPort(port) {
     const lines = result.trim().split('\n').filter(line => line.includes('LISTENING'));
     
     if (lines.length === 0) {
-      console.log(`✅ 端口 ${port} 未被占用`);
+      logger.info(`✅ 端口 ${port} 未被占用`);
       return;
     }
 
@@ -38,24 +39,24 @@ function killPort(port) {
     for (const pid of pids) {
       try {
         execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
-        console.log(`✅ 已终止占用端口 ${port} 的进程 (PID: ${pid})`);
+        logger.info(`✅ 已终止占用端口 ${port} 的进程 (PID: ${pid})`);
       } catch (error) {
         // 进程可能已经不存在，忽略错误
-        console.log(`⚠️  无法终止进程 ${pid}（可能已不存在）`);
+        logger.info(`⚠️  无法终止进程 ${pid}（可能已不存在）`);
       }
     }
   } catch (error) {
     // 如果没有找到占用端口的进程，netstat 会返回错误，这是正常的
     if (error.message && error.message.includes('findstr')) {
-      console.log(`✅ 端口 ${port} 未被占用`);
+      logger.info(`✅ 端口 ${port} 未被占用`);
     } else {
-      console.error(`❌ 清理端口 ${port} 时出错:`, error.message);
+      logger.error(`❌ 清理端口 ${port} 时出错:`, error.message);
     }
   }
 }
 
 // 清理主端口
-console.log(`🔍 检查端口 ${port}...`);
+logger.info(`🔍 检查端口 ${port}...`);
 killPort(port);
-console.log(`✅ 端口清理完成\n`);
+logger.info(`✅ 端口清理完成\n`);
 

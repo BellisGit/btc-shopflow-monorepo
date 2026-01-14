@@ -1,6 +1,6 @@
 <template>
-  <div class="file-template-page">
-    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.template.categories" right-title="title.data.files.template.templateList">
+  <div class="page">
+    <BtcMasterViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.template.categories" right-title="title.data.files.template.templateList">
       <!-- 左侧分类列表 -->
       <template #left>
         <div class="file-template-left">
@@ -168,15 +168,15 @@
           </div>
         </div>
       </template>
-    </BtcViewGroup>
+    </BtcMasterViewGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
-import { BtcViewGroup } from '@btc/shared-components';
+import { useI18n, logger } from '@btc/shared-core';
+import { BtcMasterViewGroup } from '@btc/shared-components';
 import { Document, Picture, VideoPlay, Check, ZoomIn, Download, Delete, Search } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 
@@ -381,7 +381,7 @@ const refreshTemplateList = async () => {
       loading.value = false;
     }, 500);
   } catch (error) {
-    console.error('加载模板列表失败:', error);
+    logger.error('加载模板列表失败:', error);
     loading.value = false;
   }
 };
@@ -404,27 +404,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.file-template-page {
-  height: 100%;
-  box-sizing: border-box;
 
-  .file-template-left {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 40px;
-      padding: 0 10px;
-      border-bottom: 1px solid var(--el-border-color-extra-light);
-
-      .label {
-        flex: 1;
-        font-size: 14px;
-      }
 
       .header-actions {
         display: flex;

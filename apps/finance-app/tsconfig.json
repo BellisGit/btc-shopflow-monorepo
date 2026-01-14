@@ -19,7 +19,8 @@
       "@btc/subapp-manifests": ["../../packages/subapp-manifests/dist"],
       "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],
-      "@btc/auth-shared/*": ["../../auth/shared/*"]
+      "@btc/auth-shared/*": ["../../auth/shared/*"],
+      "@workspace/locales/*": ["../../locales/*"]
     }
   },
   "include": [

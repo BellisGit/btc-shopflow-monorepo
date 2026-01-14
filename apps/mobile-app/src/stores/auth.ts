@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { storage } from '@btc/shared-utils';
@@ -103,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
       setUser(profile);
       return profile;
     } catch (error) {
-      console.error('[Auth] Failed to refresh user info', error);
+      logger.error('[Auth] Failed to refresh user info', error);
       throw error;
     }
   }

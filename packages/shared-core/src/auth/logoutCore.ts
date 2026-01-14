@@ -2,6 +2,7 @@
  * 退出登录核心逻辑（纯函数，无路由耦合）
  * 负责清理凭证、调用API、设置标记等，但不处理路由重定向
  */
+import { logger } from '../utils/logger';
 
 import { sessionStorage } from '../utils/storage/session';
 
@@ -64,7 +65,7 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
       stopUserCheckPolling();
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.warn('Failed to stop global user check polling on logout:', error);
+        logger.warn('Failed to stop global user check polling on logout:', error);
       }
     }
 
@@ -76,7 +77,7 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
           await api.logout();
         }
       } catch (error: any) {
-        console.warn('Logout API failed, but continue with frontend cleanup:', error);
+        logger.warn('Logout API failed, but continue with frontend cleanup:', error);
       }
     }
 
@@ -224,13 +225,13 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
         }
         onSuccess(message);
       } catch (error) {
-        console.warn('[logoutCore] Failed to show logout success message:', error);
+        logger.warn('[logoutCore] Failed to show logout success message:', error);
       }
     }
 
     return true;
   } catch (error: any) {
-    console.error('[logoutCore] Logout cleanup error:', error);
+    logger.error('[logoutCore] Logout cleanup error:', error);
     return false;
   }
 }

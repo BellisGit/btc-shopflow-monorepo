@@ -1,5 +1,5 @@
 <template>
-  <div class="sync-status-page">
+  <div class="page">
     <CellGroup inset>
       <Cell title="待同步操作" :value="pendingOpsCount" />
       <Cell title="最后同步时间" :value="lastSyncTime || '从未同步'" />
@@ -18,6 +18,8 @@ import { ref, onMounted } from 'vue';
 import { CellGroup, Cell, Button } from 'vant';
 import { db } from '@/db';
 import { processQueue } from '../backgroundSync';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'BtcMobileSyncStatus',
@@ -44,7 +46,7 @@ async function handleSync() {
     await processQueue();
     await updateStatus();
   } catch (error) {
-    console.error('[SyncStatus] Failed to sync:', error);
+    logger.error('[SyncStatus] Failed to sync:', error);
   }
 }
 </script>

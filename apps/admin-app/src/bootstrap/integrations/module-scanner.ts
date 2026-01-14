@@ -2,6 +2,7 @@
  * 模块自动扫描器
  * 参考 cool-admin-vue 的实现，自动扫描 modules 和 plugins 目录下的配置文件
  */
+import { logger } from '@btc/shared-core';
 
 import type { App } from 'vue';
 import type { Plugin } from '@btc/shared-core';
@@ -164,7 +165,7 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
         // 验证插件配置
         if (!pluginConfig.name) {
           const { t } = useI18n();
-          console.warn(`[ModuleScanner] ${t('common.plugin.skip_invalid')}: ${filePath} (${t('common.plugin.missing_name')})`);
+          logger.warn(`[ModuleScanner] ${t('common.plugin.skip_invalid')}: ${filePath} (${t('common.plugin.missing_name')})`);
           continue;
         }
 
@@ -175,7 +176,7 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
 
     } catch (error) {
       const { t } = useI18n();
-      console.error(`[ModuleScanner] ${t('common.plugin.parse_failed')}: ${filePath}`, error);
+      logger.error(`[ModuleScanner] ${t('common.plugin.parse_failed')}: ${filePath}`, error);
     }
   }
 

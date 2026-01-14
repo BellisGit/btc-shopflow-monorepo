@@ -3,17 +3,49 @@
  * 包含 domains、modules、plugins 等页面的配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
-  // 模块元数据（用于模块管理）
+  // ModuleConfig 字段
   name: 'platform',
   label: 'platform.label',
   description: 'platform.description',
   order: 1,
 
+  // 路由配置
+  views: [
+    {
+      path: '/platform/domains',
+      name: 'AdminDomains',
+      component: () => import('./views/domains/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.platform.domains',
+      },
+    },
+    {
+      path: '/platform/modules',
+      name: 'AdminModules',
+      component: () => import('./views/modules/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.platform.modules',
+      },
+    },
+    {
+      path: '/platform/plugins',
+      name: 'AdminPlugins',
+      component: () => import('./views/plugins/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.platform.plugins',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -22,7 +54,7 @@ export default {
       'menu.platform.domains': '域列表',
       'menu.platform.modules': '模块列表',
       'menu.platform.plugins': '插件列表',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.platform.domains': '域列表',
       // 模块元数据
       'platform.label': '平台治理',
@@ -55,7 +87,7 @@ export default {
       'menu.platform.domains': 'Domain List',
       'menu.platform.modules': 'Module List',
       'menu.platform.plugins': 'Plugin List',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.platform.domains': 'Domain List',
       // 模块元数据
       'platform.label': 'Platform Governance',
@@ -173,7 +205,7 @@ export default {
     tenant: service.admin?.iam?.tenant,
     module: service.admin?.iam?.module,
     plugin: service.admin?.iam?.plugin,
-    // BtcTableGroup 需要的域服务（左侧服务）
+    // BtcMasterTableGroup 需要的域服务（左侧服务）
     domainService: {
       _serviceName: 'domain', // 标识服务名，用于推断 code 字段名
       list: (params?: any) => {
@@ -182,4 +214,4 @@ export default {
       }
     },
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

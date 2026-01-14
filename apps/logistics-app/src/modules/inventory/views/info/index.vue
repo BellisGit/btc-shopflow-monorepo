@@ -1,7 +1,7 @@
 <template>
   <div class="logistics-crud-wrapper">
     <BtcCrud ref="crudRef" :service="inventoryInfoService">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
@@ -21,14 +21,14 @@
             <span class="btc-crud-btn__text">{{ t('logistics.inventory.base.button.pull') }}</span>
           </el-button>
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions>
           <BtcExportBtn :filename="t('menu.inventory_management.info')" />
         </BtcCrudActions>
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable
           ref="tableRef"
           :columns="columns"
@@ -36,12 +36,12 @@
           border
           :op="{ buttons: opButtons }"
         />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <BtcUpsert ref="upsertRef" :items="formItems" width="680px" />
     </BtcCrud>
@@ -54,18 +54,18 @@
       @closed="handleSubProcessDialogClosed"
     >
       <BtcCrud ref="subProcessCrudRef" :service="subProcessService" :auto-load="false">
-        <BtcRow>
+        <BtcCrudRow>
           <div class="btc-crud-primary-actions">
             <BtcRefreshBtn />
             <BtcAddBtn />
           </div>
-          <BtcFlex1 />
+          <BtcCrudFlex1 />
           <div class="btc-crud-right-group">
-            <BtcSearchKey />
+            <BtcCrudSearchKey />
           </div>
-        </BtcRow>
+        </BtcCrudRow>
 
-        <BtcRow>
+        <BtcCrudRow>
           <BtcTable
             ref="subProcessTableRef"
             :columns="subProcessColumns"
@@ -73,12 +73,12 @@
             border
             :op="{ buttons: ['edit'] }"
           />
-        </BtcRow>
+        </BtcCrudRow>
 
-        <BtcRow>
-          <BtcFlex1 />
+        <BtcCrudRow>
+          <BtcCrudFlex1 />
           <BtcPagination />
-        </BtcRow>
+        </BtcCrudRow>
 
         <BtcUpsert
           ref="subProcessUpsertRef"
@@ -93,10 +93,10 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n, useThemePlugin, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
+import { useI18n, useThemePlugin, usePageColumns, usePageForms, usePageService, logger } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert, BtcMessage, BtcSvg, BtcTableButton, BtcDialog } from '@btc/shared-components';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert, BtcMessage, BtcSvg, BtcTableButton, BtcDialog } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
@@ -150,7 +150,7 @@ const handlePullData = async () => {
     // 刷新表格数据
     crudRef.value?.crud?.loadData?.();
   } catch (error: any) {
-    console.error('[InventoryInfo] Pull data failed:', error);
+    logger.error('[InventoryInfo] Pull data failed:', error);
     BtcMessage.error(error?.message || t('logistics.inventory.base.pull.failed'));
   } finally {
     pullLoading.value = false;
@@ -304,7 +304,7 @@ const handleSubProcessSubmit = async (data: any, { close, done }: { close: () =>
     close();
     subProcessCrudRef.value?.crud?.loadData();
   } catch (error: any) {
-    console.error('[SubProcess] Submit failed:', error);
+    logger.error('[SubProcess] Submit failed:', error);
     done();
     BtcMessage.error(error?.message || t('common.saveFailed'));
   }

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { logger } from '../../../utils/logger';
 import { createI18n, useI18n as useI18nOriginal } from 'vue-i18n';
 import type { App } from 'vue';
 import type { Composer } from 'vue-i18n';
@@ -55,7 +56,7 @@ async function loadRemoteMessages(apiUrl: string, locale: string, scope = 'commo
       return result.data.messages;
     }
   } catch (error) {
-    console.warn(`[i18n] Failed to load remote messages (${scope}):`, error);
+    logger.warn(`[i18n] Failed to load remote messages (${scope}):`, error);
   }
   return {};
 }
@@ -109,7 +110,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
       if (import.meta.env.DEV) {
         // 只在 locale 是标准格式（zh-CN, en-US）时输出警告，忽略短格式（zh, en）的 fallback
         if (locale === 'zh-CN' || locale === 'en-US') {
-          console.warn(`[i18n] missing key "${key}" in locale ${locale}`);
+          logger.warn(`[i18n] missing key "${key}" in locale ${locale}`);
         }
       }
     },
@@ -127,7 +128,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
         return typeof result === 'string' ? result : String(result);
       }
     } catch (error) {
-      console.warn('[i18n] Translation error:', error);
+      logger.warn('[i18n] Translation error:', error);
     }
     return key;
   }

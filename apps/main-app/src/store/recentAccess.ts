@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
@@ -75,7 +76,7 @@ export const useRecentAccessStore = defineStore('recentAccess', () => {
       // 限制数量
       items.value = validItems.slice(0, MAX_RECENT_ITEMS);
     } catch (error) {
-      console.warn('[RecentAccess] Failed to restore from storage:', error);
+      logger.warn('[RecentAccess] Failed to restore from storage:', error);
       items.value = [];
     }
   }

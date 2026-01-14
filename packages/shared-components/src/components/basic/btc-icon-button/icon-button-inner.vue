@@ -16,6 +16,10 @@
         <btc-svg
           :name="iconName"
           :size="config.size || 16"
+          :animation="config.iconAnimation"
+          :animation-trigger="config.iconAnimationTrigger"
+          :animation-duration="config.iconAnimationDuration"
+          :animation-delay="config.iconAnimationDelay"
         />
         <span
           v-if="config.badge !== undefined && config.badge > 0"
@@ -34,6 +38,10 @@
       <btc-svg
         :name="iconName"
         :size="config.size || 16"
+        :animation="config.iconAnimation"
+        :animation-trigger="config.iconAnimationTrigger"
+        :animation-duration="config.iconAnimationDuration"
+        :animation-delay="config.iconAnimationDelay"
       />
       <span
         v-if="config.badge !== undefined && config.badge > 0"
@@ -47,7 +55,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import BtcSvg from '../../others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import type { IconButtonConfig } from './types';
 
 // 检测是否为触摸设备

@@ -2,6 +2,7 @@
  * 文档编码修复工具
  * 修复所有被全角冒号分隔符破坏的 Markdown 文件
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -119,16 +120,16 @@ async function main() {
   const dryRun = args.includes('--dry-run');
   const testMode = args.includes('--test');
 
-  console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║        文档编码修复工具 - 冒号分隔符移除              ║');
-  console.log('╚════════════════════════════════════════════════════════╝\n');
+  logger.info('╔════════════════════════════════════════════════════════╗');
+  logger.info('║        文档编码修复工具 - 冒号分隔符移除              ║');
+  logger.info('╚════════════════════════════════════════════════════════╝\n');
 
   if (dryRun) {
-    console.log('🔍 运行模式：演练模式（不会修改文件）\n');
+    logger.info('🔍 运行模式：演练模式（不会修改文件）\n');
   } else if (testMode) {
-    console.log('🧪 运行模式：测试模式（仅处理前5个文件）\n');
+    logger.info('🧪 运行模式：测试模式（仅处理前5个文件）\n');
   } else {
-    console.log('🔧 运行模式：完整修复模式\n');
+    logger.info('🔧 运行模式：完整修复模式\n');
   }
 
   // 扫描所有 .md 文件
@@ -137,19 +138,19 @@ async function main() {
     ignore: ['node_modules/**', '.vitepress/**', 'dist/**'],
   });
 
-  console.log(`📂 发现 ${files.length} 个文档文件\n`);
+  logger.info(`📂 发现 ${files.length} 个文档文件\n`);
 
   // 测试模式只处理前5个文件
   const filesToProcess = testMode ? files.slice(0, 5) : files;
 
   if (testMode) {
-    console.log(`🧪 测试模式：仅处理前 ${filesToProcess.length} 个文件：`);
-    filesToProcess.forEach((f, i) => console.log(`   ${i + 1}. ${f}`));
-    console.log();
+    logger.info(`🧪 测试模式：仅处理前 ${filesToProcess.length} 个文件：`);
+    filesToProcess.forEach((f, i) => logger.info(`   ${i + 1}. ${f}`));
+    logger.info();
   }
 
   // 处理文件
-  console.log('⚙️  开始处理文件...\n');
+  logger.info('⚙️  开始处理文件...\n');
 
   const results: FixResult[] = [];
   let processedCount = 0;
@@ -163,21 +164,21 @@ async function main() {
 
     if (result.success && result.colonCount > 0) {
       const reduction = ((result.charsBefore - result.charsAfter) / result.charsBefore * 100).toFixed(1);
-      console.log(`✅ ${result.file}`);
-      console.log(`   移除 ${result.colonCount} 个冒号分隔符`);
-      console.log(`   ${result.charsBefore} → ${result.charsAfter} 字符 (减少 ${reduction}%)\n`);
+      logger.info(`✅ ${result.file}`);
+      logger.info(`   移除 ${result.colonCount} 个冒号分隔符`);
+      logger.info(`   ${result.charsBefore} → ${result.charsAfter} 字符 (减少 ${reduction}%)\n`);
     } else if (result.error?.includes('clean')) {
-      console.log(`✨ ${result.file} (已是正常文件)\n`);
+      logger.info(`✨ ${result.file} (已是正常文件)\n`);
     } else if (!result.success) {
-      console.log(`❌ ${result.file}`);
-      console.log(`   错误: ${result.error}\n`);
+      logger.info(`❌ ${result.file}`);
+      logger.info(`   错误: ${result.error}\n`);
     }
   }
 
   // 生成统计报告
-  console.log('\n╔════════════════════════════════════════════════════════╗');
-  console.log('║                      修复报告                          ║');
-  console.log('╚════════════════════════════════════════════════════════╝\n');
+  logger.info('\n╔════════════════════════════════════════════════════════╗');
+  logger.info('║                      修复报告                          ║');
+  logger.info('╚════════════════════════════════════════════════════════╝\n');
 
   const successResults = results.filter(r => r.success && r.colonCount > 0);
   const cleanResults = results.filter(r => r.error?.includes('clean'));
@@ -187,28 +188,28 @@ async function main() {
   const totalCharsBefore = successResults.reduce((sum, r) => sum + r.charsBefore, 0);
   const totalCharsAfter = successResults.reduce((sum, r) => sum + r.charsAfter, 0);
 
-  console.log(`📊 统计信息：`);
-  console.log(`   - 总文件数：${filesToProcess.length}`);
-  console.log(`   - 需要修复：${successResults.length}`);
-  console.log(`   - 已是正常：${cleanResults.length}`);
-  console.log(`   - 修复失败：${failedResults.length}`);
-  console.log();
+  logger.info(`📊 统计信息：`);
+  logger.info(`   - 总文件数：${filesToProcess.length}`);
+  logger.info(`   - 需要修复：${successResults.length}`);
+  logger.info(`   - 已是正常：${cleanResults.length}`);
+  logger.info(`   - 修复失败：${failedResults.length}`);
+  logger.info();
 
   if (successResults.length > 0) {
-    console.log(`🔧 修复详情：`);
-    console.log(`   - 移除冒号总数：${totalColonsRemoved.toLocaleString()}`);
-    console.log(`   - 修复前字符数：${totalCharsBefore.toLocaleString()}`);
-    console.log(`   - 修复后字符数：${totalCharsAfter.toLocaleString()}`);
-    console.log(`   - 减少字符数：${(totalCharsBefore - totalCharsAfter).toLocaleString()}`);
-    console.log();
+    logger.info(`🔧 修复详情：`);
+    logger.info(`   - 移除冒号总数：${totalColonsRemoved.toLocaleString()}`);
+    logger.info(`   - 修复前字符数：${totalCharsBefore.toLocaleString()}`);
+    logger.info(`   - 修复后字符数：${totalCharsAfter.toLocaleString()}`);
+    logger.info(`   - 减少字符数：${(totalCharsBefore - totalCharsAfter).toLocaleString()}`);
+    logger.info();
   }
 
   if (failedResults.length > 0) {
-    console.log(`❌ 失败文件：`);
+    logger.info(`❌ 失败文件：`);
     failedResults.forEach(r => {
-      console.log(`   - ${r.file}: ${r.error}`);
+      logger.info(`   - ${r.file}: ${r.error}`);
     });
-    console.log();
+    logger.info();
   }
 
   // 保存报告
@@ -237,20 +238,20 @@ async function main() {
   };
 
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-  console.log(`📋 详细报告已保存到: ${path.basename(reportPath)}\n`);
+  logger.info(`📋 详细报告已保存到: ${path.basename(reportPath)}\n`);
 
   // 最终提示
   if (dryRun) {
-    console.log('💡 提示：这是演练模式，文件未被修改');
-    console.log('   运行 pnpm tsx scripts/fix-colon-separator.ts 执行实际修复\n');
+    logger.info('💡 提示：这是演练模式，文件未被修改');
+    logger.info('   运行 pnpm tsx scripts/fix-colon-separator.ts 执行实际修复\n');
   } else if (testMode) {
-    console.log('💡 提示：这是测试模式，仅处理了前5个文件');
-    console.log('   如果结果正确，运行不带 --test 参数的命令处理所有文件\n');
+    logger.info('💡 提示：这是测试模式，仅处理了前5个文件');
+    logger.info('   如果结果正确，运行不带 --test 参数的命令处理所有文件\n');
   } else {
-    console.log('✅ 修复完成！请验证文档是否正常：');
-    console.log('   1. 检查关键文件内容');
-    console.log('   2. 运行 pnpm dev 启动 VitePress');
-    console.log('   3. 检查导航和搜索功能\n');
+    logger.info('✅ 修复完成！请验证文档是否正常：');
+    logger.info('   1. 检查关键文件内容');
+    logger.info('   2. 运行 pnpm dev 启动 VitePress');
+    logger.info('   3. 检查导航和搜索功能\n');
   }
 }
 

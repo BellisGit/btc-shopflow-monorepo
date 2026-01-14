@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import type { MenuItem } from '@/store/menuRegistry';
 import { BtcSvg } from '@btc/shared-components';
 import {
@@ -176,7 +176,7 @@ const getMenuTitle = (item: MenuItem): string => {
 
       // 调试：检查 key 是否存在
       if (import.meta.env.DEV && !(item.labelKey in messages)) {
-        console.warn(`[MenuRenderer] ⚠️ Key "${item.labelKey}" not found in main app i18n messages:`, {
+        logger.warn(`[MenuRenderer] ⚠️ Key "${item.labelKey}" not found in main app i18n messages:`, {
           labelKey: item.labelKey,
           totalKeys: Object.keys(messages).length,
           hasMenuPlatform: 'menu.platform' in messages,
@@ -226,7 +226,7 @@ const getMenuTitle = (item: MenuItem): string => {
         ? mainAppI18n.global.te(item.labelKey, mainAppI18n.global.locale.value || 'zh-CN')
         : false;
 
-      console.warn(`[MenuRenderer] ⚠️ Translation failed for labelKey "${item.labelKey}":`, {
+      logger.warn(`[MenuRenderer] ⚠️ Translation failed for labelKey "${item.labelKey}":`, {
         labelKey: item.labelKey,
         translated,
         keyExistsInComponent,

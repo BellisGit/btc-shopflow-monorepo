@@ -3,6 +3,7 @@
  * 在构建时修改 HTML 中的资源 URL，将静态资源路径转换为 CDN URL
  * 支持当前应用资源 (/assets/) 和布局应用资源 (/assets/layout/)
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 
@@ -42,9 +43,9 @@ export function cdnAssetsPlugin(options: CdnAssetsPluginOptions): Plugin {
     apply: 'build',
     buildStart() {
       if (enabled) {
-        console.log(`[cdn-assets] CDN 加速已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
+        logger.info(`[cdn-assets] CDN 加速已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
       } else {
-        console.log(`[cdn-assets] CDN 加速已禁用`);
+        logger.info(`[cdn-assets] CDN 加速已禁用`);
       }
     },
     transformIndexHtml: {
@@ -324,7 +325,7 @@ export function cdnAssetsPlugin(options: CdnAssetsPluginOptions): Plugin {
         }
 
         if (modified) {
-          console.log(`[cdn-assets] 已为 index.html 中的资源引用转换为 CDN URL`);
+          logger.info(`[cdn-assets] 已为 index.html 中的资源引用转换为 CDN URL`);
         }
         
         return newHtml;

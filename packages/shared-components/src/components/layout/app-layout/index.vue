@@ -91,14 +91,16 @@
               class="content-mount content-mount--main-app"
               data-router-view
             >
-              <router-view v-slot="{ Component, route }">
-                <transition :name="pageTransitionName" mode="out-in">
-                  <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
-                  <keep-alive v-else-if="Component">
-                    <component :is="Component" :key="route.fullPath" />
-                  </keep-alive>
-                </transition>
-              </router-view>
+              <el-scrollbar class="container">
+                <router-view v-slot="{ Component, route }">
+                  <transition :name="pageTransitionName" mode="out-in">
+                    <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
+                    <keep-alive v-else-if="Component">
+                      <component :is="Component" :key="route.fullPath" />
+                    </keep-alive>
+                  </transition>
+                </router-view>
+              </el-scrollbar>
             </div>
 
             <!-- 子应用挂载点 -->
@@ -151,7 +153,7 @@ import { mitt } from '@btc/shared-components';
 import { useBrowser } from '../../../composables/useBrowser';
 import { useSettingsState } from '../../others/btc-user-setting/composables';
 import { MenuThemeEnum, MenuTypeEnum } from '../../others/btc-user-setting/config/enums';
-import { useContentMount } from '@btc/shared-core';
+import { useContentMount, logger } from '@btc/shared-core';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -242,7 +244,7 @@ try {
   isDark = settingsState.isDark;
 } catch (error) {
   // 使用默认值
-  console.warn('[AppLayout] useSettingsState 初始化失败，使用默认值', error);
+  logger.warn('[AppLayout] useSettingsState 初始化失败，使用默认值', error);
   showCrumbs = ref(true);
   pageTransition = ref('fade');
   // menuType 已经在上面初始化为 ref('left')，不需要重新赋值
@@ -264,7 +266,7 @@ if (!menuType) {
 
 // 最终验证：确保 menuType 是一个有效的 ref
 if (typeof menuType.value === 'undefined') {
-  console.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
+  logger.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
   menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
 }
 
@@ -663,7 +665,7 @@ onMounted(() => {
   if (!(window as any).__APP_EMITTER__) {
     (window as any).__APP_EMITTER__ = emitter;
     if (import.meta.env.DEV) {
-      console.log('[AppLayout] onMounted: 重新设置事件总线到 window.__APP_EMITTER__');
+      logger.info('[AppLayout] onMounted: 重新设置事件总线到 window.__APP_EMITTER__');
     }
   }
 
@@ -672,7 +674,7 @@ onMounted(() => {
   emitter.on('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
     if (import.meta.env.DEV) {
-      console.log('[AppLayout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
+      logger.info('[AppLayout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
     }
   });
   // eslint-disable-next-line no-undef
@@ -720,7 +722,7 @@ onMounted(() => {
   window.addEventListener('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
     if (import.meta.env.DEV) {
-      console.log('[AppLayout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
+      logger.info('[AppLayout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
     }
   });
 
@@ -743,7 +745,7 @@ onMounted(() => {
     ([isUsing, shouldShow, menuTypeValue]) => {
       const shouldRender = !isUsing && shouldShow;
       if (!shouldRender && typeof window !== 'undefined' && !(window as any).__SIDEBAR_NOT_RENDERED_LOGGED__) {
-        console.warn('[AppLayout] Sidebar 未渲染', {
+        logger.warn('[AppLayout] Sidebar 未渲染', {
           isUsingLayoutApp: isUsing,
           shouldShowSidebar: shouldShow,
           menuType: menuTypeValue,

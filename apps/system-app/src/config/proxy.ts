@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 // Vite 代理配置类型
@@ -22,7 +23,7 @@ async function getBackendTarget() {
     const { envConfig } = await import('@btc/shared-core/configs/unified-env-config');
     return envConfig.api.backendTarget || 'http://10.80.9.76:8115';
   } catch (error) {
-    console.warn('[Proxy] 无法加载环境配置，使用默认值:', error);
+    logger.warn('[Proxy] 无法加载环境配置，使用默认值:', error);
     return 'http://10.80.9.76:8115';
   }
 }
@@ -196,7 +197,7 @@ const proxy: Record<string, string | ProxyOptions> = {
                 res.end(newBody);
               } catch (error) {
                 // eslint-disable-next-line i18n/no-chinese-character
-                console.error('[Proxy] ✗ 处理登录响应时出错:', error);
+                logger.error('[Proxy] ✗ 处理登录响应时出错:', error);
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
                 res.end(Buffer.concat(chunks));
               }
@@ -209,7 +210,7 @@ const proxy: Record<string, string | ProxyOptions> = {
 
           proxyRes.on('error', (err: Error) => {
             // eslint-disable-next-line i18n/no-chinese-character
-            console.error('[Proxy] ✗ 读取响应流时出错:', err);
+            logger.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
@@ -224,9 +225,9 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 处理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        console.error('[Proxy] Error:', err.message);
-        console.error('[Proxy] Request URL:', req.url);
-        console.error('[Proxy] Target:', backendTarget);
+        logger.error('[Proxy] Error:', err.message);
+        logger.error('[Proxy] Request URL:', req.url);
+        logger.error('[Proxy] Target:', backendTarget);
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',

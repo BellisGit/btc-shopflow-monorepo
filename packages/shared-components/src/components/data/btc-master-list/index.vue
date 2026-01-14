@@ -1,6 +1,6 @@
 <template>
   <div class="btc-master-list">
-    <div class="btc-master-list__header">
+    <div v-if="!hideHeader" class="btc-master-list__header">
       <el-text>{{ displayTitle }}</el-text>
 
       <div class="btc-master-list__op">
@@ -44,7 +44,7 @@
     </div>
 
     <div v-if="enableKeySearch" class="btc-master-list__search">
-      <el-input
+      <BtcInput
         v-model="keyWord"
         placeholder="搜索关键字"
         clearable
@@ -101,11 +101,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, defineComponent, getCurrentInstance } from 'vue';
 
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { Check, Close, MoreFilled, Search } from '@element-plus/icons-vue';
 // Refresh 未使用
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage, BtcInput } from '@btc/shared-components';
 
 // 空图标组件，用于隐藏展开/折叠图标
 const EmptyIcon = defineComponent({
@@ -179,6 +179,7 @@ interface Props {
   childrenField?: string;
   enableKeySearch?: boolean;
   hideExpandIcon?: boolean; // 是否隐藏展开/折叠图标
+  hideHeader?: boolean; // 是否隐藏顶部标题栏
   codeField?: string; // 指定 code 字段名（如 deptCode, domainCode 等），如果不指定则自动推断
 }
 
@@ -193,6 +194,7 @@ const props = withDefaults(defineProps<Props>(), {
   childrenField: 'children',
   enableKeySearch: false,
   hideExpandIcon: false,
+  hideHeader: false,
   codeField: undefined,
 });
 
@@ -386,7 +388,7 @@ async function refresh() {
     emit('load', list.value);
 
   } catch (error) {
-    console.error('加载数据失败:', error);
+    logger.error('加载数据失败:', error);
     BtcMessage.error('加载数据失败');
   } finally {
     loading.value = false;
@@ -702,6 +704,7 @@ defineExpose({
     &-label {
       display: flex;
       align-items: center;
+      justify-content: center;
       flex: 1;
       height: 100%;
       font-size: 14px;

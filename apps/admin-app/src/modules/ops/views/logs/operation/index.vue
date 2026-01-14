@@ -1,14 +1,14 @@
-﻿<template>
+<template>
   <!-- 操作日志：增加稳定容器，确保切换时不丢失高度计算上下文 -->
   <div class="logs-root">
   <BtcCrud ref="auditCrudRef" :service="auditService" :on-before-refresh="onBeforeRefresh" :auto-load="true" style="flex: 1; min-height: 0;">
-    <BtcRow>
+    <BtcCrudRow>
       <BtcRefreshBtn />
-      <BtcFlex1 />
-      <BtcSearchKey placeholder="搜索操作日志..." />
+      <BtcCrudFlex1 />
+      <BtcCrudSearchKey placeholder="搜索操作日志..." />
       <BtcCrudActions />
-    </BtcRow>
-    <BtcRow>
+    </BtcCrudRow>
+    <BtcCrudRow>
       <BtcTable
         ref="auditTableRef"
         :columns="auditColumns"
@@ -16,11 +16,11 @@
         :auto-height="false"
         :max-height="tableMaxHeight"
       />
-    </BtcRow>
-    <BtcRow>
-      <BtcFlex1 />
+    </BtcCrudRow>
+    <BtcCrudRow>
+      <BtcCrudFlex1 />
       <BtcPagination />
-    </BtcRow>
+    </BtcCrudRow>
   </BtcCrud>
   </div>
 </template>
@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onActivated, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey, BtcCrudActions } from '@btc/shared-components';
+import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcCrudRow, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions } from '@btc/shared-components';
 import { usePageColumns, getPageConfigFull } from '@btc/shared-core';
 import { service } from '@services/eps';
 

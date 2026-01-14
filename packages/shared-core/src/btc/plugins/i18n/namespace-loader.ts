@@ -1,3 +1,4 @@
+import { logger } from '../../../utils/logger';
 import type { LocaleMessages } from 'vue-i18n';
 
 // 临时类型定义，避免 VueI18n 命名空间问题
@@ -245,7 +246,7 @@ export class NamespaceI18nLoader {
     }
 
     // 未找到翻译时的处理
-    console.warn(`[i18n] Missing translation for key: ${key} in locale: ${locale}`);
+    logger.warn(`[i18n] Missing translation for key: ${key} in locale: ${locale}`);
 
     // 开发环境显示键名，生产环境返回友好提示
     if (process.env.NODE_ENV === 'development') {

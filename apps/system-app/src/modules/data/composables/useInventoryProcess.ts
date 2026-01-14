@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
@@ -115,7 +116,7 @@ export function useInventoryProcess() {
         ? statusResponse
         : statusResponse?.status || statusResponse?.checkStatus || statusResponse?.data?.status || statusResponse?.data?.checkStatus;
     } catch (error) {
-      console.error(`[InventoryProcess] Failed to refresh status for process ${processId}:`, error);
+      logger.error(`[InventoryProcess] Failed to refresh status for process ${processId}:`, error);
       return undefined;
     }
   };
@@ -174,7 +175,7 @@ export function useInventoryProcess() {
 
       processes.value = mappedList;
     } catch (error) {
-      console.error('[InventoryProcess] Load failed:', error);
+      logger.error('[InventoryProcess] Load failed:', error);
       message.error(t('process.load.failed') || '加载流程列表失败');
     } finally {
       loading.value = false;
@@ -231,7 +232,7 @@ export function useInventoryProcess() {
 
       message.success(t('process.start.success', { name: process.name }) || `流程 "${process.name}" 已开始`);
     } catch (error) {
-      console.error('[InventoryProcess] Start failed:', error);
+      logger.error('[InventoryProcess] Start failed:', error);
       message.error(t('process.start.failed') || '开始流程失败');
     } finally {
       loading.value = false;
@@ -269,7 +270,7 @@ export function useInventoryProcess() {
 
       message.success(t('process.pause.success', { name: process.name }) || `流程 "${process.name}" 已暂停`);
     } catch (error) {
-      console.error('[InventoryProcess] Pause failed:', error);
+      logger.error('[InventoryProcess] Pause failed:', error);
       message.error(t('process.pause.failed') || '暂停流程失败');
     } finally {
       loading.value = false;
@@ -307,7 +308,7 @@ export function useInventoryProcess() {
 
       message.success(t('process.resume.success', { name: process.name }) || `流程 "${process.name}" 已恢复`);
     } catch (error) {
-      console.error('[InventoryProcess] Resume failed:', error);
+      logger.error('[InventoryProcess] Resume failed:', error);
       message.error(t('process.resume.failed') || '恢复流程失败');
     } finally {
       loading.value = false;
@@ -352,7 +353,7 @@ export function useInventoryProcess() {
 
       message.success(t('process.end.success', { name: process.name }) || `流程 "${process.name}" 已结束`);
     } catch (error) {
-      console.error('[InventoryProcess] End failed:', error);
+      logger.error('[InventoryProcess] End failed:', error);
       message.error(t('process.end.failed') || '结束流程失败');
     } finally {
       loading.value = false;
@@ -375,7 +376,7 @@ export function useInventoryProcess() {
       // 处理响应数据，可能是在 data 字段中，也可能直接返回
       detailData.value = response?.data || response || null;
     } catch (error) {
-      console.error('[InventoryProcess] Load detail failed:', error);
+      logger.error('[InventoryProcess] Load detail failed:', error);
       message.error(t('process.detail.load.failed') || '加载详情失败');
       detailVisible.value = false;
     } finally {

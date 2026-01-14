@@ -2,6 +2,7 @@
  * CRUD Composable
  * 封装 CRUD 通用逻辑：列表加载、分页、搜索、增删改等
  */
+import { logger } from '../../utils/logger';
 
 import { ref, reactive, computed, shallowRef } from 'vue';
 import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
@@ -386,7 +387,7 @@ export function useCrud<T = Record<string, unknown>>(
     // 检查 row 是否有有效的 id
     if (!row || row.id === undefined || row.id === null) {
       const errorMsg = '删除失败：行数据缺少有效的 id 字段';
-      console.error('[useCrud]', errorMsg, row);
+      logger.error('[useCrud]', errorMsg, row);
       onError?.(new Error(errorMsg));
       return;
     }
@@ -406,7 +407,7 @@ export function useCrud<T = Record<string, unknown>>(
       onAfterDelete?.();
       loadData();
     } catch (error) {
-      console.error('[useCrud] Delete operation failed:', error);
+      logger.error('[useCrud] Delete operation failed:', error);
       onError?.(error);
     }
   };
@@ -417,7 +418,7 @@ export function useCrud<T = Record<string, unknown>>(
   const handleMultiDelete = async () => {
     if (selection.value.length === 0) {
       const errorMsg = '请选择要删除的数据';
-      console.warn('[useCrud]', errorMsg);
+      logger.warn('[useCrud]', errorMsg);
       onError?.(new Error(errorMsg));
       return;
     }
@@ -439,7 +440,7 @@ export function useCrud<T = Record<string, unknown>>(
       clearSelection();
       loadData();
     } catch (error) {
-      console.error('[useCrud] Multi-delete operation failed:', error);
+      logger.error('[useCrud] Multi-delete operation failed:', error);
       onError?.(error);
     }
   };

@@ -88,6 +88,9 @@
                                                                    ],
                                           "@btc/auth-shared/*":  [
                                                                        "../../auth/shared/*"
+                                                                   ],
+                                          "@workspace/locales/*":  [
+                                                                       "../../locales/*"
                                                                    ]
                                       }
                         },

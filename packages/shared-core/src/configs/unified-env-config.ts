@@ -2,6 +2,7 @@
  * 统一的环境配置系统
  * 支持通过 .env 切换配置方案，但内部规则不变
  */
+import { logger } from '../utils/logger';
 
 import { getAllApps, getAppById } from './app-scanner';
 import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost, isSpecialAppById } from './app-env.config';
@@ -299,7 +300,7 @@ export function getEnvironment(): Environment {
     // 如果 getAllPrePorts 或 getAllDevPorts 抛出错误（如 APP_ENV_CONFIGS 未初始化）
     // 记录警告并继续使用其他方法判断环境
     if (import.meta.env.DEV) {
-      console.warn('[unified-env-config] getAllPrePorts/getAllDevPorts 调用失败，使用备用方法判断环境:', error);
+      logger.warn('[unified-env-config] getAllPrePorts/getAllDevPorts 调用失败，使用备用方法判断环境:', error);
     }
   }
 
@@ -693,7 +694,7 @@ export function getCurrentSubApp(): string | null {
 export function getSubAppEntry(appId: string): string {
   const app = getAppById(appId);
   if (!app) {
-    console.warn(`[unified-env-config] 未找到应用: ${appId}`);
+    logger.warn(`[unified-env-config] 未找到应用: ${appId}`);
     return `/${appId}/`;
   }
 
@@ -702,7 +703,7 @@ export function getSubAppEntry(appId: string): string {
   const appEnvConfig = getAppConfig(`${appId}-app`);
 
   if (!appEnvConfig) {
-    console.warn(`[unified-env-config] 未找到应用环境配置: ${appId}-app`);
+    logger.warn(`[unified-env-config] 未找到应用环境配置: ${appId}-app`);
     return `/${appId}/`;
   }
 
@@ -742,7 +743,7 @@ export function getSubAppEntry(appId: string): string {
 export function getSubAppActiveRule(appId: string): string | ((location: Location) => boolean) {
   const app = getAppById(appId);
   if (!app) {
-    console.warn(`[unified-env-config] 未找到应用: ${appId}`);
+    logger.warn(`[unified-env-config] 未找到应用: ${appId}`);
     return `/${appId}`;
   }
 

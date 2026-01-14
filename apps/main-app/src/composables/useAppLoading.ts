@@ -2,6 +2,7 @@
  * 应用 Loading 状态管理
  * 统一管理主应用切换子应用时的 Loading 状态
  */
+import { logger } from '@btc/shared-core';
 
 import { ref } from 'vue';
 import type { MicroAppConfig } from '../micro/apps';
@@ -84,7 +85,7 @@ export function retryLoadingApp() {
       window.location.reload();
     }
   } catch (error) {
-    console.error('[useAppLoading] 重试加载失败:', error);
+    logger.error('[useAppLoading] 重试加载失败:', error);
     // 如果出错，刷新页面
     window.location.reload();
   }

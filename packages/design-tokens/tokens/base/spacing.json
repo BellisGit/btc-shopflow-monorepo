@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.style-dictionary.io/v4.0.0/schema.json",
+  "spacing": {
+    "crud": {
+      "gap": {
+        "value": "10px",
+        "type": "spacing",
+        "description": "CRUD 组件行之间的垂直间距"
+      },
+      "opWidth": {
+        "value": "220px",
+        "type": "sizing",
+        "description": "CRUD 操作列的固定宽度"
+      },
+      "searchWidth": {
+        "value": "{spacing.crud.opWidth}",
+        "type": "sizing",
+        "description": "CRUD 搜索框的宽度，默认继承操作列宽度"
+      }
+    }
+  }
+}

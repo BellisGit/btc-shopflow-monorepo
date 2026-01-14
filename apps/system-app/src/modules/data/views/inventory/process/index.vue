@@ -1,9 +1,9 @@
 <template>
-  <div class="inventory-process-page">
+  <div class="page">
     <!-- 顶部工具栏 -->
-    <div class="inventory-process-page__toolbar">
+    <div class="inventory-process__toolbar">
       <!-- 左侧：刷新按钮 -->
-      <div class="inventory-process-page__toolbar-left">
+      <div class="inventory-process__toolbar-left">
         <BtcTableButton
           v-if="isMinimal"
           :config="refreshButtonConfig"
@@ -20,7 +20,7 @@
       </div>
 
       <!-- 右侧：搜索和筛选 -->
-      <div class="inventory-process-page__toolbar-right">
+      <div class="inventory-process__toolbar-right">
         <el-input
           v-model="searchKeyword"
           placeholder="搜索流程名称..."
@@ -47,7 +47,7 @@
     </div>
 
     <!-- 流程卡片列表 -->
-    <div v-loading="loading" class="inventory-process-page__grid">
+    <div v-loading="loading" class="inventory-process__grid">
       <BtcProcessCard
         v-for="process in filteredProcesses"
         :key="process.id"
@@ -64,7 +64,7 @@
     <el-empty
       v-if="!loading && filteredProcesses.length === 0"
       description="暂无流程数据"
-      class="inventory-process-page__empty"
+      class="inventory-process__empty"
     />
 
     <!-- 详情对话框 -->
@@ -201,22 +201,7 @@ const refreshButtonConfig = computed<BtcTableButtonConfig>(() => ({
 </script>
 
 <style lang="scss" scoped>
-.inventory-process-page {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  box-sizing: border-box;
-  overflow: hidden;
 
-  &__toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    flex-shrink: 0;
-    height: auto;
-  }
 
   &__toolbar-left {
     display: flex;
@@ -248,7 +233,7 @@ const refreshButtonConfig = computed<BtcTableButtonConfig>(() => ({
 }
 
 @media (max-width: 768px) {
-  .inventory-process-page__grid {
+  .inventory-process__grid {
     grid-template-columns: 1fr;
   }
 }

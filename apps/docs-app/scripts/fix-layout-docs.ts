@@ -1,6 +1,7 @@
 /**
  * 批量修复 Layout 组件文档的标准模板部分
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -51,7 +52,7 @@ import ComponentName from '@/layout/component-name'
 
 files.forEach(file => {
   const filePath = path.join(docsRoot, file);
-  console.log(`\n修复: ${file}`);
+  logger.info(`\n修复: ${file}`);
 
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -59,7 +60,7 @@ files.forEach(file => {
     // 分离 frontmatter 和内容
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
     if (!frontmatterMatch) {
-      console.log('  ⚠️  未找到 frontmatter');
+      logger.info('  ⚠️  未找到 frontmatter');
       return;
     }
 
@@ -83,12 +84,12 @@ ${description}
 ${standardTemplate}`;
 
     fs.writeFileSync(filePath, newContent, 'utf-8');
-    console.log('  ✅ 修复完成');
+    logger.info('  ✅ 修复完成');
 
   } catch (error) {
-    console.error(`  ❌ 修复失败:`, error);
+    logger.error(`  ❌ 修复失败:`, error);
   }
 });
 
-console.log('\n\n🎉 Layout 组件文档修复完成！');
+logger.info('\n\n🎉 Layout 组件文档修复完成！');
 

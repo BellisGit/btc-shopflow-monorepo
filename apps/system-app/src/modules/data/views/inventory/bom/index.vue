@@ -1,6 +1,6 @@
 <template>
-  <div class="inventory-bom-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="domainService"
       :right-service="wrappedBomService"
@@ -29,16 +29,16 @@
           {{ t('ui.export') }}
         </el-button>
       </template>
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
+import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
@@ -114,7 +114,7 @@ const domainService = {
         return Array.from(domainMap.values());
       }
     } catch (error) {
-      console.error('[InventoryBom] Failed to load domains from position service:', error);
+      logger.error('[InventoryBom] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -134,7 +134,7 @@ const wrappedBomService = {
     if (finalParams.keyword !== undefined && finalParams.keyword !== null) {
       const keyword = finalParams.keyword;
 
-      // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
+      // 如果 keyword 是对象且包含 ids 字段（BtcMasterTableGroup 的标准格式）
       if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
         const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
         // 取第一个 ID 作为 domainId
@@ -256,7 +256,7 @@ const handleImport = async (
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
-    console.error('[InventoryBom] import failed:', error);
+    logger.error('[InventoryBom] import failed:', error);
     const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.data_source.bom.import.failed');
     message.error(errorMsg);
     done();
@@ -356,7 +356,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryBom] Export failed:', error);
+    logger.error('[InventoryBom] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {
@@ -371,8 +371,5 @@ const bomFormItems = computed(() => formItems.value);
 </script>
 
 <style lang="scss" scoped>
-.inventory-bom-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

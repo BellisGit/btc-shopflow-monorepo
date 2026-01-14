@@ -2,6 +2,7 @@
  * 文件类型检测 composable
  * 封装 file-type 库，结合文件扩展名识别纯文本文件
  */
+import { logger } from '../logger';
 
 import { fileTypeFromBlob, fileTypeFromBuffer } from 'file-type';
 
@@ -186,7 +187,7 @@ export async function detectFileType(
     }
   } catch (error) {
     // file-type 检测失败，继续使用扩展名匹配
-    console.warn('[useFileType] file-type detection failed:', error);
+    logger.warn('[useFileType] file-type detection failed:', error);
   }
   
   // 3. 回退到扩展名匹配（后备方案）
@@ -238,7 +239,7 @@ export async function detectFileTypeFromBuffer(
       };
     }
   } catch (error) {
-    console.warn('[useFileType] file-type detection failed:', error);
+    logger.warn('[useFileType] file-type detection failed:', error);
   }
   
   // 3. 回退到扩展名匹配

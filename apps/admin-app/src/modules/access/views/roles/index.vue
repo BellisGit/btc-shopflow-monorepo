@@ -1,6 +1,6 @@
 <template>
-  <div class="roles-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="services.sysdomain"
       :right-service="services.sysrole"
@@ -15,14 +15,14 @@
       :left-size="'small'"
       @load="handleLoad"
     >
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
-import { BtcTableGroup } from '@btc/shared-components';
-import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n, mergeEpsDictIntoColumns, mergeEpsDictIntoFormItems } from '@btc/shared-core';
+import { BtcMasterTableGroup } from '@btc/shared-components';
+import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n, mergeEpsDictIntoColumns, mergeEpsDictIntoFormItems, logger } from '@btc/shared-core';
 import { service, list } from '@services/eps';
 
 const { t } = useI18n();
@@ -129,7 +129,7 @@ async function loadRoleOptions() {
     const response = await services.sysrole?.list({});
     roleOptions.value = response?.list || [];
   } catch (error) {
-    console.error('Failed to load role data:', error);
+    logger.error('Failed to load role data:', error);
   }
 }
 
@@ -191,7 +191,7 @@ async function handleRoleInfo(role: any, { next, done }: any) {
 
     done(roleDetail);
   } catch (error) {
-    console.error('Failed to get role details:', error);
+    logger.error('Failed to get role details:', error);
     done(role);
   }
 }
@@ -204,8 +204,5 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.roles-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

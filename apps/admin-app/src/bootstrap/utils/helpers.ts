@@ -3,7 +3,7 @@
  * 提供启动过程中的各种辅助函数
  */
 
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 
 /**
  * 延迟执行函数
@@ -23,7 +23,7 @@ export const safeExecute = async <T>(
     return await fn();
   } catch (error) {
     const { t } = useI18n();
-    console.error(errorMessage || t('common.error.failed'), error);
+    logger.error(errorMessage || t('common.error.failed'), error);
     return null;
   }
 };

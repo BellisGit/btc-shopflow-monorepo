@@ -1,6 +1,7 @@
 /**
  * 清理构建目录插件
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import { resolve } from 'path';
@@ -11,11 +12,11 @@ import { existsSync, rmSync } from 'node:fs';
  */
 function safeLog(message: string) {
   try {
-    console.log(message);
+    logger.info(message);
   } catch (error) {
     // 如果输出失败（可能是编码问题），使用纯文本输出
     // eslint-disable-next-line no-control-regex
-    console.log(message.replace(/[^\x00-\x7F]/g, ''));
+    logger.info(message.replace(/[^\x00-\x7F]/g, ''));
   }
 }
 
@@ -24,11 +25,11 @@ function safeLog(message: string) {
  */
 function safeWarn(message: string) {
   try {
-    console.warn(message);
+    logger.warn(message);
   } catch (error) {
     // 如果输出失败（可能是编码问题），使用纯文本输出
     // eslint-disable-next-line no-control-regex
-    console.warn(message.replace(/[^\x00-\x7F]/g, ''));
+    logger.warn(message.replace(/[^\x00-\x7F]/g, ''));
   }
 }
 

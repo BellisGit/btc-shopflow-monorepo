@@ -6,6 +6,7 @@
  * 统计全局 TypeScript 错误总数以及各种问题分类数量
  * 确保统计结果与 tsc:all 命令的输出一致
  */
+import { logger } from '../../utils/logger.mjs';
 
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -15,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '../..');
 
-console.log('正在运行 TypeScript 类型检查...\n');
+logger.info('正在运行 TypeScript 类型检查...\n');
 
 // 使用 spawn 确保捕获所有输出（包括 stdout 和 stderr）
 const child = spawn('node', ['scripts/turbo.js', 'run', 'type-check'], {
@@ -47,7 +48,7 @@ child.on('close', (code) => {
 
 // 处理错误
 child.on('error', (error) => {
-  console.error('执行命令时出错:', error.message);
+  logger.error('执行命令时出错:', error.message);
   if (!outputComplete) {
     outputComplete = true;
     processStats(fullOutput, 1);
@@ -181,29 +182,29 @@ function processStats(fullOutput, exitCode) {
   });
   
   // 输出统计结果
-  console.log('\n' + '='.repeat(60));
-  console.log('TypeScript 错误统计报告');
-  console.log('='.repeat(60));
-  console.log(`\n总错误数: ${totalErrors}`);
-  console.log(`总警告数: ${totalWarnings}`);
-  console.log(`总问题数: ${totalErrors + totalWarnings}`);
+  logger.info('\n' + '='.repeat(60));
+  logger.info('TypeScript 错误统计报告');
+  logger.info('='.repeat(60));
+  logger.info(`\n总错误数: ${totalErrors}`);
+  logger.info(`总警告数: ${totalWarnings}`);
+  logger.info(`总问题数: ${totalErrors + totalWarnings}`);
   
-  console.log('\n按错误类型分类:');
-  console.log('-'.repeat(60));
+  logger.info('\n按错误类型分类:');
+  logger.info('-'.repeat(60));
   const sortedErrorTypes = Object.entries(errorTypes)
     .filter(([_, count]) => count > 0)
     .sort(([_, a], [__, b]) => b - a);
   
   if (sortedErrorTypes.length > 0) {
     sortedErrorTypes.forEach(([type, count]) => {
-      console.log(`  ${type.padEnd(20)}: ${count}`);
+      logger.info(`  ${type.padEnd(20)}: ${count}`);
     });
   } else {
-    console.log('  暂无错误');
+    logger.info('  暂无错误');
   }
   
-  console.log('\n按应用分类:');
-  console.log('-'.repeat(60));
+  logger.info('\n按应用分类:');
+  logger.info('-'.repeat(60));
   const sortedApps = Object.entries(appErrors)
     .filter(([_, stats]) => stats.errors > 0 || stats.warnings > 0)
     .sort(([_, a], [__, b]) => (b.errors + b.warnings) - (a.errors + a.warnings));
@@ -211,17 +212,17 @@ function processStats(fullOutput, exitCode) {
   if (sortedApps.length > 0) {
     sortedApps.forEach(([app, stats]) => {
       const total = stats.errors + stats.warnings;
-      console.log(`  ${app.padEnd(20)}: ${stats.errors} 个错误, ${stats.warnings} 个警告 (总计: ${total})`);
+      logger.info(`  ${app.padEnd(20)}: ${stats.errors} 个错误, ${stats.warnings} 个警告 (总计: ${total})`);
     });
   } else {
-    console.log('  暂无应用错误数据');
+    logger.info('  暂无应用错误数据');
   }
   
-  console.log('\n' + '='.repeat(60));
+  logger.info('\n' + '='.repeat(60));
   
   // 验证：确保统计的错误数与实际匹配的错误数一致
   if (totalErrors !== errorMatches.length) {
-    console.log(`\n⚠ 警告: 统计的错误数 (${totalErrors}) 与匹配的错误数 (${errorMatches.length}) 不一致`);
+    logger.info(`\n⚠ 警告: 统计的错误数 (${totalErrors}) 与匹配的错误数 (${errorMatches.length}) 不一致`);
   }
   
   // 如果有错误，返回非零退出码

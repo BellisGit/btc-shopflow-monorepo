@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-page">
+  <div class="page">
     <btc-card v-loading="loading" class="profile-card">
       <template #title>
         <div class="profile-card__header-left">
@@ -61,6 +61,8 @@ import { useProfileForm } from './composables/form';
 import ProfileCard from './components/ProfileCard.vue';
 import BtcIdentityVerifyWrapper from './components/BtcIdentityVerifyWrapper.vue';
 import { BtcMessage } from '@btc/shared-components';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'Profile'
@@ -204,7 +206,7 @@ const handleAvatarChange = async (avatarUrl: string) => {
     // 重新加载用户信息
     await loadUserInfo(showFullInfo.value);
   } catch (error: any) {
-    console.error('保存头像失败:', error);
+    logger.error('保存头像失败:', error);
     BtcMessage.error(error?.message || '保存头像失败');
   }
 };

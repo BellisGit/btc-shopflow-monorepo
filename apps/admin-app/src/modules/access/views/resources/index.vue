@@ -1,7 +1,7 @@
-﻿<template>
-  <div class="resources-page">
+<template>
+  <div class="page">
     <BtcCrud ref="crudRef" :service="crudResourceService">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <el-button
@@ -16,19 +16,19 @@
             </span>
           </el-button>
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable :columns="columns" border />
-      </BtcRow>
+      </BtcCrudRow>
 
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <BtcUpsert :items="formItems" />
     </BtcCrud>
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull, logger } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import {
   BtcCrud,
@@ -45,12 +45,12 @@ import {
   BtcUpsert,
   BtcPagination,
   BtcRefreshBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcCrudActions,
+  BtcSvg,
 } from '@btc/shared-components';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
@@ -87,7 +87,7 @@ const handleSync = async () => {
     }
   } catch (error) {
     message.error(t('access.resources.sync_failed'));
-    console.error('Data sync failed:', error);
+    logger.error('Data sync failed:', error);
   } finally {
     syncLoading.value = false;
   }
@@ -95,8 +95,5 @@ const handleSync = async () => {
 </script>
 
 <style lang="scss" scoped>
-.resources-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

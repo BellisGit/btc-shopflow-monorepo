@@ -4,6 +4,7 @@
  * 由于子应用将这些模块标记为 external，Rollup 不会解析它们，导致运行时浏览器无法解析别名
  * 这个插件会在构建时将这些别名转换为运行时解析逻辑
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 
@@ -114,7 +115,7 @@ export function resolveExternalImportsPlugin(options?: ResolveExternalImportsOpt
     apply: 'build',
     buildStart() {
       if (enabled) {
-        console.log(`[resolve-external-imports] 已启用，将解析外部模块: ${externals.join(', ')}`);
+        logger.info(`[resolve-external-imports] 已启用，将解析外部模块: ${externals.join(', ')}`);
       }
     },
     // 在 transform 阶段处理源码，确保在 Vite 的预加载机制之前处理
@@ -167,7 +168,7 @@ export function resolveExternalImportsPlugin(options?: ResolveExternalImportsOpt
       });
 
       if (modified) {
-        console.log(`[resolve-external-imports] 已转换文件 ${id.split('/').slice(-2).join('/')} 中的外部模块动态导入`);
+        logger.info(`[resolve-external-imports] 已转换文件 ${id.split('/').slice(-2).join('/')} 中的外部模块动态导入`);
       }
 
       return modified ? { code: newCode, map: null } : null;
@@ -244,7 +245,7 @@ export function resolveExternalImportsPlugin(options?: ResolveExternalImportsOpt
       });
 
       if (modified) {
-        console.log(`[resolve-external-imports] 已转换 chunk ${chunk.fileName} 中的外部模块动态导入`);
+        logger.info(`[resolve-external-imports] 已转换 chunk ${chunk.fileName} 中的外部模块动态导入`);
       }
 
       return modified ? { code: newCode, map: null } : null;

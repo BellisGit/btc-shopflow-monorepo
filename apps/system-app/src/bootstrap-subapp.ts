@@ -1,4 +1,5 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import { logger } from '@btc/shared-core';
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
 import '@btc/shared-components/styles/index.scss';
@@ -64,7 +65,7 @@ export const createSystemApp = async (props: QiankunProps = {}): Promise<SystemA
     try {
       domainCacheModule = await import('./utils/domain-cache');
     } catch (error) {
-      console.warn('[system-app] Failed to import domain-cache module:', error);
+      logger.warn('[system-app] Failed to import domain-cache module:', error);
     }
 
     await setupSubAppGlobals({
@@ -104,7 +105,7 @@ export const mountSystemApp = async (context: SystemAppContext, props: QiankunPr
       }
     } catch (error) {
       // 注意：不能在非 setup 函数中调用 useI18n()，使用 tSync 或直接使用字符串
-      console.warn('[system-app] 发送国际化消息失败:', error);
+      logger.warn('[system-app] 发送国际化消息失败:', error);
     }
   }
 

@@ -90,7 +90,7 @@ defineOptions({
 });
 
 import { ref, computed, watch } from 'vue';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
 import { Check } from '@element-plus/icons-vue';
 import type { ThemeConfig } from '@btc/shared-core';
 import { BtcIconButton, BtcMessage } from '@btc/shared-components';
@@ -171,7 +171,7 @@ function handleThemeClick(themeConfig: ThemeConfig) {
 
 // handleDarkToggle 在模板中使用（第16行）
 function handleDarkToggle(event?: MouseEvent) {
-  console.log('[ThemeSwitcher] handleDarkToggle 被调用', {
+  logger.info('[ThemeSwitcher] handleDarkToggle 被调用', {
     hasEvent: !!event,
     currentIsDark: theme?.isDark?.value,
     timestamp: new Date().toISOString()
@@ -180,23 +180,23 @@ function handleDarkToggle(event?: MouseEvent) {
   if (!event) {
     // 如果没有事件，直接调用（不带动画）
     if (theme?.toggleDark) {
-      console.log('[ThemeSwitcher] 无事件，直接调用 toggleDark');
+      logger.info('[ThemeSwitcher] 无事件，直接调用 toggleDark');
       theme.toggleDark();
     }
     return;
   }
 
   if (!theme || !theme.toggleDark) {
-    console.warn('[ThemeSwitcher] theme 或 toggleDark 不存在', { theme: !!theme, toggleDark: !!theme?.toggleDark });
+    logger.warn('[ThemeSwitcher] theme 或 toggleDark 不存在', { theme: !!theme, toggleDark: !!theme?.toggleDark });
     return;
   }
 
-  console.log('[ThemeSwitcher] 调用 theme.toggleDark(event)');
+  logger.info('[ThemeSwitcher] 调用 theme.toggleDark(event)');
   theme.toggleDark(event);
 
   // 延迟检查状态变化
   setTimeout(() => {
-    console.log('[ThemeSwitcher] toggleDark 执行后状态', {
+    logger.info('[ThemeSwitcher] toggleDark 执行后状态', {
       isDark: theme?.isDark?.value,
       htmlHasDark: document.documentElement.classList.contains('dark'),
       timestamp: new Date().toISOString()

@@ -1,6 +1,7 @@
 /**
  * 二维码登录相关工具函数
  */
+import { logger } from '@btc/shared-core';
 
 import { ref, reactive } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
@@ -140,7 +141,7 @@ export function createQrCodePoller(
           }
         }
       } catch (error) {
-        console.error('轮询二维码状态失败', error);
+        logger.error('轮询二维码状态失败', error);
       }
     }, 2000);
   };

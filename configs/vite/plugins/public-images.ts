@@ -3,6 +3,7 @@
  * 将 public 目录中的图片文件打包到 assets 目录并添加哈希值
  * 特殊处理 logo.png：保持在根目录，文件名不变
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import type { OutputOptions, OutputBundle } from 'rollup';
@@ -48,7 +49,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       for (const file of files) {
         // 跳过排除的文件
         if (excludedFiles.includes(file)) {
-          console.log(`[public-images-to-assets] ⏭️  跳过 ${file}（统一使用 logo.png 作为 favicon）`);
+          logger.info(`[public-images-to-assets] ⏭️  跳过 ${file}（统一使用 logo.png 作为 favicon）`);
           continue;
         }
         
@@ -56,7 +57,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         if (imageExtensions.includes(ext)) {
           // 根目录图片需要特殊处理：保持在根目录，文件名不变，不使用哈希值
           if (rootImageFiles.includes(file)) {
-            console.log(`[public-images-to-assets] 📦 处理 ${file}，将复制到根目录（无哈希值）`);
+            logger.info(`[public-images-to-assets] 📦 处理 ${file}，将复制到根目录（无哈希值）`);
             // 记录文件的路径，在 writeBundle 阶段复制到根目录
             publicImageFiles.set(file, join(publicDir, file));
             continue;
@@ -77,7 +78,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
               source: fileContent,
             });
             emittedFiles.set(file, referenceId);
-            console.log(`[public-images-to-assets] 📦 将 ${file} 打包 (referenceId: ${referenceId})`);
+            logger.info(`[public-images-to-assets] 📦 将 ${file} 打包 (referenceId: ${referenceId})`);
           }
         }
       }
@@ -130,7 +131,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
             return `export default "/${rootFile}";`;
           }
         }
-        console.warn(`[public-images-to-assets] ⚠️  无法提取原始路径，跳过: ${id}`);
+        logger.warn(`[public-images-to-assets] ⚠️  无法提取原始路径，跳过: ${id}`);
         return null;
       }
 
@@ -150,21 +151,21 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
     },
     generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       const bundleAssets = Object.entries(bundle).filter(([_, chunk]) => (chunk as any).type === 'asset');
-      console.log(`[public-images-to-assets] 📋 bundle 中的资源文件数量: ${bundleAssets.length}`);
+      logger.info(`[public-images-to-assets] 📋 bundle 中的资源文件数量: ${bundleAssets.length}`);
 
-      console.log(`[public-images-to-assets] 🔍 开始处理 ${emittedFiles.size} 个已发出的文件`);
+      logger.info(`[public-images-to-assets] 🔍 开始处理 ${emittedFiles.size} 个已发出的文件`);
       for (const [originalFile, referenceId] of emittedFiles.entries()) {
         try {
           const actualFileName = (this as any).getFileName(referenceId);
 
           if (!actualFileName) {
-            console.warn(`[public-images-to-assets] ⚠️  无法获取 ${originalFile} 的文件名 (referenceId: ${referenceId})`);
+            logger.warn(`[public-images-to-assets] ⚠️  无法获取 ${originalFile} 的文件名 (referenceId: ${referenceId})`);
             continue;
           }
 
           const assetChunk = bundle[actualFileName];
           if (!assetChunk || assetChunk.type !== 'asset') {
-            console.warn(`[public-images-to-assets] ⚠️  在 bundle 中未找到 ${actualFileName} (原始文件: ${originalFile})`);
+            logger.warn(`[public-images-to-assets] ⚠️  在 bundle 中未找到 ${actualFileName} (原始文件: ${originalFile})`);
             continue;
           }
 
@@ -172,16 +173,16 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
           // Rollup 会将文件放在 assets 目录，所以路径应该是 assets/filename
           const fileNameWithPath = actualFileName; // 保持原始路径，包括 assets/ 前缀
           imageMap.set(originalFile, fileNameWithPath);
-          console.log(`[public-images-to-assets] ✅ ${originalFile} -> ${fileNameWithPath} (Rollup 生成的文件名)`);
+          logger.info(`[public-images-to-assets] ✅ ${originalFile} -> ${fileNameWithPath} (Rollup 生成的文件名)`);
         } catch (error) {
-          console.warn(`[public-images-to-assets] ⚠️  处理 ${originalFile} 时出错:`, error);
+          logger.warn(`[public-images-to-assets] ⚠️  处理 ${originalFile} 时出错:`, error);
         }
       }
 
       if (imageMap.size === 0) {
-        console.warn(`[public-images-to-assets] ⚠️  imageMap 为空，可能 emitFile 没有成功执行`);
+        logger.warn(`[public-images-to-assets] ⚠️  imageMap 为空，可能 emitFile 没有成功执行`);
       } else {
-        console.log(`[public-images-to-assets] 📝 imageMap 内容:`, Array.from(imageMap.entries()).map(([k, v]) => `${k} -> ${v}`).join(', '));
+        logger.info(`[public-images-to-assets] 📝 imageMap 内容:`, Array.from(imageMap.entries()).map(([k, v]) => `${k} -> ${v}`).join(', '));
       }
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
@@ -205,7 +206,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
 
           if (modified) {
             c.code = newCode;
-            console.log(`[public-images-to-assets] 🔄 更新 ${fileName} 中的图片引用`);
+            logger.info(`[public-images-to-assets] 🔄 更新 ${fileName} 中的图片引用`);
           }
         } else if (c.type === 'asset' && fileName.endsWith('.css') && (c as any).source) {
           let modified = false;
@@ -226,7 +227,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
             if (assetsPattern.test(newSource)) {
               newSource = newSource.replace(assetsPattern, rootPath);
               modified = true;
-              console.log(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的根目录图片引用: /assets/${rootFile} -> ${rootPath}`);
+              logger.info(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的根目录图片引用: /assets/${rootFile} -> ${rootPath}`);
             }
             // 也匹配直接的根路径引用（已经是根路径，不需要修改）
             const rootPattern = new RegExp(`url\\(["']?${rootPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\?[^"')]*)?["']?\\)`, 'g');
@@ -266,7 +267,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                   return match.replace(originalPath, newPath).replace(/\?[^)]*/, query ? query : '');
                 });
                 modified = true;
-                console.log(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的引用: ${originalPath} -> ${newPath}`);
+                logger.info(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的引用: ${originalPath} -> ${newPath}`);
               }
             }
           }
@@ -288,9 +289,9 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
           try {
             const fileContent = readFileSync(filePath);
             writeFileSync(fileDest, fileContent);
-            console.log(`[public-images-to-assets] ✅ 已复制 ${rootFile} 到根目录: ${fileDest}`);
+            logger.info(`[public-images-to-assets] ✅ 已复制 ${rootFile} 到根目录: ${fileDest}`);
           } catch (error) {
-            console.warn(`[public-images-to-assets] ⚠️  复制 ${rootFile} 失败:`, error);
+            logger.warn(`[public-images-to-assets] ⚠️  复制 ${rootFile} 失败:`, error);
           }
         }
       }
@@ -304,17 +305,17 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         try {
           const fileContent = readFileSync(bridgeHtmlPath);
           writeFileSync(bridgeHtmlDest, fileContent);
-          console.log(`[public-images-to-assets] ✅ 已复制 bridge.html 到根目录: ${bridgeHtmlDest}`);
+          logger.info(`[public-images-to-assets] ✅ 已复制 bridge.html 到根目录: ${bridgeHtmlDest}`);
         } catch (error) {
-          console.error(`[public-images-to-assets] ❌ 复制 bridge.html 失败:`, error);
+          logger.error(`[public-images-to-assets] ❌ 复制 bridge.html 失败:`, error);
           throw error; // 抛出错误，确保构建失败
         }
       } else {
         // bridge.html 不存在，检查是否是 main-app（应该存在）
         const appName = appDir.split(/[/\\]/).pop() || '';
         if (appName === 'main-app') {
-          console.warn(`[public-images-to-assets] ⚠️  警告: main-app 的 public/bridge.html 不存在！`);
-          console.warn(`[public-images-to-assets] ⚠️  这会导致跨子域通信失败。请确保 bridge.html 存在于 public 目录。`);
+          logger.warn(`[public-images-to-assets] ⚠️  警告: main-app 的 public/bridge.html 不存在！`);
+          logger.warn(`[public-images-to-assets] ⚠️  这会导致跨子域通信失败。请确保 bridge.html 存在于 public 目录。`);
         }
         // 其他应用不需要 bridge.html（它们访问主域的 bridge.html）
       }
@@ -347,7 +348,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
           if (html.includes(originalPath)) {
             html = html.replace(new RegExp(originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), newPath);
             modified = true;
-            console.log(`[public-images-to-assets] 🔄 更新 HTML 中的引用: ${originalPath} -> ${newPath}`);
+            logger.info(`[public-images-to-assets] 🔄 更新 HTML 中的引用: ${originalPath} -> ${newPath}`);
           }
         }
 
@@ -381,7 +382,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
             if (assetsPattern.test(content)) {
               content = content.replace(assetsPattern, rootPath);
               modified = true;
-              console.log(`[public-images-to-assets] 🔄 更新 ${file} 中的根目录图片引用: /assets/${rootFile} -> ${rootPath}`);
+              logger.info(`[public-images-to-assets] 🔄 更新 ${file} 中的根目录图片引用: /assets/${rootFile} -> ${rootPath}`);
             }
           }
 
@@ -425,7 +426,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                   });
                 }
                 modified = true;
-                console.log(`[public-images-to-assets] 🔄 更新 ${file} 中的引用: ${originalPath} -> ${newPath}`);
+                logger.info(`[public-images-to-assets] 🔄 更新 ${file} 中的引用: ${originalPath} -> ${newPath}`);
               }
             }
           }
@@ -447,18 +448,18 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         // 检查文件是否在 assets 目录或根目录
         const expectedPath = join(outputDir, hashedFile);
         if (existsSync(expectedPath)) {
-          console.log(`[public-images-to-assets] ✅ 文件已正确生成: ${hashedFile}`);
+          logger.info(`[public-images-to-assets] ✅ 文件已正确生成: ${hashedFile}`);
         } else {
           // 尝试在根目录查找（如果 hashedFile 不包含 assets/）
           const rootPath = hashedFile.startsWith('assets/')
             ? join(outputDir, hashedFile.replace('assets/', ''))
             : join(outputDir, hashedFile);
           if (existsSync(rootPath)) {
-            console.log(`[public-images-to-assets] ✅ 文件在根目录: ${hashedFile.replace('assets/', '')}`);
+            logger.info(`[public-images-to-assets] ✅ 文件在根目录: ${hashedFile.replace('assets/', '')}`);
           } else {
-            console.warn(`[public-images-to-assets] ⚠️  文件不存在: ${hashedFile} (原始文件: ${originalFile})`);
-            console.warn(`[public-images-to-assets]   检查路径: ${expectedPath}`);
-            console.warn(`[public-images-to-assets]   检查路径: ${rootPath}`);
+            logger.warn(`[public-images-to-assets] ⚠️  文件不存在: ${hashedFile} (原始文件: ${originalFile})`);
+            logger.warn(`[public-images-to-assets]   检查路径: ${expectedPath}`);
+            logger.warn(`[public-images-to-assets]   检查路径: ${rootPath}`);
           }
         }
       }

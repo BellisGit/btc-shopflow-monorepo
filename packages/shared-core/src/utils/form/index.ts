@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 /**
  * Form Hook 工具
  * 用于表单数据的绑定和提交转换
@@ -147,7 +148,7 @@ function parse(method: 'submit' | 'bind', { value, hook: pipe, form, prop }: any
     if (format[pipe]) {
       pipes = [pipe];
     } else {
-      console.error(`[hook] ${pipe} is not found`);
+      logger.error(`[hook] ${pipe} is not found`);
     }
   } else if (Array.isArray(pipe)) {
     pipes = pipe;
@@ -156,7 +157,7 @@ function parse(method: 'submit' | 'bind', { value, hook: pipe, form, prop }: any
   } else if (typeof pipe === 'function') {
     pipes = [pipe];
   } else {
-    console.error(`[hook] ${pipe} format error`);
+    logger.error(`[hook] ${pipe} format error`);
   }
 
   let v = value;

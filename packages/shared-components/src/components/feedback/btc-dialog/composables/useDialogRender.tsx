@@ -2,7 +2,7 @@ import { h } from 'vue';
 import { Close, FullScreen, Minus } from '@element-plus/icons-vue';
 import { ElIcon } from 'element-plus';
 import type { DialogProps } from '../types';
-import { useBrowser } from '../../../composables/useBrowser';
+import { useBrowser } from '../../../../composables/useBrowser';
 
 // 注意：不再需要检测微前端环境或查询容器选择器
 // 根据 cool-admin 的实现，弹窗应该始终挂载到 body，无论是什么环境

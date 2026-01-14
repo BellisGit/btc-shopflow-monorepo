@@ -2,14 +2,14 @@
   <div class="crud-demo">
     <BtcCrud ref="crudRef" :service="userService">
       <!-- Toolbar -->
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
           <BtcMultiDeleteBtn />
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey />
         <BtcCrudActions>
           <BtcImportBtn
             :template="'/templates/users.xlsx'"
@@ -18,10 +18,10 @@
           />
           <BtcExportBtn :filename="'用户列表'" />
         </BtcCrudActions>
-      </BtcRow>
+      </BtcCrudRow>
 
       <!-- Table -->
-      <BtcRow>
+      <BtcCrudRow>
         <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border>
           <!-- Custom status column -->
           <template #column-status="{ row }">
@@ -37,13 +37,13 @@
             </el-button>
           </template>
         </BtcTable>
-      </BtcRow>
+      </BtcCrudRow>
 
       <!-- Pagination -->
-      <BtcRow>
-        <BtcFlex1 />
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
 
       <!-- 新增/编辑弹窗 -->
       <BtcUpsert
@@ -131,9 +131,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useI18n, usePluginManager } from '@btc/shared-core';
+import { useI18n, usePluginManager, logger } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn } from '@btc/shared-components';
 
 const { t } = useI18n();
 const pluginManager = usePluginManager();
@@ -422,7 +422,7 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
     BtcMessage.success(`成功导入 ${validData.length} 条用户数据`);
 
   } catch (error) {
-    console.error('导入失败:', error);
+    logger.error('导入失败:', error);
     BtcMessage.error('导入失败，请重试');
     done();
   }

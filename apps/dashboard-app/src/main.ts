@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
@@ -72,7 +73,7 @@ const render = async (props: QiankunProps = {}) => {
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[dashboard-app] 无法显示应用级 loading:', error);
+        logger.warn('[dashboard-app] 无法显示应用级 loading:', error);
       }
     }
   }
@@ -108,7 +109,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('渲染失败:', error);
+    logger.error('渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading

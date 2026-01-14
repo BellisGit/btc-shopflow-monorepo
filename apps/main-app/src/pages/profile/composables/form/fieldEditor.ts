@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import type { Ref } from 'vue';
 import type { PhoneSmsState } from './phoneVerification';
@@ -73,7 +74,7 @@ export function useFieldEditor({
             resetEmailUpdateCountdown();
             await loadUserInfo(showFullInfo.value);
           } catch (error: any) {
-            console.error('保存用户信息失败:', error);
+            logger.error('保存用户信息失败:', error);
             BtcMessage.error(error?.message || '保存失败');
             done();
           }

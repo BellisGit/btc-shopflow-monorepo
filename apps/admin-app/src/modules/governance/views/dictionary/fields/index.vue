@@ -1,6 +1,6 @@
 <template>
-  <div class="dictionary-fields-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="resourceService"
       :right-service="wrappedFieldService"
@@ -21,7 +21,7 @@
       @select="onResourceSelect"
       @form-submit="handleFormSubmit"
     >
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
   </div>
 </template>
 
@@ -30,7 +30,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
-import { BtcTableGroup } from '@btc/shared-components';
+import { BtcMasterTableGroup } from '@btc/shared-components';
 
 defineOptions({
   name: 'AdminDictionaryFields'
@@ -163,9 +163,6 @@ const fieldFormItems = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.dictionary-fields-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>
 

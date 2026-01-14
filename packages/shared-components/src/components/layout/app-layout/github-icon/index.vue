@@ -13,7 +13,7 @@ defineOptions({
   name: 'BtcGithubIcon',
 });
 
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 
 const { t } = useI18n();
@@ -26,7 +26,7 @@ function toCode() {
       pluginAPI.github.openRepository();
       return;
     } catch (error) {
-      console.warn('[GithubIcon] 调用插件API失败:', error);
+      logger.warn('[GithubIcon] 调用插件API失败:', error);
     }
   }
 

@@ -2,6 +2,7 @@
  * 配置加载工具函数
  * 用于从 config.ts 读取 columns 和 forms 配置
  */
+import { logger } from './logger';
 
 import { computed, type ComputedRef } from 'vue';
 import { useI18n } from '../btc/plugins/i18n';
@@ -120,7 +121,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
     if (!configFile) {
       skippedPaths.push(path);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Config file is null/undefined: ${path}`);
+        logger.debug(`[config-loader] Config file is null/undefined: ${path}`);
       }
       continue;
     }
@@ -128,14 +129,14 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
     if (!config) {
       skippedPaths.push(path);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Config default export is null/undefined: ${path}`);
+        logger.debug(`[config-loader] Config default export is null/undefined: ${path}`);
       }
       continue;
     }
 
     // 开发环境：输出每个文件的检查信息
     if (import.meta.env.DEV) {
-      console.debug(`[config-loader] Processing config file: ${path}`, {
+      logger.debug(`[config-loader] Processing config file: ${path}`, {
         hasColumns: !!config.columns,
         hasForms: !!config.forms,
         hasService: !!config.service,
@@ -150,7 +151,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
     // 跳过非页面配置文件（现在基于配置内容判断，而不是仅基于路径）
     if (shouldSkipPath(path, config)) {
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Skipped non-page config file: ${path}`);
+        logger.debug(`[config-loader] Skipped non-page config file: ${path}`);
       }
       continue;
     }
@@ -160,7 +161,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
       skippedPaths.push(path);
       if (import.meta.env.DEV) {
         const configAny = config as any;
-        console.debug(`[config-loader] Config does not match PageConfig structure: ${path}`, {
+        logger.debug(`[config-loader] Config does not match PageConfig structure: ${path}`, {
           hasColumns: !!configAny.columns,
           hasForms: !!configAny.forms,
           hasService: !!configAny.service,
@@ -178,7 +179,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
     if (config.columns) {
       const columnKeys = Object.keys(config.columns);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Found ${columnKeys.length} column keys in ${path}:`, columnKeys);
+        logger.debug(`[config-loader] Found ${columnKeys.length} column keys in ${path}:`, columnKeys);
       }
       columnKeys.forEach(key => pageKeys.add(key));
     }
@@ -187,13 +188,13 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
     if (config.forms) {
       const formKeys = Object.keys(config.forms);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Found ${formKeys.length} form keys in ${path}:`, formKeys);
+        logger.debug(`[config-loader] Found ${formKeys.length} form keys in ${path}:`, formKeys);
       }
       formKeys.forEach(key => pageKeys.add(key));
     }
 
     if (import.meta.env.DEV) {
-      console.debug(`[config-loader] Extracted ${pageKeys.size} pageKeys from ${path}:`, Array.from(pageKeys));
+      logger.debug(`[config-loader] Extracted ${pageKeys.size} pageKeys from ${path}:`, Array.from(pageKeys));
     }
 
     // 如果从 columns 和 forms 中提取到了 pageKey，使用这些 pageKey 注册
@@ -204,7 +205,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
         registeredKeys.push(key);
         // 开发环境调试：记录注册的 pageKey
         if (import.meta.env.DEV) {
-          console.debug(`[config-loader] Registered pageKey "${key}" from path: ${path}`);
+          logger.debug(`[config-loader] Registered pageKey "${key}" from path: ${path}`);
         }
       });
     } else {
@@ -212,7 +213,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
       // 这种情况适用于只有一个 pageKey 的配置文件（如 modules/platform/org/config.ts -> org）
       const pageKey = extractPageKeyFromPath(path);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] No pageKeys found in columns/forms for ${path}, trying to extract from path:`, {
+        logger.debug(`[config-loader] No pageKeys found in columns/forms for ${path}, trying to extract from path:`, {
           extractedPageKey: pageKey,
           pathMatch: path.match(/modules\/([^/]+)\/([^/]+)(?:\/views\/([^/]+))?\/config\.ts$/),
         });
@@ -221,13 +222,13 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
         registerPageConfig(pageKey, config);
         registeredKeys.push(pageKey);
         if (import.meta.env.DEV) {
-          console.debug(`[config-loader] Registered pageKey "${pageKey}" from path: ${path}`);
+          logger.debug(`[config-loader] Registered pageKey "${pageKey}" from path: ${path}`);
         }
       } else {
         // 开发环境调试：如果从路径和 columns/forms 中都没有提取到 pageKey，使用 debug 级别
         skippedPaths.push(path);
         if (import.meta.env.DEV) {
-          console.debug(`[config-loader] Cannot extract pageKey from path: ${path}, and no pageKeys found in columns/forms`, {
+          logger.debug(`[config-loader] Cannot extract pageKey from path: ${path}, and no pageKeys found in columns/forms`, {
             hasColumns: !!config.columns,
             hasForms: !!config.forms,
             columnsKeys: config.columns ? Object.keys(config.columns) : [],
@@ -240,7 +241,7 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
 
   // 开发环境：输出注册摘要
   if (import.meta.env.DEV) {
-    console.debug(`[config-loader] Registration summary:`, {
+    logger.debug(`[config-loader] Registration summary:`, {
       registered: registeredKeys.length,
       skipped: skippedPaths.length,
       registeredKeys: registeredKeys.slice(0, 20), // 只显示前20个，避免输出过多
@@ -259,20 +260,20 @@ export function getPageConfig(pageKey: string): PageConfig | undefined {
 
   // 开发环境调试：如果配置不存在，输出调试信息
   if (import.meta.env.DEV && !config) {
-    console.warn(`[config-loader] Config not found for pageKey: ${pageKey}`);
+    logger.warn(`[config-loader] Config not found for pageKey: ${pageKey}`);
     const allKeys = Array.from(configRegistry.keys());
-    console.debug(`[config-loader] Available pageKeys (${allKeys.length}):`, allKeys);
+    logger.debug(`[config-loader] Available pageKeys (${allKeys.length}):`, allKeys);
     // 检查是否有相似的 pageKey
     const similarKeys = allKeys.filter(key => key.includes(pageKey.split('.').pop() || ''));
     if (similarKeys.length > 0) {
-      console.debug(`[config-loader] Similar pageKeys found:`, similarKeys);
+      logger.debug(`[config-loader] Similar pageKeys found:`, similarKeys);
     }
   }
 
   // 开发环境调试：如果配置存在但没有对应的 columns/forms，输出调试信息
   if (import.meta.env.DEV && config) {
     if (!config.columns?.[pageKey] && !config.forms?.[pageKey]) {
-      console.debug(`[config-loader] Config found for ${pageKey}, but columns/forms keys:`, {
+      logger.debug(`[config-loader] Config found for ${pageKey}, but columns/forms keys:`, {
         hasColumns: !!config.columns,
         hasForms: !!config.forms,
         columnsKeys: config.columns ? Object.keys(config.columns) : [],
@@ -321,7 +322,7 @@ function translateKey(key: string | undefined, t: any): string {
   try {
     if (typeof t !== 'function') {
       if (import.meta.env.DEV) {
-        console.warn(`[config-loader] t is not a function, key: ${key}`);
+        logger.warn(`[config-loader] t is not a function, key: ${key}`);
       }
       return key;
     }
@@ -340,7 +341,7 @@ function translateKey(key: string | undefined, t: any): string {
       } catch (error) {
         // 如果调用失败，使用 key 作为回退
         if (import.meta.env.DEV) {
-          console.warn(`[config-loader] Failed to call translation function for key "${key}":`, error);
+          logger.warn(`[config-loader] Failed to call translation function for key "${key}":`, error);
         }
         translatedStr = key;
       }
@@ -370,7 +371,7 @@ function translateKey(key: string | undefined, t: any): string {
             const value = messages[pageKey];
             if (typeof value === 'string' && value.trim() !== '') {
               if (import.meta.env.DEV && key.includes('tenant')) {
-                console.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${value}" (direct access)`);
+                logger.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${value}" (direct access)`);
               }
               return value;
             } else if (typeof value === 'function') {
@@ -378,7 +379,7 @@ function translateKey(key: string | undefined, t: any): string {
                 const result = value({ normalize: (arr: any[]) => arr[0] });
                 if (typeof result === 'string' && result.trim() !== '') {
                   if (import.meta.env.DEV && key.includes('tenant')) {
-                    console.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${result}" (function)`);
+                    logger.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${result}" (function)`);
                   }
                   return result;
                 }
@@ -402,12 +403,12 @@ function translateKey(key: string | undefined, t: any): string {
         const pageTranslated = t(pageKey);
         if (typeof pageTranslated === 'string' && pageTranslated !== pageKey) {
           if (import.meta.env.DEV && key.includes('tenant')) {
-            console.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${pageTranslated}" (via t function)`);
+            logger.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${pageTranslated}" (via t function)`);
           }
           return pageTranslated;
         } else if (pageTranslated != null) {
           if (import.meta.env.DEV && key.includes('tenant')) {
-            console.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${String(pageTranslated)}" (via t function)`);
+            logger.debug(`[config-loader] Translated "${key}" -> "${pageKey}" -> "${String(pageTranslated)}" (via t function)`);
           }
           return String(pageTranslated);
         }
@@ -419,7 +420,7 @@ function translateKey(key: string | undefined, t: any): string {
             const currentLocale = i18nInstance.global.locale?.value || 'zh-CN';
             const messages = i18nInstance.global.getLocaleMessage(currentLocale) || {};
             const keyExists = pageKey in messages;
-            console.debug(`[config-loader] Translation check for "${key}":`, {
+            logger.debug(`[config-loader] Translation check for "${key}":`, {
               pageKey,
               keyExists,
               hasTe: typeof (t as any).te === 'function',
@@ -428,7 +429,7 @@ function translateKey(key: string | undefined, t: any): string {
             });
           }
         } catch (error) {
-          console.debug(`[config-loader] Error checking i18n for "${key}":`, error);
+          logger.debug(`[config-loader] Error checking i18n for "${key}":`, error);
         }
       }
     }
@@ -462,19 +463,19 @@ function translateKey(key: string | undefined, t: any): string {
               }).slice(0, 5);
 
               if (similarKeys.length > 0) {
-                console.warn(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey})`, {
+                logger.warn(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey})`, {
                   similarKeys,
                   totalKeys: availableKeys.length,
                   sampleKeys: availableKeys.filter(k => k.startsWith(keyFirstPart)).slice(0, 5),
                 });
               } else {
-                console.debug(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey})`);
+                logger.debug(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey})`);
               }
             } else {
-              console.debug(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey}), i18n instance not available`);
+              logger.debug(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey}), i18n instance not available`);
             }
           } catch (error) {
-            console.debug(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey}), error checking i18n:`, error);
+            logger.debug(`[config-loader] Translation key not found: ${key} (also tried: ${pageKey}), error checking i18n:`, error);
           }
         }
       }
@@ -484,7 +485,7 @@ function translateKey(key: string | undefined, t: any): string {
     return translatedStr;
   } catch (error) {
     if (import.meta.env.DEV) {
-      console.warn(`[config-loader] Translation error for key "${key}":`, error);
+      logger.warn(`[config-loader] Translation error for key "${key}":`, error);
     }
     return key;
   }
@@ -610,17 +611,17 @@ export function usePageColumns(
   const columns = computed<TableColumn[]>(() => {
     const config = getPageConfig(pageKey);
     if (!config) {
-      console.warn(`[config-loader] Columns config not found for page: ${pageKey} (config is null/undefined)`);
+      logger.warn(`[config-loader] Columns config not found for page: ${pageKey} (config is null/undefined)`);
       return [];
     }
     if (!config.columns) {
-      console.warn(`[config-loader] Columns config not found for page: ${pageKey} (config.columns is null/undefined)`);
+      logger.warn(`[config-loader] Columns config not found for page: ${pageKey} (config.columns is null/undefined)`);
       return [];
     }
     if (!config.columns[pageKey]) {
-      console.warn(`[config-loader] Columns config not found for page: ${pageKey} (config.columns[${pageKey}] is null/undefined)`);
+      logger.warn(`[config-loader] Columns config not found for page: ${pageKey} (config.columns[${pageKey}] is null/undefined)`);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Available columns keys:`, Object.keys(config.columns));
+        logger.debug(`[config-loader] Available columns keys:`, Object.keys(config.columns));
       }
       return [];
     }
@@ -643,17 +644,17 @@ export function usePageForms(pageKey: string): { formItems: ComputedRef<FormItem
   const formItems = computed<FormItem[]>(() => {
     const config = getPageConfig(pageKey);
     if (!config) {
-      console.warn(`[config-loader] Forms config not found for page: ${pageKey} (config is null/undefined)`);
+      logger.warn(`[config-loader] Forms config not found for page: ${pageKey} (config is null/undefined)`);
       return [];
     }
     if (!config.forms) {
-      console.warn(`[config-loader] Forms config not found for page: ${pageKey} (config.forms is null/undefined)`);
+      logger.warn(`[config-loader] Forms config not found for page: ${pageKey} (config.forms is null/undefined)`);
       return [];
     }
     if (!config.forms[pageKey]) {
-      console.warn(`[config-loader] Forms config not found for page: ${pageKey} (config.forms[${pageKey}] is null/undefined)`);
+      logger.warn(`[config-loader] Forms config not found for page: ${pageKey} (config.forms[${pageKey}] is null/undefined)`);
       if (import.meta.env.DEV) {
-        console.debug(`[config-loader] Available forms keys:`, Object.keys(config.forms));
+        logger.debug(`[config-loader] Available forms keys:`, Object.keys(config.forms));
       }
       return [];
     }
@@ -716,13 +717,13 @@ export function usePageService(
   const config = getPageConfig(pageKey);
 
   if (!config) {
-    console.warn(`[config-loader] Service config not found for page: ${pageKey} (config is null/undefined)`);
+    logger.warn(`[config-loader] Service config not found for page: ${pageKey} (config is null/undefined)`);
     return null as any;
   }
   if (!config.service) {
-    console.warn(`[config-loader] Service config not found for page: ${pageKey} (config.service is null/undefined)`);
+    logger.warn(`[config-loader] Service config not found for page: ${pageKey} (config.service is null/undefined)`);
     if (import.meta.env.DEV) {
-      console.debug(`[config-loader] Config keys:`, Object.keys(config));
+      logger.debug(`[config-loader] Config keys:`, Object.keys(config));
     }
     return null as any;
   }

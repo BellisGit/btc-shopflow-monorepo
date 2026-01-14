@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ﻿import type { Ref } from 'vue';
 import type { StrategyConnection, StrategyNode } from '@/types/strategy';
 
@@ -35,7 +36,7 @@ export function useConnectionPathGenerator(
     const targetNode = nodes.value.find(n => n.id === connection.targetNodeId);
 
     if (!sourceNode || !targetNode) {
-      console.warn('getConnectionPath: Node not found', connection.sourceNodeId, connection.targetNodeId);
+      logger.warn('getConnectionPath: Node not found', connection.sourceNodeId, connection.targetNodeId);
       return '';
     }
 
@@ -63,7 +64,7 @@ export function useConnectionPathGenerator(
     const targetY = targetPoint.y;
 
     if (isNaN(sourceX) || isNaN(sourceY) || isNaN(targetX) || isNaN(targetY)) {
-      console.error('getConnectionPath: Invalid connection point coordinates', { sourcePoint, targetPoint, connection });
+      logger.error('getConnectionPath: Invalid connection point coordinates', { sourcePoint, targetPoint, connection });
       return '';
     }
 
@@ -86,14 +87,14 @@ export function useConnectionPathGenerator(
       if (Math.abs(sourceX - targetX) < 0.1 && Math.abs(offset) < 0.1) {
         const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
         if (!path || path.includes('NaN')) {
-          console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
+          logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
           return '';
         }
         return path;
       } else {
         const path = `M ${sourceX} ${sourceY} L ${sourceX} ${midY} L ${targetX} ${midY} L ${targetX} ${targetY}`;
         if (!path || path.includes('NaN')) {
-          console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midY, connection });
+          logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midY, connection });
           return '';
         }
         return path;
@@ -102,7 +103,7 @@ export function useConnectionPathGenerator(
       if (Math.abs(sourceY - targetY) < 0.1 && Math.abs(offset) < 0.1) {
         const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
         if (!path || path.includes('NaN')) {
-          console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
+          logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
           return '';
         }
         return path;
@@ -110,7 +111,7 @@ export function useConnectionPathGenerator(
         const midX = sourceX + (targetX - sourceX) / 2;
         const path = `M ${sourceX} ${sourceY} L ${midX} ${sourceY} L ${midX} ${targetY} L ${targetX} ${targetY}`;
         if (!path || path.includes('NaN')) {
-          console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midX, connection });
+          logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midX, connection });
           return '';
         }
         return path;
@@ -123,14 +124,14 @@ export function useConnectionPathGenerator(
         if (Math.abs(sourceY - targetY) < 0.1 && Math.abs(offset) < 0.1) {
           const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
           if (!path || path.includes('NaN')) {
-            console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
+            logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
             return '';
           }
           return path;
         } else {
           const path = `M ${sourceX} ${sourceY} L ${midX} ${sourceY} L ${midX} ${targetY} L ${targetX} ${targetY}`;
           if (!path || path.includes('NaN')) {
-            console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midX, connection });
+            logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midX, connection });
             return '';
           }
           return path;
@@ -142,14 +143,14 @@ export function useConnectionPathGenerator(
         if (Math.abs(sourceX - targetX) < 0.1 && Math.abs(offset) < 0.1) {
           const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
           if (!path || path.includes('NaN')) {
-            console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
+            logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, connection });
             return '';
           }
           return path;
         } else {
           const path = `M ${sourceX} ${sourceY} L ${sourceX} ${midY} L ${targetX} ${midY} L ${targetX} ${targetY}`;
           if (!path || path.includes('NaN')) {
-            console.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midY, connection });
+            logger.error('getConnectionPath: Invalid path', { sourceX, sourceY, targetX, targetY, midY, connection });
             return '';
           }
           return path;

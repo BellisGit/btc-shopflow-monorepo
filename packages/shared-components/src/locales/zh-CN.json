@@ -221,6 +221,7 @@
   "sys.message.loading": "加载中...",
   "sys.message.confirm_delete": "确定要删除吗？",
   "menu.home": "首页",
+  "menu.test_features.multi_column_layout_test": "多栏布局测试",
   "common.close_other": "关闭其他",
   "common.close_all": "关闭全部",
   "notice.title": "通知",
@@ -290,5 +291,11 @@
   "auth.message.sms_code_send_failed": "验证码发送失败",
   "auth.message.phone_required_for_sms": "请先输入手机号",
   "auth.message.phone_format_error": "手机号格式不正确",
-  "auth.message.reset_password_success": "密码重置成功"
+  "auth.message.reset_password_success": "密码重置成功",
+  "btc.filterList.size": "尺寸",
+  "btc.filterList.size.small": "小",
+  "btc.filterList.size.default": "默认",
+  "btc.filterList.size.large": "大",
+  "btc.filterList.tooltip.settings": "设置",
+  "btc.filterList.tooltip.clear": "清除所有筛选"
 }

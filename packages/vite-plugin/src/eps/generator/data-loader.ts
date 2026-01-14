@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { readFile, writeFile } from '../utils';
 import type { EpsState } from './state';
 import type { EpsColumn, EpsEntity } from '../types';
@@ -99,11 +100,11 @@ export async function getData(
         });
         state.epsList = entities;
       } else {
-        console.warn('[eps] 本地文件格式不正确，数据为空');
+        logger.warn('[eps] 本地文件格式不正确，数据为空');
         state.epsList = [];
       }
     } else {
-      console.warn(`[eps] 本地文件不存在或为空: ${epsJsonPath}`);
+      logger.warn(`[eps] 本地文件不存在或为空: ${epsJsonPath}`);
       state.epsList = [];
     }
 

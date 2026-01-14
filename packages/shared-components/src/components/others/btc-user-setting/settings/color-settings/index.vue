@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Check } from '@element-plus/icons-vue';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import { BtcColorPicker, BtcMessage } from '@btc/shared-components';
 import '../../settings/color-settings/styles/index.scss';
@@ -64,7 +64,7 @@ try {
 
 // 如果主题插件不可用，组件无法正常工作
 if (!theme) {
-  console.warn('[ColorSettings] Theme plugin not available');
+  logger.warn('[ColorSettings] Theme plugin not available');
 }
 
 // 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为 null

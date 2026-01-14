@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
@@ -52,23 +53,23 @@ async function validateDocument(filePath: string, validate: any): Promise<{
 
 // 主函数
 async function main() {
-  console.log('=== Frontmatter 验证 ===\n');
+  logger.info('=== Frontmatter 验证 ===\n');
 
   // 加载 schema
   const schema = await loadSchema();
   const validate = createValidator(schema);
-  console.log('✅ Schema 加载完成\n');
+  logger.info('✅ Schema 加载完成\n');
 
   // 查找所有已迁移的文档
   const docsDir = path.join(process.cwd(), '_ingested');
 
   if (!await fs.pathExists(docsDir)) {
-    console.log('⚠️  _ingested 目录不存在，请先运行 ingest');
+    logger.info('⚠️  _ingested 目录不存在，请先运行 ingest');
     process.exit(1);
   }
 
   const files = await glob(path.join(docsDir, '**/*.md').replace(/\\/g, '/'));
-  console.log(`找到 ${files.length} 个文档\n`);
+  logger.info(`找到 ${files.length} 个文档\n`);
 
   let validCount = 0;
   let invalidCount = 0;
@@ -80,10 +81,10 @@ async function main() {
 
     if (result.valid) {
       validCount++;
-      console.log(`  ✅ ${path.relative(docsDir, file)}`);
+      logger.info(`  ✅ ${path.relative(docsDir, file)}`);
     } else {
       invalidCount++;
-      console.log(`  ❌ ${path.relative(docsDir, file)}`);
+      logger.info(`  ❌ ${path.relative(docsDir, file)}`);
       errors.push({
         file: path.relative(docsDir, file),
         errors: result.errors || []
@@ -91,32 +92,32 @@ async function main() {
     }
   }
 
-  console.log('\n=== 验证结果 ===');
-  console.log(`✅ 有效: ${validCount}`);
-  console.log(`❌ 无效: ${invalidCount}`);
+  logger.info('\n=== 验证结果 ===');
+  logger.info(`✅ 有效: ${validCount}`);
+  logger.info(`❌ 无效: ${invalidCount}`);
 
   if (errors.length > 0) {
-    console.log('\n=== 错误详情 ===\n');
+    logger.info('\n=== 错误详情 ===\n');
     errors.forEach(({ file, errors }) => {
-      console.log(`📄 ${file}:`);
+      logger.info(`📄 ${file}:`);
       errors.forEach(err => {
         if (err.instancePath) {
-          console.log(`  - ${err.instancePath}: ${err.message}`);
+          logger.info(`  - ${err.instancePath}: ${err.message}`);
         } else {
-          console.log(`  - ${err.message}`);
+          logger.info(`  - ${err.message}`);
         }
       });
-      console.log('');
+      logger.info('');
     });
 
     process.exit(1);
   }
 
-  console.log('\n✅ 所有文档验证通过！');
+  logger.info('\n✅ 所有文档验证通过！');
 }
 
 main().catch(error => {
-  console.error('验证过程出错:', error);
+  logger.error('验证过程出错:', error);
   process.exit(1);
 });
 

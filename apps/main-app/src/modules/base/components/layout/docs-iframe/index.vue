@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { storage } from '@btc/shared-utils';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { useRoute } from 'vue-router';
 
 interface Props {
@@ -92,7 +92,7 @@ const getDocsUrl = () => {
   // 如果确实需要警告，使用全局标记避免重复警告
   // if (shouldWarn && !(window as any)[GLOBAL_WARN_KEY] && import.meta.env.DEV) {
   //   (window as any)[GLOBAL_WARN_KEY] = true;
-  //   console.warn('[DocsIframe] 无法从配置获取端口，使用默认端口 4172');
+  //   logger.warn('[DocsIframe] 无法从配置获取端口，使用默认端口 4172');
   // }
 
   return `${protocol}//${hostname}:${docsPort}/`;
@@ -156,7 +156,7 @@ function onIframeLoad() {
       }, '*');
 
     } catch (e) {
-      console.error('[Main App] Failed to update themes on load:', e);
+      logger.error('[Main App] Failed to update themes on load:', e);
     }
   }
 

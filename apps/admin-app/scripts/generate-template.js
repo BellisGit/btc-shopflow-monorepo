@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import XLSX from 'xlsx';
 import path from 'path';
 import fs from 'fs';
@@ -59,4 +60,4 @@ if (!fs.existsSync(templateDir)) {
 const outputPath = path.join(templateDir, 'users.xlsx');
 XLSX.writeFile(wb, outputPath);
 
-console.log('用户导入模板已生成:', outputPath);
+logger.info('用户导入模板已生成:', outputPath);

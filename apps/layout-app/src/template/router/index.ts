@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import {
   createRouter,
   createWebHistory,
@@ -34,7 +35,7 @@ function normalizePath(path: string): string {
   // 检测是否是 {{APP_NAME}} 子域名
   if (hostname === '{{APP_NAME}}.bellis.com.cn' && path.startsWith('{{APP_BASE_PATH}}/')) {
     const normalized = path.substring('{{APP_BASE_PATH}}'.length) || '/';
-    console.log(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+    logger.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
     return normalized;
   }
 
@@ -179,7 +180,7 @@ export const create{{APP_NAME_PASCAL}}Router = (): Router => {
   });
 
   router.onError((error: any) => {
-    console.warn('[{{APP_NAME}}-app] Router error:', error);
+    logger.warn('[{{APP_NAME}}-app] Router error:', error);
   });
 
   return router;

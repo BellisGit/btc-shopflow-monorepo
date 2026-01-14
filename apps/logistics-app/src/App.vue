@@ -5,7 +5,12 @@
     <router-view v-slot="{ Component, route: currentRoute }">
       <transition :name="pageTransition" mode="out-in">
         <keep-alive :key="viewKey" :include="keepAliveList">
-          <component v-if="Component" :is="Component" :key="currentRoute.fullPath" />
+          <component 
+            v-if="Component" 
+            :is="Component" 
+            :key="currentRoute.fullPath"
+            :class="getPageClass(currentRoute)"
+          />
         </keep-alive>
       </transition>
     </router-view>
@@ -13,7 +18,12 @@
   <router-view v-else v-slot="{ Component, route: currentRoute }">
     <transition :name="pageTransition" mode="out-in">
       <keep-alive :key="viewKey" :include="keepAliveList">
-        <component v-if="Component" :is="Component" :key="currentRoute.fullPath" />
+        <component 
+          v-if="Component" 
+          :is="Component" 
+          :key="currentRoute.fullPath"
+          :class="getPageClass(currentRoute)"
+        />
       </keep-alive>
     </transition>
   </router-view>
@@ -26,6 +36,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
 import { useLogout } from '@/composables/useLogout';
 import { useProcessStore } from '@/store/modules/process';
+import { isPageRoute, getPageClass as getPageClassName } from '@btc/shared-router';
 
 defineOptions({
   name: 'LogisticsApp',
@@ -49,6 +60,14 @@ const keepAliveList = computed(() => {
     .filter((tab) => tab.meta?.keepAlive === true && tab.name)
     .map((tab) => tab.name as string);
 });
+
+// 获取页面容器类名
+function getPageClass(currentRoute: any): string {
+  if (!isPageRoute(currentRoute)) {
+    return ''; // 非页面级路由不添加 .page 类
+  }
+  return getPageClassName(currentRoute);
+}
 
 // 刷新视图
 function refreshView() {

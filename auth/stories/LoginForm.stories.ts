@@ -1,6 +1,7 @@
 /**
  * LoginForm Storybook 故事
  */
+import { logger } from '@btc/shared-core';
 
 import type { Meta, StoryObj } from '@storybook/vue3';
 import PasswordForm from '../login/password-form/index.vue';
@@ -46,7 +47,7 @@ export const Default: Story = {
     },
     loading: false,
     submit: () => {
-      console.log('提交登录');
+      logger.info('提交登录');
     },
     t: (key: string) => key
   }
@@ -91,7 +92,7 @@ export const WithErrors: Story = {
       };
 
       const submit = () => {
-        console.log('表单验证失败');
+        logger.info('表单验证失败');
       };
 
       return { form, rules, submit, t: (key: string) => key, loading: false };

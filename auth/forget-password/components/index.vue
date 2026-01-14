@@ -178,6 +178,8 @@ import { onMounted } from 'vue';
 import { ArrowRight, Phone, Lock } from '@element-plus/icons-vue';
 import BtcStepsForm from '/@/modules/base/components/btc/btc-steps-form/index.vue';
 import { useForgetPassword } from '../composables/useForgetPassword';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'ForgetPasswordMain'
@@ -188,7 +190,7 @@ const viewModel = useForgetPassword();
 
 // 组件挂载后的初始化
 onMounted(() => {
-  console.log('忘记密码组件已挂载');
+  logger.info('忘记密码组件已挂载');
 });
 </script>
 

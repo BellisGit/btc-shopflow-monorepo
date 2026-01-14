@@ -1,5 +1,5 @@
 <template>
-  <div class="session-list-page">
+  <div class="page">
     <PullRefresh v-model="refreshing" @refresh="onRefresh">
       <List
         v-model:loading="loading"

@@ -1,25 +1,25 @@
 <template>
-  <div class="domains-page">
+  <div class="page">
     <BtcCrud ref="crudRef" :service="wrappedDomainService">
-      <BtcRow>
+      <BtcCrudRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
           <BtcAddBtn />
           <BtcMultiDeleteBtn />
         </div>
-        <BtcFlex1 />
-        <BtcSearchKey :placeholder="t('platform.domain.search_placeholder')" />
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey :placeholder="t('platform.domain.search_placeholder')" />
         <BtcCrudActions>
           <BtcExportBtn :filename="t('platform.domain.list')" />
         </BtcCrudActions>
-      </BtcRow>
-      <BtcRow>
+      </BtcCrudRow>
+      <BtcCrudRow>
         <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-      </BtcRow>
-      <BtcRow>
-        <BtcFlex1 />
+      </BtcCrudRow>
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
         <BtcPagination />
-      </BtcRow>
+      </BtcCrudRow>
       <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
     </BtcCrud>
   </div>
@@ -27,8 +27,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcExportBtn } from '@btc/shared-components';
-import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
+import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcExportBtn } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, usePageService, logger } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
@@ -43,7 +43,7 @@ const loadTenantOptions = async () => {
   const tenantService = service.admin?.iam?.tenant;
 
   if (!tenantService || typeof tenantService.list !== 'function') {
-    console.warn('[Domain] Tenant list service unavailable');
+    logger.warn('[Domain] Tenant list service unavailable');
     tenantOptions.value = [];
     return;
   }
@@ -70,7 +70,7 @@ const loadTenantOptions = async () => {
       })
       .filter((item): item is { label: string; value: any } => !!item);
   } catch (error) {
-    console.warn('[Domain] Failed to get tenant list:', error);
+    logger.warn('[Domain] Failed to get tenant list:', error);
     tenantOptions.value = [];
   } finally {
     tenantLoading.value = false;
@@ -119,13 +119,6 @@ const formItems = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.domains-page {
-  height: 100%;
-  box-sizing: border-box;
 
-  :deep(.btc-table-toolbar-host),
-  :deep(.btc-table-toolbar--inline) {
-    margin-bottom: 0;
-  }
 }
 </style>

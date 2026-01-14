@@ -1,3 +1,4 @@
+import { logger } from '../../../../utils/logger';
 import { useDark } from '@vueuse/core';
 import type { Ref } from 'vue';
 import type { ThemeConfig } from '../../../composables/useTheme';
@@ -100,7 +101,7 @@ export function createToggleDark(
             }));
           }, 0);
         } catch (e) {
-          console.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
+          logger.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
         }
       });
     } else {
@@ -150,7 +151,7 @@ export function createToggleDark(
           }));
         }, 0);
       } catch (e) {
-        console.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
+        logger.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
       }
 
       requestAnimationFrame(() => {

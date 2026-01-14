@@ -6,6 +6,7 @@
  * 
  * 注意：此文件保持向后兼容，内部调用新的处理器
  */
+import { logger } from '../../utils/logger.mjs';
 
 import { handleLint } from './handlers/lint.mjs';
 import { execSync } from 'child_process';
@@ -62,7 +63,7 @@ if (!appName) {
   }
   
   const action = fix ? '修复' : '检查';
-  console.log(`\n🔍 正在${action}所有应用和包的代码...\n`);
+  logger.info(`\n🔍 正在${action}所有应用和包的代码...\n`);
   
   try {
     execSync(command.join(' '), { 
@@ -71,10 +72,10 @@ if (!appName) {
       shell: true
     });
     // 如果执行成功，显示成功消息
-    console.log(`\n✅ 代码${action}完成，未发现任何问题！\n`);
+    logger.info(`\n✅ 代码${action}完成，未发现任何问题！\n`);
   } catch (error) {
     // 错误信息已经在 stdio: 'inherit' 模式下显示了
-    console.log(`\n❌ 代码${action}发现问题，请查看上面的错误信息。\n`);
+    logger.info(`\n❌ 代码${action}发现问题，请查看上面的错误信息。\n`);
     process.exit(error.status || 1);
   }
 } else {
@@ -84,7 +85,7 @@ if (!appName) {
       const subCommand = fix ? 'fix' : 'check';
       await handleLint(appName, subCommand);
     } catch (error) {
-      console.error('执行失败:', error);
+      logger.error('执行失败:', error);
       process.exit(1);
     }
   })();

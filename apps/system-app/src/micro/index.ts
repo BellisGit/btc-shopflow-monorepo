@@ -8,6 +8,7 @@ import { microApps } from './apps';
 import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
 import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
 import { initErrorMonitor, updateErrorList, setupGlobalErrorCapture } from '../utils/errorMonitor';
+import { logger } from '@btc/shared-core';
 
 // 获取 system-app 配置（用于判断当前是否在 system-app 预览端口）
 const SYSTEM_APP_CONFIG = getAppConfig('system-app');
@@ -96,7 +97,9 @@ if (typeof window !== 'undefined') {
       if (shouldFilter(...args)) {
         return;
       }
-      originalLog(...args);
+      // 使用 logger 统一输出，支持日志上报和格式统一
+      const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+      logger.info(message, ...args);
     };
 
     // 过滤 console.info
@@ -104,7 +107,9 @@ if (typeof window !== 'undefined') {
       if (shouldFilter(...args)) {
         return;
       }
-      originalInfo(...args);
+      // 使用 logger 统一输出，支持日志上报和格式统一
+      const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+      logger.info(message, ...args);
     };
 
   // 过滤 console.warn
@@ -133,11 +138,9 @@ if (typeof window !== 'undefined') {
         return;
       }
     }
-    // 使用保存的原始方法，如果不存在则使用当前 console.warn（可能是被其他代码替换过的）
-    const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
-    if (typeof warnFn === 'function') {
-      warnFn.apply(console, args);
-    }
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.warn(message, ...args);
   };
 
   // 过滤 console.error（single-spa 错误代码 31 通过 error 输出）
@@ -165,11 +168,10 @@ if (typeof window !== 'undefined') {
         return;
       }
     }
-    // 使用保存的原始方法，如果不存在则使用当前 console.error（可能是被其他代码替换过的）
-    const errorFn = originalError || (console as any).__originalError || console.error;
-    if (typeof errorFn === 'function') {
-      errorFn.apply(console, args);
-    }
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    const errorArg = args.find(arg => arg instanceof Error) || args[1];
+    logger.error(message, errorArg, ...args);
   };
 })();
 }
@@ -466,7 +468,9 @@ function filterQiankunLogs() {
     if (shouldFilter(...args)) {
       return;
     }
-    originalLog(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.info(message, ...args);
   };
 
   // 过滤 console.info
@@ -474,7 +478,9 @@ function filterQiankunLogs() {
     if (shouldFilter(...args)) {
       return;
     }
-    originalInfo(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.info(message, ...args);
   };
 
   // 过滤 console.warn
@@ -503,11 +509,9 @@ function filterQiankunLogs() {
         return;
       }
     }
-    // 使用保存的原始方法，如果不存在则使用当前 console.warn（可能是被其他代码替换过的）
-    const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
-    if (typeof warnFn === 'function') {
-      warnFn.apply(console, args);
-    }
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.warn(message, ...args);
   };
 }
 
@@ -619,7 +623,7 @@ if (typeof window !== 'undefined') {
                   }
 
                   if (needsFix && fixedUrl !== url) {
-                    console.log(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
+                    logger.info(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
                     // 使用修复后的 URL 调用原始 fetch
                     if (typeof input === 'string') {
                       return originalFetch.call(this, fixedUrl, init);
@@ -634,7 +638,7 @@ if (typeof window !== 'undefined') {
             }
           } catch (error) {
             // 如果获取 entryMap 失败，继续使用原始 URL
-            console.error('[资源拦截器] 获取 entryMap 失败:', error);
+            logger.error('[资源拦截器] 获取 entryMap 失败:', error);
           }
         }
       }
@@ -679,7 +683,7 @@ if (typeof window !== 'undefined') {
                     // 尝试从正确的端口加载
                     const fixedUrl = `${protocol}//${currentHost}:${targetPort}/assets/${fileName}`;
 
-                    console.log(`[Resource Interceptor] 检测到 404，尝试修复路径: ${url} -> ${fixedUrl}`);
+                    logger.info(`[Resource Interceptor] 检测到 404，尝试修复路径: ${url} -> ${fixedUrl}`);
                     const retryResponse = await originalFetch.call(this, fixedUrl, init);
                     const retryContentType = retryResponse.headers.get('content-type');
 
@@ -693,7 +697,7 @@ if (typeof window !== 'undefined') {
                 }
               }
             } catch (error) {
-              console.error('[资源拦截器] 重试失败:', error);
+              logger.error('[资源拦截器] 重试失败:', error);
             }
           }
         }
@@ -824,7 +828,7 @@ function setupGlobalResourceInterceptor() {
               }
 
               if (needsFix && fixedUrl !== url) {
-                console.log(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
+                logger.info(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
                 // 使用修复后的 URL 调用原始 fetch
                 if (typeof input === 'string') {
                   return originalFetch.call(this, fixedUrl, init);
@@ -853,7 +857,7 @@ function setupGlobalResourceInterceptor() {
     // 强制验证：在 HTTPS 页面下，绝对不允许 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (urlStr.startsWith('http://')) {
-        console.error('[HTTP] Micro 拦截：检测到 HTTPS 页面，阻止 HTTP 请求:', urlStr);
+        logger.error('[HTTP] Micro 拦截：检测到 HTTPS 页面，阻止 HTTP 请求:', urlStr);
         // 尝试提取路径部分
         try {
           const urlObj = new URL(urlStr);
@@ -1313,7 +1317,7 @@ export async function setupQiankun() {
                 }
               }
             } catch (error) {
-              console.warn('[qiankun] 无法加载 AppLoadingService，跳过应用级loading', error);
+              logger.warn('[qiankun] 无法加载 AppLoadingService，跳过应用级loading', error);
             }
           }
         }
@@ -1593,13 +1597,13 @@ export async function setupQiankun() {
           reinitializeUserCheckOnAppSwitch().catch((error) => {
             // 静默失败，不影响应用切换
             if (import.meta.env.DEV) {
-              console.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
+              logger.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
             }
           });
         } catch (error) {
           // 静默失败，不影响应用切换
           if (import.meta.env.DEV) {
-            console.warn('[qiankun:afterMount] Failed to import reinitializeUserCheckOnAppSwitch:', error);
+            logger.warn('[qiankun:afterMount] Failed to import reinitializeUserCheckOnAppSwitch:', error);
           }
         }
 
@@ -1740,7 +1744,7 @@ export async function setupQiankun() {
           clearTimeout(timeoutId);
           // 如果是超时错误，尝试重试一次
           if (error.name === 'AbortError' && !options?.signal?.aborted) {
-            console.warn(`[qiankun] 资源加载超时，尝试重试: ${url}`);
+            logger.warn(`[qiankun] 资源加载超时，尝试重试: ${url}`);
             const retryController = new AbortController();
             const retryTimeoutId = setTimeout(() => retryController.abort(), timeout);
             try {
@@ -1751,7 +1755,7 @@ export async function setupQiankun() {
               clearTimeout(retryTimeoutId);
             } catch (retryError: any) {
               clearTimeout(retryTimeoutId);
-              console.error(`[qiankun] 资源加载重试失败: ${url}`, retryError);
+              logger.error(`[qiankun] 资源加载重试失败: ${url}`, retryError);
               throw retryError;
             }
           } else {
@@ -2040,7 +2044,7 @@ export async function setupQiankun() {
           OLD_REF_PATTERN.lastIndex = 0; // 重置正则表达式
           const oldRefMatches = processedTpl.match(OLD_REF_PATTERN);
           if (oldRefMatches && oldRefMatches.length > 0) {
-            console.warn(`[getTemplate] 检测到 ${oldRefMatches.length} 个旧 chunk 引用，将强制删除:`, oldRefMatches.slice(0, 5).join(', '));
+            logger.warn(`[getTemplate] 检测到 ${oldRefMatches.length} 个旧 chunk 引用，将强制删除:`, oldRefMatches.slice(0, 5).join(', '));
 
             // 删除包含旧引用的 script 标签（更宽泛的匹配，包括所有可能的格式）
             const oldHashList = OLD_REF_PATTERN.source.replace(/^\/|\/[gimuy]*$/g, '').split('|');
@@ -2066,7 +2070,7 @@ export async function setupQiankun() {
               return openTag + before + cleanedImport + closeTag;
             });
 
-            console.log(`[getTemplate] ✅ 已清理所有旧 chunk 引用`);
+            logger.info(`[getTemplate] ✅ 已清理所有旧 chunk 引用`);
           }
         }
 
@@ -2095,7 +2099,7 @@ export async function setupQiankun() {
               entryUrl = new URL(entry, window.location.origin);
             }
           } catch (e) {
-            console.warn('[getTemplate] 解析 entry URL 失败:', entry, e);
+            logger.warn('[getTemplate] 解析 entry URL 失败:', entry, e);
           }
 
           if (entryUrl) {
@@ -2127,7 +2131,7 @@ export async function setupQiankun() {
                 break;
               }
             }
-            console.log('[getTemplate] 从 entry 参数获取:', { baseUrl, matchedAppName, port, entry, finalHost, entryHostname: entryUrl.hostname });
+            logger.info('[getTemplate] 从 entry 参数获取:', { baseUrl, matchedAppName, port, entry, finalHost, entryHostname: entryUrl.hostname });
           }
         }
 
@@ -2165,7 +2169,7 @@ export async function setupQiankun() {
                   entryUrl = new URL(appEntry, window.location.origin);
                 }
               } catch (e) {
-                console.warn('[getTemplate] 解析 appEntry URL 失败:', appEntry, e);
+                logger.warn('[getTemplate] 解析 appEntry URL 失败:', appEntry, e);
               }
 
               if (entryUrl) {
@@ -2192,7 +2196,7 @@ export async function setupQiankun() {
                 }
 
                 baseUrl = `${protocol}//${finalHost}${port ? `:${port}` : ''}`;
-                console.log('[getTemplate] 从路径/子域名判断获取:', { matchedAppName, baseUrl, port, appEntry, hostname, finalHost, entryHostname: entryUrl.hostname, currentHost });
+                logger.info('[getTemplate] 从路径/子域名判断获取:', { matchedAppName, baseUrl, port, appEntry, hostname, finalHost, entryHostname: entryUrl.hostname, currentHost });
               }
             }
           }
@@ -2216,7 +2220,7 @@ export async function setupQiankun() {
           const baseUrlObj = new URL(baseUrl);
           const targetPort = baseUrlObj.port;
           const targetHost = baseUrlObj.hostname; // 使用 baseUrl 中的 hostname（可能是子域名）
-          console.log('[getTemplate] 开始修复资源路径', { baseUrl, targetPort, targetHost, currentPort, currentHost });
+          logger.info('[getTemplate] 开始修复资源路径', { baseUrl, targetPort, targetHost, currentPort, currentHost });
 
           // 修复所有 script src 中的相对路径和包含错误端口的绝对路径
           processedTpl = processedTpl.replace(
@@ -2236,7 +2240,7 @@ export async function setupQiankun() {
               // 因为子应用的 base 可能设置为 http://localhost:${APP_PORT}/，但用户通过 IP 访问
               if (src.includes('localhost') && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
                 fixedSrc = src.replace(/localhost/g, currentHost);
-                console.log(`[getTemplate] 替换 localhost 为当前 hostname script: ${src} -> ${fixedSrc}`);
+                logger.info(`[getTemplate] 替换 localhost 为当前 hostname script: ${src} -> ${fixedSrc}`);
               }
 
               // 情况1：如果 src 是相对路径（以 / 开头），转换为完整的 URL（绝对路径）
@@ -2244,14 +2248,14 @@ export async function setupQiankun() {
               // 使用 targetHost（可能是子域名）而不是 currentHost
               if (fixedSrc.startsWith('/')) {
                 fixedSrc = `${baseUrl.replace(/localhost/g, targetHost)}${fixedSrc}`;
-                console.log(`[getTemplate] 修复相对路径 script: ${src} -> ${fixedSrc}`);
+                logger.info(`[getTemplate] 修复相对路径 script: ${src} -> ${fixedSrc}`);
               }
               // 情况2：如果 src 是相对路径（不以 / 开头，如 assets/file.js），也转换为完整的 URL
               else if (!fixedSrc.includes('://') && !fixedSrc.startsWith('//') && !fixedSrc.startsWith('data:') && !fixedSrc.startsWith('blob:')) {
                 // 确保以 / 开头
                 const normalizedSrc = fixedSrc.startsWith('/') ? fixedSrc : `/${fixedSrc}`;
                 fixedSrc = `${baseUrl.replace(/localhost/g, targetHost)}${normalizedSrc}`;
-                console.log(`[getTemplate] 修复非绝对路径 script: ${src} -> ${fixedSrc}`);
+                logger.info(`[getTemplate] 修复非绝对路径 script: ${src} -> ${fixedSrc}`);
               }
               // 情况3：如果 src 包含错误的端口（当前页面的端口），修复它
               else if (currentPort && currentPort !== targetPort && (
@@ -2268,7 +2272,7 @@ export async function setupQiankun() {
                 if (currentHost !== targetHost) {
                   fixedSrc = fixedSrc.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
                 }
-                console.log(`[getTemplate] 修复错误端口 script: ${src} -> ${fixedSrc}`);
+                logger.info(`[getTemplate] 修复错误端口 script: ${src} -> ${fixedSrc}`);
               }
               // 情况4：如果 src 是协议相对路径（//host/），添加正确的端口
               else if (fixedSrc.startsWith('//') && !fixedSrc.includes(':')) {
@@ -2279,19 +2283,19 @@ export async function setupQiankun() {
                   const urlPath = hostMatch[2];
                   if (urlHost === currentHost || urlHost === 'localhost' || urlHost === targetHost) {
                     fixedSrc = targetPort ? `//${targetHost}:${targetPort}${urlPath}` : `//${targetHost}${urlPath}`;
-                    console.log(`[getTemplate] 修复协议相对路径 script: ${src} -> ${fixedSrc}`);
+                    logger.info(`[getTemplate] 修复协议相对路径 script: ${src} -> ${fixedSrc}`);
                   }
                 }
               }
               // 情况5：如果 src 是完整 URL 但包含 localhost 或错误的 hostname，替换为 targetHost
               else if ((fixedSrc.startsWith('http://localhost') || fixedSrc.startsWith('https://localhost')) && targetHost !== 'localhost') {
                 fixedSrc = fixedSrc.replace(/localhost/g, targetHost);
-                console.log(`[getTemplate] 替换完整 URL 中的 localhost script: ${src} -> ${fixedSrc}`);
+                logger.info(`[getTemplate] 替换完整 URL 中的 localhost script: ${src} -> ${fixedSrc}`);
               }
               // 情况6：如果 src 包含错误的 hostname（当前页面的 hostname），但应该是子域名
               else if (currentHost !== targetHost && fixedSrc.includes(`://${currentHost}`)) {
                 fixedSrc = fixedSrc.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
-                console.log(`[getTemplate] 替换错误的 hostname script: ${src} -> ${fixedSrc}`);
+                logger.info(`[getTemplate] 替换错误的 hostname script: ${src} -> ${fixedSrc}`);
               }
 
               if (fixedSrc !== src) {
@@ -2321,20 +2325,20 @@ export async function setupQiankun() {
               // 使用 targetHost（可能是子域名）而不是 currentHost
               if (href.includes('localhost') && targetHost !== 'localhost' && targetHost !== '127.0.0.1') {
                 fixedHref = href.replace(/localhost/g, targetHost);
-                console.log(`[getTemplate] 替换 localhost 为 targetHost link: ${href} -> ${fixedHref}`);
+                logger.info(`[getTemplate] 替换 localhost 为 targetHost link: ${href} -> ${fixedHref}`);
               }
 
               // 情况1：如果 href 是相对路径（以 / 开头），转换为完整的 URL
               // 使用 targetHost（可能是子域名）而不是 currentHost
               if (fixedHref.startsWith('/')) {
                 fixedHref = `${baseUrl.replace(/localhost/g, targetHost)}${fixedHref}`;
-                console.log(`[getTemplate] 修复相对路径 link: ${href} -> ${fixedHref}`);
+                logger.info(`[getTemplate] 修复相对路径 link: ${href} -> ${fixedHref}`);
               }
               // 情况2：如果 href 是相对路径（不以 / 开头），也转换为完整的 URL
               else if (!fixedHref.includes('://') && !fixedHref.startsWith('//') && !fixedHref.startsWith('data:') && !fixedHref.startsWith('blob:')) {
                 const normalizedHref = fixedHref.startsWith('/') ? fixedHref : `/${fixedHref}`;
                 fixedHref = `${baseUrl.replace(/localhost/g, targetHost)}${normalizedHref}`;
-                console.log(`[getTemplate] 修复非绝对路径 link: ${href} -> ${fixedHref}`);
+                logger.info(`[getTemplate] 修复非绝对路径 link: ${href} -> ${fixedHref}`);
               }
               // 情况3：如果 href 包含错误的端口（当前页面的端口），修复它
               else if (currentPort && currentPort !== targetPort && (
@@ -2351,7 +2355,7 @@ export async function setupQiankun() {
                 if (currentHost !== targetHost) {
                   fixedHref = fixedHref.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
                 }
-                console.log(`[getTemplate] 修复错误端口 link: ${href} -> ${fixedHref}`);
+                logger.info(`[getTemplate] 修复错误端口 link: ${href} -> ${fixedHref}`);
               }
               // 情况4：如果 href 是协议相对路径（//host/），添加正确的端口
               else if (fixedHref.startsWith('//') && !fixedHref.includes(':')) {
@@ -2361,19 +2365,19 @@ export async function setupQiankun() {
                   const urlPath = hostMatch[2];
                   if (urlHost === currentHost || urlHost === 'localhost' || urlHost === targetHost) {
                     fixedHref = targetPort ? `//${targetHost}:${targetPort}${urlPath}` : `//${targetHost}${urlPath}`;
-                    console.log(`[getTemplate] 修复协议相对路径 link: ${href} -> ${fixedHref}`);
+                    logger.info(`[getTemplate] 修复协议相对路径 link: ${href} -> ${fixedHref}`);
                   }
                 }
               }
               // 情况5：如果 href 是完整 URL 但包含 localhost 或错误的 hostname，替换为 targetHost
               else if ((fixedHref.startsWith('http://localhost') || fixedHref.startsWith('https://localhost')) && targetHost !== 'localhost') {
                 fixedHref = fixedHref.replace(/localhost/g, targetHost);
-                console.log(`[getTemplate] 替换完整 URL 中的 localhost link: ${href} -> ${fixedHref}`);
+                logger.info(`[getTemplate] 替换完整 URL 中的 localhost link: ${href} -> ${fixedHref}`);
               }
               // 情况6：如果 href 包含错误的 hostname（当前页面的 hostname），但应该是子域名
               else if (currentHost !== targetHost && fixedHref.includes(`://${currentHost}`)) {
                 fixedHref = fixedHref.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
-                console.log(`[getTemplate] 替换错误的 hostname link: ${href} -> ${fixedHref}`);
+                logger.info(`[getTemplate] 替换错误的 hostname link: ${href} -> ${fixedHref}`);
               }
 
               if (fixedHref !== href) {
@@ -2411,18 +2415,18 @@ export async function setupQiankun() {
                 // 如果 entry 中的 hostname 与当前 hostname 不同，说明是跨域加载，使用 entry 的 hostname
                 if (entryUrl.hostname !== currentHost) {
                   baseHost = entryUrl.hostname;
-                  console.log('[getTemplate] 从 entry 中提取 baseHost:', baseHost, 'entry:', entry);
+                  logger.info('[getTemplate] 从 entry 中提取 baseHost:', baseHost, 'entry:', entry);
                 }
               }
             } catch (e) {
               // 解析失败，使用 targetHost
-              console.warn('[getTemplate] 解析 entry 失败，使用 targetHost:', targetHost, e);
+              logger.warn('[getTemplate] 解析 entry 失败，使用 targetHost:', targetHost, e);
             }
           }
 
           // 构建产物直接部署到子域名根目录，base 路径始终是 /
           const baseHref = `${protocol}//${baseHost}${targetPort ? `:${targetPort}` : ''}${basePath}`;
-          console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, targetHost, currentHost, matchedAppName, basePath, entry });
+          logger.info('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, targetHost, currentHost, matchedAppName, basePath, entry });
 
           // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
           processedTpl = processedTpl.replace(/<base[^>]*>/gi, '');
@@ -2443,9 +2447,9 @@ export async function setupQiankun() {
             );
           }
 
-          console.log('[getTemplate] 处理后的 HTML 模板前 1000 字符:', processedTpl.substring(0, 1000));
+          logger.info('[getTemplate] 处理后的 HTML 模板前 1000 字符:', processedTpl.substring(0, 1000));
         } else {
-          console.warn('[getTemplate] 未找到 baseUrl，无法修复资源路径');
+          logger.warn('[getTemplate] 未找到 baseUrl，无法修复资源路径');
         }
 
         // 确保所有 script 标签都有 type="module"
@@ -2456,7 +2460,7 @@ export async function setupQiankun() {
             : `<script type="module"${attrs}>`
         );
 
-        console.log('[getTemplate] 最终处理后的 HTML 包含的 script 标签:', finalTpl.match(/<script[^>]*>/gi)?.slice(0, 5));
+        logger.info('[getTemplate] 最终处理后的 HTML 包含的 script 标签:', finalTpl.match(/<script[^>]*>/gi)?.slice(0, 5));
 
         return finalTpl;
       },
@@ -2494,7 +2498,7 @@ export async function setupQiankun() {
         const { appLoadingService } = await import('@btc/shared-core');
         appLoadingService.hide(appName);
       } catch (error) {
-        console.warn('[qiankun] 无法加载 AppLoadingService，尝试强制关闭loading', error);
+        logger.warn('[qiankun] 无法加载 AppLoadingService，尝试强制关闭loading', error);
         // 兜底方案：直接通过 DOM 关闭所有 .app-loading 元素
         const loadingEls = document.querySelectorAll('.app-loading');
         loadingEls.forEach((el) => {
@@ -2534,7 +2538,7 @@ export async function setupQiankun() {
         // 如果是源文件路径错误，直接忽略（这些文件应该在构建时被打包）
         // 包括所有 /packages/ 和 /src/ 路径，这些都不应该在生产环境出现
         if (isSourcePathError) {
-          console.warn(`[错误处理] 忽略源文件路径错误: ${src} (此文件应在构建时被打包)`);
+          logger.warn(`[错误处理] 忽略源文件路径错误: ${src} (此文件应在构建时被打包)`);
           event.preventDefault();
           event.stopPropagation();
           return;
@@ -2571,7 +2575,7 @@ export async function setupQiankun() {
                 entryUrl = new URL(appEntry, window.location.origin);
               }
             } catch (e) {
-              console.warn('[错误处理] 解析 appEntry URL 失败:', appEntry, e);
+                  logger.warn('[错误处理] 解析 appEntry URL 失败:', appEntry, e);
             }
 
             if (entryUrl) {
@@ -2594,7 +2598,7 @@ export async function setupQiankun() {
 
                 // 重新加载资源
                 if (fixedUrl !== src) {
-                  console.log(`[错误处理] 修复资源路径: ${src} -> ${fixedUrl}`);
+                  logger.info(`[错误处理] 修复资源路径: ${src} -> ${fixedUrl}`);
                   if (target instanceof HTMLScriptElement) {
                     const newScript = document.createElement('script');
                     newScript.src = fixedUrl;

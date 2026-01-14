@@ -15,7 +15,9 @@ export const routes: RouteRecordRaw[] = [
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
-      titleKey: 'auth.login'
+      titleKey: 'auth.login',
+      isPage: true,
+      pageType: 'login'
     }
   },
   // 忘记密码页面（不在 Layout 中）- 使用根目录 auth 包
@@ -26,7 +28,8 @@ export const routes: RouteRecordRaw[] = [
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
-      titleKey: 'auth.login.password.forgot'
+      titleKey: 'auth.login.password.forgot',
+      isPage: true
     }
   },
   // 注册页面（不在 Layout 中）- 使用根目录 auth 包
@@ -37,7 +40,8 @@ export const routes: RouteRecordRaw[] = [
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
-      titleKey: 'auth.register'
+      titleKey: 'auth.register',
+      isPage: true
     }
   },
   // 根路径重定向到首页（从配置读取）
@@ -58,6 +62,7 @@ export const routes: RouteRecordRaw[] = [
           labelKey: 'menu.overview',
           isHome: false,
           isSubApp: false,
+          isPage: true,
           breadcrumbs: [
             { path: '/overview', i18nKey: 'menu.dashboard', label: '工作台', icon: 'svg:Lock' },
             { path: '/overview', i18nKey: 'menu.overview', label: '概览', icon: 'svg:Location' },
@@ -79,6 +84,7 @@ export const routes: RouteRecordRaw[] = [
           labelKey: 'menu.profile',
           isHome: false,
           isSubApp: false,
+          isPage: true,
           breadcrumbs: [
             { path: '/overview', i18nKey: 'menu.dashboard', label: '工作台', icon: 'svg:Lock' },
             { path: '/profile', i18nKey: 'menu.profile', label: '个人中心', icon: 'svg:user' },
@@ -100,6 +106,7 @@ export const routes: RouteRecordRaw[] = [
           labelKey: 'menu.todo',
           isHome: false,
           isSubApp: false,
+          isPage: true,
           breadcrumbs: [
             { path: '/overview', i18nKey: 'menu.dashboard', label: '工作台' },
             { path: '/todo', i18nKey: 'menu.todo', label: '我的待办' },
@@ -246,9 +253,11 @@ export const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'NotFound404Page',
-        component: () => import('../pages/404/index.vue'),
+        component: () => import('@/modules/base/pages/error/404.vue'),
         meta: {
           titleKey: 'common.page_not_found',
+          isPage: true,
+          pageType: 'error',
           breadcrumbs: [
             { labelKey: 'common.page_not_found', icon: 'svg:404' },
           ],

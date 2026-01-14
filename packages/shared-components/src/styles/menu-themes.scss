@@ -259,6 +259,41 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       }
     }
   }
+
+  // BtcInput 组件在深色菜单主题下的样式（与 .sidebar__search 保持一致）
+  .btc-input {
+    .el-input__wrapper {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: none !important;
+      height: 27px !important;
+      padding: 0 12px !important;
+      border-radius: 6px !important;
+
+      .el-input__inner {
+        color: #BABBBD !important;
+        font-size: 13px !important;
+
+        &::placeholder {
+          color: rgba(186, 187, 189, 0.6) !important;
+        }
+      }
+    }
+
+    .el-input__prefix {
+      display: flex !important;
+      align-items: center !important;
+
+      .btc-svg {
+        color: #BABBBD !important;
+      }
+    }
+
+    .el-input__suffix {
+      .el-input__clear {
+        color: #BABBBD !important;
+      }
+    }
+  }
 }
 
 // 深色菜单风格下的侧边栏容器背景（全局选择器）

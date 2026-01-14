@@ -2,6 +2,7 @@
  * 插件系统集成模块
  * 负责自动发现和注册插件
  */
+import { logger } from '@btc/shared-core';
 
 import type { App } from 'vue';
 import { usePluginManager, resetPluginManager } from '@btc/shared-core';
@@ -35,16 +36,16 @@ export async function autoDiscoverPlugins(app: App) {
     try {
       // 检查插件是否已注册，避免重复注册
       if (pluginManager.has(plugin.name)) {
-        console.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
+        logger.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
         continue;
       }
       pluginManager.register(plugin);
     } catch (error) {
       // 如果是重复注册错误，只警告不报错
       if (error instanceof Error && error.message.includes('already registered')) {
-        console.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
+        logger.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
       } else {
-        console.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
+        logger.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
       }
     }
   }
@@ -55,7 +56,7 @@ export async function autoDiscoverPlugins(app: App) {
       try {
         await pluginManager.install(plugin.name);
       } catch (error) {
-        console.error(`[PluginManager] 安装插件失败: ${plugin.name}`, error);
+        logger.error(`[PluginManager] 安装插件失败: ${plugin.name}`, error);
       }
     }
   }

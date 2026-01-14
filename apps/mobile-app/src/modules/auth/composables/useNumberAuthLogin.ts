@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, computed } from 'vue';
 import { showToast } from 'vant';
 import { useRouter, useRoute } from 'vue-router';
@@ -44,7 +45,7 @@ export function useNumberAuthLogin() {
         query: route.query,
       });
     } catch (error: any) {
-      console.error('跳转到授权页面失败:', error);
+      logger.error('跳转到授权页面失败:', error);
       showToast({
         message: '跳转失败，请重试',
         type: 'fail',

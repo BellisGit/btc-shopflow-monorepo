@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { defineStore } from 'pinia';
 import { ref, watch, nextTick } from 'vue';
 // 使用动态导入避免循环依赖（tabRegistry 可能导入 micro/manifests，而 micro/index.ts 导入 process.ts）
@@ -291,7 +292,7 @@ export const useProcessStore = defineStore('process', () => {
               }
             }
           } catch (manifestError) {
-            console.warn('[Process] Failed to resolve tab meta from manifest:', manifestError);
+            logger.warn('[Process] Failed to resolve tab meta from manifest:', manifestError);
           }
         }
 
@@ -310,7 +311,7 @@ export const useProcessStore = defineStore('process', () => {
           }
         }
       } catch (error) {
-        console.warn('[Process] Failed to resolve tab meta:', error);
+        logger.warn('[Process] Failed to resolve tab meta:', error);
       }
     })();
   }
@@ -467,7 +468,7 @@ export const useProcessStore = defineStore('process', () => {
         }
       }
     } catch (error) {
-      console.warn('[Process] Failed to restore tabs from storage:', error);
+      logger.warn('[Process] Failed to restore tabs from storage:', error);
       // 如果恢复失败，清空数据
       list.value = [];
       pinned.value = [];

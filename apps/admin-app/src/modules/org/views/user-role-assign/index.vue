@@ -1,6 +1,6 @@
 <template>
-  <div class="user-role-assign-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="domainService"
       :right-service="wrappedUserRoleService"
@@ -27,7 +27,7 @@
       <template #multi-delete-btn>
         <BtcMultiUnbindBtn @click="handleMultiUnbind" />
       </template>
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
 
     <el-drawer
       v-model="drawerVisible"
@@ -107,9 +107,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { useI18n, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, getPageConfigFull, logger } from '@btc/shared-core';
 // @ts-ignore - BtcMultiUnbindBtn 已从 @btc/shared-components 导出，但类型定义可能未更新
-import { BtcMessage, BtcTransferPanel, BtcConfirm, BtcTableGroup, BtcSvg, BtcMultiUnbindBtn } from '@btc/shared-components';
+import { BtcMessage, BtcTransferPanel, BtcConfirm, BtcMasterTableGroup, BtcSvg, BtcMultiUnbindBtn } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
 import { service } from '@services/eps';
 
@@ -149,7 +149,7 @@ const userRoleService = service.admin?.iam?.userRole;
 const wrappedUserRoleService = {
   ...userRoleService,
   page: async (params: any) => {
-    // BtcTableGroup 会将左侧选中的域 ID 作为 keyword 传递，格式为 { ids: [...] }
+    // BtcMasterTableGroup 会将左侧选中的域 ID 作为 keyword 传递，格式为 { ids: [...] }
     // 需要从 selectedDomain 中获取 domainCode，放在 keyword 对象中
     const finalParams = { ...params };
 
@@ -168,7 +168,7 @@ const wrappedUserRoleService = {
         domainCode =selectedDomain.value.domainCode || '';
       }
 
-      // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
+      // 如果 keyword 是对象且包含 ids 字段（BtcMasterTableGroup 的标准格式）
       // 或者从 selectedDomain 中获取到了 domainCode
       if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
         // 如果从 selectedDomain 中获取到了 domainCode，使用它
@@ -407,7 +407,7 @@ const searchUsers = async (query: string) => {
     // data 方法可能直接返回数组，也可能返回包含 list 的对象
     userOptions.value = Array.isArray(response) ? response : (response?.list || []);
   } catch (error) {
-    console.error('[UserRoleAssign] search users error', error);
+    logger.error('[UserRoleAssign] search users error', error);
     userOptions.value = [];
   } finally {
     userSearchLoading.value = false;
@@ -553,13 +553,13 @@ async function handleSubmit() {
       if (userCode) {
         userCodes.push(userCode);
       } else {
-        console.warn(`[UserRoleAssign] 用户没有 userCode 字段:`, user);
+        logger.warn(`[UserRoleAssign] 用户没有 userCode 字段:`, user);
         const identifier = user.username || user.realName || String(userId);
         BtcMessage.error(t('org.user_role_assign.messages.userCodeNotFound', { identifier }));
         return;
       }
     } else {
-      console.warn(`[UserRoleAssign] 找不到用户:`, userId);
+      logger.warn(`[UserRoleAssign] 找不到用户:`, userId);
       BtcMessage.error(t('org.user_role_assign.messages.userNotFound', { identifier: String(userId) }));
       return;
     }
@@ -575,13 +575,13 @@ async function handleSubmit() {
       if (roleCode) {
         roleCodes.push(roleCode);
       } else {
-        console.warn(`[UserRoleAssign] 角色没有 roleCode 字段:`, role);
+        logger.warn(`[UserRoleAssign] 角色没有 roleCode 字段:`, role);
         const identifier = role.roleName || String(roleId);
         BtcMessage.error(t('org.user_role_assign.messages.roleCodeNotFound', { identifier }));
         return;
       }
     } else {
-      console.warn(`[UserRoleAssign] 找不到角色:`, roleId);
+      logger.warn(`[UserRoleAssign] 找不到角色:`, roleId);
       BtcMessage.error(t('org.user_role_assign.messages.roleNotFound', { identifier: String(roleId) }));
       return;
     }
@@ -630,7 +630,7 @@ async function handleSubmit() {
       }
     }
   } catch (error: any) {
-    console.error('[UserRoleAssign] submit error', error);
+    logger.error('[UserRoleAssign] submit error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   } finally {
@@ -701,7 +701,7 @@ async function handleUnbind(row: any) {
     if (error?.message === 'cancel' || error === 'cancel') {
       return;
     }
-    console.error('[UserRoleAssign] unbind error', error);
+    logger.error('[UserRoleAssign] unbind error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   }
@@ -730,7 +730,7 @@ async function handleMultiUnbind(rows: any[]) {
       const roleCode = row.roleCode || row.role_code;
 
       if (!userCode || !roleCode) {
-        console.warn('[UserRoleAssign] 行数据缺少 userCode 或 roleCode:', row);
+        logger.warn('[UserRoleAssign] 行数据缺少 userCode 或 roleCode:', row);
         return null;
       }
 
@@ -781,7 +781,7 @@ async function handleMultiUnbind(rows: any[]) {
     if (error?.message === 'cancel' || error === 'cancel') {
       return;
     }
-    console.error('[UserRoleAssign] multi unbind error', error);
+    logger.error('[UserRoleAssign] multi unbind error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   }
@@ -789,10 +789,7 @@ async function handleMultiUnbind(rows: any[]) {
 </script>
 
 <style lang="scss" scoped>
-.user-role-assign-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 
 // 覆盖抽屉默认样式（只影响当前抽屉）
 :deep(.user-role-assign-drawer-wrapper) {

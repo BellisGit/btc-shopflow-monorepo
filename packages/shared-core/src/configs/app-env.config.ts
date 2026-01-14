@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger';
 /// <reference types="vite/client" />
 
 /**
@@ -194,7 +195,7 @@ export function getAllDevPorts(): string[] {
   } catch (error) {
     if (error instanceof ReferenceError && error.message.includes('before initialization')) {
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
-        console.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
+        logger.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
       }
       return [];
     }
@@ -214,7 +215,7 @@ export function getAllPrePorts(): string[] {
   } catch (error) {
     if (error instanceof ReferenceError && error.message.includes('before initialization')) {
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
-        console.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
+        logger.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
       }
       return [];
     }

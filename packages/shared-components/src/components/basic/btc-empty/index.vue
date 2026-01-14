@@ -1,12 +1,9 @@
 <template>
   <div class="btc-empty" :class="[`btc-empty--${size}`]">
     <el-empty
-      v-bind="{
-        ...$attrs,
-        image: props.image ?? $attrs.image,
-        'image-size': props.imageSize ?? $attrs['image-size'],
-        description: props.description ?? $attrs.description,
-      }"
+      :image="props.image ?? ($attrs.image as string)"
+      :image-size="props.imageSize ?? ($attrs['image-size'] as number)"
+      :description="props.description ?? ($attrs.description as string)"
     >
       <!-- 默认插槽：底部内容 -->
       <template v-if="$slots.default" #default>

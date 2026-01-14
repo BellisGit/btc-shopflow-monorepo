@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 /**
  * 指数退避重试机制
  */
@@ -127,7 +128,7 @@ export function useRetry(config: RetryConfig = {}) {
           );
 
           state.value.nextRetryDelay = delay;
-          console.log(`请求重试 ${attempt}/${operationConfig.maxRetries}，延迟 ${delay}ms`);
+          logger.info(`请求重试 ${attempt}/${operationConfig.maxRetries}，延迟 ${delay}ms`);
 
           await new Promise(resolve => setTimeout(resolve, delay));
         }
@@ -149,11 +150,11 @@ export function useRetry(config: RetryConfig = {}) {
 
         // 检查是否应该重试
         if (!shouldRetry(error, attempt, operationConfig.maxRetries)) {
-          console.error(`请求失败，不进行重试:`, error);
+          logger.error(`请求失败，不进行重试:`, error);
           break;
         }
 
-        console.warn(`请求失败，准备重试 ${attempt + 1}/${operationConfig.maxRetries}:`, error);
+        logger.warn(`请求失败，准备重试 ${attempt + 1}/${operationConfig.maxRetries}:`, error);
       }
     }
 

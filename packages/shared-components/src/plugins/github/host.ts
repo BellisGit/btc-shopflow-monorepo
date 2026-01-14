@@ -1,6 +1,7 @@
 /**
  * GitHub集成插件 - 主应用鉴权初始化（Host）
  */
+import { logger } from '@btc/shared-core';
 import { Octokit } from '@octokit/rest';
 import { storage } from '@btc/shared-core/utils';
 import type { QiankunActions } from '../types';
@@ -40,7 +41,7 @@ export function initGitHubPluginHost(options: GitHubPluginHostOptions = {}) {
 
       return true;
     } catch (error) {
-      console.error('[GitHub] Login failed:', error);
+      logger.error('[GitHub] Login failed:', error);
       return false;
     }
   };

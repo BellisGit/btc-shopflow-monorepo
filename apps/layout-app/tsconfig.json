@@ -26,7 +26,8 @@
       "@btc/shared-core": ["../../packages/shared-core/dist/src"],
       "@btc/shared-core/*": ["../../packages/shared-core/dist/*", "../../packages/shared-core/dist/src/*"],
       "@btc/auth-shared": ["../../auth/shared"],
-      "@btc/auth-shared/*": ["../../auth/shared/*"]
+      "@btc/auth-shared/*": ["../../auth/shared/*"],
+      "@workspace/locales/*": ["../../locales/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "../../configs/**/*.ts", "../../types/**/*.d.ts", "../../packages/shared-core/dist/**/*.d.ts"],

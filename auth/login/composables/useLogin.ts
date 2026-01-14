@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, reactive, nextTick } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
@@ -111,7 +112,7 @@ export function useLogin() {
           const { startUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
           startUserCheckPolling(true);
         } catch (error) {
-          console.warn('[useLogin] Failed to start user check polling:', error);
+          logger.warn('[useLogin] Failed to start user check polling:', error);
         }
         router.push('/');
       } else {
@@ -123,7 +124,7 @@ export function useLogin() {
         message: error.message || 'Unknown error',
         response: error.response
       };
-      console.error('登录错误:', errorInfo);
+      logger.error('登录错误:', errorInfo);
       BtcMessage.error(error.message || t('登录失败'));
       
       // 返回错误，让调用方刷新验证码

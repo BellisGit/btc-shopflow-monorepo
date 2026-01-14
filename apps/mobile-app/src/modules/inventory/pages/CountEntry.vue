@@ -1,14 +1,14 @@
 <template>
-  <div class="count-entry-page">
+  <div class="page">
     <!-- 顶部导航栏 -->
-    <div class="count-entry-page__header">
-      <button class="count-entry-page__back-btn" @click="handleBack">
+    <div class="count-entry__header">
+      <button class="count-entry__back-btn" @click="handleBack">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <h1 class="count-entry-page__title">录入盘点</h1>
-      <div class="count-entry-page__placeholder"></div>
+      <h1 class="count-entry__title">录入盘点</h1>
+      <div class="count-entry__placeholder"></div>
     </div>
     
     <Form @submit="handleSubmit">
@@ -57,6 +57,8 @@ import {
 import { db } from '@/db';
 import { useInventoryStore } from '@/stores/inventory';
 import { inventoryApi } from '@/services/inventory';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'BtcMobileInventoryEntry',
@@ -91,7 +93,7 @@ onMounted(() => {
       });
     } catch (e) {
       showToast('二维码格式错误');
-      console.error('Failed to parse QR code:', e);
+      logger.error('Failed to parse QR code:', e);
     }
   }
 });
@@ -159,7 +161,7 @@ async function handleSubmit() {
       router.replace({ name: 'Scanner' });
     }, 500);
   } catch (error: any) {
-    console.error('[CountEntry] Failed to submit:', error);
+    logger.error('[CountEntry] Failed to submit:', error);
     const message = error?.message || '提交失败';
     showToast({
       type: 'fail',

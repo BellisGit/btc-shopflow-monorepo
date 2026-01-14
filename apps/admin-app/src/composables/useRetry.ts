@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, readonly } from 'vue';
 
 /**
@@ -129,7 +130,7 @@ export function useRetry(config: RetryConfig = {}) {
           );
 
           state.value.nextRetryDelay = delay;
-          console.log(`Request retry ${attempt}/${operationConfig.maxRetries}, delay ${delay}ms`);
+          logger.info(`Request retry ${attempt}/${operationConfig.maxRetries}, delay ${delay}ms`);
 
           await new Promise(resolve => setTimeout(resolve, delay));
         }
@@ -151,11 +152,11 @@ export function useRetry(config: RetryConfig = {}) {
 
         // 检查是否应该重试
         if (!shouldRetry(error, attempt, operationConfig.maxRetries)) {
-          console.error('Request failed, not retrying:', error);
+          logger.error('Request failed, not retrying:', error);
           break;
         }
 
-        console.warn(`Request failed, preparing retry ${attempt + 1}/${operationConfig.maxRetries}:`, error);
+        logger.warn(`Request failed, preparing retry ${attempt + 1}/${operationConfig.maxRetries}:`, error);
       }
     }
 

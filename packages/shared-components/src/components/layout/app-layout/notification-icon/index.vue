@@ -37,6 +37,8 @@ const notificationConfig = computed(() => ({
   icon: 'notice',
   tooltip: t('common.tooltip.notification'),
   class: hasUnread ? 'btc-icon-button--breath btc-icon-button--breath--warning' : '',
+  iconAnimation: 'grow' as const,
+  iconAnimationTrigger: 'hover' as const,
   popover: {
     component: BtcNotificationPanel,
     width: 360,

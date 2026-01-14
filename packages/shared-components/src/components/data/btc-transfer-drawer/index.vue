@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
-import BtcSvg from '../../others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTransferPanel from '../btc-transfer-panel/index.vue';
 import type { TransferKey, TransferPanelChangePayload } from '../btc-transfer-panel/types';
 import type { TransferDrawerSection, TransferDrawerChangePayload, TransferDrawerRemovePayload } from './types';

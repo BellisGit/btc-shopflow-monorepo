@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
 import 'virtual:uno.css';
@@ -31,7 +32,7 @@ import('@btc/shared-components').then((utils: any) => {
 }).catch(() => {
   // 静默处理导入失败，不影响应用启动
   if (import.meta.env.DEV) {
-    console.warn('[operations-app] 无法导入 setIsMainAppFn，跳过设置');
+    logger.warn('[operations-app] 无法导入 setIsMainAppFn，跳过设置');
   }
 });
 
@@ -94,7 +95,7 @@ const render = async (props: QiankunProps = {}) => {
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[operations-app] 无法显示应用级 loading:', error);
+        logger.warn('[operations-app] 无法显示应用级 loading:', error);
       }
     }
   }
@@ -107,7 +108,7 @@ const render = async (props: QiankunProps = {}) => {
       } catch (error) {
         // 卸载失败不影响后续流程，但记录错误
         if (import.meta.env.DEV) {
-          console.warn('[operations-app] 卸载前一个实例失败:', error);
+          logger.warn('[operations-app] 卸载前一个实例失败:', error);
         }
       } finally {
         context = null;
@@ -130,7 +131,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('[operations-app] 渲染失败:', error);
+    logger.error('[operations-app] 渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -164,12 +165,12 @@ async function mount(props: QiankunProps) {
       await loadSharedResourcesFromLayoutApp({
         onProgress: (loaded: number, total: number) => {
           if (import.meta.env.DEV) {
-            console.log(`[operations-app] 加载共享资源进度: ${loaded}/${total}`);
+            logger.info(`[operations-app] 加载共享资源进度: ${loaded}/${total}`);
           }
         },
       });
     } catch (error) {
-      console.warn('[operations-app] 加载共享资源失败，继续使用本地资源:', error);
+      logger.warn('[operations-app] 加载共享资源失败，继续使用本地资源:', error);
       // 继续执行，使用本地打包的资源作为降级方案
     }
   }
@@ -189,7 +190,7 @@ async function unmount(props: QiankunProps = {}) {
     } catch (error) {
       // 卸载失败不影响后续流程
       if (import.meta.env.DEV) {
-        console.warn('[operations-app] 卸载失败:', error);
+        logger.warn('[operations-app] 卸载失败:', error);
       }
     } finally {
       context = null;
@@ -268,40 +269,40 @@ if (shouldRunStandalone()) {
                 // 挂载到 layout-app 的 #subapp-viewport
                 render({ container: viewport } as any).then(() => {
                 }).catch((error) => {
-                  console.error('[operations-app] 挂载到 layout-app 失败:', error);
+                  logger.error('[operations-app] 挂载到 layout-app 失败:', error);
                 });
               } else {
-                console.error('[operations-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                logger.error('[operations-app] 等待 #subapp-viewport 超时，尝试独立渲染');
                 render().catch((error) => {
-                  console.error('[operations-app] 独立运行失败:', error);
+                  logger.error('[operations-app] 独立运行失败:', error);
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
             render().catch((error) => {
-              console.error('[operations-app] 独立运行失败:', error);
+              logger.error('[operations-app] 独立运行失败:', error);
             });
           }
         })
         .catch((error) => {
-          console.error('[operations-app] 初始化 layout-app 失败:', error);
+          logger.error('[operations-app] 初始化 layout-app 失败:', error);
           // layout-app 加载失败，独立渲染
           render().catch((error) => {
-            console.error('[operations-app] 独立运行失败:', error);
+            logger.error('[operations-app] 独立运行失败:', error);
           });
         });
     }).catch((error) => {
-      console.error('[operations-app] 导入 init-layout-app 失败:', error);
+      logger.error('[operations-app] 导入 init-layout-app 失败:', error);
       // 导入失败，直接渲染
       render().catch((error) => {
-        console.error('[operations-app] 独立运行失败:', error);
+        logger.error('[operations-app] 独立运行失败:', error);
       });
     });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
     render().catch((error) => {
-      console.error('[operations-app] 独立运行失败:', error);
+      logger.error('[operations-app] 独立运行失败:', error);
     });
   }
 }

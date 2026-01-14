@@ -1,7 +1,7 @@
-﻿<template>
-  <div class="simulator-page">
-    <BtcRow>
-      <BtcFlex1 />
+<template>
+  <div class="page">
+    <BtcCrudRow>
+      <BtcCrudFlex1 />
       <el-form
         ref="formRef"
         :model="simulatorForm"
@@ -37,7 +37,7 @@
         <el-icon><VideoPlay /></el-icon>
         {{ t('common.ops.simulator.start') }}
       </el-button>
-    </BtcRow>
+    </BtcCrudRow>
 
     <div class="simulator-container">
 
@@ -91,7 +91,7 @@
 import { ref, reactive } from 'vue';
 import { VideoPlay } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
-import { BtcRow, BtcFlex1, BtcMessage, ExcelPlugin } from '@btc/shared-components';
+import { BtcCrudRow, BtcCrudFlex1, BtcMessage, ExcelPlugin } from '@btc/shared-components';
 
 defineOptions({
   name: 'OpsSimulator'
@@ -209,10 +209,7 @@ const handleSimulate = async () => {
 </script>
 
 <style lang="scss" scoped>
-.simulator-page {
-  height: 100%;
-  padding: 20px;
-}
+
 
 .simulator-form {
   display: inline-flex;

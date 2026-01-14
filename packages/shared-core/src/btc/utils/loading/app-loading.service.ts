@@ -1,7 +1,7 @@
 /**
  * 应用级 Loading 服务
  * 管理覆盖单个应用容器的 loading，仅遮挡当前应用区域，不影响其他应用
- * 使用 Vue 组件（AppLoading）挂载实现
+ * 使用 Vue 组件（BtcAppLoading）挂载实现
  */
 
 import { storage } from '../../../utils';
@@ -11,7 +11,7 @@ import { createApp, type App } from 'vue';
 /**
  * 应用 Loading 实例信息
  */
-interface AppLoadingInstance {
+interface BtcAppLoadingInstance {
   appName: string;
   container: HTMLElement;
   loadingElement: HTMLElement | null; // 容器元素
@@ -90,8 +90,8 @@ function getLoadingStyle(): LoadingStyle {
  * 应用级 Loading 服务
  * 单例模式，管理多个应用的 loading 实例
  */
-class AppLoadingService {
-  private instances: Map<string, AppLoadingInstance> = new Map();
+class BtcAppLoadingService {
+  private instances: Map<string, BtcAppLoadingInstance> = new Map();
   
   constructor() {
     // 监听 loading 样式变化事件
@@ -123,10 +123,10 @@ class AppLoadingService {
     try {
       // 动态导入 Vue 组件
       const sharedComponents = await import('@btc/shared-components');
-      const AppLoading = sharedComponents.AppLoading;
+      const BtcAppLoading = sharedComponents.BtcAppLoading;
       
-      if (!AppLoading) {
-        throw new Error('AppLoading component not found in @btc/shared-components');
+      if (!BtcAppLoading) {
+        throw new Error('BtcAppLoading component not found in @btc/shared-components');
       }
       
       const { createApp: createVueApp } = await import('vue');
@@ -149,7 +149,7 @@ class AppLoadingService {
       `;
 
       // 创建 Vue 应用实例
-      const vueApp = createVueApp(AppLoading, {
+      const vueApp = createVueApp(BtcAppLoading, {
         visible: true,
         title: appDisplayName,
         tip: '正在加载资源',
@@ -288,7 +288,7 @@ class AppLoadingService {
         } else {
           // 如果 Vue 应用已存在，更新 props（如果需要）
           // 注意：Vue 3 中 props 是只读的，如果需要更新，需要重新挂载
-          // 这里暂时不更新，因为 AppLoading 组件内部已经通过响应式状态管理
+          // 这里暂时不更新，因为 BtcAppLoading 组件内部已经通过响应式状态管理
           
           // 确保loading元素在body中（如果不在，移动到body）
           if (instance.loadingElement.parentNode !== document.body) {
@@ -503,5 +503,5 @@ class AppLoadingService {
 }
 
 // 导出单例实例
-export const appLoadingService = new AppLoadingService();
+export const appLoadingService = new BtcAppLoadingService();
 

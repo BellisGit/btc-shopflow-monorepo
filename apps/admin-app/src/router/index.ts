@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
 import {
   createRouter,
@@ -168,7 +169,7 @@ export const createAdminRouter = (): Router => {
   } catch (error) {
     // 如果导入失败，不影响路由功能
     if (import.meta.env.DEV) {
-      console.warn('[admin-app router] Failed to setup title guard:', error);
+      logger.warn('[admin-app router] Failed to setup title guard:', error);
     }
   }
 
@@ -245,7 +246,7 @@ export const createAdminRouter = (): Router => {
         } catch (error) {
           // 如果获取失败，静默失败，不调用 checkUser
           if (import.meta.env.DEV) {
-            console.warn('[router] Failed to get app ID from path:', error);
+            logger.warn('[router] Failed to get app ID from path:', error);
           }
           return false;
         }
@@ -264,13 +265,13 @@ export const createAdminRouter = (): Router => {
         // 如果检查失败，会在后续的认证检查中处理
         checkUser().catch((error) => {
           if (import.meta.env.DEV) {
-            console.warn('[router] User check failed:', error);
+            logger.warn('[router] User check failed:', error);
           }
         });
       } catch (error) {
         // 静默失败，不影响路由跳转
         if (import.meta.env.DEV) {
-          console.warn('[router] Failed to import checkUser:', error);
+          logger.warn('[router] Failed to import checkUser:', error);
         }
       }
     }
@@ -484,7 +485,7 @@ export const createAdminRouter = (): Router => {
       } catch (error) {
         // 静默失败
         if (import.meta.env.DEV) {
-          console.warn('[admin-app router] Failed to add tab:', error);
+          logger.warn('[admin-app router] Failed to add tab:', error);
         }
       }
     }

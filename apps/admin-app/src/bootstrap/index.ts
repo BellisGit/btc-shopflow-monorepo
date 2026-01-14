@@ -1,4 +1,5 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import { logger } from '@btc/shared-core';
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
 import '@btc/shared-components/styles/index.scss';
@@ -65,7 +66,7 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      console.warn('[admin-app] Failed to import domain-cache module:', error);
+      logger.warn('[admin-app] Failed to import domain-cache module:', error);
     }
 
     await setupSubAppGlobals({
@@ -105,7 +106,7 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
       }
     } catch (error) {
       const { t } = useI18n();
-      console.warn('[admin-app]', t('common.error.send_i18n_message_failed'), error);
+      logger.warn('[admin-app]', t('common.error.send_i18n_message_failed'), error);
     }
   }
 

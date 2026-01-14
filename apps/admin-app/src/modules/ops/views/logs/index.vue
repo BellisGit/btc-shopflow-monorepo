@@ -1,5 +1,5 @@
 <template>
-  <div class="logs-page">
+  <div class="page">
     <BtcTabs v-model="activeTab" :tabs="logTabs" @tab-change="handleTabChange">
       <!-- 操作日志 Tab -->
       <template #operation>
@@ -9,12 +9,12 @@
           :service="logServices.operationLog"
           style="padding: 10px;"
         >
-          <BtcRow>
+          <BtcCrudRow>
             <BtcRefreshBtn />
-            <BtcFlex1 />
-            <BtcSearchKey placeholder="搜索操作日志..." />
-          </BtcRow>
-          <BtcRow>
+            <BtcCrudFlex1 />
+            <BtcCrudSearchKey placeholder="搜索操作日志..." />
+          </BtcCrudRow>
+          <BtcCrudRow>
             <BtcTable
               :columns="operationLogColumns"
               border
@@ -22,11 +22,11 @@
               :auto-height="true"
               @button-click="handleButtonClick"
             />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
+          </BtcCrudRow>
+          <BtcCrudRow>
+            <BtcCrudFlex1 />
             <BtcPagination />
-          </BtcRow>
+          </BtcCrudRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
           <BtcEmpty :description="t('common.ops.logs.operation.service_unavailable')" />
@@ -41,12 +41,12 @@
           :service="logServices.requestLog"
           style="padding: 10px;"
         >
-          <BtcRow>
+          <BtcCrudRow>
             <BtcRefreshBtn />
-            <BtcFlex1 />
-            <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
-          </BtcRow>
-          <BtcRow>
+            <BtcCrudFlex1 />
+            <BtcCrudSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
+          </BtcCrudRow>
+          <BtcCrudRow>
             <BtcTable
               :columns="requestLogColumns"
               border
@@ -54,11 +54,11 @@
               :auto-height="true"
               @button-click="handleButtonClick"
             />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
+          </BtcCrudRow>
+          <BtcCrudRow>
+            <BtcCrudFlex1 />
             <BtcPagination />
-          </BtcRow>
+          </BtcCrudRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
           <BtcEmpty :description="t('common.ops.logs.request.service_unavailable')" />
@@ -115,14 +115,14 @@ import { ref, computed, nextTick, watch } from 'vue';
 import {
   BtcTabs,
   BtcCrud,
-  BtcRow,
+  BtcCrudRow,
   BtcRefreshBtn,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcTable,
   BtcPagination
 } from '@btc/shared-components';
-import { useI18n, usePageColumns, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, usePageColumns, getPageConfigFull, logger } from '@btc/shared-core';
 import { BtcEmpty } from '@btc/shared-components';
 
 defineOptions({
@@ -201,10 +201,10 @@ const detailFields = computed(() => {
 // 处理tab切换
 const handleTabChange = (tab: any) => {
   activeTab.value = tab.name;
-  console.log('[LogsCenter] tab-change →', tab.name, 'currentStorageKey =', currentStorageKey.value);
+  logger.info('[LogsCenter] tab-change →', tab.name, 'currentStorageKey =', currentStorageKey.value);
   // 等待渲染后再次打印
   nextTick(() => {
-    console.log('[LogsCenter] after render, activeTab =', activeTab.value, 'storageKey =', currentStorageKey.value);
+    logger.info('[LogsCenter] after render, activeTab =', activeTab.value, 'storageKey =', currentStorageKey.value);
   });
 };
 
@@ -212,7 +212,7 @@ const handleTabChange = (tab: any) => {
 watch(
   () => activeTab.value,
   (val, oldVal) => {
-    console.log('[LogsCenter] activeTab changed:', oldVal, '→', val, 'storageKey =', currentStorageKey.value);
+    logger.info('[LogsCenter] activeTab changed:', oldVal, '→', val, 'storageKey =', currentStorageKey.value);
   },
   { immediate: true },
 );
@@ -237,11 +237,7 @@ const formatJson = (jsonStr: string) => {
 </script>
 
 <style lang="scss" scoped>
-.logs-page {
-  height: 100%;
-  box-sizing: border-box;
-  overflow: hidden; // 防止页面滚动，让表格内部处理滚动
-}
+
 
 // 局部禁用下拉过渡，减少 ResizeObserver 回调链
 :deep(.el-dropdown__list) {

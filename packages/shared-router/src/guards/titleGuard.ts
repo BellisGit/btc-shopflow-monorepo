@@ -11,6 +11,7 @@
  *   1. 默认：{应用名} - 拜里斯科技
  *   2. 兜底：拜里斯科技
  */
+import { logger } from '@btc/shared-core';
 
 import type { RouteLocationNormalized, Router } from 'vue-router';
 import {
@@ -194,7 +195,7 @@ export function createTitleGuard(
       await setPageTitle(appId, pageTitle, options);
     } catch (error) {
       // 标题设置失败不影响路由导航
-      console.warn('[titleGuard] 设置标题失败:', error);
+      logger.warn('[titleGuard] 设置标题失败:', error);
     }
 
     // 继续路由导航

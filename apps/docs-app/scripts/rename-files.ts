@@ -1,6 +1,7 @@
 /**
  * 重命名文件 - 修复多余的短横线
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -23,7 +24,7 @@ const renameMap: Record<string, string> = {
 };
 
 async function main() {
-  console.log('开始重命名文件...\n');
+  logger.info('开始重命名文件...\n');
 
   let renamed = 0;
   let failed = 0;
@@ -34,30 +35,30 @@ async function main() {
 
     try {
       if (!fs.existsSync(oldFullPath)) {
-        console.log(`⏭️  跳过 ${oldPath} - 文件不存在`);
+        logger.info(`⏭️  跳过 ${oldPath} - 文件不存在`);
         continue;
       }
 
       if (fs.existsSync(newFullPath)) {
-        console.log(`⚠️  跳过 ${oldPath} - 目标文件已存在`);
+        logger.info(`⚠️  跳过 ${oldPath} - 目标文件已存在`);
         continue;
       }
 
       fs.renameSync(oldFullPath, newFullPath);
-      console.log(`✅ ${oldPath}\n   -> ${newPath}`);
+      logger.info(`✅ ${oldPath}\n   -> ${newPath}`);
       renamed++;
     } catch (error) {
-      console.error(`❌ 重命名失败 ${oldPath}:`, error);
+      logger.error(`❌ 重命名失败 ${oldPath}:`, error);
       failed++;
     }
   }
 
-  console.log(`\n完成！`);
-  console.log(`- 成功重命名：${renamed} 个文件`);
-  console.log(`- 失败：${failed} 个文件`);
+  logger.info(`\n完成！`);
+  logger.info(`- 成功重命名：${renamed} 个文件`);
+  logger.info(`- 失败：${failed} 个文件`);
 
   if (renamed > 0) {
-    console.log(`\n💡 建议：重启 VitePress 服务器以更新文件索引`);
+    logger.info(`\n💡 建议：重启 VitePress 服务器以更新文件索引`);
   }
 }
 

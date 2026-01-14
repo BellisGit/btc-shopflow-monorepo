@@ -3,11 +3,66 @@
  * 包含国际化配置、表格列配置和表单配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'org',
+  label: 'common.module.org.label',
+  order: 5,
+
+  // 路由配置
+  views: [
+    {
+      path: '/org/tenants',
+      name: 'AdminTenants',
+      component: () => import('./views/tenants/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.org.tenants',
+      },
+    },
+    {
+      path: '/org/departments',
+      name: 'AdminDepartments',
+      component: () => import('./views/departments/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.org.departments',
+      },
+    },
+    {
+      path: '/org/users',
+      name: 'AdminUsers',
+      component: () => import('./views/users/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.org.users',
+      },
+    },
+    {
+      path: '/org/departments/:id/roles',
+      name: 'AdminDeptRoleBind',
+      component: () => import('./views/dept-role-bind/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.org.dept_role_bind',
+      },
+    },
+    {
+      path: '/org/users/users-roles',
+      name: 'AdminUserRoleAssign',
+      component: () => import('./views/user-role-assign/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.user_role_bind',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -17,7 +72,7 @@ export default {
       'menu.org.departments': '部门列表',
       'menu.org.users': '用户列表',
       'menu.org.dept_role_bind': '部门角色绑定',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.org.dept.list': '部门列表',
       'title.org.userRoleAssign.domains': '域列表',
       // 租户相关
@@ -119,7 +174,7 @@ export default {
       'menu.org.departments': 'Department List',
       'menu.org.users': 'User List',
       'menu.org.dept_role_bind': 'Department Role Binding',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.org.dept.list': 'Department List',
       'title.org.userRoleAssign.domains': 'Domain List',
       // 租户相关
@@ -405,8 +460,8 @@ export default {
     tenant: service.admin?.iam?.tenant,
     dept: service.admin?.iam?.dept,
     user: service.admin?.iam?.user,
-    // BtcTableGroup 需要的左右服务
+    // BtcMasterTableGroup 需要的左右服务
     sysdept: service.admin?.iam?.dept,
     sysuser: service.admin?.iam?.user,
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

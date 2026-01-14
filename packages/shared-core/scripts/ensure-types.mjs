@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -48,13 +49,13 @@ function copyDtsFiles(srcPath, destPath) {
 // 复制所有 .d.ts 文件
 try {
   copyDtsFiles(srcDir, distDir);
-  console.log('✓ Copied all .d.ts files to dist');
+  logger.info('✓ Copied all .d.ts files to dist');
 } catch (error) {
-  console.error('Failed to copy .d.ts files:', error.message);
+  logger.error('Failed to copy .d.ts files:', error.message);
   // 如果复制失败，至少确保 index.d.ts 存在
   if (!existsSync(distIndexDts)) {
     copyFileSync(srcIndexDts, distIndexDts);
-    console.log('✓ Copied index.d.ts to dist (fallback)');
+    logger.info('✓ Copied index.d.ts to dist (fallback)');
   }
 }
 
@@ -65,11 +66,11 @@ try {
     cwd: rootDir,
     stdio: 'inherit',
   });
-  console.log('✓ Generated type declarations');
+  logger.info('✓ Generated type declarations');
 } catch (error) {
   // tsc 失败时输出错误信息
-  console.error('✗ Failed to generate type declarations:', error.message);
+  logger.error('✗ Failed to generate type declarations:', error.message);
   // 仍然尝试复制 index.d.ts 作为后备方案
-  console.log('⚠ Using fallback index.d.ts only');
+  logger.info('⚠ Using fallback index.d.ts only');
 }
 

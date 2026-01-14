@@ -102,6 +102,8 @@ export default {
   'menu.test_features.api_test_center': '接口测试中心',
   'menu.test_features.inventory_ticket_print': '盘点票打印',
   'menu.test_features.filter_list_test': '筛选列表测试',
+  'menu.test_features.column_layout_test': '分栏布局测试',
+  'menu.test_features.double_layout_test': '双栏布局测试',
   'menu.test_features.crud': 'CRUD 测试',
   'menu.test_features.svg': 'SVG 测试',
   'menu.test_features.i18n': '国际化测试',

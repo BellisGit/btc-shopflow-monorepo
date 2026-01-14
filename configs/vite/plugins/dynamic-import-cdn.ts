@@ -2,6 +2,7 @@
  * 动态导入 CDN 转换插件
  * 在构建时拦截代码中的 import() 调用，将 /assets/ 路径的资源转换为使用 CDN 资源加载器
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 
@@ -35,9 +36,9 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
     apply: 'build',
     buildStart(){
       if (enabled) {
-        console.log(`[dynamic-import-cdn] CDN 动态导入转换已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
+        logger.info(`[dynamic-import-cdn] CDN 动态导入转换已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
       } else {
-        console.log(`[dynamic-import-cdn] CDN 动态导入转换已禁用`);
+        logger.info(`[dynamic-import-cdn] CDN 动态导入转换已禁用`);
       }
     },
     renderChunk(code: string, chunk: any) {
@@ -69,7 +70,7 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
       // 先检查是否有匹配的 import() 调用
       const matches = Array.from(newCode.matchAll(importPattern));
       if (matches.length > 0) {
-        console.log(`[dynamic-import-cdn] 在 chunk ${chunk.fileName} 中找到 ${matches.length} 个 import() 调用`);
+        logger.info(`[dynamic-import-cdn] 在 chunk ${chunk.fileName} 中找到 ${matches.length} 个 import() 调用`);
       }
 
       newCode = newCode.replace(importPattern, (match: string, quote: string, specifier: string) => {
@@ -158,7 +159,7 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
                 return match;
               });
               if (dynamicReplaceCount > 0) {
-                console.log('[dynamic-import-cdn] 已转换', dynamicReplaceCount, '个动态导入相对路径');
+                logger.info('[dynamic-import-cdn] 已转换', dynamicReplaceCount, '个动态导入相对路径');
               }
 
               // 匹配静态导入：import ... from './path' 或 import ... from "./path"
@@ -184,7 +185,7 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
                 return match;
               });
               if (staticReplaceCount > 0) {
-                console.log('[dynamic-import-cdn] 已转换', staticReplaceCount, '个静态导入相对路径');
+                logger.info('[dynamic-import-cdn] 已转换', staticReplaceCount, '个静态导入相对路径');
               }
 
               // 创建 Blob URL 用于动态 import（保持 ES 模块语义和相对路径解析）
@@ -198,7 +199,7 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
                 URL.revokeObjectURL(blobUrl);
               }
             } catch (error) {
-              console.warn('[dynamic-import-cdn] 资源加载器失败，回退到本地路径:', ${quote}${specifier}${quote}, error);
+              logger.warn('[dynamic-import-cdn] 资源加载器失败，回退到本地路径:', ${quote}${specifier}${quote}, error);
               // 关键：回退时必须使用本地路径（而不是 CDN URL），确保能够从 nginx 服务器加载
               // 如果 specifier 已经是完整 URL（CDN URL），需要提取路径部分
               let localPath = ${quote}${specifier}${quote};
@@ -236,7 +237,7 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
       });
 
       if (modified) {
-        console.log(`[dynamic-import-cdn] 已转换 chunk 文件中的动态导入: ${chunk.fileName}`);
+        logger.info(`[dynamic-import-cdn] 已转换 chunk 文件中的动态导入: ${chunk.fileName}`);
       }
 
       return modified ? { code: newCode, map: null } : null;

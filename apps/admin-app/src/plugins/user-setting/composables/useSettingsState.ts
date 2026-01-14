@@ -2,6 +2,7 @@
  * 设置状态管理
  * 使用 localStorage 持久化设置状态
  */
+import { logger } from '@btc/shared-core';
 
 import { ref, computed, nextTick } from 'vue';
 import { appStorage } from '@/utils/app-storage';
@@ -302,7 +303,7 @@ function createSettingsState() {
           themePlugin = plugin;
         }
       } catch (e) {
-        console.warn('Failed to get theme plugin:', e);
+        logger.warn('Failed to get theme plugin:', e);
         // 如果获取失败，直接应用 DOM 变化（不使用主题插件）
         applySystemTheme();
         return;

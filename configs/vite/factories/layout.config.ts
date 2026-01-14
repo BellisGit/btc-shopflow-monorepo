@@ -2,6 +2,7 @@
  * 布局应用 Vite 配置工厂
  * 生成布局应用的完整 Vite 配置（layout-app）
  */
+import { logger } from '@btc/shared-core';
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
@@ -212,9 +213,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         if (existsSync(viteDir)) {
           try {
             rmSync(viteDir, { recursive: true, force: true });
-            console.log('[clean-vite-dir-plugin] ✅ 已删除 dist/.vite 目录');
+            logger.info('[clean-vite-dir-plugin] ✅ 已删除 dist/.vite 目录');
           } catch (error: any) {
-            console.warn('[clean-vite-dir-plugin] ⚠️  无法删除 dist/.vite 目录:', error.message);
+            logger.warn('[clean-vite-dir-plugin] ⚠️  无法删除 dist/.vite 目录:', error.message);
           }
         }
       },
@@ -279,7 +280,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
             }
             // 调试：输出 imports 信息
             if (imports.length > 0) {
-              console.log(`[ensure-manifest-plugin] ${fileName} 的 imports:`, imports);
+              logger.info(`[ensure-manifest-plugin] ${fileName} 的 imports:`, imports);
             }
 
             fileNameToKeyMap.set(fileName, relativeSource);
@@ -371,24 +372,24 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
 
                     if (actualBaseName && actualBaseName === baseName) {
                       importKey = actualKey;
-                      console.log(`[ensure-manifest-plugin] 通过基础名称匹配找到 imports: ${importFileName} -> ${actualFileName} (key: ${actualKey})`);
+                      logger.info(`[ensure-manifest-plugin] 通过基础名称匹配找到 imports: ${importFileName} -> ${actualFileName} (key: ${actualKey})`);
                       break;
                     }
                   }
 
                   // 如果仍然没有找到，输出调试信息
                   if (!importKey) {
-                    console.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName} (基础名称: ${baseName})`);
+                    logger.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName} (基础名称: ${baseName})`);
                   }
                 } else {
-                  console.warn(`[ensure-manifest-plugin] ⚠️  无法解析文件名格式: ${importFileName}`);
+                  logger.warn(`[ensure-manifest-plugin] ⚠️  无法解析文件名格式: ${importFileName}`);
                 }
               }
 
               if (importKey) {
                 importKeys.push(importKey);
               } else {
-                console.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName}`);
+                logger.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName}`);
               }
             }
           }
@@ -417,9 +418,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         const manifestPath = resolve(appDir, 'dist', 'manifest.json');
         try {
           writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-          console.log(`[ensure-manifest-plugin] ✅ 已生成 manifest.json，包含 ${Object.keys(manifest).length} 个 chunk`);
+          logger.info(`[ensure-manifest-plugin] ✅ 已生成 manifest.json，包含 ${Object.keys(manifest).length} 个 chunk`);
         } catch (error: any) {
-          console.warn('[ensure-manifest-plugin] ⚠️  无法写入 manifest.json:', error.message);
+          logger.warn('[ensure-manifest-plugin] ⚠️  无法写入 manifest.json:', error.message);
         }
       },
     } as Plugin,

@@ -7,7 +7,7 @@ import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
 import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
-import { assignIconsToMenuTree } from '@btc/shared-core';
+import { assignIconsToMenuTree, logger } from '@btc/shared-core';
 
 // 应用名称映射（用于显示友好的中文名称）
 const appNameMap: Record<string, string> = {
@@ -203,14 +203,18 @@ function filterQiankunLogs() {
     if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
       return;
     }
-    originalInfo(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.info(message, ...args);
   };
 
   console.warn = (...args: any[]) => {
     if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
       return;
     }
-    originalWarn(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.warn(message, ...args);
   };
 }
 
@@ -238,7 +242,7 @@ export function setupQiankun() {
       registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
       clearTabs: () => clearTabs(app.name),
       setActiveTab: (tabKey: string) => {
-        console.log('[Main] Sub-app set active tab:', app.name, tabKey);
+        logger.info('[Main] Sub-app set active tab:', app.name, tabKey);
       },
     },
     // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
@@ -316,7 +320,7 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      console.error(`[qiankun] 容器 #subapp-viewport 不在 DOM 中`);
+                      logger.error(`[qiankun] 容器 #subapp-viewport 不在 DOM 中`);
                       reject(new Error(`容器 #subapp-viewport 不在 DOM 中，无法加载应用 ${app.name}`));
                       return;
                     }
@@ -342,7 +346,7 @@ export function setupQiankun() {
                                     computedStyle.opacity !== '0';
 
                     if (!isVisible) {
-                      console.warn(`[qiankun] 容器 #subapp-viewport 仍然不可见，强制显示`);
+                      logger.warn(`[qiankun] 容器 #subapp-viewport 仍然不可见，强制显示`);
                       container.style.setProperty('display', 'flex', 'important');
                       container.style.setProperty('visibility', 'visible', 'important');
                       container.style.setProperty('opacity', '1', 'important');
@@ -364,7 +368,7 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
+                    logger.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
                     reject(new Error(`容器 #subapp-viewport 不存在，无法加载应用 ${app.name}`));
                   }
                 }

@@ -1,6 +1,6 @@
 <template>
-  <div class="inventory-ticket-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="domainService"
       :right-service="wrappedTicketService"
@@ -28,17 +28,17 @@
           {{ t('ui.export') }}
         </el-button>
       </template>
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
+import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
@@ -107,7 +107,7 @@ const domainService = {
       // 返回域列表
       return Array.from(domainMap.values());
     } catch (error) {
-      console.error('[InventoryTicket] Failed to load domains from position service:', error);
+      logger.error('[InventoryTicket] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -135,7 +135,7 @@ const createWrappedService = (baseService: any) => {
       if (finalParams.keyword !== undefined && finalParams.keyword !== null) {
         const keyword = finalParams.keyword;
 
-        // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
+        // 如果 keyword 是对象且包含 ids 字段（BtcMasterTableGroup 的标准格式）
         if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
           const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
           // 取第一个 ID 作为 domainId
@@ -245,7 +245,7 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
     }
     return formatDateTime(value);
   } catch (error) {
-    console.warn('[InventoryTicket] Date format error:', error, value);
+    logger.warn('[InventoryTicket] Date format error:', error, value);
     return '--';
   }
 };
@@ -350,7 +350,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryTicket] Export failed:', error);
+    logger.error('[InventoryTicket] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {
@@ -365,8 +365,5 @@ const ticketFormItems = computed(() => formItems.value);
 </script>
 
 <style lang="scss" scoped>
-.inventory-ticket-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

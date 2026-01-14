@@ -1,5 +1,5 @@
 <template>
-  <div class="customs-page" />
+  <div class="page" />
 </template>
 
 <script setup lang="ts">
@@ -9,10 +9,7 @@ defineOptions({
 </script>
 
 <style scoped lang="scss">
-.customs-page {
-  height: 100%;
-  background: transparent;
-}
+
 </style>
 
 

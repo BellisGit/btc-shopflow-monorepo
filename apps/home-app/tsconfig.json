@@ -17,7 +17,8 @@
       "@btc/shared-utils": ["../../packages/shared-utils/dist"],
       "@btc/shared-utils/*": ["../../packages/shared-utils/dist/*"],
       "@btc/subapp-manifests": ["../../packages/subapp-manifests/dist"],
-      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/dist/*"]
+      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/dist/*"],
+      "@workspace/locales/*": ["../../locales/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts", "../../configs/**/*.d.ts", "../../packages/shared-core/dist/**/*.d.ts", "../../packages/shared-components/dist/**/*.d.ts", "../../packages/shared-utils/dist/**/*.d.ts", "../../packages/subapp-manifests/dist/**/*.d.ts"],

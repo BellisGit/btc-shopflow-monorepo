@@ -1,3 +1,4 @@
+import { logger } from '../../../utils/logger';
 import type { App, Plugin } from 'vue';
 import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
@@ -171,7 +172,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
    */
   function updateThemeColor(color: string) {
     if (!color) {
-      console.warn('[Theme] updateThemeColor: color is empty');
+      logger.warn('[Theme] updateThemeColor: color is empty');
       return;
     }
 
@@ -194,7 +195,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     const updatedSettings = { ...currentSettings, theme: currentTheme.value };
     storage.set('settings', updatedSettings);
 
-    console.log('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
+    logger.info('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
   }
 
   /**
@@ -232,7 +233,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
           }
         );
       }).catch((error: any) => {
-        console.error('[ThemePlugin] View Transition 错误:', error);
+        logger.error('[ThemePlugin] View Transition 错误:', error);
       });
     } else {
       // 不支持动画，直接执行回调

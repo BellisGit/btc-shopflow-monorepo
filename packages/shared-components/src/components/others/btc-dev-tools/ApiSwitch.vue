@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import { storage } from '@btc/shared-core/utils/storage';
+import { logger } from '@btc/shared-core';
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 
@@ -71,7 +72,7 @@ function getHttpInstance(): any {
   // 如果全局对象不存在，返回一个空对象（功能会受限）
   return {
     setBaseURL: () => {
-      console.warn('[ApiSwitch] http 实例不可用，无法切换 API baseURL');
+      logger.warn('[ApiSwitch] http 实例不可用，无法切换 API baseURL');
     }
   };
 }
@@ -103,7 +104,7 @@ function loadCurrentApi() {
   const stored = storage.get<string>('dev_api_base_url');
   if (stored && stored !== '/api') {
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
-    console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+    logger.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
     storage.remove('dev_api_base_url');
   }
   
@@ -151,7 +152,7 @@ function cleanupOldStorage() {
   const stored = storage.get<string>('dev_api_base_url');
   if (stored && stored !== '/api') {
     // 清理所有非 /api 的值
-    console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+    logger.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
     storage.remove('dev_api_base_url');
   }
 }

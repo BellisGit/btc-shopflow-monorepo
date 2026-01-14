@@ -8,7 +8,7 @@
  * 3. 提供详细的错误日志，便于排查问题
  */
 
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage, logger } from '@btc/shared-core/utils/storage/session';
 import { tSync } from '../../i18n/getters';
 
 /**
@@ -88,13 +88,13 @@ async function injectAppConfigFromManifest(appId: string) {
       (window as any).__CURRENT_APP_MANIFEST__ = manifest;
     }
     if (import.meta.env.DEV) {
-      console.log(`[initLayoutApp] ${tSync('common.error.manifest_injected')}: ${appId}`, {
+      logger.info(`[initLayoutApp] ${tSync('common.error.manifest_injected')}: ${appId}`, {
         hasMenus: registry?.value?.[appId]?.length > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    console.warn(`[initLayoutApp] ${tSync('common.error.manifest_inject_failed')}:`, error);
+    logger.warn(`[initLayoutApp] ${tSync('common.error.manifest_inject_failed')}:`, error);
   }
 }
 

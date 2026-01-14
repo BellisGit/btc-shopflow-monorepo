@@ -2,6 +2,7 @@
  * 文档迁移脚本
  * 将分散的 Markdown 文档迁移到 docs-site，并添加 frontmatter
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -134,7 +135,7 @@ function migrateDoc(sourcePath: string, targetPath: string) {
   // 如果已有 frontmatter，直接复制
   if (hasFrontmatter(content)) {
     fs.writeFileSync(targetPath, content);
-    console.log(`✅ 已复制（已有 frontmatter）: ${path.basename(sourcePath)}`);
+    logger.info(`✅ 已复制（已有 frontmatter）: ${path.basename(sourcePath)}`);
     return;
   }
 
@@ -144,15 +145,15 @@ function migrateDoc(sourcePath: string, targetPath: string) {
   const newContent = frontmatter + content;
 
   fs.writeFileSync(targetPath, newContent);
-  console.log(`✅ 已迁移: ${path.basename(sourcePath)} → ${path.relative(docsiteDir, targetPath)}`);
+  logger.info(`✅ 已迁移: ${path.basename(sourcePath)} → ${path.relative(docsiteDir, targetPath)}`);
 }
 
 // 主函数
 async function main() {
-  console.log('📦 开始文档迁移...\n');
+  logger.info('📦 开始文档迁移...\n');
 
   // 1. 迁移根目录的技术文档
-  console.log('1️⃣ 迁移根目录技术文档...');
+  logger.info('1️⃣ 迁移根目录技术文档...');
   const rootDocs = [
     'VITEPRESS-INTEGRATION-COMPLETE.md',
     'VITEPRESS-SEARCH-INTEGRATION.md',
@@ -183,13 +184,13 @@ async function main() {
     }
   }
 
-  console.log('\n✅ 根目录文档迁移完成！\n');
+  logger.info('\n✅ 根目录文档迁移完成！\n');
 
   // 2. docs/ 目录已通过文件复制完成，这里只需确认
-  console.log('2️⃣ docs/ 目录内容已复制');
+  logger.info('2️⃣ docs/ 目录内容已复制');
 
   // 3. 迁移包级 README
-  console.log('\n3️⃣ 迁移包级 README...');
+  logger.info('\n3️⃣ 迁移包级 README...');
   const packages = [
     'shared-core',
     'shared-components',
@@ -231,10 +232,10 @@ async function main() {
     }
   }
 
-  console.log('\n✅ 包级 README 迁移完成！\n');
+  logger.info('\n✅ 包级 README 迁移完成！\n');
 
   // 4. 迁移 Layout 组件 README
-  console.log('4️⃣ 迁移 Layout 组件 README...');
+  logger.info('4️⃣ 迁移 Layout 组件 README...');
   const layoutComponents = [
     'breadcrumb',
     'dynamic-menu',
@@ -265,10 +266,10 @@ async function main() {
     migrateDoc(layoutReadmePath, targetPath);
   }
 
-  console.log('\n✅ Layout 组件 README 迁移完成！\n');
+  logger.info('\n✅ Layout 组件 README 迁移完成！\n');
 
-  console.log('\n🎉 所有文档迁移完成！');
-  console.log('📊 下一步：运行 pnpm --filter docs-site-app dev 验证文档');
+  logger.info('\n🎉 所有文档迁移完成！');
+  logger.info('📊 下一步：运行 pnpm --filter docs-site-app dev 验证文档');
 }
 
 main().catch(console.error);

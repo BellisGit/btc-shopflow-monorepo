@@ -3,11 +3,84 @@
  * 包含国际化配置、表格列配置和表单配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'access',
+  label: 'common.module.access.label',
+  order: 15,
+
+  // 路由配置
+  views: [
+    {
+      path: '/access/resources',
+      name: 'AdminResources',
+      component: () => import('./views/resources/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.resources',
+      },
+    },
+    {
+      path: '/access/actions',
+      name: 'AdminActions',
+      component: () => import('./views/actions/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.actions',
+      },
+    },
+    {
+      path: '/access/permissions',
+      name: 'AdminPermissions',
+      component: () => import('./views/permissions/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.permissions',
+      },
+    },
+    {
+      path: '/access/roles',
+      name: 'AdminRoles',
+      component: () => import('./views/roles/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.roles',
+      },
+    },
+    {
+      path: '/access/roles/:id/permissions',
+      name: 'AdminRolePermBind',
+      component: () => import('./views/role-perm-bind/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.role_perm_bind',
+      },
+    },
+    {
+      path: '/access/perm-compose',
+      name: 'AdminPermCompose',
+      component: () => import('./views/perm-compose/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.perm_compose',
+      },
+    },
+    {
+      path: '/access/role-permission-bind',
+      name: 'AdminRolePermissionBind',
+      component: () => import('./views/role-permission-bind/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.access.role_permission_bind',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -25,7 +98,7 @@ export default {
       'menu.access.user_role_bind': '角色绑定',
       'menu.access.role_assign': '角色分配',
       'menu.access.role_permission_bind': '权限绑定',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.access.roles.domains': '域列表',
       // 字段配置
       'access.actions.fields.action_name_cn': '行为名称',
@@ -148,7 +221,7 @@ export default {
       'menu.access.user_role_bind': 'Role Binding',
       'menu.access.role_assign': 'Role Assignment',
       'menu.access.role_permission_bind': 'Permission Binding',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.access.roles.domains': 'Domain List',
       // 字段配置
       'access.actions.fields.action_name_cn': 'Action Name',
@@ -461,8 +534,8 @@ export default {
     resource: service.admin?.iam?.resource,
     role: service.admin?.iam?.role,
     domain: service.admin?.iam?.domain,
-    // BtcTableGroup 需要的左右服务
+    // BtcMasterTableGroup 需要的左右服务
     sysdomain: service.admin?.iam?.domain,
     sysrole: service.admin?.iam?.role,
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;
