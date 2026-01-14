@@ -370,7 +370,7 @@ async function main() {
     // 步骤 12: 自动更新 CHANGELOG
     log('\n📋 步骤 12: 自动更新 CHANGELOG.md...', 'cyan');
     try {
-      exec(`node scripts/update-changelog.mjs ${version}`, { stdio: 'inherit' });
+      exec(`node scripts/commands/tools/update-changelog.mjs ${version}`, { stdio: 'inherit' });
       log('✅ CHANGELOG.md 已自动更新', 'green');
       
       // 提交 CHANGELOG 更改

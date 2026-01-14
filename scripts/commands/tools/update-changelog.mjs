@@ -11,16 +11,13 @@
  * 
  * 如果不提供版本号，会检查最新的标签并更新
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../utils/logger.mjs';
 
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { getRootDir } from '../../utils/path-helper.mjs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = join(__dirname, '..');
+const rootDir = getRootDir();
 const changelogPath = join(rootDir, 'CHANGELOG.md');
 
 // 颜色输出
