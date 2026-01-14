@@ -187,14 +187,22 @@ function checkWorkingDirectory() {
 
 /**
  * 更新 package.json 版本号
+ * @returns {boolean} 是否实际更新了版本号
  */
 function updateVersionInPackageJson(version) {
   const packageJsonPath = join(rootDir, 'package.json');
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
   const oldVersion = packageJson.version;
+  
+  if (oldVersion === version) {
+    log(`ℹ️  package.json 版本号已经是 ${version}，无需更新`, 'blue');
+    return false;
+  }
+  
   packageJson.version = version;
   writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf-8');
   log(`✅ 已更新 package.json: ${oldVersion} -> ${version}`, 'green');
+  return true;
 }
 
 // 主函数
@@ -360,9 +368,11 @@ async function main() {
   log('\n📋 步骤 7: 更新版本号...', 'cyan');
   const shouldUpdateVersion = isAuto ? true : await confirm('是否自动更新 package.json 中的版本号？', true);
   if (shouldUpdateVersion) {
-    updateVersionInPackageJson(version);
-    execInteractive('git add package.json');
-    execInteractive(`git commit -m "chore: bump version to ${version}"`);
+    const hasChanges = updateVersionInPackageJson(version);
+    if (hasChanges) {
+      execInteractive('git add package.json');
+      execInteractive(`git commit -m "chore: bump version to ${version}"`);
+    }
   }
 
   // 步骤 8: 创建 release 分支
