@@ -352,7 +352,7 @@ async function main() {
 
   // 步骤 7: 更新版本号（可选）
   log('\n📋 步骤 7: 更新版本号...', 'cyan');
-  const shouldUpdateVersion = await confirm('是否自动更新 package.json 中的版本号？', true);
+  const shouldUpdateVersion = isAuto ? true : await confirm('是否自动更新 package.json 中的版本号？', true);
   if (shouldUpdateVersion) {
     updateVersionInPackageJson(version);
     execInteractive('git add package.json');
@@ -366,7 +366,7 @@ async function main() {
   try {
     exec(`git rev-parse --verify ${releaseBranch}`, { silent: true });
     log(`⚠️  分支 ${releaseBranch} 已存在`, 'yellow');
-    const shouldDelete = await confirm('是否删除现有分支并重新创建？', false);
+    const shouldDelete = isAuto ? true : await confirm('是否删除现有分支并重新创建？', false);
     if (shouldDelete) {
       execInteractive(`git branch -D ${releaseBranch}`);
       try {
@@ -388,7 +388,7 @@ async function main() {
 
   // 步骤 9: 推送到远程
   log('\n📋 步骤 9: 推送到远程...', 'cyan');
-  const shouldPush = await confirm(`是否推送 ${releaseBranch} 分支到远程？`, true);
+  const shouldPush = isAuto ? true : await confirm(`是否推送 ${releaseBranch} 分支到远程？`, true);
   if (shouldPush) {
     execInteractive(`git push -u origin ${releaseBranch}`);
     log(`✅ 已推送 ${releaseBranch} 分支`, 'green');
@@ -396,7 +396,7 @@ async function main() {
 
   // 步骤 10: 切换到 main 分支并合并
   log('\n📋 步骤 10: 合并到 main 分支...', 'cyan');
-  const shouldMergeToMain = await confirm('是否合并到 main 分支并创建标签？', true);
+  const shouldMergeToMain = isAuto ? !config.skipMergeToMain : await confirm('是否合并到 main 分支并创建标签？', true);
   
   if (shouldMergeToMain) {
     log('切换到 main 分支...', 'yellow');
@@ -420,7 +420,7 @@ async function main() {
     try {
       exec(`git rev-parse ${tagName}`, { silent: true });
       log(`⚠️  标签 ${tagName} 已存在`, 'yellow');
-      const shouldDeleteTag = await confirm('是否删除现有标签并重新创建？', false);
+      const shouldDeleteTag = isAuto ? true : await confirm('是否删除现有标签并重新创建？', false);
       if (shouldDeleteTag) {
         execInteractive(`git tag -d ${tagName}`);
         try {
@@ -457,7 +457,7 @@ async function main() {
       log('✅ CHANGELOG.md 已自动更新', 'green');
       
       // 提交 CHANGELOG 更改
-      const shouldCommitChangelog = await confirm('是否提交 CHANGELOG.md 的更改？', true);
+      const shouldCommitChangelog = isAuto ? true : await confirm('是否提交 CHANGELOG.md 的更改？', true);
       if (shouldCommitChangelog) {
         execInteractive('git add CHANGELOG.md');
         execInteractive(`git commit -m "docs: update CHANGELOG for ${tagName}"`);
@@ -469,7 +469,7 @@ async function main() {
 
     // 步骤 13: 合并回 develop
     log('\n📋 步骤 13: 合并回 develop 分支...', 'cyan');
-    const shouldMergeBack = await confirm('是否合并回 develop 分支？', true);
+    const shouldMergeBack = isAuto ? !config.skipMergeBack : await confirm('是否合并回 develop 分支？', true);
     if (shouldMergeBack) {
       log('切换到 develop 分支...', 'yellow');
       execInteractive('git checkout develop');
@@ -488,7 +488,7 @@ async function main() {
 
     // 步骤 14: 推送所有更改
     log('\n📋 步骤 14: 推送所有更改...', 'cyan');
-    const shouldPushAll = await confirm('是否推送 main、develop 分支和标签到远程？', true);
+    const shouldPushAll = isAuto ? true : await confirm('是否推送 main、develop 分支和标签到远程？', true);
     if (shouldPushAll) {
       log('推送 main 分支...', 'yellow');
       execInteractive('git push origin main');
@@ -506,7 +506,7 @@ async function main() {
 
     // 步骤 15: 清理 release 分支
     log('\n📋 步骤 15: 清理 release 分支...', 'cyan');
-    const shouldCleanup = await confirm('是否删除本地和远程的 release 分支？', true);
+    const shouldCleanup = isAuto ? !config.skipCleanup : await confirm('是否删除本地和远程的 release 分支？', true);
     if (shouldCleanup) {
       log(`删除本地分支 ${releaseBranch}...`, 'yellow');
       execInteractive(`git branch -d ${releaseBranch}`);
