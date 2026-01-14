@@ -4,13 +4,19 @@
  * 发布推送脚本 - 简化版本发布流程
  * 
  * 使用方式：
- *   pnpm release:push
- *   或
- *   node scripts/release-push.mjs
+ *   交互式模式：
+ *     pnpm release:push
+ *     或
+ *     node scripts/commands/release/push.mjs
+ * 
+ *   全自动模式：
+ *     node scripts/commands/release/push.mjs --auto --version=1.0.10
+ *     或
+ *     node scripts/commands/release/push.mjs --auto --version=1.0.10 --tag-message="版本描述"
  * 
  * 功能：
  *   1. 检查当前分支（应在 develop）
- *   2. 交互式输入版本号和标签消息
+ *   2. 交互式或自动输入版本号和标签消息
  *   3. 自动创建 release 分支
  *   4. 自动创建标签
  *   5. 自动更新 CHANGELOG.md
@@ -445,8 +451,9 @@ async function main() {
 
     log(`创建标签 ${tagName}...`, 'yellow');
     // 使用临时文件传递 tag message，避免 Windows PowerShell 编码问题
-    const { tmpdir } = require('os');
-    const { randomBytes } = require('crypto');
+    const { tmpdir } = await import('os');
+    const { randomBytes } = await import('crypto');
+    const { unlinkSync } = await import('fs');
     const tempFile = join(tmpdir(), `git-tag-message-${randomBytes(8).toString('hex')}.txt`);
     try {
       writeFileSync(tempFile, finalTagMessage, { encoding: 'utf-8' });
@@ -454,7 +461,7 @@ async function main() {
       log(`✅ 已创建标签 ${tagName}`, 'green');
     } finally {
       try {
-        require('fs').unlinkSync(tempFile);
+        unlinkSync(tempFile);
       } catch (e) {
         // 忽略删除失败
       }
