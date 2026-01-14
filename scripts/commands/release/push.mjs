@@ -47,6 +47,53 @@ function log(message, color = 'reset') {
   logger.info(`${colors[color]}${message}${colors.reset}`);
 }
 
+/**
+ * 解析命令行参数
+ */
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const config = {
+    auto: false,
+    version: null,
+    tagMessage: null,
+    skipPull: false,
+    skipMergeToMain: false,
+    skipMergeBack: false,
+    skipCleanup: false,
+  };
+
+  for (const arg of args) {
+    if (arg === '--auto') {
+      config.auto = true;
+    } else if (arg.startsWith('--version=')) {
+      config.version = arg.split('=')[1];
+    } else if (arg.startsWith('--tag-message=')) {
+      config.tagMessage = arg.split('=')[1];
+    } else if (arg === '--skip-pull') {
+      config.skipPull = true;
+    } else if (arg === '--skip-merge-to-main') {
+      config.skipMergeToMain = true;
+    } else if (arg === '--skip-merge-back') {
+      config.skipMergeBack = true;
+    } else if (arg === '--skip-cleanup') {
+      config.skipCleanup = true;
+    }
+  }
+
+  return config;
+}
+
+/**
+ * 自动计算下一个版本号（patch 版本）
+ */
+function getNextVersion(currentVersion) {
+  const parts = currentVersion.split('.');
+  const major = parseInt(parts[0], 10);
+  const minor = parseInt(parts[1], 10);
+  const patch = parseInt(parts[2], 10) + 1;
+  return `${major}.${minor}.${patch}`;
+}
+
 function exec(command, options = {}) {
   try {
     return execSync(command, {
@@ -146,8 +193,12 @@ function updateVersionInPackageJson(version) {
 
 // 主函数
 async function main() {
+  // 解析命令行参数
+  const config = parseArgs();
+  const isAuto = config.auto;
+
   log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'cyan');
-  log('🚀 发布推送流程', 'bright');
+  log(isAuto ? '🚀 发布推送流程（全自动模式）' : '🚀 发布推送流程', 'bright');
   log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'cyan');
 
   // 步骤 1: 检查当前分支
