@@ -451,8 +451,9 @@ async function main() {
 
     log(`创建标签 ${tagName}...`, 'yellow');
     // 使用临时文件传递 tag message，避免 Windows PowerShell 编码问题
-    const { tmpdir } = require('os');
-    const { randomBytes } = require('crypto');
+    const { tmpdir } = await import('os');
+    const { randomBytes } = await import('crypto');
+    const { unlinkSync } = await import('fs');
     const tempFile = join(tmpdir(), `git-tag-message-${randomBytes(8).toString('hex')}.txt`);
     try {
       writeFileSync(tempFile, finalTagMessage, { encoding: 'utf-8' });
@@ -460,7 +461,7 @@ async function main() {
       log(`✅ 已创建标签 ${tagName}`, 'green');
     } finally {
       try {
-        require('fs').unlinkSync(tempFile);
+        unlinkSync(tempFile);
       } catch (e) {
         // 忽略删除失败
       }
