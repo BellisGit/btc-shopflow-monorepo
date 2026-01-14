@@ -213,13 +213,17 @@ async function main() {
 
   // 建议在 develop 分支，但不强制
   if (currentBranch !== 'develop') {
-    const shouldContinue = await confirm(
-      `当前不在 develop 分支，是否继续？`,
-      false
-    );
-    if (!shouldContinue) {
-      log('已取消', 'yellow');
-      process.exit(0);
+    if (isAuto) {
+      log('⚠️  当前不在 develop 分支，但自动模式继续执行', 'yellow');
+    } else {
+      const shouldContinue = await confirm(
+        `当前不在 develop 分支，是否继续？`,
+        false
+      );
+      if (!shouldContinue) {
+        log('已取消', 'yellow');
+        process.exit(0);
+      }
     }
   }
 
@@ -227,15 +231,19 @@ async function main() {
   log('\n📋 步骤 2: 检查工作区状态...', 'cyan');
   const isClean = checkWorkingDirectory();
   if (!isClean) {
-    log('⚠️  工作区有未提交的更改', 'yellow');
-    const shouldContinue = await confirm('是否先提交这些更改？', true);
-    if (shouldContinue) {
-      log('请先提交更改，然后重新运行此脚本', 'yellow');
-      process.exit(0);
+    if (isAuto) {
+      log('⚠️  工作区有未提交的更改，自动模式继续执行', 'yellow');
     } else {
-      const forceContinue = await confirm('是否忽略未提交的更改继续？', false);
-      if (!forceContinue) {
+      log('⚠️  工作区有未提交的更改', 'yellow');
+      const shouldContinue = await confirm('是否先提交这些更改？', true);
+      if (shouldContinue) {
+        log('请先提交更改，然后重新运行此脚本', 'yellow');
         process.exit(0);
+      } else {
+        const forceContinue = await confirm('是否忽略未提交的更改继续？', false);
+        if (!forceContinue) {
+          process.exit(0);
+        }
       }
     }
   } else {
@@ -244,7 +252,7 @@ async function main() {
 
   // 步骤 3: 拉取最新代码
   log('\n📋 步骤 3: 拉取最新代码...', 'cyan');
-  const shouldPull = await confirm('是否拉取最新代码？', true);
+  const shouldPull = isAuto ? !config.skipPull : await confirm('是否拉取最新代码？', true);
   if (shouldPull) {
     try {
       execInteractive(`git pull origin ${currentBranch}`);
@@ -259,8 +267,21 @@ async function main() {
   log('📝 步骤 4: 输入版本信息', 'bright');
   log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'cyan');
 
-  let version = await prompt('请输入版本号（如 1.0.8）: ');
-  version = version.trim();
+  let version = config.version;
+  
+  if (!version) {
+    if (isAuto) {
+      // 自动模式：从 package.json 读取当前版本并自动递增
+      const packageJsonPath = join(rootDir, 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+      const currentVersion = packageJson.version;
+      version = getNextVersion(currentVersion);
+      log(`自动计算版本号: ${currentVersion} -> ${version}`, 'blue');
+    } else {
+      version = await prompt('请输入版本号（如 1.0.8）: ');
+      version = version.trim();
+    }
+  }
 
   if (!version) {
     log('❌ 版本号不能为空', 'red');
@@ -285,37 +306,48 @@ async function main() {
 
   // 步骤 5: 输入标签消息
   log('\n📋 步骤 5: 输入标签消息（版本描述）...', 'cyan');
-  log('提示：可以输入多行，输入空行结束', 'yellow');
   
-  const tagMessageLines = [];
-  let line = await prompt('标签消息（第一行，或直接回车使用默认）: ');
-  if (line.trim()) {
-    tagMessageLines.push(line.trim());
-    
-    // 允许输入多行
-    while (true) {
-      line = await prompt('继续输入（直接回车结束）: ');
-      if (!line.trim()) {
-        break;
-      }
+  let finalTagMessage;
+  if (isAuto) {
+    finalTagMessage = config.tagMessage || `版本 ${tagName}`;
+    log(`使用标签消息: ${finalTagMessage}`, 'blue');
+  } else {
+    log('提示：可以输入多行，输入空行结束', 'yellow');
+    const tagMessageLines = [];
+    let line = await prompt('标签消息（第一行，或直接回车使用默认）: ');
+    if (line.trim()) {
       tagMessageLines.push(line.trim());
+      
+      // 允许输入多行
+      while (true) {
+        line = await prompt('继续输入（直接回车结束）: ');
+        if (!line.trim()) {
+          break;
+        }
+        tagMessageLines.push(line.trim());
+      }
     }
-  }
 
-  const defaultTagMessage = `版本 ${tagName}`;
-  const finalTagMessage = tagMessageLines.length > 0
-    ? `版本 ${tagName}\n\n${tagMessageLines.join('\n')}`
-    : defaultTagMessage;
+    const defaultTagMessage = `版本 ${tagName}`;
+    finalTagMessage = tagMessageLines.length > 0
+      ? `版本 ${tagName}\n\n${tagMessageLines.join('\n')}`
+      : defaultTagMessage;
+  }
 
   log(`\n标签消息预览:`, 'blue');
   log(finalTagMessage, 'yellow');
 
   // 步骤 6: 确认信息
-  log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'cyan');
-  const shouldContinue = await confirm('确认开始发布流程？', true);
-  if (!shouldContinue) {
-    log('已取消', 'yellow');
-    process.exit(0);
+  if (!isAuto) {
+    log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'cyan');
+    const shouldContinue = await confirm('确认开始发布流程？', true);
+    if (!shouldContinue) {
+      log('已取消', 'yellow');
+      process.exit(0);
+    }
+  } else {
+    log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'cyan');
+    log('✅ 自动模式：开始发布流程', 'green');
   }
 
   // 步骤 7: 更新版本号（可选）
