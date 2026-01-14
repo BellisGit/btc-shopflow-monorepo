@@ -1,4 +1,5 @@
 <template>
+  <div class="page">
     <BtcCrud ref="crudRef" :service="wrappedService">
       <BtcCrudRow>
         <div class="btc-crud-primary-actions">
@@ -19,6 +20,7 @@
       </BtcCrudRow>
       <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
     </BtcCrud>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -38,4 +40,6 @@ const wrappedService = usePageService('access.permissions', 'permission', {
 onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 </script>
 
+<style lang="scss" scoped>
 
+</style>

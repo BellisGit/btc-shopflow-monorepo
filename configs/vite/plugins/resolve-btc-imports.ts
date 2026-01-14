@@ -4,6 +4,7 @@
  * 同时处理 shared-components 内部使用的别名（如 @btc-components, @btc-common 等）
  * 确保 Rollup 能够正确解析这些导入，即使它们来自已构建的包
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import { resolve } from 'path';
@@ -196,7 +197,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
     name: 'resolve-btc-imports',
     apply: 'build',
     buildStart() {
-      console.log('[resolve-btc-imports] 已启用，将解析从已构建包中导入的 @btc/* 模块和 shared-components 内部别名');
+      logger.info('[resolve-btc-imports] 已启用，将解析从已构建包中导入的 @btc/* 模块和 shared-components 内部别名');
     },
     resolveId(id: string, importer?: string) {
       // 检查导入是否来自已构建的包或 shared-components 源码
@@ -210,7 +211,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
       // 首先处理 shared-components 内部别名（这些别名可能在任何地方使用）
       const sharedComponentsAlias = resolveSharedComponentsAlias(id);
       if (sharedComponentsAlias) {
-        console.log(`[resolve-btc-imports] 解析 shared-components 内部别名 ${id} (来自 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sharedComponentsAlias.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 shared-components 内部别名 ${id} (来自 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sharedComponentsAlias.split('/').slice(-3).join('/')}`);
         return sharedComponentsAlias;
       }
 
@@ -220,7 +221,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
         const sourcePath = withConfigs(subPath);
         const finalPath = ensureFileExtension(sourcePath);
         
-        console.log(`[resolve-btc-imports] 解析 @configs 包 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${finalPath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 @configs 包 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${finalPath.split('/').slice(-3).join('/')}`);
         return finalPath;
       }
 
@@ -235,7 +236,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
           ? withPackages('shared-components/src/index.ts')
           : withPackages(`shared-components/src/${id.replace('@btc/shared-components/', '')}`);
         
-        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
         return sourcePath;
       }
 
@@ -245,7 +246,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
           ? withPackages('shared-core/src/index.ts')
           : withPackages(`shared-core/src/${id.replace('@btc/shared-core/', '')}`);
         
-        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
         return sourcePath;
       }
 
@@ -255,7 +256,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
           ? withPackages('shared-utils/src/index.ts')
           : withPackages(`shared-utils/src/${id.replace('@btc/shared-utils/', '')}`);
         
-        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
         return sourcePath;
       }
 
@@ -265,7 +266,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
           ? withPackages('shared-plugins/src/index.ts')
           : withPackages(`shared-plugins/src/${id.replace('@btc/shared-plugins/', '')}`);
         
-        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
         return ensureFileExtension(sourcePath);
       }
 
@@ -275,7 +276,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
           ? withPackages('i18n/src/index.ts')
           : withPackages(`i18n/src/${id.replace('@btc/i18n/', '')}`);
         
-        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
         return ensureFileExtension(sourcePath);
       }
 
@@ -291,7 +292,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
           sourcePath = withRoot(`auth/shared/${subPath}${subPath.includes('.') ? '' : '.ts'}`);
         }
         
-        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        logger.info(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
         return sourcePath;
       }
 

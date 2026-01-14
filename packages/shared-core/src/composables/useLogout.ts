@@ -2,6 +2,7 @@
  * 通用退出登录 composable
  * 可以在所有应用中使用，支持退出后保存当前路径以便登录后返回
  */
+import { logger } from '../utils/logger';
 
 import { useRouter } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
@@ -80,7 +81,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
                 }
               }
             } catch (error) {
-              console.warn('[useLogout] Failed to show logout success message:', error);
+              logger.warn('[useLogout] Failed to show logout success message:', error);
             }
           },
         }),
@@ -89,7 +90,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
       const success = await logoutCore(logoutCoreOptions);
 
       if (!success) {
-        console.error('[useLogout] Logout core failed');
+        logger.error('[useLogout] Logout core failed');
         isLoggingOut = false;
         return;
       }
@@ -134,7 +135,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
 
               // 调试信息（开发环境）
               if (import.meta.env.DEV) {
-                console.log('[useLogout] 退出登录重定向:', {
+                logger.info('[useLogout] 退出登录重定向:', {
                   logoutUrl,
                   hasLogoutParam: logoutUrl.includes('logout=1') || logoutUrl.includes('logout='),
                   hasOAuthCallbackParam: logoutUrl.includes('oauth_callback=')
@@ -145,7 +146,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
             }
           } catch (error) {
             // 如果导入失败，使用兜底方案
-            console.error('[useLogout] Failed to build logout URL:', error);
+            logger.error('[useLogout] Failed to build logout URL:', error);
             const currentPath = window.location.pathname + window.location.search;
             const oauthCallbackParam = currentPath && currentPath !== '/login' && !currentPath.startsWith('/login?')
               ? `&oauth_callback=${encodeURIComponent(currentPath)}`
@@ -155,7 +156,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
         }, redirectDelay);
       }
     } catch (error: any) {
-      console.error('Logout cleanup error:', error);
+      logger.error('Logout cleanup error:', error);
       isLoggingOut = false;
     } finally {
       setTimeout(() => {
@@ -222,7 +223,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
         startUserCheckPolling(true);
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.warn('[useLogout] Failed to start user check polling on login:', error);
+          logger.warn('[useLogout] Failed to start user check polling on login:', error);
         }
       }
 
@@ -244,7 +245,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
             redirect = getAndClearLogoutRedirectPath(); // 这个是同步的，保持不变
           } catch (error) {
             if (import.meta.env.DEV) {
-              console.warn('[useLogout] Failed to get logout redirect path:', error);
+              logger.warn('[useLogout] Failed to get logout redirect path:', error);
             }
           }
         }
@@ -273,7 +274,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
         } catch (error) {
           // 如果导入失败，使用默认逻辑
           if (import.meta.env.DEV) {
-            console.warn('[useLogout] Failed to handle cross app redirect:', error);
+            logger.warn('[useLogout] Failed to handle cross app redirect:', error);
           }
           // 回退到简单的路径跳转
           const simplePath = redirectPath.split('?')[0] || '/';
@@ -309,7 +310,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
 
     // 执行统一登出逻辑（异步处理）
     performLogoutCleanup(true).catch((error) => {
-      console.error('[useLogout] Error in logout cleanup:', error);
+      logger.error('[useLogout] Error in logout cleanup:', error);
     }); // true 表示是远程触发的登出
   });
 
@@ -335,11 +336,11 @@ export function useLogout(options: UseLogoutOptions = {}) {
         bridge.sendMessage('logout', { timestamp: Date.now() });
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.warn('Failed to broadcast logout message:', error);
+          logger.warn('Failed to broadcast logout message:', error);
         }
       }
     } catch (error: any) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       await performLogoutCleanup(false);
     }
   };

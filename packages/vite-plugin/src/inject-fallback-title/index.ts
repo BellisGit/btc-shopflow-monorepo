@@ -2,6 +2,7 @@
  * Vite 插件：注入静态兜底 title 到 index.html
  * 职责：构建时统一设置初始 title，避免子应用重复写
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin, ResolvedConfig } from 'vite';
 import { readFileSync, existsSync } from 'fs';
@@ -36,14 +37,14 @@ function loadAppsConfig(root: string): AppsConfig | null {
     const configPath = resolve(root, '../../apps.config.json');
     
     if (!existsSync(configPath)) {
-      console.warn('[inject-fallback-title] apps.config.json 不存在:', configPath);
+      logger.warn('[inject-fallback-title] apps.config.json 不存在:', configPath);
       return null;
     }
 
     const configContent = readFileSync(configPath, 'utf-8');
     return JSON.parse(configContent) as AppsConfig;
   } catch (error) {
-    console.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
+    logger.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
     return null;
   }
 }
@@ -138,7 +139,7 @@ export function injectFallbackTitle(options: {
       enforce: 'pre', // 在其他插件之前执行
       transform(html: string) {
       if (!viteConfig) {
-        console.warn('[inject-fallback-title] Vite 配置未找到，跳过注入标题');
+        logger.warn('[inject-fallback-title] Vite 配置未找到，跳过注入标题');
         return html;
       }
 
@@ -178,7 +179,7 @@ export function injectFallbackTitle(options: {
 
         return updatedHtml;
       } catch (error) {
-        console.error('[inject-fallback-title] 注入标题失败:', error);
+        logger.error('[inject-fallback-title] 注入标题失败:', error);
         return html;
       }
       },

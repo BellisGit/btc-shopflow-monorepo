@@ -97,7 +97,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm, BtcMessage, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, usePageColumns, usePageService } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageService, logger } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';
 import type {
   Strategy,
@@ -182,7 +182,7 @@ const viewStrategyDetail = async (strategy: Strategy) => {
   try {
     selectedStrategyStats.value = await strategyService.getStrategyStats(strategy.id);
   } catch (error) {
-    console.error('Failed to load strategy stats:', error);
+    logger.error('Failed to load strategy stats:', error);
   }
   showDetailDialog.value = true;
 };

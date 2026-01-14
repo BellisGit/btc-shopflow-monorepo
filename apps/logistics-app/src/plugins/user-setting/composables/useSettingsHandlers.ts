@@ -2,6 +2,7 @@
  * 设置处理器
  * 提供所有设置的变更处理方法
  */
+import { logger } from '@btc/shared-core';
 
 import { useSettingsState } from './useSettingsState';
 import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
@@ -120,7 +121,7 @@ export function useSettingsHandlers() {
         }
       } catch (e) {
         // 如果主题插件不可用，忽略错误
-        console.warn('Theme plugin not available:', e);
+        logger.warn('Theme plugin not available:', e);
       }
       // 触发页面重新加载或更新主题
       window.dispatchEvent(new CustomEvent('theme-color-change', { detail: { color } }));

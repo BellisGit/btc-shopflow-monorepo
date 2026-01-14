@@ -75,6 +75,7 @@ function shouldRetry(error: any, retryCount: number, maxRetries: number): boolea
 
   return false;
 }
+import { logger } from '@btc/shared-core';
 
 import { ref, readonly } from 'vue';
 
@@ -120,7 +121,7 @@ export function useRetry(config: RetryConfig = {}) {
 
           state.value.nextRetryDelay = delay;
           // 使用国际化键（在非组件文件中，直接使用键名，由日志系统处理）
-          console.log('common.retry.request_retry', `${attempt}/${operationConfig.maxRetries}`, 'common.retry.delay', `${delay}ms`);
+          logger.info('common.retry.request_retry', `${attempt}/${operationConfig.maxRetries}`, 'common.retry.delay', `${delay}ms`);
 
           await new Promise(resolve => setTimeout(resolve, delay));
         }
@@ -142,11 +143,11 @@ export function useRetry(config: RetryConfig = {}) {
 
         // 检查是否应该重试
         if (!shouldRetry(error, attempt, operationConfig.maxRetries)) {
-          console.error('common.error.not_retrying', error);
+          logger.error('common.error.not_retrying', error);
           break;
         }
 
-        console.warn('common.error.preparing_retry', `${attempt + 1}/${operationConfig.maxRetries}`, error);
+        logger.warn('common.error.preparing_retry', `${attempt + 1}/${operationConfig.maxRetries}`, error);
       }
     }
 

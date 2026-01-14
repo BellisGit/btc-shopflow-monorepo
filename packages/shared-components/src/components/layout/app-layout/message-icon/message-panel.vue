@@ -52,7 +52,7 @@ defineOptions({
 });
 
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useI18n, onGlobalStateChange } from '@btc/shared-core';
+import { useI18n, onGlobalStateChange, logger } from '@btc/shared-core';
 import { useRouter } from 'vue-router';
 import '@btc-assets/icons/system/iconfont.css';
 
@@ -93,7 +93,7 @@ const loadMessages = () => {
         })
         .slice(0, 20);
     } catch (error) {
-      console.warn('[MessagePanel] 获取消息列表失败:', error);
+      logger.warn('[MessagePanel] 获取消息列表失败:', error);
       messageList.value = [];
     }
   } else {
@@ -131,7 +131,7 @@ const handleMessageClick = (item: MessageItem) => {
       // 触发更新事件
       window.dispatchEvent(new CustomEvent('message-center-updated'));
     } catch (error) {
-      console.warn('[MessagePanel] 标记消息已读失败:', error);
+      logger.warn('[MessagePanel] 标记消息已读失败:', error);
     }
   }
 

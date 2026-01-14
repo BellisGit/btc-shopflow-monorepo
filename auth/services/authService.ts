@@ -6,7 +6,7 @@
  * @description 提供所有认证相关的 API 调用，包括登录、注册、忘记密码等
  */
 
-import { request } from '@btc/shared-core';
+import { request, logger } from '@btc/shared-core';
 import { storage, type ApiResponse } from '@btc/shared-utils';
 
 // ==================== 类型定义 ====================
@@ -81,7 +81,7 @@ async function handleApiCall<T>(
     // 检查响应状态
     if (response.code !== 2000) {
       const message = response.msg || errorMessage || 'API 调用失败';
-      console.error(`[AuthService] ${message}:`, {
+      logger.error(`[AuthService] ${message}:`, {
         code: response.code,
         msg: response.msg,
         data: response.data
@@ -103,13 +103,13 @@ async function handleApiCall<T>(
       method: error.config?.method
     };
     
-    console.error(`[AuthService] ${message}:`, errorInfo);
+    logger.error(`[AuthService] ${message}:`, errorInfo);
     
     // 如果是网络错误或 404，提供友好的错误信息
     if (error.response?.status === 404) {
-      console.warn('[AuthService] API 端点不存在，可能是后端服务未启动');
+      logger.warn('[AuthService] API 端点不存在，可能是后端服务未启动');
     } else if (!error.response) {
-      console.warn('[AuthService] 网络连接失败，请检查网络或后端服务');
+      logger.warn('[AuthService] 网络连接失败，请检查网络或后端服务');
     }
     
     throw error;

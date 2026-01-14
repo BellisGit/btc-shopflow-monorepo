@@ -8,6 +8,7 @@
  * 优化：添加 localStorage 持久化，类似 cool-admin 的做法
  * 刷新页面时从 localStorage 恢复菜单数据，避免菜单重新加载导致的闪烁
  */
+import { logger } from '@btc/shared-core';
 
 import { ref, triggerRef, type Ref } from 'vue';
 import { storage } from '@btc/shared-core/utils';
@@ -71,7 +72,7 @@ function loadMenuRegistryFromStorage(): Record<string, MenuItem[]> | null {
     return hasData ? registry : null;
   } catch (error) {
     // 解析失败，清除无效缓存
-    console.warn('[MenuRegistry] 恢复菜单缓存失败，清除无效缓存:', error);
+    logger.warn('[MenuRegistry] 恢复菜单缓存失败，清除无效缓存:', error);
     // 清理所有菜单缓存键（使用 storage.remove，确保正确处理 prefix）
     // 注意：storage.info() 返回的键名已经去掉了 prefix
     try {
@@ -119,7 +120,7 @@ function saveMenuRegistryToStorage(registry: Record<string, MenuItem[]>): void {
     });
   } catch (error) {
     // 存储失败（可能是存储空间不足），静默处理
-    console.warn('[MenuRegistry] 保存菜单缓存失败:', error);
+    logger.warn('[MenuRegistry] 保存菜单缓存失败:', error);
   }
 }
 

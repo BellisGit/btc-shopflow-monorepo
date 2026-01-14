@@ -1,5 +1,5 @@
 <template>
-  <div class="about-page">
+  <div class="page">
     <!-- 主内容区 -->
     <section class="main-content">
       <!-- SVG几何背景，使用slot将内容放在内接矩形中 -->

@@ -18,6 +18,8 @@ export interface IconButtonPopover {
   popperClass?: string;
 }
 
+import type { BtcSvgAnimation, BtcSvgAnimationTrigger } from '../btc-svg/types';
+
 export interface IconButtonConfig {
   icon: string | (() => string);
   tooltip?: string | (() => string);
@@ -28,5 +30,10 @@ export interface IconButtonConfig {
   size?: number;
   class?: string;
   disabled?: boolean;
+  // 图标动画配置
+  iconAnimation?: BtcSvgAnimation;
+  iconAnimationTrigger?: BtcSvgAnimationTrigger;
+  iconAnimationDuration?: string | number;
+  iconAnimationDelay?: string | number;
 }
 

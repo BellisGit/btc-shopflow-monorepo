@@ -60,3 +60,8 @@ export type { EnvInfo } from './env-info';
 
 // 主应用登录 URL 工具
 export { getMainAppLoginUrl } from './get-main-app-login-url';
+
+// 日志模块
+export * from './logger';
+export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './logger';
+export type { LogContext, LogLevel, LoggerOptions, Logger } from './logger';

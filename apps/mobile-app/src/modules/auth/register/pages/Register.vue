@@ -1,14 +1,14 @@
 <template>
-  <div class="register-page">
+  <div class="page">
     <!-- 导航栏 - 只保留返回按钮 -->
     <van-nav-bar
       left-arrow
       @click-left="handleBack"
-      class="register-page__nav"
+      class="register__nav"
     />
 
     <!-- 内容区域 -->
-    <div class="register-page__content">
+    <div class="register__content">
       <!-- Logo 区域 -->
       <RegisterLogo />
 
@@ -46,19 +46,10 @@ const handleFormSubmit = () => {
 @use '../styles/register-page' as *;
 
 // 覆盖 Vant 组件的 CSS 变量，确保输入框样式与登录页一致
-.register-page {
-  --van-cell-background: rgba(60, 60, 60, 0.8);
-  --van-cell-text-color: #fff;
-  --van-field-label-color: #fff;
-  --van-field-input-text-color: #fff;
-  --van-field-placeholder-text-color: rgba(255, 255, 255, 0.5);
-  --van-field-input-disabled-text-color: rgba(255, 255, 255, 0.7);
-  --van-field-disabled-text-color: rgba(255, 255, 255, 0.7);
-  --van-cell-border-radius: 24px;
-}
+
 
 // 移除导航栏的 hairline 底部边框
-:deep(.register-page__nav.van-hairline--bottom) {
+:deep(.register__nav.van-hairline--bottom) {
   &::after {
     display: none !important;
     border: none !important;
@@ -66,7 +57,7 @@ const handleFormSubmit = () => {
   }
 }
 
-:deep(.register-page__nav .van-nav-bar__content) {
+:deep(.register__nav .van-nav-bar__content) {
   &::after {
     display: none !important;
     border: none !important;

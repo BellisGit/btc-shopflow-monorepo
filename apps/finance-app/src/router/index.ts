@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import {
   createRouter,
   createWebHistory,
@@ -35,7 +36,7 @@ function normalizePath(path: string): string {
   // 检测是否是 finance 子域名
   if (hostname === 'finance.bellis.com.cn' && path.startsWith('/finance/')) {
     const normalized = path.substring('/finance'.length) || '/';
-    console.log(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+    logger.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
     return normalized;
   }
 
@@ -180,7 +181,7 @@ export const createFinanceRouter = (): Router => {
   });
 
   router.onError((error: any) => {
-    console.warn('[finance-app] Router error:', error);
+    logger.warn('[finance-app] Router error:', error);
   });
 
   return router;

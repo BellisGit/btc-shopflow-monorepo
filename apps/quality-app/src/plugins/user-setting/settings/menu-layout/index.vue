@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { useWindowSize } from '@vueuse/core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { useSettingsConfig, useSettingsHandlers, useSettingsState } from '../../composables';
 import '../../settings/menu-layout/styles/index.scss';
 
@@ -38,7 +38,7 @@ const settingsState = useSettingsState();
 // 处理图片加载错误
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  console.warn('Image failed to load:', img.src);
+  logger.warn('Image failed to load:', img.src);
   // 可以在这里添加占位符或错误处理逻辑
 };
 </script>

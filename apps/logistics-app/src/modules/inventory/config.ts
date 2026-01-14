@@ -3,12 +3,58 @@
  * 包含 info、detail、result 等页面配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 
 export default {
+  // ModuleConfig 字段
+  name: 'inventory',
+  label: 'common.module.inventory.label',
+  order: 50,
+
+  // 路由配置
+  views: [
+    {
+      path: '/inventory',
+      name: 'LogisticsInventory',
+      component: () => import('./views/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory_management',
+      },
+    },
+    {
+      path: '/inventory/info',
+      name: 'LogisticsInventoryInfo',
+      component: () => import('./views/info/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory_management.info',
+      },
+    },
+    {
+      path: '/inventory/detail',
+      name: 'LogisticsInventoryDetail',
+      component: () => import('./views/detail/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory_management.detail',
+      },
+    },
+    {
+      path: '/inventory/result',
+      name: 'LogisticsInventoryResult',
+      component: () => import('./views/result/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory_management.result',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 菜单配置
@@ -19,7 +65,7 @@ export default {
       'menu.inventory_management.result': '盘点结果表',
       // 页面标题
       'inventory.check.list': '盘点列表',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.logistics.inventory.check.list': '盘点列表',
       // 按钮
       'logistics.inventory.base.button.pull': '拉取数据',
@@ -40,7 +86,7 @@ export default {
       'menu.inventory_management.result': 'Inventory Result',
       // 页面标题
       'inventory.check.list': 'Inventory Check List',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title  and right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title  and right-title）
       'title.logistics.inventory.check.list': 'Inventory Check List',
       // 按钮
       'logistics.inventory.base.button.pull': 'Pull Data',
@@ -198,4 +244,4 @@ export default {
     checkList: service.logistics?.warehouse?.check,
     storageLocation: createCrudServiceFromEps(['logistics', 'base', 'position'], service),
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

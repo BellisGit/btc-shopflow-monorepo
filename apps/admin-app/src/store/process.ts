@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { getActiveApp, resolveTabMeta } from './tabRegistry';
@@ -181,7 +182,7 @@ export const useProcessStore = defineStore('process', () => {
 
     // 如果解析失败（没有元数据），拒绝添加（防止脏 Tab）
     if (!tabMeta) {
-      console.warn('[Process] Failed to resolve tab meta for:', data.path, data.name);
+      logger.warn('[Process] Failed to resolve tab meta for:', data.path, data.name);
       return;
     }
 

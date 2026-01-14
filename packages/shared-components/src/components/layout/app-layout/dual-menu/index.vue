@@ -81,7 +81,7 @@ defineOptions({
 
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter, type RouteLocationNormalized, type NavigationGuardNext } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import { useCurrentApp } from '../../../../composables/useCurrentApp';
 import { getMenusForApp } from '../../../../store/menuRegistry';
@@ -242,7 +242,7 @@ const currentSubMenuItems = computed(() => {
       return firstPath === childPath;
     });
     if (isFirstLevel && import.meta.env.DEV) {
-      console.warn('[dual-menu] 过滤掉一级菜单 index 从子菜单中:', child.index, childPath);
+      logger.warn('[dual-menu] 过滤掉一级菜单 index 从子菜单中:', child.index, childPath);
     }
     return !isFirstLevel;
   });
@@ -464,7 +464,7 @@ const handleFirstLevelClick = (item: any, event?: Event) => {
         router.push(firstChildPath).catch((err: unknown) => {
           // 路由跳转失败，静默处理（可能是路由不存在，但不应该影响菜单切换）
           if (import.meta.env.DEV) {
-            console.warn('[dual-menu] 跳转到第一个子菜单失败:', firstChildPath, err);
+            logger.warn('[dual-menu] 跳转到第一个子菜单失败:', firstChildPath, err);
           }
         });
         return;
@@ -553,14 +553,14 @@ const handleMenuSelect = (index: string) => {
   // 关键：如果正在切换一级菜单，直接返回，不处理 @select 事件
   if (isSwitchingFirstLevel.value) {
     if (import.meta.env.DEV) {
-      console.log('[dual-menu] 正在切换一级菜单，忽略 @select 事件:', index);
+      logger.info('[dual-menu] 正在切换一级菜单，忽略 @select 事件:', index);
     }
     return;
   }
 
   if (!index) {
   if (import.meta.env.DEV) {
-      console.log('[dual-menu] handleMenuSelect: index is empty');
+      logger.info('[dual-menu] handleMenuSelect: index is empty');
     }
     return;
   }
@@ -568,7 +568,7 @@ const handleMenuSelect = (index: string) => {
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
 
   if (import.meta.env.DEV) {
-    console.log('[dual-menu] handleMenuSelect called', {
+    logger.info('[dual-menu] handleMenuSelect called', {
       index,
       absolutePath,
       currentApp: currentApp.value,
@@ -587,7 +587,7 @@ const handleMenuSelect = (index: string) => {
     const itemPath = item.index.startsWith('/') ? item.index : `/${item.index}`;
     const match = itemPath === absolutePath;
     if (import.meta.env.DEV && match) {
-      console.warn('[dual-menu] 匹配到一级菜单，阻止导航:', {
+      logger.warn('[dual-menu] 匹配到一级菜单，阻止导航:', {
         itemIndex: item.index,
         itemPath,
         absolutePath,
@@ -599,7 +599,7 @@ const handleMenuSelect = (index: string) => {
 
   if (isFirstLevelIndex) {
     if (import.meta.env.DEV) {
-      console.warn('[dual-menu] 阻止一级菜单导航，直接返回:', index, absolutePath);
+      logger.warn('[dual-menu] 阻止一级菜单导航，直接返回:', index, absolutePath);
     }
     // 关键：直接返回，不执行任何路由跳转
     return;
@@ -624,7 +624,7 @@ const handleMenuSelect = (index: string) => {
   // 如果找到的菜单项有 children，说明是分组节点，不应该导航
   if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
     if (import.meta.env.DEV) {
-      console.log('[dual-menu] 跳过分组节点导航:', index, matchedItem);
+      logger.info('[dual-menu] 跳过分组节点导航:', index, matchedItem);
     }
     return;
   }
@@ -633,7 +633,7 @@ const handleMenuSelect = (index: string) => {
   router.push(absolutePath).catch((err: unknown) => {
     // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
     if (import.meta.env.DEV) {
-      console.warn('[dual-menu] 路由跳转失败:', absolutePath, err);
+      logger.warn('[dual-menu] 路由跳转失败:', absolutePath, err);
     }
   });
 };

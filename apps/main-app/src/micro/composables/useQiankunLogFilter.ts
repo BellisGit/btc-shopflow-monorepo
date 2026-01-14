@@ -3,6 +3,8 @@
  * 用于过滤 qiankun 和 single-spa 产生的噪音日志
  */
 
+import { logger } from '@btc/shared-core';
+
 /**
  * 检查是否应该过滤日志
  */
@@ -80,7 +82,9 @@ export function setupQiankunLogFilter(): void {
     if (shouldFilter(...args)) {
       return;
     }
-    originalLog(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.info(message, ...args);
   };
 
   // 过滤 console.info
@@ -88,7 +92,9 @@ export function setupQiankunLogFilter(): void {
     if (shouldFilter(...args)) {
       return;
     }
-    originalInfo(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.info(message, ...args);
   };
 
   // 过滤 console.warn
@@ -149,39 +155,37 @@ export function setupQiankunLogFilter(): void {
       }
     }
     // 对于表单验证错误，不打印到控制台，但允许错误监控系统上报
-    // 使用保存的原始方法，如果不存在则使用当前 console.warn（可能是被其他代码替换过的）
-    const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
-    if (typeof warnFn === 'function') {
-      // 如果是表单验证错误，不打印（跳过 warnFn.apply），但允许错误监控系统上报
-      if (isFormValidationError(...args)) {
-        // 直接调用 errorMonitor 的上报方法，不打印到控制台
-        import('../../utils/errorMonitor').then(({ updateErrorList }) => {
-          const message = args.map((arg) => {
-            if (arg === null) return 'null';
-            if (arg === undefined) return 'undefined';
-            if (typeof arg === 'string') return arg;
-            if (typeof arg === 'object') {
-              try {
-                return JSON.stringify(arg);
-              } catch {
-                return String(arg);
-              }
+    // 如果是表单验证错误，不打印到控制台，但允许错误监控系统上报
+    if (isFormValidationError(...args)) {
+      // 直接调用 errorMonitor 的上报方法，不打印到控制台
+      import('../../utils/errorMonitor').then(({ updateErrorList }) => {
+        const message = args.map((arg) => {
+          if (arg === null) return 'null';
+          if (arg === undefined) return 'undefined';
+          if (typeof arg === 'string') return arg;
+          if (typeof arg === 'object') {
+            try {
+              return JSON.stringify(arg);
+            } catch {
+              return String(arg);
             }
-            return String(arg);
-          }).join(' ');
-          updateErrorList({
-            type: 'console-warn',
-            message,
-            source: 'main-app',
-            isWarning: true,
-          });
-        }).catch(() => {
-          // 如果导入失败，静默处理
+          }
+          return String(arg);
+        }).join(' ');
+        updateErrorList({
+          type: 'console-warn',
+          message,
+          source: 'main-app',
+          isWarning: true,
         });
-        return; // 不打印，直接返回
-      }
-      warnFn.apply(console, args);
+      }).catch(() => {
+        // 如果导入失败，静默处理
+      });
+      return; // 不打印，直接返回
     }
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.warn(message, ...args);
   };
 
   // 过滤 console.error（single-spa 错误代码 31 通过 error 输出）
@@ -224,11 +228,10 @@ export function setupQiankunLogFilter(): void {
         return;
       }
     }
-    // 使用保存的原始方法，如果不存在则使用当前 console.error（可能是被其他代码替换过的）
-    const errorFn = originalError || (console as any).__originalError || console.error;
-    if (typeof errorFn === 'function') {
-      errorFn.apply(console, args);
-    }
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    const errorArg = args.find(arg => arg instanceof Error) || args[1];
+    logger.error(message, errorArg, ...args);
   };
 }
 

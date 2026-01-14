@@ -1,24 +1,26 @@
 <template>
-  <BtcCrud ref="crudRef" :service="rolePermissionService">
-    <BtcCrudRow>
-      <div class="btc-crud-primary-actions">
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
-      </div>
-      <BtcCrudFlex1 />
-      <BtcCrudSearchKey placeholder="搜索角色权限绑定..." />
-      <BtcCrudActions />
-    </BtcCrudRow>
-    <BtcCrudRow>
-      <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-    </BtcCrudRow>
-    <BtcCrudRow>
-      <BtcCrudFlex1 />
-      <BtcPagination />
-    </BtcCrudRow>
-    <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
-  </BtcCrud>
+  <div class="page">
+    <BtcCrud ref="crudRef" :service="rolePermissionService">
+      <BtcCrudRow>
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
+        <BtcCrudFlex1 />
+        <BtcCrudSearchKey placeholder="搜索角色权限绑定..." />
+        <BtcCrudActions />
+      </BtcCrudRow>
+      <BtcCrudRow>
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
+      </BtcCrudRow>
+      <BtcCrudRow>
+        <BtcCrudFlex1 />
+        <BtcPagination />
+      </BtcCrudRow>
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
+    </BtcCrud>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -102,9 +104,10 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+
+
 .btc-crud-primary-actions {
   display: flex;
   gap: 8px;
 }
 </style>
-

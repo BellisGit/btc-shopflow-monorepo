@@ -7,6 +7,7 @@
  * 2. 使用 Broadcast Channel 实现同源标签页通信
  * 3. 通过 postMessage 实现跨域通信
  */
+import { logger } from '../utils/logger';
 
 import { ref, onUnmounted, type Ref } from 'vue';
 
@@ -201,7 +202,7 @@ export function useCrossDomainBridge(
                 try {
                   handler(message.payload, message.origin);
                 } catch (error) {
-                  console.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
+                  logger.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
                 }
               });
             }
@@ -209,7 +210,7 @@ export function useCrossDomainBridge(
         };
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.warn('[useCrossDomainBridge] Failed to create direct BroadcastChannel:', error);
+          logger.warn('[useCrossDomainBridge] Failed to create direct BroadcastChannel:', error);
         }
       }
     }
@@ -299,7 +300,7 @@ export function useCrossDomainBridge(
         if ((currentSrc !== finalBridgeUrl && currentSrc !== 'about:blank') || isSubdomainUrl) {
           // src 不正确或者是子域 URL，重新设置为主域 URL
           if (import.meta.env.DEV) {
-            console.warn('[useCrossDomainBridge] Iframe src mismatch, resetting:', {
+            logger.warn('[useCrossDomainBridge] Iframe src mismatch, resetting:', {
               current: currentSrc,
               expected: finalBridgeUrl,
               isSubdomainUrl
@@ -327,7 +328,7 @@ export function useCrossDomainBridge(
           const errorMsg = error?.message || String(error);
 
           if (import.meta.env.DEV) {
-            console.warn('[useCrossDomainBridge] Failed to register with existing bridge:', {
+            logger.warn('[useCrossDomainBridge] Failed to register with existing bridge:', {
               iframeSrc: existingIframe.src,
               error: errorMsg
             });
@@ -404,7 +405,7 @@ export function useCrossDomainBridge(
 
         if (!originMatched) {
           if (import.meta.env.DEV) {
-            console.warn('[useCrossDomainBridge] Rejected message from origin:', e.origin, 'expected:', bridgeOrigin);
+            logger.warn('[useCrossDomainBridge] Rejected message from origin:', e.origin, 'expected:', bridgeOrigin);
           }
           return;
         }
@@ -436,7 +437,7 @@ export function useCrossDomainBridge(
               try {
                 handler(message.payload, message.origin);
               } catch (error) {
-                console.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
+                logger.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
               }
             });
           }
@@ -490,7 +491,7 @@ export function useCrossDomainBridge(
           if (isSubdomainUrl) {
             // src 包含子域名，强制重新设置为主域 URL
             if (import.meta.env.DEV) {
-              console.warn('[useCrossDomainBridge] Iframe src contains subdomain, resetting to main domain:', {
+              logger.warn('[useCrossDomainBridge] Iframe src contains subdomain, resetting to main domain:', {
                 current: currentSrc,
                 expected: finalBridgeUrl
               });
@@ -535,10 +536,10 @@ export function useCrossDomainBridge(
             const isOriginMismatch = errorMsg.includes('target origin') || errorMsg.includes('origin');
 
             if (import.meta.env.DEV || isOriginMismatch) {
-              console.warn('[useCrossDomainBridge] Failed to postMessage to bridge (origin mismatch):', error);
-              console.warn('[useCrossDomainBridge] Expected origin:', bridgeOrigin);
-              console.warn('[useCrossDomainBridge] Iframe src:', instance.iframe.src);
-              console.warn('[useCrossDomainBridge] Error message:', errorMsg);
+              logger.warn('[useCrossDomainBridge] Failed to postMessage to bridge (origin mismatch):', error);
+              logger.warn('[useCrossDomainBridge] Expected origin:', bridgeOrigin);
+              logger.warn('[useCrossDomainBridge] Iframe src:', instance.iframe.src);
+              logger.warn('[useCrossDomainBridge] Error message:', errorMsg);
             }
 
             // 关键：如果是 origin 不匹配，说明 iframe 加载了错误的页面（可能是 404 fallback 到 index.html）
@@ -547,7 +548,7 @@ export function useCrossDomainBridge(
               // 检查重试次数，避免无限重试
               if (instance.retryCount >= instance.maxRetries) {
                 if (import.meta.env.DEV) {
-                  console.error('[useCrossDomainBridge] Max retries reached, giving up on iframe bridge. Will use BroadcastChannel only.');
+                  logger.error('[useCrossDomainBridge] Max retries reached, giving up on iframe bridge. Will use BroadcastChannel only.');
                 }
                 // 标记为就绪（即使失败），避免阻塞应用
                 isReady.value = true;
@@ -562,7 +563,7 @@ export function useCrossDomainBridge(
               // 关键：直接使用主域 URL，不依赖任何相对路径或子域 URL
               const reloadUrl = `${finalBridgeUrl}${finalBridgeUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
               if (import.meta.env.DEV) {
-                console.log('[useCrossDomainBridge] Origin mismatch detected, forcing iframe reload (attempt ' + instance.retryCount + '/' + instance.maxRetries + '):', reloadUrl);
+                logger.info('[useCrossDomainBridge] Origin mismatch detected, forcing iframe reload (attempt ' + instance.retryCount + '/' + instance.maxRetries + '):', reloadUrl);
               }
               // 关键：先移除 iframe，然后重新创建，确保清除所有缓存和状态
               if (instance.iframe.parentNode) {
@@ -590,7 +591,7 @@ export function useCrossDomainBridge(
             // 如果 iframe src 不正确，重新设置（可能是之前设置错误）
             if (instance.iframe.src !== finalBridgeUrl && !instance.iframe.src.includes(finalBridgeUrl)) {
               if (import.meta.env.DEV) {
-                console.log('[useCrossDomainBridge] Resetting iframe src to correct URL');
+                logger.info('[useCrossDomainBridge] Resetting iframe src to correct URL');
               }
               instance.iframe.src = finalBridgeUrl;
               // 不标记为就绪，等待重新加载
@@ -602,7 +603,7 @@ export function useCrossDomainBridge(
             // 不标记为就绪，但可以使用 BroadcastChannel（如果可用）
             // 在生产环境中，如果 bridge.html 不存在，这是正常的（需要部署）
             if (import.meta.env.DEV) {
-              console.warn('[useCrossDomainBridge] Iframe loaded but postMessage failed. Bridge.html may not exist or network error.');
+              logger.warn('[useCrossDomainBridge] Iframe loaded but postMessage failed. Bridge.html may not exist or network error.');
             }
             isReady.value = false;
             return;
@@ -610,7 +611,7 @@ export function useCrossDomainBridge(
         }
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.warn('[useCrossDomainBridge] Failed to register with bridge:', error);
+          logger.warn('[useCrossDomainBridge] Failed to register with bridge:', error);
         }
         // 不标记为就绪
         return;
@@ -629,16 +630,16 @@ export function useCrossDomainBridge(
     instance.iframe.onerror = () => {
       const errorMsg = `[useCrossDomainBridge] Iframe failed to load: ${finalBridgeUrl}`;
       if (import.meta.env.DEV) {
-        console.error(errorMsg);
-        console.error('[useCrossDomainBridge] This usually means bridge.html does not exist or is not accessible.');
-        console.error('[useCrossDomainBridge] Please check:');
-        console.error('  1. Is bridge.html deployed to the server?');
-        console.error('  2. Is Nginx configured correctly?');
-        console.error('  3. Are file permissions correct?');
-        console.error('  4. Try accessing the URL directly in browser:', finalBridgeUrl);
+        logger.error(errorMsg);
+        logger.error('[useCrossDomainBridge] This usually means bridge.html does not exist or is not accessible.');
+        logger.error('[useCrossDomainBridge] Please check:');
+        logger.error('  1. Is bridge.html deployed to the server?');
+        logger.error('  2. Is Nginx configured correctly?');
+        logger.error('  3. Are file permissions correct?');
+        logger.error('  4. Try accessing the URL directly in browser:', finalBridgeUrl);
       } else {
         // 生产环境也记录错误，但使用 console.warn 避免过于显眼
-        console.warn(errorMsg);
+        logger.warn(errorMsg);
       }
       // iframe 加载失败时，仍然可以使用 BroadcastChannel（如果可用）
       // 不标记为就绪，但也不阻止 BroadcastChannel 的使用
@@ -719,7 +720,7 @@ export function useCrossDomainBridge(
         }
 
         if (isOriginMismatch) {
-          console.warn('[useCrossDomainBridge] Iframe origin mismatch (bridge.html may not be loaded):', {
+          logger.warn('[useCrossDomainBridge] Iframe origin mismatch (bridge.html may not be loaded):', {
             expected: bridgeOriginForLog,
             iframeSrc: instance.iframe?.src,
             error: errorMsg
@@ -729,7 +730,7 @@ export function useCrossDomainBridge(
           // 检查重试次数，避免无限重试
           if (instance.retryCount >= instance.maxRetries) {
             if (import.meta.env.DEV) {
-              console.error('[useCrossDomainBridge] Max retries reached in sendMessage, giving up on iframe bridge.');
+              logger.error('[useCrossDomainBridge] Max retries reached in sendMessage, giving up on iframe bridge.');
             }
             // 标记为就绪（即使失败），避免阻塞应用
             isReady.value = true;
@@ -750,7 +751,7 @@ export function useCrossDomainBridge(
             // 如果 src 包含子域名，强制设置为主域 URL
             if (isSubdomainUrl) {
               if (import.meta.env.DEV) {
-                console.log('[useCrossDomainBridge] Iframe src contains subdomain, resetting to main domain:', {
+                logger.info('[useCrossDomainBridge] Iframe src contains subdomain, resetting to main domain:', {
                   current: currentSrc,
                   expected: finalBridgeUrl
                 });
@@ -759,7 +760,7 @@ export function useCrossDomainBridge(
             } else {
               const reloadUrl = `${finalBridgeUrl}${finalBridgeUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
               if (import.meta.env.DEV) {
-                console.log('[useCrossDomainBridge] Origin mismatch in sendMessage, forcing iframe reload (attempt ' + instance.retryCount + '/' + instance.maxRetries + '):', reloadUrl);
+                logger.info('[useCrossDomainBridge] Origin mismatch in sendMessage, forcing iframe reload (attempt ' + instance.retryCount + '/' + instance.maxRetries + '):', reloadUrl);
               }
               instance.iframe.src = reloadUrl;
             }
@@ -767,7 +768,7 @@ export function useCrossDomainBridge(
           }
         } else {
           if (import.meta.env.DEV) {
-            console.warn('[useCrossDomainBridge] Failed to send message via iframe:', error);
+            logger.warn('[useCrossDomainBridge] Failed to send message via iframe:', error);
           }
         }
       }
@@ -925,7 +926,7 @@ export function broadcastLoginMessage(): void {
   } catch (error) {
     // 静默失败，不影响登录流程
     if (import.meta.env.DEV) {
-      console.warn('[broadcastLoginMessage] Failed to broadcast login message:', error);
+      logger.warn('[broadcastLoginMessage] Failed to broadcast login message:', error);
     }
   }
 }

@@ -55,6 +55,8 @@ export { createTSync } from './utils/i18n/create-tsync';
 export type { CreateTSyncOptions } from './utils/i18n/create-tsync';
 export { setupAppI18n } from './utils/i18n/setup-app-i18n';
 export type { SetupAppI18nOptions } from './utils/i18n/setup-app-i18n';
+export { loadFlatI18nMessages } from './utils/i18n/simple-flat-loader';
+export type { FlatLocaleSource, FlatLocaleMessages } from './utils/i18n/simple-flat-loader';
 export { useCrossDomainBridge, broadcastLoginMessage } from './composables/useCrossDomainBridge';
 export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';
@@ -123,6 +125,7 @@ export * from './composables/useEnvInfo';
 // 显式导出 types/common 中的类型，避免与 types/schemas 冲突
 export type { BaseResponse } from './types/common';
 export * from './types/crud';
+export type { ModuleConfig } from './types/module';
 export * from './utils/menu-icon-assigner';
 export * from './utils/app-route-utils';
 export * from './eps';
@@ -130,6 +133,9 @@ export * from './eps';
 // ========== 从 shared-utils 迁移的工具模块 ==========
 export * from './utils';
 export { getCookieDomain } from './utils/storage/cookie';
+// 日志模块
+export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
+export type { LogContext, LogLevel, LoggerOptions, Logger } from './utils/logger';
 // 显式导出存储工具（确保 Pinia 插件正确导出）
 export { persistedStatePlugin, persistedStatePluginSession, createPersistedStatePlugin } from './utils/storage/pinia-persist';
 export type { PersistedStatePluginOptions } from './utils/storage/pinia-persist';
@@ -143,6 +149,12 @@ export {
   getPageConfig,
   getAllRegisteredPageKeys,
 } from './utils/config-loader';
+export {
+  scanRoutesFromModules,
+  scanRoutesFromConfigFiles,
+  mergeRoutes,
+  registerRoutes,
+} from './utils/route-scanner';
 
 // ========== 从 subapp-manifests 迁移的清单模块 ==========
 export * from './manifest';

@@ -1,7 +1,7 @@
 <template>
-  <div class="inventory-page">
+  <div class="page">
     <router-view v-slot="{ Component }">
-      <div class="inventory-page__content">
+      <div class="inventory__content">
         <component :is="Component" />
       </div>
     </router-view>
@@ -15,17 +15,9 @@ defineOptions({
 </script>
 
 <style scoped lang="scss">
-.inventory-page {
-  height: 100%;
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-}
 
-.inventory-page__content {
+
+.inventory__content {
   flex: 1;
   height: 100%;
   min-height: 0;
@@ -34,7 +26,7 @@ defineOptions({
   flex-direction: column;
 }
 
-.inventory-page__content > * {
+.inventory__content > * {
   flex: 1 1 auto;
   min-width: 0;
 }

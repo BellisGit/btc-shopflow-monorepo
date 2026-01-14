@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { sessionStorage } from '../../utils/storage/session';
 import type { SubAppContext } from './types';
@@ -25,11 +26,11 @@ export function createLogoutFunction(
         if (authApi?.logout) {
           await authApi.logout();
         } else {
-          console.warn('[useLogout] Auth API logout function not available.');
+          logger.warn('[useLogout] Auth API logout function not available.');
         }
       } catch (error: any) {
         // 后端 API 失败不影响前端清理
-        console.warn('Logout API failed, but continue with frontend cleanup:', error);
+        logger.warn('Logout API failed, but continue with frontend cleanup:', error);
       }
 
       // 关键：先清除登录状态标记，确保 isAuthenticated() 立即返回 false
@@ -208,7 +209,7 @@ export function createLogoutFunction(
         }
       } catch (error) {
         // 如果导入失败，使用兜底方案
-        console.error('[useSubAppLogout] Failed to build logout URL:', error);
+        logger.error('[useSubAppLogout] Failed to build logout URL:', error);
         context.router.replace({
           path: '/login',
           query: { logout: '1' }
@@ -216,7 +217,7 @@ export function createLogoutFunction(
       }
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
 
       // 关键：先清除登录状态标记，确保 isAuthenticated() 立即返回 false
       const getAppStorage = () => {
@@ -379,7 +380,7 @@ export function createLogoutFunction(
         }
       } catch (error) {
         // 如果导入失败，使用兜底方案
-        console.error('[useSubAppLogout] Failed to build logout URL:', error);
+        logger.error('[useSubAppLogout] Failed to build logout URL:', error);
         context.router.replace({
           path: '/login',
           query: { logout: '1' }

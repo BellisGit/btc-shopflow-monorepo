@@ -2,6 +2,7 @@
  * 策略执行引擎
  * 实现事件驱动的实时策略评估和执行
  */
+import { logger } from '@btc/shared-core';
 
 import type {
   Strategy,
@@ -387,7 +388,7 @@ export class StrategyExecutionEngine {
         });
         break; // 使用第一个成功评估的规则
       } catch (error) {
-        console.warn(`Rule evaluation failed: ${rule.expression}`, error);
+        logger.warn(`Rule evaluation failed: ${rule.expression}`, error);
       }
     }
 
@@ -519,12 +520,12 @@ export class StrategyExecutionEngine {
         return { output: { ...context, access: 'denied' }, effect: StrategyEffect.DENY };
 
       case 'LOG_EVENT':
-        console.log('Strategy log:', parameters.message || 'Action execution', context);
+        logger.info('Strategy log:', parameters.message || 'Action execution', context);
         return { output: context };
 
       case 'SEND_NOTIFICATION':
         // 模拟发送通知
-        console.log('Send notification:', parameters);
+        logger.info('Send notification:', parameters);
         return { output: { ...context, notificationSent: true } };
 
       case 'UPDATE_DATA':
@@ -552,7 +553,7 @@ export class StrategyExecutionEngine {
         }
 
       default:
-        console.warn(`Unknown action type: ${action.type}`);
+        logger.warn(`Unknown action type: ${action.type}`);
         return { output: context };
     }
   }
@@ -648,7 +649,7 @@ export class StrategyExecutionEngine {
       try {
         listener(event);
       } catch (error) {
-        console.error('Event listener execution failed:', error);
+        logger.error('Event listener execution failed:', error);
       }
     });
   }

@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { ElMessageBox } from 'element-plus';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -134,15 +134,15 @@ const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement;
   const failedUrl = img.src;
 
-  console.warn('[UserInfo] 头像加载失败:', failedUrl);
+  logger.warn('[UserInfo] 头像加载失败:', failedUrl);
 
   // 标记已处理
   errorHandled.value = true;
 
   // 如果失败的是 logo.png，不再重试
   if (failedUrl.includes('logo.png')) {
-    console.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
-    console.error('[UserInfo] URL:', failedUrl);
+    logger.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
+    logger.error('[UserInfo] URL:', failedUrl);
     return;
   }
 
@@ -161,14 +161,14 @@ watch(() => userInfo.value?.avatar, (newAvatar, oldAvatar) => {
 // 初始化
 onMounted(async () => {
   if (import.meta.env.DEV) {
-    console.log('[UserInfo] onMounted called');
+    logger.info('[UserInfo] onMounted called');
   }
   await loadProfileInfo();
 });
 
 // 处理用户下拉菜单命令
 const handleCommand = (command: string) => {
-  console.log('[UserInfo] handleCommand 被调用, command:', command);
+  logger.info('[UserInfo] handleCommand 被调用, command:', command);
   switch (command) {
     case 'profile':
       // 个人信息页面属于系统域（主应用），直接使用 router.push
@@ -194,7 +194,7 @@ const handleCommand = (command: string) => {
         .then(() => {
           // 用户确认退出
           logout().catch((error) => {
-            console.error('[UserInfo] logout 执行失败:', error);
+            logger.error('[UserInfo] logout 执行失败:', error);
           });
         })
         .catch(() => {

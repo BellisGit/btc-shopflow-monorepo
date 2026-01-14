@@ -67,7 +67,7 @@ import {
   BtcCrudSearchKey,
   BtcCrudActions,
 } from '@btc/shared-components';
-import { usePageColumns, getPageConfigFull, useI18n } from '@btc/shared-core';
+import { usePageColumns, getPageConfigFull, useI18n, logger } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -203,7 +203,7 @@ const requestColumns = computed(() => {
             const ipStr = row.ip.length > 1000 ? row.ip.substring(0, 1000) + '...' : row.ip;
             return ipStr.split(',').map((ip: string) => ip.trim()).filter((ip: any) => ip).join(', ');
           } catch (error) {
-            console.error('IP field format error:', error);
+            logger.error('IP field format error:', error);
             return '-';
           }
         }
@@ -248,7 +248,7 @@ onMounted(async () => {
     // const res = await requestService.getKeep();
     // keepDays.value = Number(res);
   } catch (err) {
-    console.error('Failed to get log retention days', err);
+    logger.error('Failed to get log retention days', err);
   }
   await nextTick();
   try {

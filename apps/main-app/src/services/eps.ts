@@ -1,5 +1,6 @@
 // 注意：此文件被标记为副作用模块（package.json 中的 sideEffects），确保完整的 EPS 数据被包含
 // 防止 tree-shaking 移除未直接访问的 EPS 服务
+import { logger } from '@btc/shared-core';
 import epsModule from 'virtual:eps';
 import { loadEpsService, exportEpsServiceToGlobal } from '@btc/shared-core';
 
@@ -8,7 +9,7 @@ const { service, list } = loadEpsService(epsModule);
 
 // 开发环境调试：检查 service 对象结构（已禁用日志）
 // if (import.meta.env.DEV) {
-//   console.log('[eps.ts] EPS service loaded', {
+//   logger.info('[eps.ts] EPS service loaded', {
 //     hasService: !!service,
 //     hasAdmin: !!service?.admin,
 //     hasIam: !!service?.admin?.iam,

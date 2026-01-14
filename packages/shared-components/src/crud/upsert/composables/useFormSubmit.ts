@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref } from 'vue';
 import { formHook } from '@btc/shared-core/utils/form';
 import type { UseCrudReturn } from '@btc/shared-core';
@@ -38,7 +39,7 @@ export function useFormSubmit(
    */
   const handleSubmit = async () => {
     if (!formRef.value) {
-      console.warn('[BtcUpsert] Form ref is not available');
+      logger.warn('[BtcUpsert] Form ref is not available');
       return;
     }
 
@@ -98,7 +99,7 @@ export function useFormSubmit(
               return result;
             }
           } catch (error: any) {
-            console.error('[BtcUpsert] Error in custom onSubmit next callback:', error, {
+            logger.error('[BtcUpsert] Error in custom onSubmit next callback:', error, {
               errorMessage: error?.message,
               errorStack: error?.stack,
             });
@@ -128,7 +129,7 @@ export function useFormSubmit(
         close();
       }
     } catch (_error) {
-      console.error('[BtcUpsert] Form validation or submission failed:', _error, {
+      logger.error('[BtcUpsert] Form validation or submission failed:', _error, {
         errorMessage: _error instanceof Error ? _error.message : String(_error),
         errorStack: _error instanceof Error ? _error.stack : undefined,
         mode: mode.value,

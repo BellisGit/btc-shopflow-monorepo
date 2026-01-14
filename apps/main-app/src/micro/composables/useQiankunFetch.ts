@@ -3,7 +3,7 @@
  * 用于处理 qiankun 的 fetch 请求，修复资源路径
  */
 
-import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
+import { getAppBySubdomain, getAppByPathPrefix, logger } from '@btc/shared-core/configs/app-scanner';
 import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
 import { getGlobalEntryMap } from './useResourceInterceptor';
 
@@ -82,7 +82,7 @@ export function createFetchHandler(entryMap: Map<string, string>) {
     } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError' && !options?.signal?.aborted) {
-        console.warn(`[qiankun] 资源加载超时，尝试重试: ${url}`);
+        logger.warn(`[qiankun] 资源加载超时，尝试重试: ${url}`);
         const retryController = new AbortController();
         const retryTimeoutId = setTimeout(() => retryController.abort(), timeout);
         try {
@@ -93,7 +93,7 @@ export function createFetchHandler(entryMap: Map<string, string>) {
           clearTimeout(retryTimeoutId);
         } catch (retryError: any) {
           clearTimeout(retryTimeoutId);
-          console.error(`[qiankun] 资源加载重试失败: ${url}`, retryError);
+          logger.error(`[qiankun] 资源加载重试失败: ${url}`, retryError);
           throw retryError;
         }
       } else {

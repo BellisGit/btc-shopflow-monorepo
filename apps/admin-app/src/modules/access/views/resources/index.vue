@@ -1,5 +1,5 @@
 <template>
-  <div class="resources-page">
+  <div class="page">
     <BtcCrud ref="crudRef" :service="crudResourceService">
       <BtcCrudRow>
         <div class="btc-crud-primary-actions">
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull, logger } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import {
   BtcCrud,
@@ -49,8 +49,8 @@ import {
   BtcCrudFlex1,
   BtcCrudSearchKey,
   BtcCrudActions,
+  BtcSvg,
 } from '@btc/shared-components';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
@@ -87,7 +87,7 @@ const handleSync = async () => {
     }
   } catch (error) {
     message.error(t('access.resources.sync_failed'));
-    console.error('Data sync failed:', error);
+    logger.error('Data sync failed:', error);
   } finally {
     syncLoading.value = false;
   }
@@ -95,8 +95,5 @@ const handleSync = async () => {
 </script>
 
 <style lang="scss" scoped>
-.resources-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

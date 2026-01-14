@@ -2,18 +2,39 @@ import type { App } from 'vue';
 import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { BtcAppLayout } from '@btc/shared-components';
+import { BtcAppLayout as AppLayout } from '@btc/shared-components';
 import { getMainAppLoginUrl } from '@btc/shared-core';
+import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
+import { logger } from '@btc/shared-core';
 
-// 基础路由（页面组件）
-const pageRoutes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: () => import('../../views/Home.vue'),
-    meta: { isHome: true },
-  },
-];
+/**
+ * 获取路由配置
+ * 自动路由发现：从所有模块的 config.ts 中自动提取 views 和 pages 路由
+ */
+function getQualityRoutes() {
+  let pageRoutes: any[] = [];
+  
+  try {
+    const autoRoutes = scanRoutesFromConfigFiles('/src/modules/*/config.ts', {
+      enableAutoDiscovery: true,
+      preferManualRoutes: false,
+      mergeViewsToChildren: false,
+    });
+
+    pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
+
+    if (import.meta.env.DEV) {
+      logger.info(
+        `[QualityRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
+      );
+    }
+  } catch (error) {
+    logger.error('[QualityRouter] Failed to scan routes from modules:', error);
+    pageRoutes = [];
+  }
+
+  return pageRoutes;
+}
 
 /**
  * 创建品质应用路由
@@ -21,6 +42,9 @@ const pageRoutes = [
 export const createQualityRouter = (): Router => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
+  // 自动扫描路由
+  const pageRoutes = getQualityRoutes();
 
   // 根据运行模式返回不同的路由配置
   // 独立运行且未使用 layout-app 时：使用 AppLayout 包裹所有路由

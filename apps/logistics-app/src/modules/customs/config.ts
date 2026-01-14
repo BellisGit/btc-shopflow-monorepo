@@ -2,9 +2,28 @@
  * 海关模块配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 
 export default {
+  // ModuleConfig 字段
+  name: 'customs',
+  label: 'common.module.customs.label',
+  order: 60,
+
+  // 路由配置
+  views: [
+    {
+      path: '/customs',
+      name: 'LogisticsCustoms',
+      component: () => import('./views/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.customs_module',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 菜单配置
@@ -27,4 +46,4 @@ export default {
   forms: {},
 
   service: {},
-} satisfies PageConfig;
+} satisfies ModuleConfig;

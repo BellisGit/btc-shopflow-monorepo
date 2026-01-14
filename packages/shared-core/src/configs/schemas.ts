@@ -2,6 +2,7 @@
  * 配置验证 Zod Schemas
  * 用于验证应用配置、菜单配置、清单配置等
  */
+import { logger } from '../utils/logger';
 
 import { z } from 'zod';
 
@@ -236,7 +237,7 @@ export function validateConfig<T>(
       return schema.parse(preprocessedConfig);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error(`[配置验证] ${configName}验证失败:`, error.errors);
+        logger.error(`[配置验证] ${configName}验证失败:`, error.errors);
         throw new Error(
           `${configName}验证失败: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
         );
@@ -250,7 +251,7 @@ export function validateConfig<T>(
       return result.data;
     } else {
       // 生产环境静默失败，返回原始配置，并上报
-      console.warn(`[配置验证] ${configName}验证失败，使用原始配置`);
+      logger.warn(`[配置验证] ${configName}验证失败，使用原始配置`);
       // 上报验证失败（异步，不阻塞）
       import('../utils/zod/reporting').then(({ reportValidationError }) => {
         reportValidationError(

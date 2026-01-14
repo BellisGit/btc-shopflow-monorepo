@@ -2,6 +2,7 @@
  * 文档编码修复工具
  * 扫描所有 Markdown 文件，检测并报告乱码问题
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -64,7 +65,7 @@ function scanFile(filePath: string): EncodingIssue[] {
       }
     });
   } catch (error) {
-    console.error(`Failed to scan ${relativePath}:`, error);
+    logger.error(`Failed to scan ${relativePath}:`, error);
   }
 
   return issues;
@@ -74,7 +75,7 @@ function scanFile(filePath: string): EncodingIssue[] {
  * 主函数
  */
 async function main() {
-  console.log('📝 开始扫描文档系统...\n');
+  logger.info('📝 开始扫描文档系统...\n');
 
   // 扫描所有 .md 文件
   const files = await glob('**/*.md', {
@@ -82,7 +83,7 @@ async function main() {
     ignore: ['node_modules/**', '.vitepress/**', 'dist/**'],
   });
 
-  console.log(`找到 ${files.length} 个文档文件\n`);
+  logger.info(`找到 ${files.length} 个文档文件\n`);
 
   const allIssues: EncodingIssue[] = [];
   const affectedFiles = new Set<string>();
@@ -98,22 +99,22 @@ async function main() {
   }
 
   // 生成报告
-  console.log('═══════════════════════════════════════════════════════');
-  console.log('                    乱码扫描报告');
-  console.log('═══════════════════════════════════════════════════════\n');
+  logger.info('═══════════════════════════════════════════════════════');
+  logger.info('                    乱码扫描报告');
+  logger.info('═══════════════════════════════════════════════════════\n');
 
-  console.log(`📊 统计信息：`);
-  console.log(`   - 扫描文件数：${files.length}`);
-  console.log(`   - 受影响文件：${affectedFiles.size}`);
-  console.log(`   - 问题总数：${allIssues.length}\n`);
+  logger.info(`📊 统计信息：`);
+  logger.info(`   - 扫描文件数：${files.length}`);
+  logger.info(`   - 受影响文件：${affectedFiles.size}`);
+  logger.info(`   - 问题总数：${allIssues.length}\n`);
 
   if (allIssues.length === 0) {
-    console.log('✅ 未发现编码问题！');
+    logger.info('✅ 未发现编码问题！');
     return;
   }
 
   // 按文件分组显示
-  console.log('🔍 问题详情：\n');
+  logger.info('🔍 问题详情：\n');
 
   const issuesByFile = new Map<string, EncodingIssue[]>();
   allIssues.forEach(issue => {
@@ -125,16 +126,16 @@ async function main() {
 
   // 按文件显示
   for (const [file, issues] of issuesByFile) {
-    console.log(`\n📄 ${file} (${issues.length} 个问题)`);
-    console.log('   ' + '─'.repeat(60));
+    logger.info(`\n📄 ${file} (${issues.length} 个问题)`);
+    logger.info('   ' + '─'.repeat(60));
 
     issues.forEach(issue => {
-      console.log(`   行 ${issue.line}: ${issue.issue}`);
-      console.log(`   内容: ${issue.content.substring(0, 80)}${issue.content.length > 80 ? '...' : ''}`);
+      logger.info(`   行 ${issue.line}: ${issue.issue}`);
+      logger.info(`   内容: ${issue.content.substring(0, 80)}${issue.content.length > 80 ? '...' : ''}`);
     });
   }
 
-  console.log('\n═══════════════════════════════════════════════════════\n');
+  logger.info('\n═══════════════════════════════════════════════════════\n');
 
   // 生成 JSON 报告
   const reportPath = path.join(docsRoot, 'encoding-issues-report.json');
@@ -156,7 +157,7 @@ async function main() {
     }))
   }, null, 2));
 
-  console.log(`📋 详细报告已保存到: ${path.relative(docsRoot, reportPath)}\n`);
+  logger.info(`📋 详细报告已保存到: ${path.relative(docsRoot, reportPath)}\n`);
 }
 
 main().catch(console.error);

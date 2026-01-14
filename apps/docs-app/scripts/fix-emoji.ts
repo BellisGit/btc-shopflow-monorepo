@@ -2,6 +2,7 @@
  * 修复文档中损坏的 emoji 图标
  * 根据上下文恢复正确的 emoji
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -202,9 +203,9 @@ function fixEmojisInFile(filePath: string): FixResult {
  * 主函数
  */
 async function main() {
-  console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║           文档 Emoji 修复工具                          ║');
-  console.log('╚════════════════════════════════════════════════════════╝\n');
+  logger.info('╔════════════════════════════════════════════════════════╗');
+  logger.info('║           文档 Emoji 修复工具                          ║');
+  logger.info('╚════════════════════════════════════════════════════════╝\n');
 
   // 扫描所有 .md 文件
   const files = await glob('**/*.md', {
@@ -212,8 +213,8 @@ async function main() {
     ignore: ['node_modules/**', '.vitepress/**', 'dist/**'],
   });
 
-  console.log(`📂 发现 ${files.length} 个文档文件\n`);
-  console.log('⚙️  开始修复 emoji...\n');
+  logger.info(`📂 发现 ${files.length} 个文档文件\n`);
+  logger.info('⚙️  开始修复 emoji...\n');
 
   const results: FixResult[] = [];
 
@@ -223,34 +224,34 @@ async function main() {
     results.push(result);
 
     if (result.success && result.replacements > 0) {
-      console.log(`✅ ${result.file} - 修复了 ${result.replacements} 处 emoji`);
+      logger.info(`✅ ${result.file} - 修复了 ${result.replacements} 处 emoji`);
     }
   }
 
   // 统计
-  console.log('\n╔════════════════════════════════════════════════════════╗');
-  console.log('║                    修复报告                            ║');
-  console.log('╚════════════════════════════════════════════════════════╝\n');
+  logger.info('\n╔════════════════════════════════════════════════════════╗');
+  logger.info('║                    修复报告                            ║');
+  logger.info('╚════════════════════════════════════════════════════════╝\n');
 
   const fixedFiles = results.filter(r => r.success && r.replacements > 0);
   const totalReplacements = fixedFiles.reduce((sum, r) => sum + r.replacements, 0);
   const failedFiles = results.filter(r => !r.success);
 
-  console.log(`📊 统计信息：`);
-  console.log(`   - 扫描文件：${files.length}`);
-  console.log(`   - 修复文件：${fixedFiles.length}`);
-  console.log(`   - 修复总数：${totalReplacements}`);
-  console.log(`   - 失败文件：${failedFiles.length}`);
-  console.log();
+  logger.info(`📊 统计信息：`);
+  logger.info(`   - 扫描文件：${files.length}`);
+  logger.info(`   - 修复文件：${fixedFiles.length}`);
+  logger.info(`   - 修复总数：${totalReplacements}`);
+  logger.info(`   - 失败文件：${failedFiles.length}`);
+  logger.info();
 
   if (failedFiles.length > 0) {
-    console.log(`❌ 失败文件：`);
-    failedFiles.forEach(r => console.log(`   - ${r.file}: ${r.error}`));
-    console.log();
+    logger.info(`❌ 失败文件：`);
+    failedFiles.forEach(r => logger.info(`   - ${r.file}: ${r.error}`));
+    logger.info();
   }
 
-  console.log('✅ Emoji 修复完成！');
-  console.log('💡 建议：刷新浏览器查看效果 (Ctrl+F5)\n');
+  logger.info('✅ Emoji 修复完成！');
+  logger.info('💡 建议：刷新浏览器查看效果 (Ctrl+F5)\n');
 }
 
 main().catch(console.error);

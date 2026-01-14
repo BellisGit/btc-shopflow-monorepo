@@ -102,6 +102,8 @@ export default {
   'menu.test_features.api_test_center': 'API Test Center',
   'menu.test_features.inventory_ticket_print': 'Inventory Ticket Print',
   'menu.test_features.filter_list_test': 'Filter List Test',
+  'menu.test_features.column_layout_test': 'Column Layout Test',
+  'menu.test_features.double_layout_test': 'Double Layout Test',
   'menu.test_features.crud': 'CRUD Test',
   'menu.test_features.svg': 'SVG Test',
   'menu.test_features.i18n': 'Internationalization Test',

@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { createApp, type App as VueApp } from 'vue';
 import App from './App.vue';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
@@ -60,7 +61,7 @@ const layoutIsMainApp = (
   // 其他情况使用统一的 isMainApp 判断逻辑
   const result = unifiedIsMainApp(routePath, locationPath, isStandalone);
   if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__)) {
-    console.log(`[layout-app] ${tSync('common.error.using_unified_logic')}`, {
+    logger.info(`[layout-app] ${tSync('common.error.using_unified_logic')}`, {
       routePath,
       locationPath,
       isStandalone,
@@ -191,7 +192,7 @@ function ensureDefaultSettings() {
 
 const initLayoutEnvironment = async (appInstance: VueApp) => {
   if (import.meta.env.DEV) {
-    console.log(`[layout-app] ${tSync('common.error.init_environment_started')}`);
+    logger.info(`[layout-app] ${tSync('common.error.init_environment_started')}`);
   }
 
   // 关键：在初始化开始时就设置全局依赖，确保在 Vue 应用创建之前这些依赖就已存在
@@ -276,13 +277,13 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
         } catch (error) {
           // 静默失败，避免影响其他功能
           if (import.meta.env.DEV) {
-            console.warn(`[layout-app] ${tSync('common.error.subapp_route_change_failed')}:`, error);
+            logger.warn(`[layout-app] ${tSync('common.error.subapp_route_change_failed')}:`, error);
           }
         }
       })();
 
       if (import.meta.env.DEV) {
-        console.log(`[layout-app] ${tSync('common.error.subapp_route_change_received')}:`, detail);
+        logger.info(`[layout-app] ${tSync('common.error.subapp_route_change_received')}:`, detail);
       }
     }) as EventListener);
   }
@@ -319,7 +320,7 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
             // 使用已存在的全局注册表（可能由其他模块创建）
             registry = (window as any).__BTC_MENU_REGISTRY__;
             if (import.meta.env.DEV) {
-              console.log(`[layout-app] ${tSync('common.error.menu_registry_using_existing')}`);
+              logger.info(`[layout-app] ${tSync('common.error.menu_registry_using_existing')}`);
             }
           } else {
             // 如果全局不存在，创建新的并挂载到全局对象
@@ -328,7 +329,7 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
               (window as any).__BTC_MENU_REGISTRY__ = registry;
             }
             if (import.meta.env.DEV) {
-              console.log(`[layout-app] ${tSync('common.error.menu_registry_creating_new')}`);
+              logger.info(`[layout-app] ${tSync('common.error.menu_registry_creating_new')}`);
             }
           }
 
@@ -337,15 +338,15 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
             // 验证注册表结构
             const keys = Object.keys(registry.value);
             if (import.meta.env.DEV) {
-              console.log(`[layout-app] ${tSync('common.error.menu_registry_initialized')}:`, keys);
+              logger.info(`[layout-app] ${tSync('common.error.menu_registry_initialized')}:`, keys);
             }
           }
         }
       } catch (error) {
-        console.error(`[layout-app] ${tSync('common.error.menu_registry_init_failed')}:`, error);
+        logger.error(`[layout-app] ${tSync('common.error.menu_registry_init_failed')}:`, error);
       }
     }).catch((error) => {
-      console.error('[layout-app] 菜单注册表初始化失败:', error);
+      logger.error('[layout-app] 菜单注册表初始化失败:', error);
     });
   }
   setupEps(appInstance);
@@ -656,7 +657,7 @@ const ensureMicroAppsRegistered = async () => {
         async (error: any, app: any) => {
           // 子应用加载失败：立即清除 loading 状态
           clearLoadingState();
-          console.error(`[layout-app] ${tSync('common.error.subapp_load_failed')} ${app?.name}:`, error);
+          logger.error(`[layout-app] ${tSync('common.error.subapp_load_failed')} ${app?.name}:`, error);
 
           // 设置全局状态，标记加载失败
           (window as any).__LAYOUT_APP_QIANKUN_LOAD_FAILED__ = true;
@@ -919,7 +920,7 @@ async function mount(props: any) {
 
       // 其他错误正常处理（可以记录日志或上报）
       if (import.meta.env.DEV) {
-        console.error(`[layout-app] ${tSync('common.error.vue_error')}:`, err, info);
+        logger.error(`[layout-app] ${tSync('common.error.vue_error')}:`, err, info);
       }
     };
 
@@ -943,7 +944,7 @@ async function mount(props: any) {
   if (embedded) {
     // 嵌入模式：子应用会自己挂载到 #subapp-viewport，不需要通过 qiankun 加载
     if (import.meta.env.DEV) {
-      console.log(`[layout-app] ${tSync('common.error.embedded_mode_detected')}`);
+      logger.info(`[layout-app] ${tSync('common.error.embedded_mode_detected')}`);
     }
     return;
   }
@@ -976,7 +977,7 @@ async function mount(props: any) {
       event.preventDefault();
       event.stopPropagation();
       if (import.meta.env.DEV) {
-        console.warn(`[layout-app] ${tSync('common.error.dom_operation_error')}:`, errorMessage);
+        logger.warn(`[layout-app] ${tSync('common.error.dom_operation_error')}:`, errorMessage);
       }
       return true; // 阻止默认错误处理
     }
@@ -1064,7 +1065,7 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
         // 如果指定的容器不存在，尝试查找 #app（兜底）
         container = document.querySelector('#app') as HTMLElement;
         if (container && import.meta.env.DEV) {
-          console.warn(`[layout-app] ${tSync('common.error.mount_target_not_found')} ${mountTarget}`);
+          logger.warn(`[layout-app] ${tSync('common.error.mount_target_not_found')} ${mountTarget}`);
         }
       }
       // 关键：验证容器 ID，确保挂载位置正确
@@ -1074,7 +1075,7 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
         if (correctContainer && document.body.contains(correctContainer)) {
           container = correctContainer;
           if (import.meta.env.DEV) {
-            console.warn(`[layout-app] ${tSync('common.error.mount_container_corrected')}`);
+            logger.warn(`[layout-app] ${tSync('common.error.mount_container_corrected')}`);
           }
         } else {
           throw new Error(`[layout-app] 挂载目标 ${mountTarget} 不存在，且无法找到 #app 容器`);
@@ -1098,7 +1099,7 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
         // 只有在非嵌入模式下才启动 qiankun 来加载子应用
         ensureMicroAppsRegistered();
       } else if (import.meta.env.DEV) {
-        console.log(`[layout-app] ${tSync('common.error.embedded_mode_detected_standalone')}`);
+        logger.info(`[layout-app] ${tSync('common.error.embedded_mode_detected_standalone')}`);
       }
     } else {
       throw new Error(`[layout-app] ${tSync('common.error.mount_container_not_found')}`);

@@ -2,12 +2,126 @@
  * 数据管理模块配置
  * 包含 inventory、files、dictionary 等页面的配置
  */
+import { logger } from '@btc/shared-core';
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'data',
+  label: 'common.module.data.label',
+  order: 20,
+
+  // 路由配置
+  views: [
+    {
+      path: 'data/files/list',
+      name: 'DataFilesList',
+      component: () => import('./views/files/list/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.data.files.list',
+      },
+    },
+    {
+      path: 'data/files/template',
+      name: 'DataFilesTemplate',
+      component: () => import('./views/files/template/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.data.files.template',
+      },
+    },
+    {
+      path: 'data/files/preview',
+      name: 'DataFilesPreview',
+      component: () => import('./views/files/preview/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.data.files.preview',
+      },
+    },
+    {
+      path: 'inventory/dataSource/bom',
+      name: 'InventoryDataSourceBom',
+      component: () => import('./views/inventory/bom/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory.dataSource.bom',
+      },
+    },
+    {
+      path: 'inventory/dataSource/list',
+      name: 'InventoryDataSourceList',
+      component: () => import('./views/inventory/list/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory.dataSource.list',
+      },
+    },
+    {
+      path: 'inventory/dataSource/ticket',
+      name: 'InventoryDataSourceTicket',
+      component: () => import('./views/inventory/ticket/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory.dataSource.ticket',
+      },
+    },
+    {
+      path: 'inventory/process',
+      name: 'InventoryProcess',
+      component: () => import('./views/inventory/process/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory.process',
+      },
+    },
+    {
+      path: 'inventory/check',
+      name: 'InventoryCheck',
+      component: () => import('./views/inventory/check/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory.result',
+      },
+    },
+    {
+      path: 'inventory/confirm',
+      name: 'InventoryConfirm',
+      component: () => import('./views/inventory/confirm/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.inventory.confirm',
+      },
+    },
+    {
+      path: 'data/dictionary',
+      redirect: 'data/dictionary/file-categories',
+    },
+    {
+      path: 'data/dictionary/file-categories',
+      name: 'DataDictionaryFileCategories',
+      component: () => import('./views/dictionary/file-categories/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.data.dictionary.file_categories',
+      },
+    },
+    {
+      path: 'data/recycle',
+      name: 'DataRecycle',
+      component: () => import('./views/recycle/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.data.recycle',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 菜单配置
@@ -34,7 +148,7 @@ export default {
       'menu.inventory.process': '流程管理',
       'menu.inventory.result': '实盘数据',
       'menu.inventory.confirm': '流程确认',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.inventory.dataSource.domains': '域列表',
       'title.inventory.dataSource.domains.select_required': '请先选择左侧域',
       'title.inventory.check.list': '盘点列表',
@@ -126,7 +240,7 @@ export default {
       'menu.inventory.process': 'Process Management',
       'menu.inventory.result': 'Live Inventory Data',
       'menu.inventory.confirm': 'Process Confirmation',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title  and right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title  and right-title）
       'title.inventory.dataSource.domains': 'Domain List',
       'title.inventory.dataSource.domains.select_required': 'Please select a domain on the left first',
       'title.inventory.check.list': 'Check List',
@@ -400,10 +514,10 @@ export default {
           });
           return Array.from(domainMap.values());
         } catch (error) {
-          console.warn('[DataInventoryList] Failed to load domain list:', error);
+          logger.warn('[DataInventoryList] Failed to load domain list:', error);
           return [];
         }
       },
     },
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

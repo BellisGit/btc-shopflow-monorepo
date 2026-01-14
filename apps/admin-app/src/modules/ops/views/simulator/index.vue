@@ -1,5 +1,5 @@
 <template>
-  <div class="simulator-page">
+  <div class="page">
     <BtcCrudRow>
       <BtcCrudFlex1 />
       <el-form
@@ -209,10 +209,7 @@ const handleSimulate = async () => {
 </script>
 
 <style lang="scss" scoped>
-.simulator-page {
-  height: 100%;
-  padding: 20px;
-}
+
 
 .simulator-form {
   display: inline-flex;

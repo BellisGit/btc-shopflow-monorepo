@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="menu-perm-bind-page">
+  <div class="page">
     <el-card>
       <template #header>
         <div class="card-header">
@@ -93,8 +93,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.menu-perm-bind-page {
-}
+
 
 .card-header {
   display: flex;

@@ -20,6 +20,7 @@ export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
 export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
+export { default as BtcDoubleLayout } from './components/layout/btc-double-layout/index.vue';
 export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
 export { default as BtcAppSkeleton } from './components/basic/app-skeleton/index.vue';
 export { default as BtcGlobalSearch } from './components/layout/app-layout/global-search/index.vue';
@@ -94,8 +95,11 @@ export type { BtcContainerProps } from './components/layout/btc-container/types'
 export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
 export type { IconButtonConfig, IconButtonDropdown, IconButtonDropdownItem, IconButtonPopover } from './components/basic/btc-icon-button';
 export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';
+export type { BtcTab } from './components/navigation/btc-tabs/index.vue';
 // 显式导出函数和枚举
 export { useCurrentApp } from './composables/useCurrentApp';
+export { useAutoMaxHeight } from './composables/useAutoMaxHeight';
+export type { UseAutoMaxHeightOptions } from './composables/useAutoMaxHeight';
 export { useGlobalBreakpoints, initGlobalBreakpoints } from './composables/useGlobalBreakpoints';
 export { useProcessStore, getCurrentAppFromPath } from './store/process';
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry } from './store/menuRegistry';

@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import {
   createRouter,
   createWebHistory,
@@ -16,7 +17,6 @@ import { tSync } from '../i18n/getters';
 // 使用动态导入避免循环依赖
 // import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from '../micro/index';
-import { systemRoutes } from './routes/system';
 import { getSystemRoutes } from './routes/system-routes';
 import { getCookie } from '@btc/shared-core/utils/cookie';
 import { storage } from '@btc/shared-utils';
@@ -170,9 +170,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'NotFound404Page',
-        component: () => import('../pages/404/index.vue'),
+        component: () => import('../modules/base/pages/error/404.vue'),
         meta: {
           titleKey: 'common.page_not_found',
+          isPage: true,
+          pageType: 'error',
           breadcrumbs: [
             { labelKey: 'common.page_not_found', icon: 'svg:404' },
           ],
@@ -491,7 +493,7 @@ async function updateDocumentTitle(to: RouteLocationNormalized) {
     await setPageTitle(appId, pageTitle, { isHome, sync: false, translate: tSync });
   } catch (error) {
     // 标题设置失败不影响功能
-    console.warn('[title] 更新标题失败:', error);
+    logger.warn('[title] 更新标题失败:', error);
   }
 }
 
@@ -538,7 +540,7 @@ export function isAuthenticated(): boolean {
   } catch (error) {
     // 如果检查失败，继续检查其他方式
     if (import.meta.env.DEV) {
-      console.warn('[isAuthenticated] Failed to check is_logged_in flag:', error);
+      logger.warn('[isAuthenticated] Failed to check is_logged_in flag:', error);
     }
   }
 
@@ -581,7 +583,7 @@ export function isAuthenticated(): boolean {
     return false;
   } catch (error) {
     // 解析失败，保守返回 false
-    console.warn('[isAuthenticated] Failed to check credential expire time:', error);
+    logger.warn('[isAuthenticated] Failed to check credential expire time:', error);
     return false;
   }
 }
@@ -710,7 +712,7 @@ router.beforeResolve(async (to) => {
         throw new Error('rootLoadingService 未定义或方法不存在');
       }
     } catch (error) {
-      console.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
+      logger.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
       // 备用方案：直接操作 DOM（向后兼容）
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
@@ -1293,7 +1295,7 @@ export const createSystemRouter = (): Router => {
     // 检测是否是 system 子域名
     if (currentSubdomainApp === 'system' && path.startsWith('/system/')) {
       const normalized = path.substring('/system'.length) || '/';
-      console.log(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+      logger.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
       return normalized;
     }
 
@@ -1440,7 +1442,7 @@ export const createSystemRouter = (): Router => {
   });
 
   systemRouter.onError((error: any) => {
-    console.warn('[system-app] Router error:', error);
+    logger.warn('[system-app] Router error:', error);
   });
 
   return systemRouter;

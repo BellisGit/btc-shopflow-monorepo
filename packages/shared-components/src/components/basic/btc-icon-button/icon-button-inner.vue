@@ -16,6 +16,10 @@
         <btc-svg
           :name="iconName"
           :size="config.size || 16"
+          :animation="config.iconAnimation"
+          :animation-trigger="config.iconAnimationTrigger"
+          :animation-duration="config.iconAnimationDuration"
+          :animation-delay="config.iconAnimationDelay"
         />
         <span
           v-if="config.badge !== undefined && config.badge > 0"
@@ -34,6 +38,10 @@
       <btc-svg
         :name="iconName"
         :size="config.size || 16"
+        :animation="config.iconAnimation"
+        :animation-trigger="config.iconAnimationTrigger"
+        :animation-duration="config.iconAnimationDuration"
+        :animation-delay="config.iconAnimationDelay"
       />
       <span
         v-if="config.badge !== undefined && config.badge > 0"

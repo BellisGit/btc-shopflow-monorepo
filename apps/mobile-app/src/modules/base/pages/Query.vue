@@ -1,11 +1,11 @@
 <template>
-  <div class="query-page">
+  <div class="page">
     <!-- 顶栏 -->
-    <div class="query-page__header">
-      <h1 class="query-page__title">查询</h1>
+    <div class="query__header">
+      <h1 class="query__title">查询</h1>
       
       <!-- 搜索框 -->
-      <div class="query-page__search">
+      <div class="query__search">
         <van-field
           v-model="keyword"
           placeholder="物料编码/仓位/盘点人"
@@ -19,8 +19,8 @@
         </van-field>
       </div>
 
-      <div class="query-page__add-wrapper" ref="addBtnRef">
-        <button class="query-page__add-btn" @click="toggleMenu">
+      <div class="query__add-wrapper" ref="addBtnRef">
+        <button class="query__add-btn" @click="toggleMenu">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -28,14 +28,14 @@
         <!-- 悬浮菜单 - 出现在加号按钮下方 -->
         <div 
           v-if="showMenu" 
-          class="query-page__menu"
+          class="query__menu"
         >
-          <div class="query-page__menu-content">
+          <div class="query__menu-content">
             <div 
-              class="query-page__menu-item"
+              class="query__menu-item"
               @click.stop="handleScan"
             >
-              <img :src="scanIcon" class="query-page__menu-icon" alt="扫一扫" />
+              <img :src="scanIcon" class="query__menu-icon" alt="扫一扫" />
               <span>扫一扫</span>
             </div>
           </div>
@@ -46,12 +46,12 @@
     <!-- 遮罩层 -->
     <div 
       v-if="showMenu" 
-      class="query-page__overlay"
+      class="query__overlay"
       @click="closeMenu"
     ></div>
     
     <!-- 内容区域 -->
-    <div class="query-page__content">
+    <div class="query__content">
       <van-list
         v-if="hasSearched && resultList.length > 0"
         v-model:loading="loading"
@@ -80,7 +80,7 @@
       
       <van-empty v-else-if="hasSearched && !loading" description="暂无数据" />
       
-      <div v-else-if="!hasSearched" class="query-page__placeholder">
+      <div v-else-if="!hasSearched" class="query__placeholder">
         <p>请输入关键词进行搜索</p>
       </div>
     </div>
@@ -93,6 +93,8 @@ import { useRouter } from 'vue-router';
 import { Field, Icon, showToast, Empty, List, Cell } from 'vant';
 import scanIcon from '@/assets/scan.svg';
 import { inventoryApi } from '@/services/inventory';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'BtcMobileQuery',
@@ -116,9 +118,9 @@ function closeMenu() {
 }
 
 function handleScan() {
-  console.log('Scan clicked');
+  logger.info('Scan clicked');
   router.push('/scanner').catch(err => {
-    console.error('Navigation error:', err);
+    logger.error('Navigation error:', err);
   });
   closeMenu();
 }
@@ -141,7 +143,7 @@ async function onSearch() {
     resultList.value = rows;
     finished.value = true; // 简单起见，一次性加载
   } catch (error) {
-    console.error('Search failed:', error);
+    logger.error('Search failed:', error);
     showToast('搜索失败');
     finished.value = true;
   } finally {
@@ -169,23 +171,7 @@ function formatTime(timeStr: string) {
 </script>
 
 <style lang="scss" scoped>
-.query-page {
-  min-height: 100%;
-  background: #f7f8fa;
-  
-  // 顶栏
-  &__header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; // 改为 space-between，容纳搜索框和加号
-    padding: 8px 16px; // 减少内边距，适应搜索框
-    padding-top: calc(8px + env(safe-area-inset-top));
-    background: #fff; // 恢复背景色，因为加了搜索框
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  }
+
   
   &__title {
     display: none; // 隐藏标题

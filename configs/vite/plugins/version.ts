@@ -3,6 +3,7 @@
  * 为 HTML 文件中的资源引用添加全局统一的构建时间戳版本号
  * 用于浏览器缓存控制，每次构建都会生成新的时间戳
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -56,7 +57,7 @@ export function addVersionPlugin(): Plugin {
     name: 'add-version',
     apply: 'build',
     buildStart() {
-      console.log(`[add-version] 构建时间戳版本号: ${buildTimestamp}`);
+      logger.info(`[add-version] 构建时间戳版本号: ${buildTimestamp}`);
     },
     // 关键：使用 transformIndexHtml（Vite 内部是在后置阶段生成/写入 index.html，generateBundle 很容易拿不到最终 HTML）
     transformIndexHtml: {
@@ -166,7 +167,7 @@ export function addVersionPlugin(): Plugin {
         );
 
         if (modified) {
-          console.log(`[add-version] 已为 index.html 中的资源引用添加版本号: v=${buildTimestamp}`);
+          logger.info(`[add-version] 已为 index.html 中的资源引用添加版本号: v=${buildTimestamp}`);
           return newHtml;
         }
         return html;

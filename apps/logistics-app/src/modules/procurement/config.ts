@@ -2,9 +2,55 @@
  * 采购模块配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 
 export default {
+  // ModuleConfig 字段
+  name: 'procurement',
+  label: 'common.module.procurement.label',
+  order: 30,
+
+  // 路由配置
+  views: [
+    {
+      path: '/procurement',
+      name: 'LogisticsProcurement',
+      component: () => import('./views/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.procurement',
+      },
+    },
+    {
+      path: '/procurement/auxiliary',
+      name: 'LogisticsProcurementAuxiliary',
+      component: () => import('./views/auxiliary/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.procurement.auxiliary',
+      },
+    },
+    {
+      path: '/procurement/packaging',
+      name: 'LogisticsProcurementPackaging',
+      component: () => import('./views/packaging/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.procurement.packaging',
+      },
+    },
+    {
+      path: '/procurement/supplier',
+      name: 'LogisticsProcurementSupplier',
+      component: () => import('./views/supplier/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.procurement.supplier',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 菜单配置
@@ -43,4 +89,4 @@ export default {
   forms: {},
 
   service: {},
-} satisfies PageConfig;
+} satisfies ModuleConfig;

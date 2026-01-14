@@ -1,5 +1,5 @@
 <template>
-  <div class="dictionary-values-page">
+  <div class="page">
     <BtcCrud
       ref="crudRef"
       :service="dictionaryValueService"
@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, logger } from '@btc/shared-core';
 import {
   BtcCrud,
   BtcTable,
@@ -120,7 +120,7 @@ const handleImport = async (
     crudRef.value?.crud?.refresh?.();
     close();
   } catch (error: any) {
-    console.error('[DictionaryValues] import failed:', error);
+    logger.error('[DictionaryValues] import failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('common.import.failed');
     message.error(errorMsg);
     done();
@@ -130,9 +130,6 @@ const handleImport = async (
 </script>
 
 <style lang="scss" scoped>
-.dictionary-values-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>
 

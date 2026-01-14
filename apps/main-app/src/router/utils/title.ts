@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import type { RouteLocationNormalized } from 'vue-router';
 import { tSync } from '../../i18n/getters';
 import { getAppIdFromPath, setPageTitle } from '@btc/shared-core';
@@ -72,7 +73,7 @@ async function updateDocumentTitle(to: RouteLocationNormalized) {
     await setPageTitle(appId, pageTitle, { isHome, sync: false, translate: tSync });
   } catch (error) {
     // 标题设置失败不影响功能
-    console.warn('[title] 更新标题失败:', error);
+    logger.warn('[title] 更新标题失败:', error);
   }
 }
 

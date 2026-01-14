@@ -8,6 +8,7 @@
  *   pnpm cmd dev system          # 快速模式：开发系统应用
  *   pnpm cmd lint admin fix      # 快速模式：修复管理应用代码
  */
+import { logger } from '../../utils/logger.mjs';
 
 import prompts from 'prompts';
 import { COMMAND_TYPES, APP_CHOICES, getSubCommandChoices, getAppDisplayName } from './config.mjs';
@@ -84,9 +85,9 @@ async function quickMode(args) {
  * 交互式模式：通过提示选择
  */
 async function interactiveMode() {
-  console.log('\n\x1b[36m╔══════════════════════════════════════════════════════════╗\x1b[0m');
-  console.log('\x1b[36m║\x1b[0m  \x1b[33mBTC ShopFlow 交互式命令系统\x1b[0m                          \x1b[36m║\x1b[0m');
-  console.log('\x1b[36m╚══════════════════════════════════════════════════════════╝\x1b[0m\n');
+  logger.info('\n\x1b[36m╔══════════════════════════════════════════════════════════╗\x1b[0m');
+  logger.info('\x1b[36m║\x1b[0m  \x1b[33mBTC ShopFlow 交互式命令系统\x1b[0m                          \x1b[36m║\x1b[0m');
+  logger.info('\x1b[36m╚══════════════════════════════════════════════════════════╝\x1b[0m\n');
   
   // 1. 选择命令类型
   const { commandType } = await prompts({
@@ -102,7 +103,7 @@ async function interactiveMode() {
   });
   
   if (!commandType) {
-    console.log('\n操作已取消');
+    logger.info('\n操作已取消');
     process.exit(0);
   }
   
@@ -120,7 +121,7 @@ async function interactiveMode() {
   const { appNames } = await prompts(appPrompt);
   
   if (!appNames || (Array.isArray(appNames) && appNames.length === 0)) {
-    console.log('\n操作已取消');
+    logger.info('\n操作已取消');
     process.exit(0);
   }
   
@@ -139,7 +140,7 @@ async function interactiveMode() {
     });
     
     if (subCmd === undefined) {
-      console.log('\n操作已取消');
+      logger.info('\n操作已取消');
       process.exit(0);
     }
     
@@ -160,7 +161,7 @@ async function interactiveMode() {
   });
   
   if (!confirm) {
-    console.log('\n操作已取消');
+    logger.info('\n操作已取消');
     process.exit(0);
   }
   
@@ -195,22 +196,22 @@ async function interactiveMode() {
     const totalErrors = results.reduce((sum, r) => sum + (r.errors || 0), 0);
     const totalWarnings = results.reduce((sum, r) => sum + (r.warnings || 0), 0);
     
-    console.log('\n' + '='.repeat(60));
-    console.log('\x1b[33m代码检查统计\x1b[0m');
-    console.log('='.repeat(60));
-    console.log(`成功: \x1b[32m${successCount}\x1b[0m 个应用`);
+    logger.info('\n' + '='.repeat(60));
+    logger.info('\x1b[33m代码检查统计\x1b[0m');
+    logger.info('='.repeat(60));
+    logger.info(`成功: \x1b[32m${successCount}\x1b[0m 个应用`);
     if (failCount > 0) {
-      console.log(`失败: \x1b[31m${failCount}\x1b[0m 个应用`);
+      logger.info(`失败: \x1b[31m${failCount}\x1b[0m 个应用`);
     }
     if (totalErrors > 0) {
-      console.log(`错误: \x1b[31m${totalErrors}\x1b[0m 个`);
+      logger.info(`错误: \x1b[31m${totalErrors}\x1b[0m 个`);
     }
     if (totalWarnings > 0) {
-      console.log(`警告: \x1b[33m${totalWarnings}\x1b[0m 个`);
+      logger.info(`警告: \x1b[33m${totalWarnings}\x1b[0m 个`);
     }
-    console.log('='.repeat(60) + '\n');
+    logger.info('='.repeat(60) + '\n');
   } else {
-    console.log('\n\x1b[32m✓ 所有命令执行完成\x1b[0m\n');
+    logger.info('\n\x1b[32m✓ 所有命令执行完成\x1b[0m\n');
   }
 }
 
@@ -231,14 +232,14 @@ async function main() {
 
 // 处理 Ctrl+C
 process.on('SIGINT', () => {
-  console.log('\n\n操作已取消');
+  logger.info('\n\n操作已取消');
   process.exit(0);
 });
 
 // 运行主函数
 main().catch(error => {
   showError(`执行失败: ${error.message}`);
-  console.error(error);
+  logger.error(error);
   process.exit(1);
 });
 

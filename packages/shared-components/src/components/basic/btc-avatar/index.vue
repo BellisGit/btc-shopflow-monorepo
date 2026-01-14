@@ -48,6 +48,8 @@ import { useUpload } from '@btc-components/form/btc-upload/composables/useUpload
 import { useAvatarRhythm } from './composables/useAvatarRhythm';
 import './index.scss';
 import { BtcMessage } from '@btc/shared-components';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'BtcAvatar'
@@ -185,7 +187,7 @@ const handleFileSelect = async (event: Event) => {
       await props.onUpload(res.url);
     }
   } catch (error: any) {
-    console.error('上传失败:', error);
+    logger.error('上传失败:', error);
     BtcMessage.error(error?.message || '上传失败');
   } finally {
     // 清空 input 值，以便下次可以选择同一个文件

@@ -38,6 +38,14 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
     'no-unused-vars': 'off',
+    // 日志规范：禁止使用 console，强制使用统一的 logger
+    // 允许 console.warn 和 console.error 用于紧急错误（向后兼容）
+    'no-console': [
+      'warn',
+      {
+        allow: ['warn', 'error'], // 仅允许 console.warn 和 console.error 用于紧急错误
+      },
+    ],
     // 国际化规范检查
     // 1. 禁止硬编码中文文本（核心规则）
     // 注意：eslint-plugin-i18n v2.4.0 的配置选项已变更，使用默认配置
@@ -161,6 +169,13 @@ module.exports = {
       files: ['packages/shared-core/src/utils/storage/**/*.{ts,js}', 'packages/shared-core/src/utils/cookie/**/*.{ts,js}', 'packages/shared-core/src/utils/cross-domain/**/*.{ts,js}'],
       rules: {
         'no-restricted-syntax': 'off',
+      },
+    },
+    // 允许 logger 模块内部使用 console（用于传输错误等）
+    {
+      files: ['packages/shared-core/src/utils/logger/**/*.{ts,js}'],
+      rules: {
+        'no-console': 'off',
       },
     },
   ],

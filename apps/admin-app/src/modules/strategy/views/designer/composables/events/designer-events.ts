@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ﻿import { ref, nextTick, type Ref } from 'vue';
 import type { StrategyNode, StrategyConnection } from '@/types/strategy';
 
@@ -57,7 +58,7 @@ export function useDesignerEvents(
         recordHistory();
         saveNow();
       } catch (error) {
-        console.error('Failed to parse component data:', error);
+        logger.error('Failed to parse component data:', error);
       }
     }
   };

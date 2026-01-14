@@ -1,44 +1,24 @@
 // ==================== 布局相关样式 ====================
 
-// 页面内容容器样式 - 确保高度正确传递
-// 注意：所有通过 router-view 渲染的页面组件根元素都应该占据完整高度
-// 注意：使用更精确的选择器，避免匹配到 el-pagination（el-pagination 包含 -page）
-.btc-page-content,
-[class*="page-content"],
-[class*="PageContent"],
-[class$="-page"]:not(.el-pagination) {
-	height: 100%;
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-	overflow: hidden;
-}
+// 页面容器样式（由 .page 系统接管）
+// 所有页面级路由的根元素由 App.vue 自动应用 .page 类
+// 页面组件内部使用 .page BEM 规范：.page__header, .page__body, .page__footer
 
-// 排除 el-pagination，防止被上面的全局样式影响
-.el-pagination {
-	flex-direction: row !important;
-}
-
-// 确保 router-view 内部的所有页面组件根元素占据完整高度
-// 这是全局样式，用于处理所有页面组件
-// 注意：router-view 在 content-mount--main-app 内部，需要使用正确的选择器
-.app-layout__content > router-view > *,
-.app-layout__content .content-mount--main-app > router-view > * {
-	height: 100%;
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-	overflow: hidden;
-	flex: 1; // 页面组件根元素需要占据完整高度
-}
-
-// 确保 content-mount--main-app 内部的 router-view 正确显示
+// 确保 router-view 渲染的页面组件能正确填充
+.app-layout__content > router-view,
 .app-layout__content .content-mount--main-app > router-view {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
+	width: 100%;
+	height: 100%;
+}
+
+// 页面组件根元素（.page 容器）自动填充父容器
+.app-layout__content > router-view > .page,
+.app-layout__content .content-mount--main-app > router-view > .page {
+	flex: 1;
 	min-height: 0;
 }
 
@@ -208,81 +188,13 @@
 
 	// 关键修复：如果主应用容器后面有子应用容器，隐藏主应用容器
 	// 使用相邻兄弟选择器（最兼容的方案）
-	> .content-mount--main-app + #subapp-viewport {
-		// 前面的主应用容器应该被隐藏（通过 JavaScript 或确保 v-if 正确）
-		// CSS 无法直接选择前面的兄弟元素，所以这个规则只是标记
-	}
+	// 注意：CSS 无法直接选择前面的兄弟元素，所以这个规则只是标记
+	// 实际隐藏逻辑通过 JavaScript (v-if) 处理
+	// > .content-mount--main-app + #subapp-viewport {
+	// 	// 前面的主应用容器应该被隐藏（通过 JavaScript 或确保 v-if 正确）
+	// }
 }
 
-// =========================
-// 全局页面滚动条规则（.page 容器）
-// =========================
-// 参考 cool-admin-vue-7.x 的逻辑，实现递归的 .page 容器滚动条规则
-// 当内容超出父级最大高度时，所有层级的 .page 容器自动出现右侧滚动条
-// 适用于主应用和所有子应用
-
-// Mixin：页面滚动条样式（可复用于自动应用样式的选择器）
-@mixin page-scrollbar-styles {
-	max-height: 100%;
-	overflow-y: auto;
-	overflow-x: hidden;
-	// 确保滚动条不影响布局
-	scrollbar-gutter: stable;
-
-	// Webkit 浏览器（Chrome、Safari、Edge）
-	&::-webkit-scrollbar {
-		width: 6px;
-		height: 6px;
-	}
-
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background-color: rgba(0, 0, 0, 0.2);
-		border-radius: 3px;
-		opacity: 0;
-		transition: opacity 0.3s ease-in-out;
-	}
-
-	// 悬停或滚动时显示滚动条
-	&:hover::-webkit-scrollbar-thumb,
-	&.is-scrolling::-webkit-scrollbar-thumb {
-		opacity: 1;
-	}
-
-	// Firefox 浏览器
-	scrollbar-width: thin;
-	scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
-
-// 暗黑模式滚动条样式 mixin
-@mixin page-scrollbar-styles-dark {
-	&::-webkit-scrollbar-thumb {
-		background-color: rgba(255, 255, 255, 0.2);
-	}
-
-	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-// 递归的 .page 容器规则（支持无限层级嵌套）
-.page,
-.page .page,
-.page .page .page,
-.page .page .page .page {
-	@include page-scrollbar-styles;
-}
-
-// 暗黑模式适配
-html.dark {
-	.page,
-	.page .page,
-	.page .page .page,
-	.page .page .page .page {
-		@include page-scrollbar-styles-dark;
-	}
-}
 
 // 禁用滚动条的覆盖类（允许特殊页面禁用滚动条）
 .page-no-scroll {
@@ -295,4 +207,73 @@ html.dark {
 // =========================
 body.theme-brand-red {
 	background-color: var(--el-bg-color-page);
+}
+
+
+// =========================
+// el-scrollbar 通用样式（仅负责滚动条美化，填充满父容器）
+// =========================
+// 当业务容器复用 .container 核心样式时，内部的 el-scrollbar 只需要填充满父容器
+// 注意：这个样式适用于业务容器内部的 el-scrollbar，不适用于直接应用 .container 类的 el-scrollbar
+// 注意：在全局 SCSS 中不能使用 :deep()，直接使用选择器即可
+.el-scrollbar {
+	width: 100%;
+	height: 100%;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+
+	.el-scrollbar__wrap {
+		overflow-x: hidden !important;
+		overflow-y: auto !important;
+		flex: 1 !important;
+		min-height: 0 !important;
+		height: 100% !important;
+	}
+
+	.el-scrollbar__view {
+		width: 100% !important;
+		height: auto !important;
+		min-height: 100% !important;
+		display: flex !important;
+		flex-direction: column !important;
+	}
+
+	// el-scrollbar 滚动条样式定制（参考 btc-container 的实现）
+	.el-scrollbar__bar {
+		&.is-vertical {
+			right: 0;
+			width: 6px;
+
+			.el-scrollbar__thumb {
+				background-color: rgba(0, 0, 0, 0.2);
+				border-radius: 3px;
+				opacity: 0; // 默认完全透明
+				transition: opacity 0.3s ease-in-out;
+			}
+		}
+	}
+
+	// 悬停或滚动时显示滚动条
+	&:hover .el-scrollbar__bar.is-vertical .el-scrollbar__thumb,
+	&.is-scrolling .el-scrollbar__bar.is-vertical .el-scrollbar__thumb {
+		opacity: 1;
+	}
+
+	// 暗色模式滚动条
+	@media (prefers-color-scheme: dark) {
+		.el-scrollbar__bar.is-vertical .el-scrollbar__thumb {
+			background-color: rgba(255, 255, 255, 0.2);
+		}
+	}
+
+	// 响应式设计：确保在连续变化的尺寸下也能正确响应
+	// 移动端优化（<= 768px）
+	@media only screen and (max-width: 768px) {
+		// 移动端保持相同的布局逻辑，但可能需要调整滚动条宽度
+		.el-scrollbar__bar.is-vertical {
+			width: 4px; // 移动端使用更窄的滚动条
+		}
+	}
 }

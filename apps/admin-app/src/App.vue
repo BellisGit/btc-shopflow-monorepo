@@ -2,18 +2,26 @@
   <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
   <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
   <div v-if="!isStandalone" :class="['admin-app']">
-    <router-view v-slot="{ Component }">
+    <router-view v-slot="{ Component, route }">
       <transition :name="pageTransition" mode="out-in">
         <keep-alive :key="viewKey" :include="keepAliveList">
-          <component v-if="Component" :is="Component" />
+          <component 
+            v-if="Component" 
+            :is="Component" 
+            :class="getPageClass(route)"
+          />
         </keep-alive>
       </transition>
     </router-view>
   </div>
-  <router-view v-else v-slot="{ Component }">
+  <router-view v-else v-slot="{ Component, route }">
     <transition :name="pageTransition" mode="out-in">
       <keep-alive :key="viewKey" :include="keepAliveList">
-        <component v-if="Component" :is="Component" />
+        <component 
+          v-if="Component" 
+          :is="Component" 
+          :class="getPageClass(route)"
+        />
       </keep-alive>
     </transition>
   </router-view>
@@ -25,6 +33,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
 import { useLogout } from '@/composables/useLogout';
 import { useProcessStore } from '@/store/process';
+import { isPageRoute, getPageClass as getPageClassName } from '@btc/shared-router';
 
 defineOptions({
   name: 'AdminApp',
@@ -49,6 +58,14 @@ const keepAliveList = computed(() => {
     .filter((tab) => tab.meta?.keepAlive === true && tab.name)
     .map((tab) => tab.name as string);
 });
+
+// 获取页面容器类名
+function getPageClass(currentRoute: any): string {
+  if (!isPageRoute(currentRoute)) {
+    return ''; // 非页面级路由不添加 .page 类
+  }
+  return getPageClassName(currentRoute);
+}
 
 // 刷新视图（只在手动刷新时调用，通过事件触发）
 // 参考 cool-admin：key 只在手动刷新时才更新，而不是每次路由变化都更新

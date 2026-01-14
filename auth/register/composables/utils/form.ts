@@ -1,6 +1,7 @@
 /**
  * 注册表单相关工具函数
  */
+import { logger } from '@btc/shared-core';
 
 import { ref, reactive, computed, watch } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
@@ -262,7 +263,7 @@ export function createRegisterHandler(
       BtcMessage.success('注册成功！');
       onSuccess?.(response.data);
     } catch (error: any) {
-      console.error('注册请求失败:', error);
+      logger.error('注册请求失败:', error);
 
       // 处理不同类型的错误
       let errorMessage = '注册过程中发生错误';

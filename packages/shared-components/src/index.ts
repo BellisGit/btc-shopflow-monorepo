@@ -23,7 +23,6 @@ import BtcImportBtn from './plugins/excel/components/import-btn/index.vue';
 // 导入样式
 import './components/feedback/btc-dialog/styles/index.scss';
 import './components/form/btc-form/style.scss';
-import './components/layout/btc-view-group/styles/index.scss'; // btc-view-group 样式（btc-table-group 依赖）
 import './components/feedback/btc-message/styles.scss';
 import './components/feedback/btc-notification/styles.scss';
 import './components/basic/btc-icon-button/index.scss';
@@ -59,12 +58,16 @@ export { default as BtcTableButton } from './components/basic/btc-table-button/i
 export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
 export { default as BtcTag } from './components/basic/btc-tag/index.vue';
+export { default as BtcCollapse } from './components/basic/btc-collapse/index.vue';
+export { default as BtcCollapseItem } from './components/basic/btc-collapse/CollapseItem.vue';
+export { default as BtcSplitter } from './components/basic/btc-splitter/index.vue';
+export { default as BtcSplitterPanel } from './components/basic/btc-splitter/btc-splitter-panel.vue';
 
 // Layout 布局组件
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
-export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
-export { default as BtcSplitLayout } from './components/layout/btc-split-layout/index.vue';
 export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
+export { default as BtcDoubleLayout } from './components/layout/btc-double-layout/index.vue';
+export { default as BtcViews } from './components/layout/btc-views/index.vue';
 export { default as BtcAppSkeleton } from './components/basic/app-skeleton/index.vue';
 export { default as BtcGlobalSearch } from './components/layout/app-layout/global-search/index.vue';
 
@@ -82,10 +85,7 @@ export { default as BtcUpload } from './components/form/btc-upload/index.vue';
 
 // Data 数据展示组件
 export { default as BtcMasterList } from './components/data/btc-master-list/index.vue';
-export { default as BtcTableGroup } from './components/data/btc-table-group/index.vue';
-export { default as BtcFilterGroup } from './components/data/btc-filter-group/index.vue';
-export { default as BtcDoubleLeftGroup } from './components/data/btc-double-group/index.vue';
-export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
+export { default as BtcMasterTableGroup } from './components/data/btc-master-table-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
 export { default as BtcChartGallery } from './components/data/btc-chart-gallery/index.vue';
@@ -112,7 +112,7 @@ export { default as BtcRootLoading } from './components/loading/root-loading/ind
 
 // Others 其他组件
 export { default as BtcSvg } from './components/basic/btc-svg/index.vue';
-export { default as BtcMasterViewGroup } from './components/layout/btc-view-group/index.vue';
+export type { BtcSvgAnimation, BtcSvgAnimationTrigger } from './components/basic/btc-svg/types';
 export { default as BtcSearch } from './components/form/btc-search/index.vue';
 export { default as BtcInput } from './components/form/btc-input/index.vue';
 export { default as BtcDevTools } from './components/others/btc-dev-tools/index.vue';
@@ -172,6 +172,13 @@ export { default as mitt, globalMitt, Mitt } from './utils/mitt';
 // 导出 app-layout 工具函数
 export { setIsMainAppFn, getIsMainAppFn } from './components/layout/app-layout/utils';
 
+// 导出错误页面组件
+export { default as BtcError404 } from './components/pages/error/404.vue';
+export { default as BtcError401 } from './components/pages/error/401.vue';
+export { default as BtcError403 } from './components/pages/error/403.vue';
+export { default as BtcError500 } from './components/pages/error/500.vue';
+export { default as BtcError502 } from './components/pages/error/502.vue';
+
 // 导出用户设置相关的枚举类型（显式导出以避免moduleResolution: "bundler"解析问题）
 export { MenuThemeEnum, SystemThemeEnum, MenuTypeEnum, ContainerWidthEnum, BoxStyleType } from './components/others/btc-user-setting/config/enums';
 
@@ -182,9 +189,7 @@ export type { TableColumn, OpButton, OpConfig } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
 export type { DialogProps } from './components/feedback/btc-dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './components/form/btc-form/types';
-export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
-export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
-export type { DoubleGroupProps as BtcDoubleLeftGroupProps, DoubleGroupEmits as BtcDoubleLeftGroupEmits, DoubleGroupExpose as BtcDoubleLeftGroupExpose } from './components/data/btc-double-group/types';
+export type { MasterTableGroupProps, MasterTableGroupEmits, MasterTableGroupExpose } from './components/data/btc-master-table-group/types';
 export type {
   TransferKey,
   TransferPanelProps,
@@ -196,9 +201,7 @@ export type {
   TransferPanelRemovePayload,
 } from './components/data/btc-transfer-panel/types';
 export type { BtcContainerProps } from './components/layout/btc-container/types';
-export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
-export type { BtcSplitLayoutProps, BtcSplitLayoutEmits, BtcSplitLayoutExpose } from './components/layout/btc-split-layout/types';
-export type { BtcFilterGroupProps, BtcFilterGroupEmits, BtcFilterGroupExpose } from './components/data/btc-filter-group/types';
+export type { BtcSplitterProps, BtcSplitterEmits, BtcSplitterExpose, BtcSplitterDirection, BtcSplitterPanelProps, BtcSplitterPanelEmits } from './components/basic/btc-splitter/types';
 export type {
   IconButtonConfig,
   IconButtonDropdown,
@@ -206,6 +209,7 @@ export type {
   IconButtonPopover
 } from './components/basic/btc-icon-button';
 export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';
+export type { BtcTab } from './components/navigation/btc-tabs/index.vue';
 export type {
   ProcessManagementItem,
   ProcessPauseRecord

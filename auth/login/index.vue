@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
@@ -166,7 +166,7 @@ const handlePasswordSubmit = async (form: { username: string; password: string }
     }
     await passwordSubmit(form);
   } catch (error) {
-    console.error('密码登录错误:', error);
+    logger.error('密码登录错误:', error);
     // 错误已在 usePasswordLogin 中处理，这里只是防止未捕获的错误
   } finally {
     // 延迟重置标记，确保异步操作完成
@@ -193,7 +193,7 @@ const handleSmsSubmit = async (form: { phone: string; smsCode: string }) => {
     await smsSubmit(form);
   } catch (error) {
     // 错误已在 useSmsLogin 中处理，这里只是防止未捕获的错误
-    console.error('短信登录错误:', error);
+    logger.error('短信登录错误:', error);
   } finally {
     // 延迟重置标记，确保异步操作完成
     setTimeout(() => {

@@ -1,6 +1,7 @@
 /**
  * 部署测试API接口
  */
+import { logger } from '@btc/shared-core';
 
 import { storage } from '@btc/shared-utils';
 
@@ -53,10 +54,10 @@ export interface TestReport {
  * 启动测试
  */
 export async function startTest(config: TestConfig): Promise<string> {
-  console.log('[deployment-test API] 启动测试，配置:', config);
+  logger.info('[deployment-test API] 启动测试，配置:', config);
   // 直接使用本地执行模式（前端实现）
   const testId = await startLocalTest(config);
-  console.log('[deployment-test API] 本地测试ID:', testId);
+  logger.info('[deployment-test API] 本地测试ID:', testId);
   return testId;
 }
 
@@ -66,10 +67,10 @@ export async function startTest(config: TestConfig): Promise<string> {
 async function startLocalTest(config: TestConfig): Promise<string> {
   // 生成测试ID
   const testId = `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  console.log('[deployment-test API] 生成测试ID:', testId);
+  logger.info('[deployment-test API] 生成测试ID:', testId);
 
   // 在后台执行测试
-  console.log('[deployment-test API] 启动后台测试执行...');
+  logger.info('[deployment-test API] 启动后台测试执行...');
   executeTestInBackground(testId, config);
 
   return testId;
@@ -79,7 +80,7 @@ async function startLocalTest(config: TestConfig): Promise<string> {
  * 在后台执行测试
  */
 async function executeTestInBackground(testId: string, config: TestConfig) {
-  console.log('[deployment-test API] 开始后台执行测试，testId:', testId, 'config:', config);
+  logger.info('[deployment-test API] 开始后台执行测试，testId:', testId, 'config:', config);
   // 将测试状态存储到localStorage
   const testStatusKey = `deployment-test-${testId}`;
   const testResultsKey = `deployment-test-results-${testId}`;
@@ -89,22 +90,22 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
     status: 'pending',
     progress: 0,
   };
-  console.log('[deployment-test API] 设置初始状态为 pending');
+  logger.info('[deployment-test API] 设置初始状态为 pending');
   storage.set(testStatusKey, status);
 
   // 使用 setTimeout 确保状态更新能被轮询捕获
   setTimeout(async () => {
-    console.log('[deployment-test API] 开始执行测试逻辑...');
+    logger.info('[deployment-test API] 开始执行测试逻辑...');
     try {
       // 更新为 running 状态
-      console.log('[deployment-test API] 更新状态为 running');
+      logger.info('[deployment-test API] 更新状态为 running');
       status.status = 'running';
       status.progress = 0;
       storage.set(testStatusKey, status);
 
       // 加载部署配置
       const deployConfig = await loadDeployConfig();
-      console.log('[deployment-test API] 部署配置加载完成:', deployConfig);
+      logger.info('[deployment-test API] 部署配置加载完成:', deployConfig);
 
       // 执行实际测试
       const startTime = Date.now();
@@ -130,7 +131,7 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
         status.progress = Math.round(((i + 1) / totalApps) * 100);
         storage.set(testStatusKey, status);
 
-        console.log(`[deployment-test API] 测试应用: ${appName}`);
+        logger.info(`[deployment-test API] 测试应用: ${appName}`);
         const appConfig = deployConfig.apps?.[appName];
 
         if (!appConfig) {
@@ -177,9 +178,9 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
       storage.set(testStatusKey, status);
       storage.set(testResultsKey, results);
 
-      console.log('[deployment-test API] 测试完成:', results);
+      logger.info('[deployment-test API] 测试完成:', results);
     } catch (error: unknown) {
-      console.error('[deployment-test API] 测试执行失败:', error);
+      logger.error('[deployment-test API] 测试执行失败:', error);
       status.status = 'failed';
       status.error = error instanceof Error ? error.message : String(error);
       storage.set(testStatusKey, status);
@@ -206,7 +207,7 @@ async function loadDeployConfig(): Promise<DeployConfig> {
     }
     throw new Error('无法加载部署配置');
   } catch (error) {
-    console.warn('[deployment-test API] 无法从 /deploy.config.json 加载配置，使用默认配置');
+    logger.warn('[deployment-test API] 无法从 /deploy.config.json 加载配置，使用默认配置');
     // 返回默认配置（可以根据实际情况调整）
     return {
       apps: {
@@ -238,7 +239,7 @@ async function testApp(appName: string, appConfig: AppConfig, timeout: number, b
 
   try {
     // 1. 测试首页可访问性
-    console.log(`[deployment-test API] 测试 ${appName} 首页可访问性: ${homepageUrl}`);
+    logger.info(`[deployment-test API] 测试 ${appName} 首页可访问性: ${homepageUrl}`);
     const homePageTest = await testHttpRequest(homepageUrl, timeout);
 
     if (!homePageTest.success) {
@@ -252,7 +253,7 @@ async function testApp(appName: string, appConfig: AppConfig, timeout: number, b
 
     // 2. 测试资源引用完整性
     if (homePageTest.content) {
-      console.log(`[deployment-test API] 测试 ${appName} 资源引用完整性`);
+      logger.info(`[deployment-test API] 测试 ${appName} 资源引用完整性`);
       const assetReferences = extractAssetReferencesFromHtml(homePageTest.content);
 
       // 测试前10个关键资源
@@ -359,11 +360,11 @@ function extractAssetReferencesFromHtml(htmlContent: string): string[] {
  * 获取测试状态
  */
 export async function getTestStatus(testId: string): Promise<TestStatus> {
-  console.log('[deployment-test API] 获取测试状态，testId:', testId);
+  logger.info('[deployment-test API] 获取测试状态，testId:', testId);
 
   // 如果testId为undefined或空，直接返回错误状态
   if (!testId) {
-    console.warn('[deployment-test API] testId为空，返回失败状态');
+    logger.warn('[deployment-test API] testId为空，返回失败状态');
     return {
       status: 'failed',
       error: '测试ID无效',
@@ -374,17 +375,17 @@ export async function getTestStatus(testId: string): Promise<TestStatus> {
   const statusKey = `deployment-test-${testId}`;
   const status = storage.get<TestStatus>(statusKey);
 
-  console.log('[deployment-test API] storage key:', statusKey, 'value:', status);
+  logger.info('[deployment-test API] storage key:', statusKey, 'value:', status);
 
   if (!status) {
-    console.warn('[deployment-test API] 测试状态不存在');
+    logger.warn('[deployment-test API] 测试状态不存在');
     return {
       status: 'failed',
       error: '测试不存在',
     };
   }
 
-  console.log('[deployment-test API] 从 storage 读取的状态:', status);
+  logger.info('[deployment-test API] 从 storage 读取的状态:', status);
   return status;
 }
 
@@ -393,7 +394,7 @@ export async function getTestStatus(testId: string): Promise<TestStatus> {
  */
 export async function getTestReport(testId: string): Promise<TestReport> {
   // 直接从 storage 读取报告（前端实现）
-  console.log('[deployment-test API] 获取测试报告，testId:', testId);
+  logger.info('[deployment-test API] 获取测试报告，testId:', testId);
   const resultsKey = `deployment-test-results-${testId}`;
   const report = storage.get<TestReport>(resultsKey);
 
@@ -401,7 +402,7 @@ export async function getTestReport(testId: string): Promise<TestReport> {
     throw new Error('测试报告不存在');
   }
 
-  console.log('[deployment-test API] 从 storage 读取的报告:', report);
+  logger.info('[deployment-test API] 从 storage 读取的报告:', report);
   return report;
 }
 
@@ -410,7 +411,7 @@ export async function getTestReport(testId: string): Promise<TestReport> {
  */
 export async function stopTest(testId: string): Promise<void> {
   // 前端实现：更新状态为停止
-  console.log('[deployment-test API] 停止测试，testId:', testId);
+  logger.info('[deployment-test API] 停止测试，testId:', testId);
   const statusKey = `deployment-test-${testId}`;
   const status = storage.get<TestStatus>(statusKey);
 
@@ -425,7 +426,7 @@ export async function stopTest(testId: string): Promise<void> {
  * 下载测试报告
  */
 export async function downloadReport(testId: string, format: 'html' | 'json' | 'markdown' = 'html'): Promise<void> {
-  console.log('[deployment-test API] 下载测试报告，testId:', testId, 'format:', format);
+  logger.info('[deployment-test API] 下载测试报告，testId:', testId, 'format:', format);
 
   // 从localStorage获取报告
   const report = await getTestReport(testId);

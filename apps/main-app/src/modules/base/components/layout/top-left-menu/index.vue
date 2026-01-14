@@ -23,7 +23,7 @@ defineOptions({
 
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useCurrentApp } from '@/composables/useCurrentApp';
 import { getMenusForApp } from '@/store/menuRegistry';
@@ -96,7 +96,7 @@ const handleMenuSelect = (index: string) => {
       const absolutePath = firstChild.index.startsWith('/') ? firstChild.index : `/${firstChild.index}`;
       router.push(absolutePath).catch((err) => {
         if (import.meta.env.DEV) {
-          console.warn('[top-left-menu] 跳转到第一个子菜单失败:', absolutePath, err);
+          logger.warn('[top-left-menu] 跳转到第一个子菜单失败:', absolutePath, err);
         }
       });
       return;
@@ -107,7 +107,7 @@ const handleMenuSelect = (index: string) => {
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
   router.push(absolutePath).catch((err) => {
     if (import.meta.env.DEV) {
-      console.warn('[top-left-menu] 跳转失败:', absolutePath, err);
+      logger.warn('[top-left-menu] 跳转失败:', absolutePath, err);
     }
   });
 };

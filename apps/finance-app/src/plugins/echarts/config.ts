@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { type App, h } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
@@ -73,7 +74,7 @@ function registerEChartsOnce() {
   } catch (error) {
     // 重复注册在微前端场景下是可预期的，兜底不让应用崩溃
     if (import.meta.env.DEV && !alreadyMarked) {
-      console.warn('[finance-app][echarts] ECharts use() register failed (ignored):', error);
+      logger.warn('[finance-app][echarts] ECharts use() register failed (ignored):', error);
     }
   } finally {
     if (w) w[GLOBAL_ECHARTS_USE_FLAG] = true;

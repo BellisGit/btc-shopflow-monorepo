@@ -1,3 +1,4 @@
+import { logger } from '../../../utils/logger';
 import type { App } from 'vue';
 import type {
   Plugin,
@@ -69,7 +70,7 @@ export class PluginManager {
     // 检查是否禁用
     if (!enable) {
       if (this.options.debug) {
-        console.log(`[PluginManager] Plugin "${name}" is disabled`);
+        logger.info(`[PluginManager] Plugin "${name}" is disabled`);
       }
       return this;
     }
@@ -89,7 +90,7 @@ export class PluginManager {
     });
 
     if (this.options.debug) {
-      console.log(`[PluginManager] Plugin "${name}" registered`);
+      logger.info(`[PluginManager] Plugin "${name}" registered`);
     }
 
     return this;
@@ -109,7 +110,7 @@ export class PluginManager {
 
     if (record.status === PluginStatus.Installed) {
       if (this.options.debug) {
-        console.warn(`[PluginManager] Plugin "${name}" is already installed`);
+        logger.warn(`[PluginManager] Plugin "${name}" is already installed`);
       }
       return;
     }
@@ -154,7 +155,7 @@ export class PluginManager {
           this.toolbarComponents.push(plugin.toolbar);
         } else {
           if (this.options.debug) {
-            console.warn(`[PluginManager] 插件 "${name}" 的 toolbar.component 不是函数，跳过工具栏注册`);
+            logger.warn(`[PluginManager] 插件 "${name}" 的 toolbar.component 不是函数，跳过工具栏注册`);
           }
         }
       }
@@ -183,7 +184,7 @@ export class PluginManager {
       record.installedAt = new Date();
 
       if (this.options.debug) {
-        console.log(`[PluginManager] Plugin "${name}" installed successfully`);
+        logger.info(`[PluginManager] Plugin "${name}" installed successfully`);
       }
     } catch (error) {
       record.status = PluginStatus.Failed;
@@ -210,11 +211,11 @@ export class PluginManager {
           this.app.component(componentName, component);
 
           if (this.options.debug) {
-            console.log(`[PluginManager] Registered component: ${componentName} from plugin "${pluginName}"`);
+            logger.info(`[PluginManager] Registered component: ${componentName} from plugin "${pluginName}"`);
           }
         }
       } catch (error) {
-        console.error(`[PluginManager] Failed to register component from plugin "${pluginName}":`, error);
+        logger.error(`[PluginManager] Failed to register component from plugin "${pluginName}":`, error);
       }
     }
   }
@@ -230,10 +231,10 @@ export class PluginManager {
         this.app.directive(directiveName, directiveDefinition);
 
         if (this.options.debug) {
-          console.log(`[PluginManager] Registered directive: v-${directiveName} from plugin "${pluginName}"`);
+          logger.info(`[PluginManager] Registered directive: v-${directiveName} from plugin "${pluginName}"`);
         }
       } catch (error) {
-        console.error(`[PluginManager] Failed to register directive "${directiveName}" from plugin "${pluginName}":`, error);
+        logger.error(`[PluginManager] Failed to register directive "${directiveName}" from plugin "${pluginName}":`, error);
       }
     }
   }
@@ -243,7 +244,7 @@ export class PluginManager {
    */
   private registerRoutes(pluginName: string, plugin: Plugin): void {
     if (!this.router) {
-      console.warn(`[PluginManager] Router not set, skipping route registration for plugin "${pluginName}"`);
+      logger.warn(`[PluginManager] Router not set, skipping route registration for plugin "${pluginName}"`);
       return;
     }
 
@@ -253,10 +254,10 @@ export class PluginManager {
         try {
           this.router.addRoute(route);
           if (this.options.debug) {
-            console.log(`[PluginManager] Registered view route: ${route.path} from plugin "${pluginName}"`);
+            logger.info(`[PluginManager] Registered view route: ${route.path} from plugin "${pluginName}"`);
           }
         } catch (error) {
-          console.error(`[PluginManager] Failed to register view route from plugin "${pluginName}":`, error);
+          logger.error(`[PluginManager] Failed to register view route from plugin "${pluginName}":`, error);
         }
       }
     }
@@ -267,10 +268,10 @@ export class PluginManager {
         try {
           this.router.addRoute(route);
           if (this.options.debug) {
-            console.log(`[PluginManager] Registered page route: ${route.path} from plugin "${pluginName}"`);
+            logger.info(`[PluginManager] Registered page route: ${route.path} from plugin "${pluginName}"`);
           }
         } catch (error) {
-          console.error(`[PluginManager] Failed to register page route from plugin "${pluginName}":`, error);
+          logger.error(`[PluginManager] Failed to register page route from plugin "${pluginName}":`, error);
         }
       }
     }
@@ -313,7 +314,7 @@ export class PluginManager {
       record.status = PluginStatus.Uninstalled;
 
       if (this.options.debug) {
-        console.log(`[PluginManager] Plugin "${name}" uninstalled`);
+        logger.info(`[PluginManager] Plugin "${name}" uninstalled`);
       }
     } catch (error) {
       throw new Error(`[PluginManager] Failed to uninstall plugin "${name}": ${error}`);
@@ -493,7 +494,7 @@ export class PluginManager {
     this.plugins.delete(name);
 
     if (this.options.debug) {
-      console.log(`[PluginManager] Plugin "${name}" removed`);
+      logger.info(`[PluginManager] Plugin "${name}" removed`);
     }
   }
 
@@ -503,7 +504,7 @@ export class PluginManager {
   clear(): void {
     this.plugins.clear();
     if (this.options.debug) {
-      console.log('[PluginManager] All plugins cleared');
+      logger.info('[PluginManager] All plugins cleared');
     }
   }
 
@@ -643,18 +644,18 @@ export class PluginManager {
     const failed = plugins.filter(p => p.status === 'failed');
 
     console.group('[PluginManager] 插件统计信息');
-    console.log(`📊 总插件数: ${plugins.length}`);
-    console.log(`✅ 已安装: ${installed.length}`);
-    console.log(`❌ 安装失败: ${failed.length}`);
-    console.log(`📦 有 API: ${plugins.filter(p => p.hasApi).length}`);
-    console.log(`🧩 有组件: ${plugins.filter(p => p.hasComponents).length}`);
-    console.log(`🎯 有工具栏: ${plugins.filter(p => p.hasToolbar).length}`);
-    console.log(`📐 有布局: ${plugins.filter(p => p.hasLayout).length}`);
+    logger.info(`📊 总插件数: ${plugins.length}`);
+    logger.info(`✅ 已安装: ${installed.length}`);
+    logger.info(`❌ 安装失败: ${failed.length}`);
+    logger.info(`📦 有 API: ${plugins.filter(p => p.hasApi).length}`);
+    logger.info(`🧩 有组件: ${plugins.filter(p => p.hasComponents).length}`);
+    logger.info(`🎯 有工具栏: ${plugins.filter(p => p.hasToolbar).length}`);
+    logger.info(`📐 有布局: ${plugins.filter(p => p.hasLayout).length}`);
 
     if (failed.length > 0) {
       console.group('❌ 失败的插件');
       failed.forEach(plugin => {
-        console.error(`${plugin.name}: ${plugin.error?.message}`);
+        logger.error(`${plugin.name}: ${plugin.error?.message}`);
       });
       console.groupEnd();
     }

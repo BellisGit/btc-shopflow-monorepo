@@ -1,3 +1,4 @@
+import { logger } from '../../../utils/logger';
 import type { App, Directive } from 'vue';
 
 /**
@@ -56,7 +57,7 @@ const permissionDirective: Directive = {
     const app = (instance as any)?.appContext?.app;
 
     if (!app) {
-      console.warn('[permission] 无法获取 app 实例');
+      logger.warn('[permission] 无法获取 app 实例');
       return;
     }
 

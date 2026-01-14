@@ -2,6 +2,7 @@
  * 自动生成导航栏配置
  * 根据一级文件夹名称自动生成 nav
  */
+import { logger } from '@btc/shared-core';
 
 import fs from 'fs';
 import path from 'path';
@@ -73,7 +74,7 @@ function findFirstMarkdown(dir: string): string | null {
       }
     }
   } catch (error) {
-    console.warn(`Failed to find markdown in ${dir}:`, error);
+    logger.warn(`Failed to find markdown in ${dir}:`, error);
   }
 
   return null;

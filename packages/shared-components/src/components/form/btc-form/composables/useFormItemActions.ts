@@ -1,4 +1,5 @@
-﻿import { formHook } from '@btc/shared-core/utils/form';
+import { formHook } from '@btc/shared-core/utils/form';
+import { logger } from '@btc/shared-core';
 
 /**
  * 琛ㄥ崟椤瑰姩鎬佹帶鍒舵柟娉曪紙瀵归綈 cool-admin form/helper/action.ts锛? */
@@ -57,7 +58,7 @@ export function useFormItemActions(formSetup: any) {
       const item = findItemByProp(prop);
 
       if (!item) {
-        console.error(`[set] ${prop} is not found`);
+        logger.error(`[set] ${prop} is not found`);
         return;
       }
 

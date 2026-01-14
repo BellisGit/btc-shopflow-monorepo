@@ -1,5 +1,5 @@
 <template>
-  <div class="test-page">
+  <div class="page">
     <h1>测试 btc-grid-group 组件</h1>
     <btc-grid-group left-width="200px" right-width="200px">
       <!-- 顶栏左侧 -->
@@ -44,9 +44,6 @@ defineOptions({
 </script>
 
 <style scoped>
-.test-page {
-  height: 100vh;
-  width: 100vw;
-}
+
 </style>
 

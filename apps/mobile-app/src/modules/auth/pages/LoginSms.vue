@@ -1,11 +1,11 @@
 <template>
-  <div class="login-page">
-    <div class="login-page__container">
+  <div class="page">
+    <div class="login__container">
       <!-- Logo 和标题 -->
       <BtcLoginHeader />
 
       <!-- 手机号登录表单 -->
-      <div class="login-page__form">
+      <div class="login__form">
         <!-- 手机号输入 -->
         <div class="form-field-wrapper">
           <van-field
@@ -59,7 +59,7 @@
           round
           :loading="loading"
           @click="handleSubmit"
-          class="login-page__submit-btn"
+          class="login__submit-btn"
         >
           立即登录
         </van-button>
@@ -71,7 +71,7 @@
           plain
           :loading="oneClickLoading"
           @click="handleOneClickLogin"
-          class="login-page__oneclick-btn"
+          class="login__oneclick-btn"
         >
           本机号码一键登录
         </van-button>
@@ -83,16 +83,16 @@
       <!-- 底部操作按钮 -->
       <div 
         v-show="showBottomActions" 
-        class="login-page__bottom-actions"
+        class="login__bottom-actions"
       >
         <button
-          class="login-page__action-btn login-page__action-btn--add-account"
+          class="login__action-btn login__action-btn--add-account"
           @click="showAccountMenu = true"
         >
           <van-icon name="user-o" size="20" />
         </button>
         <button
-          class="login-page__action-btn login-page__action-btn--register"
+          class="login__action-btn login__action-btn--register"
           @click="handleRegister"
         >
           <van-icon name="plus" size="20" />
@@ -472,26 +472,7 @@ const handleRegister = () => {
 
 <style lang="scss" scoped>
 // 强制覆盖输入框样式，确保深灰色背景和圆角生效
-.login-page {
-  // 覆盖 Vant 组件的 CSS 变量
-  --van-cell-background: rgba(60, 60, 60, 0.8);
-  --van-cell-text-color: #fff;
-  --van-field-label-color: #fff;
-  --van-field-input-text-color: #fff;
-  --van-field-placeholder-text-color: rgba(255, 255, 255, 0.5);
-  --van-field-input-disabled-text-color: rgba(255, 255, 255, 0.7);
-  --van-field-disabled-text-color: rgba(255, 255, 255, 0.7);
-  --van-cell-border-radius: 24px;
 
-  :deep(.form-field-wrapper) {
-      .van-cell {
-        background: rgba(60, 60, 60, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 24px !important; // 圆角效果
-      padding: 14px 20px !important;
-        color: #fff !important;
-      overflow: hidden !important;
-      }
 
     .van-field--disabled.van-cell {
           background: rgba(60, 60, 60, 0.6) !important;
@@ -541,11 +522,11 @@ const handleRegister = () => {
   }
 }
 
-.login-page__submit-btn {
+.login__submit-btn {
   margin-top: 32px;
 }
 
-.login-page__oneclick-btn {
+.login__oneclick-btn {
   margin-top: 12px;
   --van-button-border-color: rgba(255, 255, 255, 0.4);
   color: #fff;

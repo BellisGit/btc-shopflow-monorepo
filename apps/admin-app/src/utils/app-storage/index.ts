@@ -2,6 +2,7 @@
  * 主应用专用存储管理工具
  * 提供统一的存储管理接口，支持类型安全、版本管理、数据迁移等功能
  */
+import { logger } from '@btc/shared-core';
 
 import { storage } from '@btc/shared-utils';
 import type { UserStorage, AppSettingsStorage } from '../storage-manager';
@@ -368,7 +369,7 @@ class AppStorageManager {
         try {
           listener(key, newValue, oldValue);
         } catch (error) {
-          console.error(`[AppStorage] Listener execution error (key: ${key}):`, error);
+          logger.error(`[AppStorage] Listener execution error (key: ${key}):`, error);
         }
       });
     }

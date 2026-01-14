@@ -2,6 +2,7 @@
  * 域列表缓存工具
  * 用于避免多个组件同时请求域列表接口
  */
+import { logger } from '@btc/shared-core';
 
 import { storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
@@ -27,7 +28,7 @@ function handleLogout() {
       }).catch((error) => {
         // 如果导入失败，静默处理
         if (import.meta.env.DEV) {
-          console.warn('Failed to stop global user check polling on logout:', error);
+          logger.warn('Failed to stop global user check polling on logout:', error);
         }
       });
     } catch (error) {
@@ -70,7 +71,7 @@ function handleLogout() {
       }
     }, 100);
   } catch (error) {
-    console.error('[getDomainList] Logout error:', error);
+    logger.error('[getDomainList] Logout error:', error);
     // 即使出错也尝试跳转到登录页
     if (typeof window !== 'undefined') {
       setTimeout(() => {
@@ -99,7 +100,7 @@ function getDomainListFromStorage(): any | null {
   } catch (error) {
     // 静默失败，不影响功能
     if (import.meta.env.DEV) {
-      console.warn('[getDomainList] Failed to read from storage:', error);
+      logger.warn('[getDomainList] Failed to read from storage:', error);
     }
   }
   return null;

@@ -27,6 +27,8 @@ import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import { useCurrentApp } from '../../../../composables/useCurrentApp';
 import { getMenusForApp } from '../../../../store/menuRegistry';
 import MenuRenderer from '../menu-renderer/index.vue';
+import { logger } from '@btc/shared-core';
+
 
 const route = useRoute();
 const router = useRouter();
@@ -132,7 +134,7 @@ const findFirstLeafMenu = (items: any[]): any => {
 
 const handleMenuSelect = (index: string) => {
   if (import.meta.env.DEV) {
-    console.log('[main-app] top-left-menu select', { index, currentApp: currentApp.value });
+    logger.info('[main-app] top-left-menu select', { index, currentApp: currentApp.value });
   }
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
 
@@ -162,7 +164,7 @@ const handleMenuSelect = (index: string) => {
         : `/${firstChild.index}`;
       router.push(firstChildPath).catch((err: unknown) => {
         if (import.meta.env.DEV) {
-          console.warn('[top-left-menu] 跳转到第一个子菜单失败:', firstChildPath, err);
+          logger.warn('[top-left-menu] 跳转到第一个子菜单失败:', firstChildPath, err);
         }
       });
       return;
@@ -172,7 +174,7 @@ const handleMenuSelect = (index: string) => {
   // 如果没有子菜单或找不到第一个子菜单，直接跳转到当前路径
   router.push(absolutePath).catch((err: unknown) => {
     if (import.meta.env.DEV) {
-      console.warn('[top-left-menu] 路由跳转失败:', absolutePath, err);
+      logger.warn('[top-left-menu] 路由跳转失败:', absolutePath, err);
     }
   });
 };

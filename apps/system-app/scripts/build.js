@@ -3,10 +3,11 @@
  * 构建脚本包装器
  * 用于解决 Windows 上 pnpm NODE_PATH 过长的问题
  */
+import { logger } from '@btc/shared-core';
 
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, relative } from 'path';
 import { existsSync, readdirSync, rmSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,7 +59,7 @@ try {
     throw new Error(`Found vite binary is not a .js file: ${viteBin}`);
   }
 } catch (error) {
-  console.error('Failed to find vite binary:', error.message);
+  logger.error('Failed to find vite binary:', error.message);
   process.exit(1);
 }
 
@@ -69,7 +70,22 @@ if (args[0] === 'build') {
   const appDir = resolve(__dirname, '..');
   const distDir = resolve(appDir, 'dist');
   
-  console.log('🧹 清理构建产物...');
+  // 检查并清理 src 目录下的构建产物
+  logger.info('🔍 检查 src 目录下的构建产物...');
+  try {
+    const checkScript = resolve(monorepoRoot, 'scripts', 'check-src-artifacts.mjs');
+    if (existsSync(checkScript)) {
+      const relativeAppPath = relative(monorepoRoot, appDir).replace(/\\/g, '/');
+      execSync(`node "${checkScript}" "${relativeAppPath}"`, {
+        cwd: monorepoRoot,
+        stdio: 'inherit',
+      });
+    }
+  } catch (error) {
+    logger.warn('⚠️  检查 src 目录构建产物时出错，继续构建:', error.message);
+  }
+  
+  logger.info('🧹 清理构建产物...');
   
   // 只清理 dist 目录，保留 build 目录（包含 EPS 数据）
   if (existsSync(distDir)) {
@@ -81,20 +97,20 @@ if (args[0] === 'build') {
       try {
         rmSync(distDir, { recursive: true, force: true });
         success = true;
-        console.log('✅ 已清理 dist 目录');
+        logger.info('✅ 已清理 dist 目录');
       } catch (error) {
         retries--;
         if (error.code === 'EBUSY' || error.code === 'ENOTEMPTY') {
           if (retries > 0) {
-            console.log(`⚠️  目录被占用，等待 500ms 后重试... (剩余 ${retries} 次)`);
+            logger.info(`⚠️  目录被占用，等待 500ms 后重试... (剩余 ${retries} 次)`);
             // 同步等待 500ms
             const start = Date.now();
             while (Date.now() - start < 500) {
               // 忙等待
             }
           } else {
-            console.warn('⚠️  无法清理 dist 目录（可能被其他程序占用），继续构建...');
-            console.warn('   提示：请关闭可能占用文件的程序（如文件资源管理器、编辑器等）');
+            logger.warn('⚠️  无法清理 dist 目录（可能被其他程序占用），继续构建...');
+            logger.warn('   提示：请关闭可能占用文件的程序（如文件资源管理器、编辑器等）');
             success = true; // 继续构建，不阻塞
           }
         } else {
@@ -104,7 +120,7 @@ if (args[0] === 'build') {
     }
   }
   
-  console.log('✅ 清理完成（已保留 build/eps 目录）\n');
+  logger.info('✅ 清理完成（已保留 build/eps 目录）\n');
 }
 
 // 使用 node 运行 vite，避免 pnpm 设置过长的 NODE_PATH
@@ -120,7 +136,7 @@ const child = spawn('node', [viteBin, ...args], {
 });
 
 child.on('error', (error) => {
-  console.error('Error:', error);
+  logger.error('Error:', error);
   process.exit(1);
 });
 

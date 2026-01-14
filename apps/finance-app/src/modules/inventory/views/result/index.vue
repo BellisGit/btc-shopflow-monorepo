@@ -1,6 +1,6 @@
 <template>
-  <div class="finance-inventory-result-page">
-    <BtcViewGroup
+  <div class="page">
+    <BtcMasterViewGroup
       ref="tableGroupRef"
       :left-service="checkService"
       left-title="title.finance.inventory.check.list"
@@ -49,14 +49,14 @@
           />
         </BtcCrud>
       </template>
-    </BtcViewGroup>
+    </BtcMasterViewGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
-import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
-import { BtcSvg, BtcViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService, logger } from '@btc/shared-core';
+import { BtcSvg, BtcMasterViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
 import { useFinanceInventoryExport } from './composables/useFinanceInventoryExport';
 
 defineOptions({
@@ -204,7 +204,7 @@ const onCheckSelect = (check: any) => {
 
 // 页面挂载时，检查是否有选中的项，如果有则自动加载数据
 onMounted(() => {
-  // 延迟检查，确保 BtcViewGroup 已经加载完成并可能已经选中了第一项
+  // 延迟检查，确保 BtcMasterViewGroup 已经加载完成并可能已经选中了第一项
   nextTick(() => {
     if (isUnmounted) return;
 
@@ -263,7 +263,7 @@ const handleExport = async () => {
         } catch (error) {
           // 组件可能正在卸载，静默处理
           if (import.meta.env.DEV) {
-            console.warn('[FinanceInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
+            logger.warn('[FinanceInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
           }
           return;
         }
@@ -290,9 +290,6 @@ const handleExport = async () => {
 </script>
 
 <style scoped lang="scss">
-.finance-inventory-result-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>
 

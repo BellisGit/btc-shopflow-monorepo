@@ -1,6 +1,6 @@
 <template>
-  <div class="inventory-detail-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="checkService"
       :right-service="wrappedDiffService"
@@ -28,7 +28,7 @@
           {{ t('ui.export') }}
         </el-button>
       </template>
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
 
     <!-- 详情弹窗 -->
     <BtcDialog
@@ -57,9 +57,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
-import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcTableGroup, BtcDialog } from '@btc/shared-components';
+import { BtcMasterTableGroup, BtcDialog } from '@btc/shared-components';
 import { formatDateTime, formatTableNumber } from '@btc/shared-utils';
 import { service } from '@services/eps';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
@@ -90,7 +90,7 @@ const checkService = {
   list: async (params?: any) => {
     const checkListService = service.logistics?.warehouse?.check?.list;
     if (!checkListService) {
-      console.warn('[InventoryDetail] 盘点列表接口不存在');
+      logger.warn('[InventoryDetail] 盘点列表接口不存在');
       return {
         list: [],
         pagination: {
@@ -122,7 +122,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      console.error('[InventoryDetail] 获取盘点列表失败:', error);
+      logger.error('[InventoryDetail] 获取盘点列表失败:', error);
       return {
         list: [],
         pagination: {
@@ -238,7 +238,7 @@ const loadPositionOptions = async () => {
     // 调用物流子应用的仓位配置表的 page 服务
     const pageService = service.logistics?.base?.position?.page;
     if (!pageService) {
-      console.warn('[InventoryDetail] 仓位配置 page 服务不存在');
+      logger.warn('[InventoryDetail] 仓位配置 page 服务不存在');
       positionOptions.value = [];
       return;
     }
@@ -291,7 +291,7 @@ const loadPositionOptions = async () => {
       return a.label.localeCompare(b.label, 'zh-CN', { numeric: true, sensitivity: 'base' });
     });
   } catch (error) {
-    console.error('[InventoryDetail] 获取仓位选项失败:', error);
+    logger.error('[InventoryDetail] 获取仓位选项失败:', error);
     positionOptions.value = [];
   } finally {
     positionLoading.value = false;
@@ -333,7 +333,7 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
     }
     return formatDateTime(value);
   } catch (error) {
-    console.warn('[InventoryDetail] Date format error:', error, value);
+    logger.warn('[InventoryDetail] Date format error:', error, value);
     return '--';
   }
 };
@@ -477,7 +477,7 @@ const handleExport = async () => {
                 value = formatDateTime(value);
               } catch (error) {
                 // 如果格式化失败，使用原值
-                console.warn('[InventoryDetail] Failed to format processTime:', error);
+                logger.warn('[InventoryDetail] Failed to format processTime:', error);
               }
             }
             return value ?? '';
@@ -496,7 +496,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryDetail] Export failed:', error);
+    logger.error('[InventoryDetail] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('common.ui.export_failed');
     BtcMessage.error(errorMsg);
   } finally {
@@ -511,8 +511,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.inventory-detail-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

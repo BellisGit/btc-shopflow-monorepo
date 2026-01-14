@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
@@ -75,7 +76,7 @@ async function getGitInfo(filePath: string): Promise<{
       date: date.split(' ')[0] // 只取日期部分
     };
   } catch (error) {
-    console.warn(`[Git] Failed to get info for ${filePath}:`, error);
+    logger.warn(`[Git] Failed to get info for ${filePath}:`, error);
     return {
       commit: 'unknown',
       author: 'unknown',
@@ -143,19 +144,19 @@ async function processDocument(
 
     // 如果没有 frontmatter，跳过
     if (!frontmatter || Object.keys(frontmatter).length === 0) {
-      console.warn(`[Skip] No frontmatter: ${filePath}`);
+      logger.warn(`[Skip] No frontmatter: ${filePath}`);
       return null;
     }
 
     // 验证 frontmatter
     if (!validate(frontmatter)) {
-      console.error(`[Invalid] ${filePath}:`, validate.errors);
+      logger.error(`[Invalid] ${filePath}:`, validate.errors);
       return null;
     }
 
     // 只处理 publish: true 的文档
     if (frontmatter.publish !== true) {
-      console.log(`[Skip] Not published: ${filePath}`);
+      logger.info(`[Skip] Not published: ${filePath}`);
       return null;
     }
 
@@ -185,7 +186,7 @@ async function processDocument(
       targetPath
     };
   } catch (error) {
-    console.error(`[Error] Failed to process ${filePath}:`, error);
+    logger.error(`[Error] Failed to process ${filePath}:`, error);
     return null;
   }
 }
@@ -434,17 +435,17 @@ ${Object.entries(allTags)
 
 // 主函数
 async function ingest() {
-  console.log('=== 开始文档采集 ===\n');
+  logger.info('=== 开始文档采集 ===\n');
 
   // 1. 加载配置和 schema
   const config = await loadConfig();
   const schema = await loadSchema();
   const validate = createValidator(schema);
 
-  console.log('✅ 配置和 schema 加载完成');
+  logger.info('✅ 配置和 schema 加载完成');
 
   // 2. 扫描源文档
-  console.log('\n📂 扫描源文档...');
+  logger.info('\n📂 扫描源文档...');
   const rootDir = path.join(process.cwd(), '../..');
   const files: string[] = [];
 
@@ -456,10 +457,10 @@ async function ingest() {
     files.push(...matched);
   }
 
-  console.log(`  找到 ${files.length} 个文档文件`);
+  logger.info(`  找到 ${files.length} 个文档文件`);
 
   // 3. 处理每个文档
-  console.log('\n📝 处理文档...');
+  logger.info('\n📝 处理文档...');
   const processedDocs: DocInfo[] = [];
   let skipped = 0;
   const invalid = 0;
@@ -468,16 +469,16 @@ async function ingest() {
     const doc = await processDocument(file, config, validate);
     if (doc) {
       processedDocs.push(doc);
-      console.log(`  ✅ ${path.basename(file)}`);
+      logger.info(`  ✅ ${path.basename(file)}`);
     } else {
       if (files.length > 0) skipped++;
     }
   }
 
-  console.log(`\n处理完成: ${processedDocs.length} 成功, ${skipped} 跳过, ${invalid} 无效`);
+  logger.info(`\n处理完成: ${processedDocs.length} 成功, ${skipped} 跳过, ${invalid} 无效`);
 
   // 4. 写入文档到目标位置
-  console.log('\n📦 写入文档...');
+  logger.info('\n📦 写入文档...');
   const outputDir = process.cwd();
 
   for (const doc of processedDocs) {
@@ -489,26 +490,26 @@ async function ingest() {
     await fs.writeFile(targetFullPath, newContent);
   }
 
-  console.log(`  写入 ${processedDocs.length} 个文档`);
+  logger.info(`  写入 ${processedDocs.length} 个文档`);
 
   // 5. 生成索引页
-  console.log('\n📑 生成索引页...');
+  logger.info('\n📑 生成索引页...');
   await generateIndexes(processedDocs);
-  console.log('  ✅ 索引页生成完成');
+  logger.info('  ✅ 索引页生成完成');
 
   // 6. 统计报告
-  console.log('\n=== 采集完成 ===');
-  console.log(`总计: ${processedDocs.length} 篇文档`);
-  console.log('\n按类型:');
+  logger.info('\n=== 采集完成 ===');
+  logger.info(`总计: ${processedDocs.length} 篇文档`);
+  logger.info('\n按类型:');
   const byType = processedDocs.reduce((acc, doc) => {
     acc[doc.frontmatter.type] = (acc[doc.frontmatter.type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   Object.entries(byType).forEach(([type, count]) => {
-    console.log(`  ${type}: ${count} 篇`);
+    logger.info(`  ${type}: ${count} 篇`);
   });
 
-  console.log('\n按项目:');
+  logger.info('\n按项目:');
   const byProject = processedDocs.reduce((acc, doc) => {
     acc[doc.frontmatter.project] = (acc[doc.frontmatter.project] || 0) + 1;
     return acc;
@@ -517,7 +518,7 @@ async function ingest() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
     .forEach(([project, count]) => {
-      console.log(`  ${project}: ${count} 篇`);
+      logger.info(`  ${project}: ${count} 篇`);
     });
 }
 

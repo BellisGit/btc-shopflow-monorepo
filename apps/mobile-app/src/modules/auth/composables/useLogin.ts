@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
@@ -48,7 +49,7 @@ export function useLogin() {
       const redirectPath = redirect.split('?')[0];
       router.push(redirectPath);
     } catch (error: any) {
-      console.error('[Login] Failed:', error);
+      logger.error('[Login] Failed:', error);
       errorMessage.value = error?.message || '登录失败，请检查用户名和密码';
       showToast({
         type: 'fail',

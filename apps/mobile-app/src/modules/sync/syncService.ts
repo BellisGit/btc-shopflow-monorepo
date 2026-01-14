@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
 import { db } from '@/db';
 import { processQueue } from './backgroundSync';
@@ -47,7 +48,7 @@ export async function pullUpdates(lastSyncTime?: number) {
 
     return data;
   } catch (error) {
-    console.error('[SyncService] Failed to pull updates:', error);
+    logger.error('[SyncService] Failed to pull updates:', error);
     throw error;
   }
 }

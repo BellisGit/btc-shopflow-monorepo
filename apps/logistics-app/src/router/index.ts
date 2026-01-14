@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import {
   createRouter,
   createWebHistory,
@@ -35,7 +36,7 @@ function normalizePath(path: string): string {
   // 检测是否是 logistics 子域名
   if (hostname === 'logistics.bellis.com.cn' && path.startsWith('/logistics/')) {
     const normalized = path.substring('/logistics'.length) || '/';
-    console.log(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+    logger.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
     return normalized;
   }
 

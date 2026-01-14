@@ -1,43 +1,40 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { BtcAppLayout } from '@btc/shared-components';
-import { systemRoutes } from './system';
+import { BtcAppLayout as AppLayout } from '@btc/shared-components';
+import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
+import { logger } from '@btc/shared-core';
 
 /**
- * 将相对路径转换为绝对路径
+ * 将相对路径转换为绝对路径（用于 system-app 的特殊路径处理）
  */
-function normalizeRoutePath(route: RouteRecordRaw, basePath: string = ''): RouteRecordRaw {
+function normalizeRoutePath(route: RouteRecordRaw, isStandalone: boolean): RouteRecordRaw {
   const normalized = { ...route };
 
-  // 处理路径：空字符串表示父路由的根路径，在 qiankun 模式下应该是 basePath
+  // 独立运行时：保持相对路径（会被父路由自动拼接）
+  if (isStandalone) {
+    return normalized;
+  }
+
+  // qiankun 模式或 layout-app 模式：需要将相对路径转换为绝对路径
+  // 空路径转换为 "/"
   if (!normalized.path || normalized.path === '') {
-    normalized.path = basePath || '/';
+    normalized.path = '/';
   } else if (!normalized.path.startsWith('/')) {
-    // 相对路径：添加 basePath 前缀
-    normalized.path = `${basePath}/${normalized.path}`.replace(/\/+/g, '/');
-  } else if (basePath && normalized.path !== '/') {
-    // 绝对路径但不是根路径：添加 basePath 前缀
-    normalized.path = `${basePath}${normalized.path}`.replace(/\/+/g, '/');
+    // 相对路径转换为绝对路径
+    normalized.path = `/${normalized.path}`;
   }
 
   // 处理 redirect
   if (normalized.redirect) {
     if (typeof normalized.redirect === 'string') {
       if (!normalized.redirect.startsWith('/')) {
-        normalized.redirect = `${basePath}/${normalized.redirect}`.replace(/\/+/g, '/');
-      } else if (basePath && normalized.redirect !== '/') {
-        normalized.redirect = `${basePath}${normalized.redirect}`.replace(/\/+/g, '/');
+        normalized.redirect = `/${normalized.redirect}`;
       }
     } else if (typeof normalized.redirect === 'object' && normalized.redirect.path) {
       if (!normalized.redirect.path.startsWith('/')) {
         normalized.redirect = {
           ...normalized.redirect,
-          path: `${basePath}/${normalized.redirect.path}`.replace(/\/+/g, '/'),
-        };
-      } else if (basePath && normalized.redirect.path !== '/') {
-        normalized.redirect = {
-          ...normalized.redirect,
-          path: `${basePath}${normalized.redirect.path}`.replace(/\/+/g, '/'),
+          path: `/${normalized.redirect.path}`,
         };
       }
     }
@@ -45,58 +42,57 @@ function normalizeRoutePath(route: RouteRecordRaw, basePath: string = ''): Route
 
   // 递归处理子路由
   if (normalized.children && Array.isArray(normalized.children)) {
-    normalized.children = normalized.children.map(child => normalizeRoutePath(child, ''));
+    normalized.children = normalized.children.map(child => normalizeRoutePath(child, isStandalone));
   }
 
   return normalized;
 }
 
 /**
- * 获取系统应用路由配置
- * - qiankun 模式：直接返回页面路由（由主应用提供 Layout），路径需要以 "/" 开头
- *   在 qiankun 模式下，子应用使用 createMemoryHistory()，路径应该是相对于子应用的
- *   空路径应该转换为 "/"，其他相对路径转换为绝对路径（如 "/data/files/list"）
- * - layout-app 模式：直接返回页面路由（由 layout-app 提供 Layout），路径需要以 "/" 开头
- * - 独立运行时：使用 AppLayout 包裹所有路由，路径为 /system，子路由使用相对路径
+ * 获取路由配置
+ * - qiankun 模式：返回页面路由（登录页等由主应用提供）
+ * - layout-app 模式：返回页面路由（由 layout-app 提供 Layout）
+ * - 独立运行时：使用 BtcAppLayout 包裹所有路由
+ * 
+ * 自动路由发现：
+ * - 从所有模块的 config.ts 中自动提取 views 和 pages 路由
+ * - 完全按照 cool-admin 的方案，所有路由都从模块配置中自动发现
  */
 export const getSystemRoutes = (): RouteRecordRaw[] => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
 
-  // qiankun 模式或 layout-app 模式：需要将相对路径转换为绝对路径
-  // 关键：Vue Router 要求顶级路由必须以 "/" 开头
-  // 在 qiankun 模式下，子应用使用 createMemoryHistory()，路径应该是相对于子应用的
-  // 空路径应该转换为 "/"，其他相对路径转换为绝对路径
-  if (!isStandalone || isUsingLayoutApp) {
-    return systemRoutes.map(route => {
-      const normalized = { ...route };
-
-      // 对于空路径，转换为 "/"（qiankun 模式下子应用的根路径）
-      if (!normalized.path || normalized.path === '') {
-        normalized.path = '/';
-      } else if (!normalized.path.startsWith('/')) {
-        // 对于相对路径，转换为绝对路径（以 "/" 开头）
-        normalized.path = `/${normalized.path}`;
-      }
-
-      // 处理 redirect
-      if (normalized.redirect) {
-        if (typeof normalized.redirect === 'string') {
-          if (!normalized.redirect.startsWith('/')) {
-            normalized.redirect = `/${normalized.redirect}`;
-          }
-        } else if (typeof normalized.redirect === 'object' && normalized.redirect.path) {
-          if (!normalized.redirect.path.startsWith('/')) {
-            normalized.redirect = {
-              ...normalized.redirect,
-              path: `/${normalized.redirect.path}`,
-            };
-          }
-        }
-      }
-
-      return normalized;
+  // 自动扫描模块配置中的路由
+  let pageRoutes: RouteRecordRaw[] = [];
+  
+  try {
+    // 扫描所有模块的 config.ts，提取路由
+    const autoRoutes = scanRoutesFromConfigFiles('/src/modules/*/config.ts', {
+      enableAutoDiscovery: true,
+      preferManualRoutes: false,
+      mergeViewsToChildren: false,
     });
+
+    // 合并 views 和 pages 路由
+    pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
+
+    // 输出扫描结果（开发环境）
+    if (import.meta.env.DEV) {
+      logger.info(
+        `[systemRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
+      );
+      if (autoRoutes.conflicts.length > 0) {
+        logger.warn(`[systemRouter] Route conflicts:`, autoRoutes.conflicts);
+      }
+    }
+  } catch (error) {
+    logger.error(`[systemRouter] Failed to scan routes from modules:`, error);
+    pageRoutes = [];
+  }
+
+  // qiankun 模式或 layout-app 模式：需要将相对路径转换为绝对路径
+  if (!isStandalone || isUsingLayoutApp) {
+    return pageRoutes.map(route => normalizeRoutePath(route, false));
   }
 
   // 独立运行：使用 AppLayout 包裹所有路由
@@ -105,7 +101,7 @@ export const getSystemRoutes = (): RouteRecordRaw[] => {
     {
       path: '/system',
       component: AppLayout,
-      children: systemRoutes,
+      children: pageRoutes,
     },
     // 兼容生产环境子域名：如果没有 /system 前缀，重定向到 /system
     {
@@ -115,6 +111,5 @@ export const getSystemRoutes = (): RouteRecordRaw[] => {
   ];
 };
 
-// 为了向后兼容，也导出一个常量（在模块加载时检测）
-export const systemAppRoutes: RouteRecordRaw[] = getSystemRoutes();
-
+// 为了向后兼容，保留导出（使用函数动态获取）
+export const systemRoutes = getSystemRoutes();

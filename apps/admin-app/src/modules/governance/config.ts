@@ -3,11 +3,48 @@
  * 包含字典管理、文件管理等页面的配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'governance',
+  label: 'common.module.governance.label',
+  order: 25,
+
+  // 路由配置
+  views: [
+    {
+      path: '/governance/files/templates',
+      name: 'AdminGovernanceFilesTemplates',
+      component: () => import('./views/files/templates/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.governance.files.templates',
+      },
+    },
+    {
+      path: '/governance/dictionary/fields',
+      name: 'AdminDictionaryFields',
+      component: () => import('./views/dictionary/fields/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.governance.dictionary.fields',
+      },
+    },
+    {
+      path: '/governance/dictionary/values',
+      name: 'AdminDictionaryValues',
+      component: () => import('./views/dictionary/values/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.governance.dictionary.values',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -18,7 +55,7 @@ export default {
       'menu.governance.dictionary': '字典管理',
       'menu.governance.dictionary.fields': '字段管理',
       'menu.governance.dictionary.values': '字典值管理',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.governance.files.templates.domains': '域列表',
       'title.governance.dictionary.fields.resources': '资源列表',
       // 字典相关
@@ -50,7 +87,7 @@ export default {
       'menu.governance.dictionary': 'Dictionary Management',
       'menu.governance.dictionary.fields': 'Field Management',
       'menu.governance.dictionary.values': 'Dictionary Value Management',
-      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
       'title.governance.files.templates.domains': 'Domain List',
       'title.governance.dictionary.fields.resources': 'Resource List',
       // 字典相关
@@ -151,14 +188,14 @@ export default {
     resource: service.admin?.iam?.resource,
     domain: service.admin?.iam?.domain,
     processTemplate: service.admin?.iam?.processTemplate,
-    // BtcTableGroup 需要的域服务（左侧服务）
+    // BtcMasterTableGroup 需要的域服务（左侧服务）
     domainService: {
       list: (params?: any) => {
         const finalParams = params || {};
         return service.admin?.iam?.domain?.list(finalParams);
       }
     },
-    // BtcTableGroup 需要的资源服务（左侧服务，用于 dictionary.fields）
+    // BtcMasterTableGroup 需要的资源服务（左侧服务，用于 dictionary.fields）
     resourceService: {
       list: (params?: any) => {
         const finalParams = params || {};
@@ -166,4 +203,4 @@ export default {
       }
     },
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

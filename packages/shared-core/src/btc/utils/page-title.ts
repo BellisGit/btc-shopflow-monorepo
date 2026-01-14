@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 /**
  * 浏览器标题设置工具
  * 核心职责：封装标题拼接规则、修改 document.title
@@ -80,11 +81,11 @@ async function loadAppsConfig(): Promise<AppsConfig> {
 
       // 方案3：如果以上都失败，使用空配置（兜底）
       // 注意：在运行时，应用信息可以通过其他方式获取（如从路由路径推断）
-      console.warn('[page-title] 无法加载 apps.config.json，使用空配置');
+      logger.warn('[page-title] 无法加载 apps.config.json，使用空配置');
       appsConfigCache = { apps: [] };
       return appsConfigCache;
     } catch (error) {
-      console.error('[page-title] 加载应用配置失败:', error);
+      logger.error('[page-title] 加载应用配置失败:', error);
       appsConfigCache = { apps: [] };
       return appsConfigCache;
     } finally {

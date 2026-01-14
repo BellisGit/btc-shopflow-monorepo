@@ -1,5 +1,5 @@
 <template>
-  <div class="test-center-page">
+  <div class="page">
     <!-- 搜索栏 -->
     <BtcCrudRow class="search-row">
       <BtcCrudFlex1 />
@@ -79,7 +79,7 @@ import { ref, computed, onMounted, markRaw, shallowRef } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { BtcMessage, BtcCrudRow, BtcCrudFlex1 } from '@btc/shared-components';
 import { BtcDialog } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import {
   getAllTestInstanceConfigs,
   loadTestInstanceComponent,
@@ -126,7 +126,7 @@ const loadTestInstances = async () => {
             component: markRaw(component) // 使用 markRaw 标记组件为非响应式
           };
         } catch (error) {
-          console.warn(`Failed to load test instance: ${config.name}`, error);
+          logger.warn(`Failed to load test instance: ${config.name}`, error);
           return null;
         }
       })
@@ -135,7 +135,7 @@ const loadTestInstances = async () => {
     // 过滤掉加载失败的实例
     testInstances.value = testModules.filter(Boolean) as TestInstance[];
   } catch (error) {
-    console.error('加载测试实例失败:', error);
+    logger.error('加载测试实例失败:', error);
     BtcMessage.error('加载测试实例失败');
   }
 };
@@ -183,13 +183,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.test-center-page {
-  width: 100%;
-  min-height: 100vh;
-  padding: 10px;
-  box-sizing: border-box;
-  --card-min-width: 350px;
-}
+
 
 .search-row {
   margin-bottom: 10px;

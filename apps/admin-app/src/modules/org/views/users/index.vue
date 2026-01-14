@@ -1,6 +1,6 @@
 <template>
-  <div class="users-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="services.sysdept"
       :right-service="services.sysuser"
@@ -20,8 +20,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { BtcTableGroup } from '@btc/shared-components';
-import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n } from '@btc/shared-core';
+import { BtcMasterTableGroup } from '@btc/shared-components';
+import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n, logger } from '@btc/shared-core';
 
 const { t } = useI18n();
 
@@ -98,15 +98,12 @@ async function handleUserInfo(user: any, { next, done }: any) {
 
     done(userDetail);
   } catch (error) {
-    console.error('Failed to get user details:', error);
+    logger.error('Failed to get user details:', error);
     done(user);
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.users-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

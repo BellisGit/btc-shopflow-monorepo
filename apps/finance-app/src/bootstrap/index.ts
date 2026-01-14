@@ -1,4 +1,5 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import { logger } from '@btc/shared-core';
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
 import '@btc/shared-components/styles/index.scss';
@@ -58,7 +59,7 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      console.warn('[finance-app] Failed to import domain-cache module:', error);
+      logger.warn('[finance-app] Failed to import domain-cache module:', error);
     }
 
     await setupSubAppGlobals({

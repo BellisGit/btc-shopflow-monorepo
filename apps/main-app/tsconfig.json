@@ -18,7 +18,8 @@
       "@btc/shared-components": ["../../packages/shared-components/src", "../../packages/shared-components/dist"],
       "@btc/shared-components/*": ["../../packages/shared-components/src/*", "../../packages/shared-components/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],
-      "@btc/auth-shared/*": ["../../auth/shared/*"]
+      "@btc/auth-shared/*": ["../../auth/shared/*"],
+      "@workspace/locales/*": ["../../locales/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],

@@ -3,12 +3,18 @@
  * 包含 material、inventory 等页面的配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 
 export default {
+  // ModuleConfig 字段
+  name: 'warehouse',
+  label: 'common.module.warehouse.label',
+  order: 10,
+
+  // PageConfig 字段（保留）
   locale: {
     'zh-CN': {
       // 物料
@@ -178,4 +184,4 @@ export default {
     inventoryInfo: createCrudServiceFromEps(['logistics', 'warehouse', 'check'], service),
     inventoryDetail: createCrudServiceFromEps(['logistics', 'warehouse', 'diff'], service),
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

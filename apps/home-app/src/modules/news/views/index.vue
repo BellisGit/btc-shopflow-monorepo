@@ -1,5 +1,5 @@
 <template>
-  <div class="news-page" ref="newsPageRef">
+  <div class="page" ref="newsPageRef">
     <!-- 主内容区 -->
     <section class="main-content">
       <!-- SVG几何背景（自动提供内容区域） -->

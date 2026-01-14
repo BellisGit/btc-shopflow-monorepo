@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
@@ -54,7 +55,7 @@ if (typeof window !== 'undefined') {
       errorStack.includes('BtcCrud')
     ) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      console.error('CRUD component error (must fix):', errorMessage, {
+      logger.error('CRUD component error (must fix):', errorMessage, {
         error: event.error,
         stack: errorStack,
       });
@@ -129,7 +130,7 @@ const render = async (props: QiankunProps = {}) => {
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[admin-app] Cannot display app-level loading:', error);
+        logger.warn('[admin-app] Cannot display app-level loading:', error);
       }
     }
   }
@@ -182,7 +183,7 @@ const render = async (props: QiankunProps = {}) => {
       // 静默失败
     }
   } catch (error) {
-    console.error('Render failed:', error);
+    logger.error('Render failed:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading

@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
@@ -213,7 +214,7 @@ async function initRootLoading() {
       throw new Error('rootLoadingService 未定义或方法不存在');
     }
   } catch (error) {
-    console.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
+    logger.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
     // 备用方案：直接操作 DOM（向后兼容）
     // 使用类名切换，样式已在 loading.css 中定义
     const loadingEl = document.getElementById('Loading');
@@ -234,7 +235,7 @@ async function hideRootLoading() {
       throw new Error('rootLoadingService 未定义或方法不存在');
     }
   } catch (error) {
-    console.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
+    logger.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
     // 备用方案：直接操作 DOM（向后兼容）
     // 使用类名切换，样式已在 loading.css 中定义
     const loadingEl = document.getElementById('Loading');
@@ -302,7 +303,7 @@ const startupPromise = Promise.resolve()
     // 立即启动应用，不等待 EPS 服务
     // 为 bootstrap 添加超时保护
     const bootstrapPromise = bootstrap(app).catch((error) => {
-      console.error('[main-app] Bootstrap 过程失败:', error);
+      logger.error('[main-app] Bootstrap 过程失败:', error);
       throw error;
     });
     const bootstrapTimeout = new Promise((_, reject) => {
@@ -439,7 +440,7 @@ const startupPromise = Promise.resolve()
   })
   .catch(async (error) => {
     // 应用启动失败
-    console.error('[main-app] 应用启动失败:', error);
+    logger.error('[main-app] 应用启动失败:', error);
 
     // 清除超时定时器
     if (loadingTimeoutId) {
@@ -459,6 +460,6 @@ const startupPromise = Promise.resolve()
         isAppMounted = true;
       }
     } catch (mountError) {
-      console.error('[main-app] 应用挂载失败:', mountError);
+      logger.error('[main-app] 应用挂载失败:', mountError);
     }
   });

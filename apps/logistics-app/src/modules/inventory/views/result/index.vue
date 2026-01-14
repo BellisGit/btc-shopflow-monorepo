@@ -1,6 +1,6 @@
 <template>
-  <div class="logistics-inventory-result-page">
-    <BtcViewGroup
+  <div class="page">
+    <BtcMasterViewGroup
       ref="tableGroupRef"
       :left-service="checkService"
       left-title="title.logistics.inventory.check.list"
@@ -49,15 +49,15 @@
           />
         </BtcCrud>
       </template>
-    </BtcViewGroup>
+    </BtcMasterViewGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue';
-import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
+import { BtcMasterViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 import { formatTableNumber } from '@btc/shared-utils';
 import { service } from '@services/eps';
@@ -86,7 +86,7 @@ const checkService = {
   list: async (params?: any) => {
     const checkListService = service.logistics?.warehouse?.check?.list;
     if (!checkListService) {
-      console.warn('[LogisticsInventoryResult] 盘点列表接口不存在');
+      logger.warn('[LogisticsInventoryResult] 盘点列表接口不存在');
       return {
         list: [],
         pagination: {
@@ -118,7 +118,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      console.error('[LogisticsInventoryResult] 获取盘点列表失败:', error);
+      logger.error('[LogisticsInventoryResult] 获取盘点列表失败:', error);
       return {
         list: [],
         pagination: {
@@ -278,7 +278,7 @@ const handleExport = async () => {
         } catch (error) {
           // 组件可能正在卸载，静默处理
           if (import.meta.env.DEV) {
-            console.warn('[LogisticsInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
+            logger.warn('[LogisticsInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
           }
           return;
         }
@@ -322,9 +322,6 @@ const columns = computed(() => {
 </script>
 
 <style scoped lang="scss">
-.logistics-inventory-result-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>
 

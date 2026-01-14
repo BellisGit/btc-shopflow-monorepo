@@ -1,5 +1,5 @@
 <template>
-  <div class="baseline-page">
+  <div class="page">
     <BtcCrud ref="crudRef" :service="wrappedBaselineService || baselineService">
       <BtcCrudRow>
         <div class="btc-crud-primary-actions">
@@ -49,8 +49,5 @@ const wrappedBaselineService = usePageService('ops.baseline', 'baseline') || bas
 </script>
 
 <style lang="scss" scoped>
-.baseline-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

@@ -3,11 +3,48 @@
  * 包含策略管理、策略监控等页面的配置
  */
 
-import type { PageConfig } from '../../../../../types/locale';
+import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // ModuleConfig 字段
+  name: 'strategy',
+  label: 'common.module.strategy.label',
+  order: 45,
+
+  // 路由配置
+  views: [
+    {
+      path: '/strategy/management',
+      name: 'AdminStrategyManagement',
+      component: () => import('./views/management/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.strategy.management',
+      },
+    },
+    {
+      path: '/strategy/designer',
+      name: 'AdminStrategyDesigner',
+      component: () => import('./views/designer/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.strategy.designer',
+      },
+    },
+    {
+      path: '/strategy/monitor',
+      name: 'AdminStrategyMonitor',
+      component: () => import('./views/monitor/index.vue'),
+      meta: {
+        isPage: true,
+        titleKey: 'menu.strategy.monitor',
+      },
+    },
+  ],
+
+  // PageConfig 字段（保留）
   // 国际化配置（扁平结构）
   locale: {
     'zh-CN': {
@@ -797,4 +834,4 @@ export default {
   service: {
     strategy: service.admin?.strategy,
   },
-} satisfies PageConfig;
+} satisfies ModuleConfig;

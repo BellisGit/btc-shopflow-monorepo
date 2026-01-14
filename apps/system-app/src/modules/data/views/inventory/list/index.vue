@@ -1,6 +1,6 @@
 <template>
-  <div class="inventory-list-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="domainService"
       :right-service="wrappedMaterialService"
@@ -29,17 +29,17 @@
           {{ t('ui.export') }}
         </el-button>
       </template>
-    </BtcTableGroup>
+    </BtcMasterTableGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService, logger } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
+import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
@@ -108,7 +108,7 @@ const domainService = {
       // 返回域列表
       return Array.from(domainMap.values());
     } catch (error) {
-      console.error('[InventoryList] Failed to load domains from position service:', error);
+      logger.error('[InventoryList] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -146,7 +146,7 @@ const createWrappedService = (baseService: any) => {
       if (finalParams.keyword !== undefined && finalParams.keyword !== null) {
         const keyword = finalParams.keyword;
 
-        // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
+        // 如果 keyword 是对象且包含 ids 字段（BtcMasterTableGroup 的标准格式）
         if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
           const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
           // 取第一个 ID 作为 domainId
@@ -262,7 +262,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     tableGroupRef.value?.crudRef?.refresh?.();
     close();
   } catch (error: any) {
-    console.error('[InventoryList] import failed:', error);
+    logger.error('[InventoryList] import failed:', error);
     // 优先从错误对象中提取后端返回的 msg
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.data_source.list.import.failed');
     message.error(errorMsg);
@@ -278,7 +278,7 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
     }
     return formatDateTime(value);
   } catch (error) {
-    console.warn('[InventoryList] Date format error:', error, value);
+    logger.warn('[InventoryList] Date format error:', error, value);
     return '--';
   }
 };
@@ -382,7 +382,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryList] Export failed:', error);
+    logger.error('[InventoryList] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {
@@ -415,8 +415,5 @@ const materialFormItems = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.inventory-list-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

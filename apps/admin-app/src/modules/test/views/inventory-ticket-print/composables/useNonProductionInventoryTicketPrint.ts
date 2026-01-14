@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
@@ -195,7 +196,7 @@ export function useNonProductionInventoryTicketPrint(
         // 注意：这只是一个启发式检查，不能完全保证准确性
         const printDuration = Date.now() - beforePrintTime;
         if (printDuration < MIN_PRINT_TIME) {
-          console.log('[NonProductionInventoryTicketPrint] Print dialog closed too quickly, likely cancelled');
+          logger.info('[NonProductionInventoryTicketPrint] Print dialog closed too quickly, likely cancelled');
           if (cleanup) {
             cleanup();
           }
@@ -217,7 +218,7 @@ export function useNonProductionInventoryTicketPrint(
           if (checkTicketPrintService) {
             await checkTicketPrintService(list);
           } else {
-            console.warn('[NonProductionInventoryTicketPrint] Print service not available, skipping API call');
+            logger.warn('[NonProductionInventoryTicketPrint] Print service not available, skipping API call');
           }
         } catch (error) {
           // 响应拦截器已显示错误消息，不需要在控制台打印

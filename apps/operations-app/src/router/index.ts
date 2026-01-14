@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import {
   createRouter,
   createWebHistory,
@@ -5,8 +6,9 @@ import {
 } from 'vue-router';
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { BtcAppLayout } from '@btc/shared-components';
+import { BtcAppLayout as AppLayout } from '@btc/shared-components';
 import { getMainAppLoginUrl } from '@btc/shared-core';
+import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
 
 /**
  * 动态导入 @btc/shared-core
@@ -16,39 +18,34 @@ async function importSharedCore() {
   return await import('@btc/shared-core');
 }
 
-// 基础路由（页面组件）
-const pageRoutes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: () => import('../views/Home.vue'),
-    meta: {
-      isHome: true,
-      titleKey: 'menu.operations.overview',
-      tabLabelKey: 'menu.operations.overview',
-    },
-  },
-  {
-    path: '/ops/error',
-    name: 'ErrorMonitor',
-    component: () => import('../views/ErrorMonitor.vue'),
-    meta: {
-      isHome: false,
-      titleKey: 'menu.operations.error',
-      tabLabelKey: 'menu.operations.error',
-    },
-  },
-  {
-    path: '/ops/deployment-test',
-    name: 'DeploymentTest',
-    component: () => import('../views/DeploymentTest.vue'),
-    meta: {
-      isHome: false,
-      titleKey: 'menu.operations.deploymentTest',
-      tabLabelKey: 'menu.operations.deploymentTest',
-    },
-  },
-];
+/**
+ * 获取路由配置
+ * 自动路由发现：从所有模块的 config.ts 中自动提取 views 和 pages 路由
+ */
+function getOperationsRoutes() {
+  let pageRoutes: any[] = [];
+  
+  try {
+    const autoRoutes = scanRoutesFromConfigFiles('/src/modules/*/config.ts', {
+      enableAutoDiscovery: true,
+      preferManualRoutes: false,
+      mergeViewsToChildren: false,
+    });
+
+    pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
+
+    if (import.meta.env.DEV) {
+      logger.info(
+        `[OperationsRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
+      );
+    }
+  } catch (error) {
+    logger.error('[OperationsRouter] Failed to scan routes from modules:', error);
+    pageRoutes = [];
+  }
+
+  return pageRoutes;
+}
 
 // 路由级别loading的延迟定时器
 let routeLoadingTimer: ReturnType<typeof setTimeout> | null = null;
@@ -57,6 +54,9 @@ const ROUTE_LOADING_DELAY = 300;
 
 export const createOperationsRouter = (isStandalone: boolean = false): Router => {
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
+  // 自动扫描路由
+  const pageRoutes = getOperationsRoutes();
 
   // 根据运行模式返回不同的路由配置
   // 独立运行且未使用 layout-app 时：使用 AppLayout 包裹所有路由
@@ -88,7 +88,7 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
 
       if (isProductionSubdomain && hostname === 'operations.bellis.com.cn' && to.path.startsWith('/operations/')) {
         const normalized = to.path.substring('/operations'.length) || '/';
-        console.log(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        logger.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
         next({
           path: normalized,
           query: to.query,
@@ -205,7 +205,7 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
   });
 
   router.onError((error: Error) => {
-    console.warn('[operations-app] Router error:', error);
+    logger.warn('[operations-app] Router error:', error);
   });
 
   return router;

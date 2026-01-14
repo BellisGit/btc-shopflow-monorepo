@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import { useMessage } from './use-message';
@@ -88,6 +89,6 @@ export function loadingError(appName: string, error?: Error) {
   const message = useMessage();
   message.error(`加载「${appName}」失败，请刷新重试`);
 
-  console.error(`[应用加载失败] ${appName}:`, error);
+  logger.error(`[应用加载失败] ${appName}:`, error);
 }
 

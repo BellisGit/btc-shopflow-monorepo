@@ -221,6 +221,7 @@
   "sys.message.loading": "加载中...",
   "sys.message.confirm_delete": "确定要删除吗？",
   "menu.home": "首页",
+  "menu.test_features.multi_column_layout_test": "多栏布局测试",
   "common.close_other": "关闭其他",
   "common.close_all": "关闭全部",
   "notice.title": "通知",
@@ -295,5 +296,6 @@
   "btc.filterList.size.small": "小",
   "btc.filterList.size.default": "默认",
   "btc.filterList.size.large": "大",
-  "btc.filterList.tooltip.settings": "设置"
+  "btc.filterList.tooltip.settings": "设置",
+  "btc.filterList.tooltip.clear": "清除所有筛选"
 }

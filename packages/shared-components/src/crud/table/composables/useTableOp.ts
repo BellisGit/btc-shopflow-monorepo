@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { nextTick, ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
@@ -32,7 +33,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
       try {
         return buttons({ scope: _scope });
       } catch (error) {
-        console.error('[useTableOp] opButtons 函数调用失败:', error);
+        logger.error('[useTableOp] opButtons 函数调用失败:', error);
         // 如果函数调用失败，返回默认按钮
         return ['edit', 'delete'];
       }
@@ -94,7 +95,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
    */
   const handleOpClick = (btn: string, row: any, emit?: (event: string, ...args: any[]) => void) => {
     if (!crud) {
-      console.error('[useTableOp] crud is not available');
+      logger.error('[useTableOp] crud is not available');
       return;
     }
 
@@ -103,21 +104,21 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
         if (typeof crud.handleEdit === 'function') {
           crud.handleEdit(row);
         } else {
-          console.error('[useTableOp] crud.handleEdit is not available');
+          logger.error('[useTableOp] crud.handleEdit is not available');
         }
         break;
       case 'delete':
         if (typeof crud.handleDelete === 'function') {
           crud.handleDelete(row);
         } else {
-          console.error('[useTableOp] crud.handleDelete is not available');
+          logger.error('[useTableOp] crud.handleDelete is not available');
         }
         break;
       case 'info':
         if (typeof crud.handleView === 'function') {
           crud.handleView(row);
         } else {
-          console.error('[useTableOp] crud.handleView is not available');
+          logger.error('[useTableOp] crud.handleView is not available');
         }
         break;
       case 'detail':

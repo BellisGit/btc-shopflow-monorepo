@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { defineConfig } from 'vitepress';
 import { exportSearchIndexPlugin } from './plugins/exportSearchIndex';
 import { fileURLToPath, URL } from 'node:url';
@@ -54,7 +55,7 @@ export default defineConfig({
     }
     // 如果不在iframe中，让VitePress的appearance配置自己处理主题
   } catch(e) {
-    console.error('[Early Script] Error:', e);
+    logger.error('[Early Script] Error:', e);
   }
 })();`
     ]

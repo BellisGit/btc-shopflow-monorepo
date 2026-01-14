@@ -6,6 +6,7 @@
  * - 权限过滤
  * - 排序处理
  */
+import { logger } from '@btc/shared-core';
 
 import { computed, ref } from 'vue';
 import { getAllManifests, getManifest, type MenuConfigItem, type MenuConfig } from '@btc/shared-core/manifest';
@@ -70,14 +71,14 @@ export function useMenuAggregation() {
       // 1. 获取主应用 manifest
       const mainManifest = getManifest('main');
       if (!mainManifest) {
-        console.warn('[useMenuAggregation] 主应用 manifest 不存在');
+        logger.warn('[useMenuAggregation] 主应用 manifest 不存在');
         overviewMenus.value = [];
         return;
       }
 
       // 检查 menuConfig 是否存在
       if (!mainManifest.menuConfig) {
-        console.warn('[useMenuAggregation] 主应用 manifest 缺少 menuConfig');
+        logger.warn('[useMenuAggregation] 主应用 manifest 缺少 menuConfig');
         overviewMenus.value = [];
         return;
       }
@@ -92,7 +93,7 @@ export function useMenuAggregation() {
       const merged = mergeMenus(mainManifest.menuConfig, subAppManifests);
       
       if (import.meta.env.DEV) {
-        console.log('[useMenuAggregation] 菜单加载完成', {
+        logger.info('[useMenuAggregation] 菜单加载完成', {
           categories: merged.length,
           menuConfig: mainManifest.menuConfig,
         });
@@ -104,7 +105,7 @@ export function useMenuAggregation() {
       // 5. 排序并设置
       overviewMenus.value = merged.sort((a, b) => a.sort - b.sort);
     } catch (error) {
-      console.error('[useMenuAggregation] 加载菜单失败:', error);
+      logger.error('[useMenuAggregation] 加载菜单失败:', error);
       overviewMenus.value = [];
     } finally {
       isLoading.value = false;

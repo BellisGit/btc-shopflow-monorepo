@@ -1,3 +1,4 @@
+import { logger } from '../../../utils/logger';
 ﻿/**
  * 插件资源加载器
  * 用于加载插件的静态资源（SVG、图片等）
@@ -58,7 +59,7 @@ export class ResourceLoader {
           });
         }
       } catch (_error) {
-        console.error(`[ResourceLoader] Failed to load SVG from ${path}:`, _error);
+        logger.error(`[ResourceLoader] Failed to load SVG from ${path}:`, _error);
       }
     }
   }

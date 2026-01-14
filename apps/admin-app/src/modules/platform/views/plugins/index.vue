@@ -1,6 +1,6 @@
 <template>
-  <div class="plugins-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="domainService"
       :right-service="wrappedPluginService"
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { BtcTableGroup } from '@btc/shared-components';
+import { BtcMasterTableGroup } from '@btc/shared-components';
 import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n } from '@btc/shared-core';
 
 const { t } = useI18n();
@@ -49,9 +49,6 @@ const onDomainSelect = (domain: any) => {
 </script>
 
 <style lang="scss" scoped>
-.plugins-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>
 

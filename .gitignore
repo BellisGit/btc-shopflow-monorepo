@@ -37,3 +37,11 @@ node_modules/.vite/
 
 # 部署配置文件（包含敏感信息）
 scripts/deploy-config.sh
+
+# src 目录下的构建产物（TypeScript 编译后的 .js 和 .map 文件）
+# 注意：排除配置文件和脚本文件
+**/src/**/*.js
+!**/vite.config.js
+!**/*.config.js
+!**/scripts/**/*.js
+**/src/**/*.map

@@ -1,6 +1,7 @@
 /**
  * 用户检查轮询管理器
  */
+import { logger } from '../../utils/logger';
 
 import { checkUser } from './useUserCheck';
 import { storeUserCheckData, getUserCheckDataFromStorage, isValidRemainingTime } from './useUserCheckStorage';
@@ -28,7 +29,7 @@ async function performLogout(): Promise<void> {
         await globalLogout();
         return;
       } catch (error) {
-        console.error('[useUserCheckPolling] Logout function failed:', error);
+        logger.error('[useUserCheckPolling] Logout function failed:', error);
       }
     }
   }
@@ -64,16 +65,16 @@ function startExitProcess(): void {
         });
       }
     }).catch((error) => {
-      console.error('[useUserCheckPolling] Failed to import BtcMessage:', error);
+      logger.error('[useUserCheckPolling] Failed to import BtcMessage:', error);
     });
   } catch (error) {
-    console.error('[useUserCheckPolling] Failed to show exit warning:', error);
+    logger.error('[useUserCheckPolling] Failed to show exit warning:', error);
   }
 
   // 5秒后执行退出
   exitTimer = setTimeout(() => {
     performLogout().catch((error) => {
-      console.error('[useUserCheckPolling] Failed to perform logout:', error);
+      logger.error('[useUserCheckPolling] Failed to perform logout:', error);
     });
   }, 5000);
 }
@@ -102,7 +103,7 @@ function calculateActualRemainingTime(
     const actualRemainingTime = Math.max(0, Math.floor((expireTime - currentTime) / 1000));
     return actualRemainingTime;
   } catch (error) {
-    console.error('[useUserCheckPolling] Failed to calculate actual remaining time:', error);
+    logger.error('[useUserCheckPolling] Failed to calculate actual remaining time:', error);
     return -1;
   }
 }
@@ -118,7 +119,7 @@ async function performCheck(): Promise<void> {
   // 防止并发执行
   if (isChecking) {
     if (import.meta.env.DEV) {
-      console.warn('[useUserCheckPolling] performCheck is already running, skipping');
+      logger.warn('[useUserCheckPolling] performCheck is already running, skipping');
     }
     return;
   }
@@ -158,7 +159,7 @@ async function performCheck(): Promise<void> {
       if (diff > maxDiff) {
         // 差异过大，记录警告但继续使用计算值
         if (import.meta.env.DEV) {
-          console.warn(
+          logger.warn(
             `[useUserCheckPolling] 时间差计算与 remainingTime 差异较大: 计算值=${actualRemainingTime}秒, API值=${remainingTime}秒, 差异=${diff}秒`
           );
         }
@@ -169,7 +170,7 @@ async function performCheck(): Promise<void> {
     if (!isValidRemainingTime(actualRemainingTime)) {
       // 异常情况，使用默认间隔（5分钟）重新检查
       if (import.meta.env.DEV) {
-        console.warn(
+        logger.warn(
           `[useUserCheckPolling] 实际剩余时间异常: ${actualRemainingTime}秒，使用默认间隔重新检查`
         );
       }
@@ -185,7 +186,7 @@ async function performCheck(): Promise<void> {
     if (status === 'expired' || status === 'unauthorized') {
       // 立即退出
       if (import.meta.env.DEV) {
-        console.log(`[useUserCheckPolling] 用户状态：${status}，立即退出`);
+        logger.info(`[useUserCheckPolling] 用户状态：${status}，立即退出`);
       }
       stopPolling();
       startExitProcess();
@@ -195,7 +196,7 @@ async function performCheck(): Promise<void> {
     if (status === 'soon_expire' && actualRemainingTime < 30) {
       // 停止轮询，进入退出流程
       if (import.meta.env.DEV) {
-        console.log(
+        logger.info(
           `[useUserCheckPolling] 用户状态：${status}，实际剩余时间：${actualRemainingTime}秒 < 30秒，进入退出流程`
         );
       }
@@ -210,7 +211,7 @@ async function performCheck(): Promise<void> {
     // 如果剩余时间 <= 30秒，不再安排下一次调用（进入退出流程）
     if (nextCallTime <= 0) {
       if (import.meta.env.DEV) {
-        console.log(
+        logger.info(
           `[useUserCheckPolling] 剩余时间：${actualRemainingTime}秒 <= 30秒，进入退出流程`
         );
       }
@@ -238,7 +239,7 @@ async function performCheck(): Promise<void> {
       }, interval);
     }
   } catch (error) {
-    console.error('[useUserCheckPolling] Check failed:', error);
+    logger.error('[useUserCheckPolling] Check failed:', error);
     // 即使出错也继续轮询（使用默认间隔）
     if (isPolling) {
       pollingTimer = setTimeout(() => {
@@ -311,7 +312,7 @@ export function startPolling(callback?: PollingCallback, forceImmediate = false)
     } catch (error) {
       // 如果恢复失败，继续执行立即检查
       if (import.meta.env.DEV) {
-        console.warn('[useUserCheckPolling] Failed to restore remaining time from storage:', error);
+        logger.warn('[useUserCheckPolling] Failed to restore remaining time from storage:', error);
       }
     }
   }

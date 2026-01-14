@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ﻿import { ref, computed, watch, nextTick } from 'vue';
 import type { StrategyNode, StrategyConnection } from '@/types/strategy';
 import { useCanvasScale } from './useCanvasScale';
@@ -164,7 +165,7 @@ export function useStrategyDesigner() {
         // 添加节点
         await addNode(component, { x, y });
       } catch (error) {
-        console.error('Failed to parse component data:', error);
+        logger.error('Failed to parse component data:', error);
       }
     }
   };
@@ -261,7 +262,7 @@ export function useStrategyDesigner() {
 
         selectedNodeId.value = '';
       } catch (error) {
-        console.error('Failed to delete node:', error);
+        logger.error('Failed to delete node:', error);
       }
     } else if (selectedConnection.value) {
       try {
@@ -271,7 +272,7 @@ export function useStrategyDesigner() {
         }
         selectedConnectionId.value = '';
       } catch (error) {
-        console.error('Failed to delete connection:', error);
+        logger.error('Failed to delete connection:', error);
       }
     }
   };

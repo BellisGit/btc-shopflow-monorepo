@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "注释": "=== 在 package.json 的 scripts 部分添加以下内容 ===",
+    
+    "i18n:check:completeness": "node scripts/i18n/check-completeness.mjs",
+    "i18n:check:duplicates": "node scripts/i18n/find-duplicates.mjs",
+    "i18n:check:all": "pnpm run i18n:check:completeness && pnpm run i18n:check:duplicates",
+    
+    "i18n:migrate": "node scripts/i18n/migrate-flat-to-nested.mjs",
+    "i18n:migrate:file": "node scripts/i18n/migrate-flat-to-nested.mjs file",
+    "i18n:migrate:dir": "node scripts/i18n/migrate-flat-to-nested.mjs dir",
+    "i18n:migrate:config": "node scripts/i18n/migrate-flat-to-nested.mjs config"
+  },
+  
+  "devDependencies": {
+    "注释": "需要添加以下依赖",
+    "glob": "^10.3.10"
+  }
+}

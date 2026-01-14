@@ -1,0 +1,104 @@
+// ==================== 设计令牌（Design Tokens）====================
+// 集中管理 BTC 项目的核心设计变量
+// 这些变量是项目设计规范的基础，所有组件和应用都应该使用这些变量
+//
+// 使用说明：
+// 1. 优先使用 Element Plus 变量（--el-*），这些变量会自动适配主题
+// 2. 仅在 Element Plus 未覆盖的场景使用 BTC 自定义变量（--btc-*）
+// 3. 所有变量都应该提供默认值，确保在变量未定义时也能正常工作
+// 4. 变量名使用语义化命名，表达含义而非具体值
+//
+// 迁移说明：
+// ✅ 已完成迁移：使用 @btc/design-tokens 包管理设计令牌
+// 设计令牌包中的 SCSS 变量通过 #{} 插值转换为 CSS 变量
+
+// ==================== 导入设计令牌包 =====================
+// 从 @btc/design-tokens 包导入编译后的设计令牌（SCSS 变量）
+@use '@btc/design-tokens/scss' as *;
+
+// ==================== BTC 自定义设计令牌（从设计令牌包转换）====================
+// 将设计令牌包中的 SCSS 变量转换为 CSS 变量
+
+:root {
+  // CRUD 组件相关令牌
+  // CRUD 行间距（默认 10px）
+  --btc-crud-gap: #{$btc-crud-gap};
+
+  // CRUD 操作列宽度（默认 220px）
+  --btc-crud-op-width: #{$btc-crud-op-width};
+
+  // CRUD 搜索框宽度（默认继承 op-width）
+  --btc-crud-search-width: #{$btc-crud-search-width};
+
+  // CRUD 按钮颜色（默认继承文本颜色）
+  --btc-crud-btn-color: #{$btc-crud-btn-color};
+
+  // CRUD 图标颜色（默认继承主色）
+  --btc-crud-icon-color: #{$btc-crud-icon-color};
+
+  // 图标颜色（默认继承文本颜色）
+  --btc-icon-color: #{$btc-icon-color};
+
+  // 呼吸灯颜色（默认继承主色）
+  --btc-breath-color: #{$btc-breath-color};
+
+  // 表格按钮颜色（默认继承主色）
+  --btc-table-button-color: #{$btc-table-button-color};
+}
+
+// ==================== 组件级变量定义 ====================
+// 这些变量在组件选择器中定义，只在组件内有效
+// 定义位置：各组件样式文件中
+
+// CRUD 组件变量（定义在 .btc-crud 中）
+// 位置：crud/_base.scss
+// --btc-crud-gap
+// --btc-crud-op-width
+
+// CRUD 按钮变量（定义在 .btc-crud-btn 中）
+// 位置：crud/_button.scss
+// --btc-crud-btn-color
+// --btc-crud-icon-color
+
+// 图标按钮变量（定义在 .btc-comm__icon 中）
+// 位置：_components.scss
+// --btc-icon-color
+
+// 呼吸灯变量（定义在 .btc-icon-button--breath 中）
+// 位置：_components.scss
+// --btc-breath-color
+
+// ==================== 变量使用指南 ====================
+//
+// 1. 优先使用 Element Plus 变量
+//    color: var(--el-text-color-primary);
+//
+// 2. 使用 BTC 变量时提供默认值
+//    gap: var(--btc-crud-gap, 10px);
+//
+// 3. 变量可以嵌套引用
+//    --btc-crud-search-width: var(--btc-crud-op-width, 220px);
+//
+// 4. 组件级变量可以覆盖全局变量
+//    .btc-crud {
+//      --btc-crud-gap: 15px;  // 覆盖全局默认值
+//    }
+
+// ==================== 主题切换支持 ====================
+//
+// Element Plus 变量会在主题切换时自动更新
+// BTC 自定义变量如果引用了 Element Plus 变量，也会自动适配
+//
+// 示例：
+// --btc-icon-color: var(--el-text-color-primary);
+// 在暗色主题下，--el-text-color-primary 变为 #e5eaf3
+// --btc-icon-color 也会自动变为 #e5eaf3
+
+// ==================== 扩展说明 ====================
+//
+// 如需新增设计令牌：
+// 1. 确定变量作用域（全局 or 组件级）
+// 2. 使用语义化命名（--btc-xxx）
+// 3. 提供默认值或引用现有变量
+// 4. 更新 CSS_VARIABLES.md 文档
+// 5. 在本文档中添加注释说明

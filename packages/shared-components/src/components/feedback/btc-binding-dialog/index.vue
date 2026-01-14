@@ -184,6 +184,8 @@ import type { SaveBindingApi } from './types';
 import BtcDialog from '../btc-dialog/index';
 import type { Component } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
+import { logger } from '@btc/shared-core';
+
 
 defineOptions({
   name: 'BtcBindingDialog'
@@ -286,12 +288,12 @@ const {
       visible.value = false;
       emit('success');
     } catch (error: any) {
-      console.error('保存绑定信息失败:', error);
+      logger.error('保存绑定信息失败:', error);
       BtcMessage.error(error?.message || '保存绑定信息失败');
     }
   },
   onError: (error) => {
-    console.error('验证失败:', error);
+    logger.error('验证失败:', error);
   }
 });
 

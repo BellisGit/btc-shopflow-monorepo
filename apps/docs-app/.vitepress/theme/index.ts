@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import DefaultTheme from 'vitepress/theme';
 import { h } from 'vue';
 import type { Theme } from 'vitepress';
@@ -418,7 +419,7 @@ export default {
         });
 
       } catch (error) {
-        console.error('[VitePress] Failed to sync theme:', error);
+        logger.error('[VitePress] Failed to sync theme:', error);
       }
     }
 

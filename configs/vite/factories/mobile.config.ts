@@ -2,6 +2,7 @@
  * 移动应用 Vite 配置工厂
  * 生成移动应用的完整 Vite 配置（mobile-app）
  */
+import { logger } from '@btc/shared-core';
 
 import type { UserConfig, Plugin, ViteDevServer } from 'vite';
 import { resolve } from 'path';
@@ -330,7 +331,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             }
             // 确保文件不为空
             if (!manifestContent.trim()) {
-              console.warn('[fix-manifest-plugin] ⚠️ manifest 文件为空，跳过修复');
+              logger.warn('[fix-manifest-plugin] ⚠️ manifest 文件为空，跳过修复');
               return;
             }
             const manifest = JSON.parse(manifestContent);
@@ -363,10 +364,10 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             if (modified) {
               const fixedContent = JSON.stringify(manifest, null, 2);
               writeFileSync(manifestPath, fixedContent, 'utf-8');
-              console.log('[fix-manifest-plugin] ✅ 已修复 manifest.webmanifest（移除 ios 字段，修复 purpose 格式）');
+              logger.info('[fix-manifest-plugin] ✅ 已修复 manifest.webmanifest（移除 ios 字段，修复 purpose 格式）');
             }
           } catch (error) {
-            console.warn('[fix-manifest-plugin] ⚠️ 修复 manifest 时出错:', error);
+            logger.warn('[fix-manifest-plugin] ⚠️ 修复 manifest 时出错:', error);
           }
         }
       },

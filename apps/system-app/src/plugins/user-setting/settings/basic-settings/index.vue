@@ -17,7 +17,7 @@
 import { computed } from 'vue';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import SettingItem from '../../components/shared/SettingItem.vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { useSettingsConfig } from '../../composables/useSettingsConfig';
 import { useSettingsHandlers } from '../../composables/useSettingsHandlers';
 import { useSettingsState } from '../../composables/useSettingsState';
@@ -83,7 +83,7 @@ const handleSettingChange = (handlerName: string | undefined, value: any) => {
   if (typeof handler === 'function') {
     handler(value);
   } else {
-    console.warn(`Handler "${handlerName}" not found in basicHandlers`);
+    logger.warn(`Handler "${handlerName}" not found in basicHandlers`);
   }
 };
 </script>

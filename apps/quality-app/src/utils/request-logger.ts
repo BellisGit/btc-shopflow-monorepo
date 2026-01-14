@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 
 /**
@@ -60,7 +61,7 @@ class RequestLogQueue {
 
     // 检查队列长度，防止内存溢出
     if (this.queue.length >= this.MAX_QUEUE_SIZE) {
-      console.warn(`请求日志队列已满(${this.MAX_QUEUE_SIZE})，丢弃最旧的日志`);
+      logger.warn(`请求日志队列已满(${this.MAX_QUEUE_SIZE})，丢弃最旧的日志`);
       this.queue.shift(); // 移除最旧的日志
     }
 
@@ -77,7 +78,7 @@ class RequestLogQueue {
         // 转换为 JSON 字符串
         paramsString = JSON.stringify(normalizedParams);
       } catch (error) {
-        console.warn('参数序列化失败，使用空对象:', error);
+        logger.warn('参数序列化失败，使用空对象:', error);
         paramsString = '{}';
       }
     }
@@ -183,7 +184,7 @@ class RequestLogQueue {
         this.tryFlush();
       }
     } catch (error) {
-      console.error('批量发送请求日志失败（已重试）:', error);
+      logger.error('批量发送请求日志失败（已重试）:', error);
 
       // 重试机制已经处理了重试，这里只需要暂停发送
       this.isPaused = true;
@@ -193,7 +194,7 @@ class RequestLogQueue {
       setTimeout(() => {
         this.isServiceAvailable = true;
         this.isPaused = false;
-        console.log('请求日志服务已重新启用，继续发送队列中的数据');
+        logger.info('请求日志服务已重新启用，继续发送队列中的数据');
         if (this.queue.length > 0) {
           this.tryFlush();
         }

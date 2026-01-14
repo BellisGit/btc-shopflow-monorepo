@@ -34,6 +34,8 @@ export interface BtcFilterListProps {
   multiple?: boolean; // 是否支持多选（默认 true）
   size?: BtcFilterListSize; // 组件尺寸：large（450px）、small（200px）、default（当前宽度）
   storageKey?: string; // 存储 key，用于区分不同页面的尺寸设置（如果不提供，则不存储）
+  showTagsContainer?: boolean; // 是否显示标签容器，默认 true
+  optionWrap?: boolean; // 是否允许选项换行，默认 true（当容器宽度较小时，可设置为 false 避免选项竖排）
 }
 
 export interface BtcFilterListEmits {
@@ -41,3 +43,23 @@ export interface BtcFilterListEmits {
   'update:modelValue': [result: FilterResult[]];
   'update:size': [size: BtcFilterListSize];
 }
+
+export interface CategoryTagRow {
+  categoryId: string;
+  categoryName: string;
+  tags: Array<{
+    optionValue: any;
+    optionLabel: string;
+  }>;
+  visibleTags: Array<{
+    optionValue: any;
+    optionLabel: string;
+  }>;
+  overflowCount: number;
+  overflowTags: Array<{
+    optionValue: any;
+    optionLabel: string;
+  }>;
+}
+
+export type BtcTagType = 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'pink' | 'cyan' | 'teal' | 'indigo' | 'orange' | 'brown' | 'gray' | 'lime' | 'olive' | 'navy' | 'maroon';

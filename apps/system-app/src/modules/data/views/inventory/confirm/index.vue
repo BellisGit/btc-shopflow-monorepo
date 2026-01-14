@@ -1,6 +1,6 @@
 <template>
-  <div class="inventory-confirm-page">
-    <BtcTableGroup
+  <div class="page">
+    <BtcMasterTableGroup
       ref="tableGroupRef"
       :left-service="checkService"
       :right-service="approvalService"
@@ -24,9 +24,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcMessage, BtcConfirm } from '@btc/shared-components';
+import { BtcMasterTableGroup, BtcMessage, BtcConfirm } from '@btc/shared-components';
 import { service } from '@/services/eps';
 
 defineOptions({
@@ -47,7 +47,7 @@ const checkService = {
   list: async (params?: any) => {
     const checkListService = service.logistics?.warehouse?.check?.list;
     if (!checkListService) {
-      console.warn('[InventoryConfirm] 盘点列表接口不存在');
+      logger.warn('[InventoryConfirm] 盘点列表接口不存在');
       return {
         list: [],
         pagination: {
@@ -105,7 +105,7 @@ const approvalService = {
     }
 
     try {
-      // BtcTableGroup 会自动将左侧选中项的 checkNo 传递到 keyword 对象中
+      // BtcMasterTableGroup 会自动将左侧选中项的 checkNo 传递到 keyword 对象中
       // 这里只需要直接调用接口即可
       const response = await approvalPageService(params || {});
 
@@ -120,7 +120,7 @@ const approvalService = {
       const size = params?.size || 10;
       const normalized = normalizePageResponse(data, page, size);
 
-      // BtcTableGroup 期望返回 { list, total } 格式，而不是 { list, pagination }
+      // BtcMasterTableGroup 期望返回 { list, total } 格式，而不是 { list, pagination }
       return {
         list: normalized.list,
         total: normalized.total,
@@ -156,7 +156,7 @@ const approvalService = {
 // 盘点选择处理
 const onCheckSelect = (check: any) => {
   selectedCheck.value = check;
-  // BtcTableGroup 会自动刷新右侧表格，不需要手动调用 refresh()
+  // BtcMasterTableGroup 会自动刷新右侧表格，不需要手动调用 refresh()
 };
 
 // 判断是否已确认
@@ -243,7 +243,7 @@ const handleConfirm = async (row: any) => {
 };
 
 // 操作列配置（根据状态动态渲染按钮）
-// 注意：BtcTableGroup 期望 op.buttons 是一个数组，而不是函数
+// 注意：BtcMasterTableGroup 期望 op.buttons 是一个数组，而不是函数
 // 如果需要根据行数据动态显示按钮，需要在按钮的 onClick 中处理状态判断
 const opConfig = computed(() => ({
   buttons: [
@@ -281,8 +281,5 @@ const approvalFormItems = computed(() => formItems.value);
 </script>
 
 <style lang="scss" scoped>
-.inventory-confirm-page {
-  height: 100%;
-  box-sizing: border-box;
-}
+
 </style>

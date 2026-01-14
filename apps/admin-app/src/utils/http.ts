@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
@@ -46,7 +47,7 @@ export class Http {
         // 调试日志（仅在开发/预览环境）
         if (import.meta.env.DEV || window.location.port.startsWith('41')) {
           if (!token && config.url?.includes('/api/')) {
-            console.warn(`[HTTP] Request ${config.url} has no token:`, {
+            logger.warn(`[HTTP] Request ${config.url} has no token:`, {
               hasCookieToken: !!cookieToken,
               hasStorageToken: !!storageToken,
               cookies: document.cookie.split(';').map(c => c.trim()),
@@ -147,7 +148,7 @@ export class Http {
               startUserCheckPolling(true);
             }).catch((error) => {
               if (import.meta.env.DEV) {
-                console.warn('[http] Failed to start user check polling after login:', error);
+                logger.warn('[http] Failed to start user check polling after login:', error);
               }
             });
           } catch (error) {
@@ -167,7 +168,7 @@ export class Http {
               } catch (error) {
                 // 静默失败，不影响登录流程
                 if (import.meta.env.DEV) {
-                  console.warn('[http] Failed to load domain list after login:', error);
+                  logger.warn('[http] Failed to load domain list after login:', error);
                 }
               }
             }, 500); // 延迟 500ms 确保 EPS 服务已初始化
@@ -182,7 +183,7 @@ export class Http {
               bridge.sendMessage('login', { timestamp: Date.now() });
             }).catch((error) => {
               if (import.meta.env.DEV) {
-                console.warn('[http] Failed to broadcast login message:', error);
+                logger.warn('[http] Failed to broadcast login message:', error);
               }
             });
           } catch (error) {
@@ -327,7 +328,7 @@ export class Http {
         }
       } catch (err) {
         // 获取用户信息失败，仍然记录日志但不包含用户信息
-        console.warn('Failed to get user info:', err);
+        logger.warn('Failed to get user info:', err);
       }
 
       // 如果没有用户ID，说明未登录或用户信息不完整，不记录日志
@@ -393,7 +394,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      console.error('Failed to log request:', error);
+      logger.error('Failed to log request:', error);
     }
   }
 
@@ -466,7 +467,7 @@ export class Http {
     try {
       const result = interceptor.onFulfilled(mockResponse);
     } catch (error) {
-      console.error('Interceptor error:', error);
+      logger.error('Interceptor error:', error);
     }
   }
 

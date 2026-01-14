@@ -6,6 +6,7 @@
         v-if="Component"
         :is="Component"
         :key="route.meta?.noLayout ? route.fullPath : undefined"
+        :class="getPageClass(route)"
       />
     </router-view>
   </div>
@@ -13,6 +14,15 @@
 
 <script setup lang="ts">
 import { BtcDevTools } from '@btc/shared-components';
+import { isPageRoute, getPageClass as getPageClassName } from '@btc/shared-router';
+
+// 获取页面容器类名
+function getPageClass(currentRoute: any): string {
+  if (!isPageRoute(currentRoute)) {
+    return ''; // 非页面级路由不添加 .page 类
+  }
+  return getPageClassName(currentRoute);
+}
 </script>
 
 <style>

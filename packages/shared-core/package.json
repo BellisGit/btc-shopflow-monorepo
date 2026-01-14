@@ -11,7 +11,8 @@
       "types": "./src/index.d.ts",
       "development": "./src/index.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
     },
     "./utils": {
       "types": "./src/utils/index.d.ts",
@@ -55,6 +56,30 @@
       "import": "./dist/utils/error-monitor/index.mjs",
       "require": "./dist/utils/error-monitor/index.js"
     },
+    "./utils/logger": {
+      "types": "./src/utils/logger/index.d.ts",
+      "development": "./src/utils/logger/index.ts",
+      "import": "./dist/utils/logger/index.mjs",
+      "require": "./dist/utils/logger/index.js"
+    },
+    "./utils/form": {
+      "types": "./src/utils/form/index.d.ts",
+      "development": "./src/utils/form/index.ts",
+      "import": "./dist/utils/form/index.mjs",
+      "require": "./dist/utils/form/index.js"
+    },
+    "./utils/form/zod-validator": {
+      "types": "./src/utils/form/zod-validator.d.ts",
+      "development": "./src/utils/form/zod-validator.ts",
+      "import": "./dist/utils/form/zod-validator.mjs",
+      "require": "./dist/utils/form/zod-validator.js"
+    },
+    "./utils/format": {
+      "types": "./src/utils/format/index.d.ts",
+      "development": "./src/utils/format/index.ts",
+      "import": "./dist/utils/format/index.mjs",
+      "require": "./dist/utils/format/index.js"
+    },
     "./utils/qiankun/load-layout-app": {
       "types": "./src/utils/qiankun/load-layout-app.d.ts",
       "development": "./src/utils/qiankun/load-layout-app.ts",
@@ -69,8 +94,8 @@
     },
     "./manifest": {
       "types": "./src/manifest/index.d.ts",
-      "development": "./src/manifest/index.ts",
-      "import": "./src/manifest/index.ts",
+      "development": "./dist/manifest/index.mjs",
+      "import": "./dist/manifest/index.mjs",
       "require": "./dist/manifest/index.js"
     },
     "./env": {
@@ -135,7 +160,7 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "prebuild": "node scripts/generate-overview-i18n.mjs",
+    "prebuild": "node ../../scripts/check-src-artifacts.mjs packages/shared-core && node scripts/generate-overview-i18n.mjs",
     "build": "vite build && node scripts/create-dist-src-index.mjs",
     "postbuild": "node scripts/create-dist-src-index.mjs",
     "type-check": "tsc --noEmit --project tsconfig.type-check.json"
@@ -153,9 +178,13 @@
     "dexie": "^4.2.1",
     "file-type": "^21.2.0",
     "pinia-plugin-persistedstate": "^3.2.3",
+    "pino": "^10.1.1",
+    "pino-pretty": "^13.1.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@build-utils/logger": "workspace:*",
+    "@types/pino": "^7.0.5",
     "@vueuse/core": "^13.9.0",
     "element-plus": "2.13.0",
     "pinia": "^3.0.3",

@@ -2,6 +2,7 @@
  * CSS 相关插件
  * 确保 CSS 文件被正确打包
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import type { OutputOptions, OutputBundle } from 'rollup';
@@ -61,36 +62,36 @@ export function ensureCssPlugin(): Plugin {
             if (hasInsertStyleWithCss) patterns.push('insertStyle 函数');
             if (hasStyleTagWithContent) patterns.push('<style> 标签');
             if (hasInlineCssString) patterns.push('内联 CSS 字符串');
-            console.warn(`[ensure-css-plugin] ⚠️ 警告：在 ${file} 中检测到可能的内联 CSS（模式：${patterns.join(', ')}）`);
+            logger.warn(`[ensure-css-plugin] ⚠️ 警告：在 ${file} 中检测到可能的内联 CSS（模式：${patterns.join(', ')}）`);
           }
         }
       });
 
       if (hasInlineCss) {
-        console.warn('[ensure-css-plugin] ⚠️ 警告：检测到 CSS 可能被内联到 JS 中，这会导致 qiankun 无法正确加载样式');
-        console.warn(`[ensure-css-plugin] 可疑文件：${suspiciousFiles.join(', ')}`);
-        console.warn('[ensure-css-plugin] 请检查 vite-plugin-qiankun 配置和 build.assetsInlineLimit 设置');
+        logger.warn('[ensure-css-plugin] ⚠️ 警告：检测到 CSS 可能被内联到 JS 中，这会导致 qiankun 无法正确加载样式');
+        logger.warn(`[ensure-css-plugin] 可疑文件：${suspiciousFiles.join(', ')}`);
+        logger.warn('[ensure-css-plugin] 请检查 vite-plugin-qiankun 配置和 build.assetsInlineLimit 设置');
       }
     },
     writeBundle(_options: OutputOptions, bundle: OutputBundle) {
       const cssFiles = Object.keys(bundle).filter(file => file.endsWith('.css'));
       if (cssFiles.length === 0) {
-        console.error('[ensure-css-plugin] ❌ 错误：构建产物中无 CSS 文件！');
-        console.error('[ensure-css-plugin] 请检查：');
-        console.error('1. 入口文件是否静态导入全局样式（index.css/uno.css/element-plus.css）');
-        console.error('2. 是否有 Vue 组件中使用 <style> 标签');
-        console.error('3. UnoCSS 配置是否正确，是否导入 @unocss all');
-        console.error('4. vite-plugin-qiankun 的 useDevMode 是否在生产环境正确关闭');
-        console.error('5. build.assetsInlineLimit 是否设置为 0（禁止内联）');
+        logger.error('[ensure-css-plugin] ❌ 错误：构建产物中无 CSS 文件！');
+        logger.error('[ensure-css-plugin] 请检查：');
+        logger.error('1. 入口文件是否静态导入全局样式（index.css/uno.css/element-plus.css）');
+        logger.error('2. 是否有 Vue 组件中使用 <style> 标签');
+        logger.error('3. UnoCSS 配置是否正确，是否导入 @unocss all');
+        logger.error('4. vite-plugin-qiankun 的 useDevMode 是否在生产环境正确关闭');
+        logger.error('5. build.assetsInlineLimit 是否设置为 0（禁止内联）');
       } else {
-        console.log(`[ensure-css-plugin] ✅ 成功打包 ${cssFiles.length} 个 CSS 文件：`, cssFiles);
+        logger.info(`[ensure-css-plugin] ✅ 成功打包 ${cssFiles.length} 个 CSS 文件：`, cssFiles);
         cssFiles.forEach(file => {
           const asset = bundle[file] as any;
           if (asset && asset.source) {
             const sizeKB = (asset.source.length / 1024).toFixed(2);
-            console.log(`  - ${file}: ${sizeKB}KB`);
+            logger.info(`  - ${file}: ${sizeKB}KB`);
           } else if (asset && asset.fileName) {
-            console.log(`  - ${asset.fileName || file}`);
+            logger.info(`  - ${asset.fileName || file}`);
           }
         });
       }

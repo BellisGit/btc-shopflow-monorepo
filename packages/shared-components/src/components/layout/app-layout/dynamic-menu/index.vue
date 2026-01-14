@@ -30,7 +30,7 @@ defineOptions({
 
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
 import { getCurrentEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
@@ -134,7 +134,7 @@ const currentMenuItems = computed(() => {
   // 确保注册表存在
   if (!menuRegistry) {
     if (import.meta.env.DEV || !(window as any).__MENU_REGISTRY_MISSING_LOGGED__) {
-      console.warn('[DynamicMenu] 菜单注册表不存在', { app });
+      logger.warn('[DynamicMenu] 菜单注册表不存在', { app });
       (window as any).__MENU_REGISTRY_MISSING_LOGGED__ = true;
     }
     return [];
@@ -161,14 +161,14 @@ const currentMenuItems = computed(() => {
         }
       } catch (error) {
         if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_ERROR_${app}__`]) {
-          console.error(`[DynamicMenu] 菜单注册失败: ${app}`, error);
+          logger.error(`[DynamicMenu] 菜单注册失败: ${app}`, error);
           (window as any)[`__MENU_REGISTER_ERROR_${app}__`] = true;
         }
       }
     } else {
       // 如果菜单注册函数不存在，输出警告
       if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_FN_MISSING_${app}__`]) {
-        console.warn(`[DynamicMenu] 菜单注册函数不存在: ${app}`, {
+        logger.warn(`[DynamicMenu] 菜单注册函数不存在: ${app}`, {
           __REGISTER_MENUS_FOR_APP__: typeof registerMenusFn,
           registry: menuRegistry.value,
           allApps: Object.keys(menuRegistry.value || {})
@@ -275,7 +275,7 @@ onMounted(() => {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.warn('[DynamicMenu] 菜单注册失败:', error);
+            logger.warn('[DynamicMenu] 菜单注册失败:', error);
           }
         }
       } else {
@@ -296,7 +296,7 @@ onMounted(() => {
                     }
                   } catch (error) {
                     if (import.meta.env.DEV) {
-                      console.warn('[DynamicMenu] 从 manifest 注册菜单失败:', error);
+                      logger.warn('[DynamicMenu] 从 manifest 注册菜单失败:', error);
                     }
                   }
                 }).catch(() => {
@@ -305,7 +305,7 @@ onMounted(() => {
               }
             } catch (error) {
               if (import.meta.env.DEV) {
-                console.warn('[DynamicMenu] 获取 manifest 菜单失败:', error);
+                logger.warn('[DynamicMenu] 获取 manifest 菜单失败:', error);
               }
             }
           }).catch(() => {
@@ -411,7 +411,7 @@ onMounted(() => {
               checkHasMenuConfig().then((stillHasMenuConfig) => {
                 if (stillHasMenuConfig) {
                   if (import.meta.env.DEV) {
-                    console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+                    logger.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
                   }
                 }
                 // 如果没有菜单配置，静默跳过，不输出警告
@@ -435,7 +435,7 @@ onMounted(() => {
               clearInterval(checkInterval);
               retrying = false;
               if (import.meta.env.DEV) {
-                console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+                logger.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
               }
             }
           }, 100);
@@ -763,7 +763,7 @@ watch(
       // 根路径 `/` 是父路由，它的子路由才是实际的菜单项
       if (newPath === '/' || newPath === '') {
         if (import.meta.env.DEV) {
-          console.log('[DynamicMenu] 根路径，跳过菜单激活:', {
+          logger.info('[DynamicMenu] 根路径，跳过菜单激活:', {
             originalPath: newPath,
             currentApp: app,
           });
@@ -786,7 +786,7 @@ watch(
         // 特殊处理：根路径 `/` 没有对应的菜单项，直接返回
         if (newPath === '/' || newPath === '') {
           if (import.meta.env.DEV) {
-            console.log('[DynamicMenu] 子应用根路径（生产环境），跳过菜单激活:', {
+            logger.info('[DynamicMenu] 子应用根路径（生产环境），跳过菜单激活:', {
               originalPath: newPath,
               currentApp: app,
             });
@@ -800,7 +800,7 @@ watch(
         // 特殊处理：子应用根路径（如 `/admin` -> `/`）没有对应的菜单项，直接返回
         if (subAppPath === '/' || subAppPath === '') {
           if (import.meta.env.DEV) {
-            console.log('[DynamicMenu] 子应用根路径（开发环境），跳过菜单激活:', {
+            logger.info('[DynamicMenu] 子应用根路径（开发环境），跳过菜单激活:', {
               originalPath: newPath,
               subAppPath,
               currentApp: app,
@@ -817,7 +817,7 @@ watch(
       // 特殊处理：根路径 `/` 没有对应的菜单项，直接返回
       if (newPath === '/' || newPath === '') {
         if (import.meta.env.DEV) {
-          console.log('[DynamicMenu] 子应用根路径（独立运行+生产环境），跳过菜单激活:', {
+          logger.info('[DynamicMenu] 子应用根路径（独立运行+生产环境），跳过菜单激活:', {
             originalPath: newPath,
             currentApp: currentApp.value,
           });
@@ -1084,7 +1084,7 @@ const handleMenuSelect = (index: string) => {
     // 如果找到的菜单项有 children，说明是分组节点，不应该导航
     if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
       if (import.meta.env.DEV) {
-        console.log('[dynamic-menu] 跳过分组节点导航:', index, matchedItem);
+        logger.info('[dynamic-menu] 跳过分组节点导航:', index, matchedItem);
       }
       return;
     }
@@ -1125,7 +1125,7 @@ const handleMenuSelect = (index: string) => {
       // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
       // 这通常发生在点击分组节点时，虽然我们已经过滤了，但作为兜底处理
       if (import.meta.env.DEV) {
-        console.error('[dynamic-menu] 路由跳转失败:', {
+        logger.error('[dynamic-menu] 路由跳转失败:', {
           absolutePath,
           routePath,
           error: err,

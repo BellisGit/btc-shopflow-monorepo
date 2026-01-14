@@ -3,6 +3,7 @@
  * 在构建时转换代码中的 import() 调用，将相对路径转换为 CDN URL
  * 与 cdnAssetsPlugin 配合，实现完整的 CDN 加速
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 
@@ -42,9 +43,9 @@ export function cdnImportPlugin(options: CdnImportPluginOptions): Plugin {
     apply: 'build',
     buildStart() {
       if (enabled) {
-        console.log(`[cdn-import] CDN 动态导入转换已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
+        logger.info(`[cdn-import] CDN 动态导入转换已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
       } else {
-        console.log(`[cdn-import] CDN 动态导入转换已禁用`);
+        logger.info(`[cdn-import] CDN 动态导入转换已禁用`);
       }
     },
     renderChunk(code: string, chunk: any) {
@@ -117,7 +118,7 @@ export function cdnImportPlugin(options: CdnImportPluginOptions): Plugin {
       });
 
       if (modified) {
-        console.log(`[cdn-import] 已转换 chunk ${chunk.fileName} 中的动态导入为 CDN URL`);
+        logger.info(`[cdn-import] 已转换 chunk ${chunk.fileName} 中的动态导入为 CDN URL`);
       }
 
       return modified ? { code: newCode, map: null } : null;

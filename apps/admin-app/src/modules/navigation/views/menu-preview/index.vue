@@ -1,5 +1,5 @@
 <template>
-  <div class="menu-preview-page">
+  <div class="page">
     <div class="preview-container">
       <!-- ???? -->
       <BtcCrudRow>
@@ -164,9 +164,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.menu-preview-page {
-  padding: 0;
-}
+
 
 .preview-container {
   min-height: 400px;

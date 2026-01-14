@@ -2,6 +2,7 @@
  * Locales 静态文件插件
  * 在开发服务器层面提供 src/locales/*.json 文件，供主应用通过 fetch 加载
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin, ViteDevServer } from 'vite';
 import type { ResolvedConfig } from 'vite';
@@ -41,7 +42,7 @@ export function localesStaticPlugin(appDir: string): Plugin {
     // 检查文件是否存在
     if (!existsSync(fullPath)) {
       // 文件不存在，记录警告并继续下一个中间件
-      console.warn(`[locales-static] File not found: ${fullPath} (requested: ${req.url})`);
+      logger.warn(`[locales-static] File not found: ${fullPath} (requested: ${req.url})`);
       next();
       return;
     }
@@ -61,7 +62,7 @@ export function localesStaticPlugin(appDir: string): Plugin {
       res.end(content);
     } catch (error) {
       // 读取文件失败，继续下一个中间件
-      console.warn(`[locales-static] Failed to read file: ${fullPath}`, error);
+      logger.warn(`[locales-static] Failed to read file: ${fullPath}`, error);
       next();
     }
   };

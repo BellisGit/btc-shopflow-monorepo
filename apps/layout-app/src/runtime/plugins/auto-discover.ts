@@ -1,4 +1,4 @@
-import type { Plugin } from '@btc/shared-core';
+import type { Plugin, logger } from '@btc/shared-core';
 import { tSync } from '../i18n/getters';
 
 /**
@@ -32,7 +32,7 @@ export async function discoverSystemPlugins(): Promise<Plugin[]> {
         }
       }
     } catch (error) {
-      console.error(`[layout-app] ${tSync('common.error.plugin_parse_failed')}:`, filePath, error);
+      logger.error(`[layout-app] ${tSync('common.error.plugin_parse_failed')}:`, filePath, error);
     }
   }
 

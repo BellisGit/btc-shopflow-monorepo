@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser';
 import { appStorage } from '@/utils/app-storage';
@@ -200,14 +201,14 @@ export function useUserInfo() {
   const loadProfileInfo = async () => {
     try {
       if (import.meta.env.DEV) {
-        console.log('[useUserInfo] loadProfileInfo 被调用（只从缓存读取，不调用接口）');
+        logger.info('[useUserInfo] loadProfileInfo 被调用（只从缓存读取，不调用接口）');
       }
       
       // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该加载
       const user = appStorage.user.get();
       if (!user) {
         if (import.meta.env.DEV) {
-          console.log('[useUserInfo] 用户未登录，跳过加载');
+          logger.info('[useUserInfo] 用户未登录，跳过加载');
         }
         return;
       }
@@ -217,7 +218,7 @@ export function useUserInfo() {
       const cachedProfileInfo = getProfileInfoFromCache();
       
       if (import.meta.env.DEV) {
-        console.log('[useUserInfo] 从缓存读取结果:', cachedProfileInfo ? '有数据' : '无数据');
+        logger.info('[useUserInfo] 从缓存读取结果:', cachedProfileInfo ? '有数据' : '无数据');
       }
 
       if (cachedProfileInfo) {
@@ -262,7 +263,7 @@ export function useUserInfo() {
     } catch (error) {
       // 静默失败，不影响页面显示
       if (import.meta.env.DEV) {
-        console.warn('加载用户信息失败:', error);
+        logger.warn('加载用户信息失败:', error);
       }
     }
   };

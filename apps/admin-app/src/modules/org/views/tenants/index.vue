@@ -1,4 +1,5 @@
 <template>
+  <div class="page">
     <BtcCrud ref="crudRef" :service="tenantService">
       <BtcCrudRow>
         <div class="btc-crud-primary-actions">
@@ -19,6 +20,7 @@
       </BtcCrudRow>
       <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
     </BtcCrud>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -31,3 +33,6 @@ const { formItems } = usePageForms('org.tenants');
 const tenantService = usePageService('org.tenants');
 </script>
 
+<style lang="scss" scoped>
+
+</style>

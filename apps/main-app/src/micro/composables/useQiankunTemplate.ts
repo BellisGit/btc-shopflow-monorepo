@@ -3,7 +3,7 @@
  * 用于处理 HTML 模板，修复资源路径并确保 script 标签为 module 类型
  */
 
-import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
+import { getAppBySubdomain, getAppByPathPrefix, logger } from '@btc/shared-core/configs/app-scanner';
 
 /**
  * 清理旧 chunk 引用
@@ -15,7 +15,7 @@ function cleanOldChunkReferences(processedTpl: string): string {
     OLD_REF_PATTERN.lastIndex = 0;
     const oldRefMatches = processedTpl.match(OLD_REF_PATTERN);
     if (oldRefMatches && oldRefMatches.length > 0) {
-      console.warn(`[getTemplate] 检测到 ${oldRefMatches.length} 个旧 chunk 引用，将强制删除:`, oldRefMatches.slice(0, 5).join(', '));
+      logger.warn(`[getTemplate] 检测到 ${oldRefMatches.length} 个旧 chunk 引用，将强制删除:`, oldRefMatches.slice(0, 5).join(', '));
 
       const oldHashList = OLD_REF_PATTERN.source.replace(/^\/|\/[gimuy]*$/g, '').split('|');
       const oldScriptPattern = new RegExp(`<script[^>]*src=["'][^"']*(${oldHashList.join('|')})[^"']*["'][^>]*>`, 'gi');
@@ -33,7 +33,7 @@ function cleanOldChunkReferences(processedTpl: string): string {
         return openTag + before + cleanedImport;
       });
 
-      console.log(`[getTemplate] ✅ 已清理所有旧 chunk 引用`);
+      logger.info(`[getTemplate] ✅ 已清理所有旧 chunk 引用`);
     }
   }
   return processedTpl;
@@ -205,7 +205,7 @@ function getBaseUrlAndAppName(
         entryUrl = new URL(entry, window.location.origin);
       }
     } catch (e) {
-      console.warn('[getTemplate] 解析 entry URL 失败:', entry, e);
+      logger.warn('[getTemplate] 解析 entry URL 失败:', entry, e);
     }
 
     if (entryUrl) {
@@ -259,7 +259,7 @@ function getBaseUrlAndAppName(
             entryUrl = new URL(appEntry, window.location.origin);
           }
         } catch (e) {
-          console.warn('[getTemplate] 解析 appEntry URL 失败:', appEntry, e);
+          logger.warn('[getTemplate] 解析 appEntry URL 失败:', appEntry, e);
         }
 
         if (entryUrl) {

@@ -71,7 +71,7 @@ defineOptions({
 });
 
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useI18n, onGlobalStateChange } from '@btc/shared-core';
+import { useI18n, onGlobalStateChange, logger } from '@btc/shared-core';
 import { useRouter } from 'vue-router';
 import '@btc-assets/icons/system/iconfont.css';
 
@@ -121,7 +121,7 @@ const loadNotifications = () => {
         })
         .slice(0, 20);
     } catch (error) {
-      console.warn('[NotificationPanel] 获取通知列表失败:', error);
+      logger.warn('[NotificationPanel] 获取通知列表失败:', error);
       noticeList.value = [];
     }
   } else {
@@ -206,7 +206,7 @@ const handleNotificationClick = (item: NotificationItem) => {
   //     loadNotifications();
   //     window.dispatchEvent(new CustomEvent('notification-center-updated'));
   //   } catch (error) {
-  //     console.warn('[NotificationPanel] 标记通知已读失败:', error);
+  //     logger.warn('[NotificationPanel] 标记通知已读失败:', error);
   //   }
   // }
 };
@@ -220,7 +220,7 @@ const handleReadAll = () => {
   //     loadNotifications();
   //     window.dispatchEvent(new CustomEvent('notification-center-updated'));
   //   } catch (error) {
-  //     console.warn('[NotificationPanel] 标记全部已读失败:', error);
+  //     logger.warn('[NotificationPanel] 标记全部已读失败:', error);
   //   }
   // }
 };

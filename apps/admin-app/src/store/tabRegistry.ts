@@ -22,6 +22,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'test-api-test-center': { key: 'test-api-test-center', title: 'API Test Center', path: '/admin/test/api-test-center', i18nKey: 'menu.test_features.api_test_center' },
     'test-inventory-ticket-print': { key: 'test-inventory-ticket-print', title: 'Inventory Ticket Print', path: '/admin/test/inventory-ticket-print', i18nKey: 'menu.test_features.inventory_ticket_print' },
     'test-filter-list-test': { key: 'test-filter-list-test', title: 'Filter List Test', path: '/admin/test/filter-list-test', i18nKey: 'menu.test_features.filter_list_test' },
+    'test-multi-column-layout-test': { key: 'test-multi-column-layout-test', title: 'Multi Column Layout Test', path: '/admin/test/multi-column-layout-test', i18nKey: 'menu.test_features.multi_column_layout_test' },
 
     // 平台治理
     'platform-domains': { key: 'platform-domains', title: 'Domains', path: '/admin/platform/domains', i18nKey: 'menu.platform.domains' },

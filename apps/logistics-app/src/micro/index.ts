@@ -10,7 +10,7 @@ import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuI
 import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, type ProcessItem } from '../store';
 import { getCurrentAppFromPath } from '@btc/shared-components';
-import { assignIconsToMenuTree } from '@btc/shared-core';
+import { assignIconsToMenuTree, logger } from '@btc/shared-core';
 
 // 应用名称映射（用于显示友好的中文名称，使用国际化键）
 const appNameMap: Record<string, string> = {
@@ -232,14 +232,18 @@ function filterQiankunLogs() {
     if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
       return;
     }
-    originalInfo(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.info(message, ...args);
   };
 
   console.warn = (...args: any[]) => {
     if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
       return;
     }
-    originalWarn(...args);
+    // 使用 logger 统一输出，支持日志上报和格式统一
+    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+    logger.warn(message, ...args);
   };
 }
 
@@ -267,7 +271,7 @@ export function setupQiankun() {
       registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
       clearTabs: () => clearTabs(app.name),
       setActiveTab: (tabKey: string) => {
-        console.log('[Main] Sub-app set active tab:', app.name, tabKey);
+        logger.info('[Main] Sub-app set active tab:', app.name, tabKey);
       },
     },
     // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
@@ -345,7 +349,7 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      console.error(`[qiankun]`, 'common.system.container_not_in_dom');
+                      logger.error(`[qiankun]`, 'common.system.container_not_in_dom');
                       reject(new Error(`common.system.container_not_in_dom_cannot_load ${app.name}`));
                       return;
                     }
@@ -371,7 +375,7 @@ export function setupQiankun() {
                                     computedStyle.opacity !== '0';
 
                     if (!isVisible) {
-                      console.warn(`[qiankun]`, 'common.system.container_still_invisible');
+                      logger.warn(`[qiankun]`, 'common.system.container_still_invisible');
                       container.style.setProperty('display', 'flex', 'important');
                       container.style.setProperty('visibility', 'visible', 'important');
                       container.style.setProperty('opacity', '1', 'important');
@@ -393,7 +397,7 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    console.error(`[qiankun]`, 'common.system.container_not_found', `${maxRetries * retryDelay}ms`);
+                    logger.error(`[qiankun]`, 'common.system.container_not_found', `${maxRetries * retryDelay}ms`);
                     reject(new Error(`common.system.container_not_exists ${app.name}`));
                   }
                 }

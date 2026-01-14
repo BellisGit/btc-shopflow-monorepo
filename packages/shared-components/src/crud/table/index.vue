@@ -1,27 +1,28 @@
 <template>
-  <el-table
-    ref="tableRef"
-    class="btc-table"
-    :key="rebuildKey"
-    :data="crud?.tableData?.value ?? []"
-    :loading="crud?.loading?.value || false"
-      :height="height || undefined"
-    :max-height="autoHeight ? (autoMaxHeight && autoMaxHeight > 0 ? autoMaxHeight : (maxHeight ?? undefined)) : (maxHeight || undefined)"
-    :row-key="rowKey || 'username'"
-    :empty-text="translatedEmptyText"
+  <el-scrollbar>
+    <el-table
+      ref="tableRef"
+      class="btc-table"
+      :key="rebuildKey"
+      :data="crud?.tableData?.value ?? []"
+      :loading="crud?.loading?.value || false"
+      :height="height || '100%'"
+      :max-height="autoHeight ? (autoMaxHeight && autoMaxHeight > 0 ? autoMaxHeight : (maxHeight ?? undefined)) : (maxHeight || undefined)"
+      :row-key="rowKey || 'username'"
+      :empty-text="translatedEmptyText"
       :default-sort="computedDefaultSort"
       :border="currentBorder"
       :stripe="currentStripe"
       :size="currentSize"
       :header-cell-style="mergedHeaderCellStyle"
-    highlight-current-row
-    fit
+      highlight-current-row
+      fit
       v-bind="tableAttrs"
-    @selection-change="crud?.handleSelectionChange"
-    @sort-change="onSortChange"
-    @row-contextmenu="onRowContextMenu"
-    style="width: 100%"
-  >
+      @selection-change="crud?.handleSelectionChange"
+      @sort-change="onSortChange"
+      @row-contextmenu="onRowContextMenu"
+      style="width: 100%"
+    >
     <table-column
         v-for="(column, index) in visibleColumns"
         :key="column.prop || column.type || index"
@@ -100,14 +101,16 @@
       </div>
     </template>
   </el-table>
+  </el-scrollbar>
 </template>
 
 <script setup lang="ts">
 import { ref, inject, provide, toRefs, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useAttrs } from 'vue';
+import { ElScrollbar } from 'element-plus';
+import type { TableInstance } from 'element-plus';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-import type { TableInstance } from 'element-plus';
 import type { TableColumn, TableProps, TableSize, TableToolbarItem } from './types';
 import {
   useTableColumns,
@@ -649,8 +652,21 @@ defineExpose({
 // 修复固定列层级遮挡问题
 // 核心问题：样式穿透、选择器权重、层级上下文、背景色透明
 .btc-table {
+  // .container 已经强制设置了 width: 100% 和 height: 100%
+  // width: 100%; // 可选：显式设置，但 .container 已强制设置
+  // height: 100%; // 可选：显式设置，但 .container 已强制设置
+
+  display: flex; // flex 布局
+  flex-direction: column; // 垂直布局
+  min-height: 0; // 允许收缩
+
   // 使用 :deep() 穿透 scoped 样式隔离，确保样式作用到 el-table 内部 DOM
   :deep(.el-table) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     // 1. 固定右侧列（操作列）- 最高层级
     .el-table__fixed-right {
       position: absolute !important; // 确保定位生效
@@ -689,6 +705,11 @@ defineExpose({
 
     // 3. 中间滚动区域 - 最低层级，确保在固定列下方
     .el-table__inner {
+      flex: 1;
+      min-height: 0;
+      // 注意：不应该在这里设置 overflow-y: auto
+      // 滚动由 .container 统一处理，自动出现滚动条
+
       .el-table__header-wrapper,
       .el-table__body-wrapper {
         position: relative !important; // 补全定位，确保 z-index 生效

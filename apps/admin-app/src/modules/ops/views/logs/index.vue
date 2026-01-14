@@ -1,5 +1,5 @@
 <template>
-  <div class="logs-page">
+  <div class="page">
     <BtcTabs v-model="activeTab" :tabs="logTabs" @tab-change="handleTabChange">
       <!-- 操作日志 Tab -->
       <template #operation>
@@ -122,7 +122,7 @@ import {
   BtcTable,
   BtcPagination
 } from '@btc/shared-components';
-import { useI18n, usePageColumns, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, usePageColumns, getPageConfigFull, logger } from '@btc/shared-core';
 import { BtcEmpty } from '@btc/shared-components';
 
 defineOptions({
@@ -201,10 +201,10 @@ const detailFields = computed(() => {
 // 处理tab切换
 const handleTabChange = (tab: any) => {
   activeTab.value = tab.name;
-  console.log('[LogsCenter] tab-change →', tab.name, 'currentStorageKey =', currentStorageKey.value);
+  logger.info('[LogsCenter] tab-change →', tab.name, 'currentStorageKey =', currentStorageKey.value);
   // 等待渲染后再次打印
   nextTick(() => {
-    console.log('[LogsCenter] after render, activeTab =', activeTab.value, 'storageKey =', currentStorageKey.value);
+    logger.info('[LogsCenter] after render, activeTab =', activeTab.value, 'storageKey =', currentStorageKey.value);
   });
 };
 
@@ -212,7 +212,7 @@ const handleTabChange = (tab: any) => {
 watch(
   () => activeTab.value,
   (val, oldVal) => {
-    console.log('[LogsCenter] activeTab changed:', oldVal, '→', val, 'storageKey =', currentStorageKey.value);
+    logger.info('[LogsCenter] activeTab changed:', oldVal, '→', val, 'storageKey =', currentStorageKey.value);
   },
   { immediate: true },
 );
@@ -237,11 +237,7 @@ const formatJson = (jsonStr: string) => {
 </script>
 
 <style lang="scss" scoped>
-.logs-page {
-  height: 100%;
-  box-sizing: border-box;
-  overflow: hidden; // 防止页面滚动，让表格内部处理滚动
-}
+
 
 // 局部禁用下拉过渡，减少 ResizeObserver 回调链
 :deep(.el-dropdown__list) {

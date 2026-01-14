@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 /**
  * 资源加载器
  * 实现 CDN -> OSS -> 本地的三级降级策略
@@ -682,7 +683,7 @@ function setupScriptInterceptor() {
             if (config?.enabled && resourceLoader) {
               const appName = config.appName;
               if (!appName) {
-                console.warn('[resource-loader] 未找到应用名称配置，跳过 CDN 加速');
+                logger.warn('[resource-loader] 未找到应用名称配置，跳过 CDN 加速');
                 script.setAttribute('src', value);
                 return;
               }
@@ -722,7 +723,7 @@ function setupScriptInterceptor() {
                     script.dispatchEvent(new Event('load'));
                   })
                   .catch(error => {
-                    console.error(`[resource-loader] 加载脚本失败: ${value}`, error);
+                    logger.error(`[resource-loader] 加载脚本失败: ${value}`, error);
                     if (script.onerror) {
                       script.onerror(new ErrorEvent('error', { error }) as any);
                     }
@@ -880,7 +881,7 @@ function setupStylesheetInterceptor() {
     }
 
     // 回退到本地路径
-    console.warn(`[resource-loader] CSS 加载失败，回退到本地: ${href} -> ${localPath}`);
+    logger.warn(`[resource-loader] CSS 加载失败，回退到本地: ${href} -> ${localPath}`);
     link.href = localPath;
   };
 

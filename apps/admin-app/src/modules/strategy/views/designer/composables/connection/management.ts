@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ﻿import { ref, computed, reactive, watch, type Ref } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { StrategyConnection, StrategyNode } from '@/types/strategy';
@@ -49,7 +50,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     if (canvasRef) {
       updateTempConnection(event, canvasRef);
     } else {
-      console.error('Canvas element not found');
+      logger.error('Canvas element not found');
     }
   };
 

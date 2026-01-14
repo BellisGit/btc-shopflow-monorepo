@@ -512,48 +512,8 @@ onUnmounted(() => {
     // 关键：自动为 router-view 渲染的页面组件根元素应用 .page 样式
     // 确保主应用的所有页面组件根元素都自动应用滚动条规则
     // 注意：由于 scoped 样式限制，这里直接应用样式而不是引用 mixin
-    :deep(.content-mount--main-app > router-view > *) {
-      // 应用 .page 类的样式效果（max-height: 100%, overflow-y: auto）
-      max-height: 100%;
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-gutter: stable;
-      
-      // Element Plus 滚动条样式（与共享组件中的 .page 样式保持一致）
-      &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 3px;
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-      }
-
-      &:hover::-webkit-scrollbar-thumb {
-        opacity: 1;
-      }
-
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-    }
-    
-    // 暗黑模式适配
-    html.dark & {
-      :deep(.content-mount--main-app > router-view > *) {
-        &::-webkit-scrollbar-thumb {
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-      }
-    }
+    // 注意：滚动现在由 .container 统一处理（通过 el-scrollbar），不再需要自定义滚动逻辑
+    // 已移除自定义滚动样式，由 .container 统一处理
 
     // 子应用挂载点（占据内容区域完整尺寸）
     #subapp-viewport {
@@ -619,48 +579,12 @@ onUnmounted(() => {
       height: 100%;
       width: 100%;
       
-      // 关键：自动为子应用的根容器应用 .page 样式
-      // 确保子应用的所有页面组件根元素都自动应用滚动条规则
-      // 注意：由于 scoped 样式限制，这里直接应用样式而不是引用 mixin
-      max-height: 100%;
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-gutter: stable;
-      
-      // Element Plus 滚动条样式（与共享组件中的 .page 样式保持一致）
-      &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 3px;
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-      }
-
-      &:hover::-webkit-scrollbar-thumb {
-        opacity: 1;
-      }
-
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-    }
-    
-    // 暗黑模式适配
-    html.dark & {
-      :deep(#subapp-viewport #app) {
-        &::-webkit-scrollbar-thumb {
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-      }
+      // 注意：滚动现在由 .container 统一处理（通过 el-scrollbar），不再需要自定义滚动逻辑
+      // 移除滚动相关样式，由 .container 统一处理
+      // max-height: 100%;
+      // overflow-y: auto;
+      // overflow-x: hidden;
+      // scrollbar-gutter: stable;
     }
 
     :deep(qiankun-head) {

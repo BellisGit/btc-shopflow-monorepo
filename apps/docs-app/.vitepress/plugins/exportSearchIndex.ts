@@ -4,6 +4,7 @@
  * 该插件会在构建时将 VitePress 的搜索索引导出为独立的 JSON 文件，
  * 供主应用的全局搜索功能使用。
  */
+import { logger } from '@btc/shared-core';
 
 import type { Plugin } from 'vite';
 import fs from 'fs';
@@ -43,10 +44,10 @@ export function exportSearchIndexPlugin(): Plugin {
           const searchIndex = extractSearchIndexFromBuild(outDir);
           const indexPath = path.join(outDir, 'search-index.json');
           fs.writeFileSync(indexPath, JSON.stringify(searchIndex, null, 2));
-          console.log('[exportSearchIndex] Search index exported to:', indexPath);
+          logger.info('[exportSearchIndex] Search index exported to:', indexPath);
         }
       } catch (error) {
-        console.warn('[exportSearchIndex] Failed to export search index:', error);
+        logger.warn('[exportSearchIndex] Failed to export search index:', error);
       }
     }
   };

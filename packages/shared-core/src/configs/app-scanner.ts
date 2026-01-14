@@ -2,6 +2,7 @@
  * 应用动态扫描器
  * 参考 cool-admin 的实现，自动扫描 apps 目录下的所有应用
  */
+import { logger } from '../utils/logger';
 
 import type { AppIdentity } from './app-identity.types';
 // 导入 Zod 验证工具（可选）
@@ -37,7 +38,7 @@ function getAppRegistry(): Map<string, AppIdentity> {
     }
   } catch (error) {
     // 如果所有尝试都失败，创建一个新的 Map 实例（虽然不应该发生）
-    console.warn('[app-scanner] getAppRegistry() 初始化失败，创建新实例', error);
+    logger.warn('[app-scanner] getAppRegistry() 初始化失败，创建新实例', error);
     return new Map<string, AppIdentity>();
   }
 }
@@ -72,7 +73,7 @@ function validateAppIdentity(identity: any, appName: string): identity is AppIde
   } catch (error) {
     // 验证失败，记录警告但返回 false（向后兼容）
     if (import.meta.env.DEV) {
-      console.warn(`[app-scanner] 应用 ${appName} 的配置验证失败:`, error);
+      logger.warn(`[app-scanner] 应用 ${appName} 的配置验证失败:`, error);
     }
     return false;
   }
@@ -92,7 +93,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       registry.clear();
     } catch (error) {
       // 如果 clear 失败，重新初始化 registry
-      console.warn('[app-scanner] registry.clear() 失败，重新初始化', error);
+      logger.warn('[app-scanner] registry.clear() 失败，重新初始化', error);
       try {
         if (typeof globalThis !== 'undefined') {
           (globalThis as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
@@ -102,7 +103,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
         }
       } catch (e) {
         // 如果重新初始化也失败，继续使用当前 registry（虽然可能有问题）
-        console.error('[app-scanner] 无法重新初始化 registry', e);
+        logger.error('[app-scanner] 无法重新初始化 registry', e);
       }
     }
   } else {
@@ -115,7 +116,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
         (globalObj as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
       }
     } catch (e) {
-      console.error('[app-scanner] 无法初始化 registry', e);
+      logger.error('[app-scanner] 无法初始化 registry', e);
     }
   }
 
@@ -127,7 +128,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
   if (!appConfigsMap || typeof appConfigsMap !== 'object' || appConfigsMap === null || Array.isArray(appConfigsMap)) {
     // 只在开发环境或真正有问题时才警告
     if (import.meta.env.DEV) {
-      console.warn('[app-scanner] appConfigsMap 不存在或不是对象，跳过扫描', { appConfigsMap });
+      logger.warn('[app-scanner] appConfigsMap 不存在或不是对象，跳过扫描', { appConfigsMap });
     }
     return finalRegistry;
   }
@@ -154,7 +155,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
 
       finalRegistry.set(identity.id, identity);
     } catch (error) {
-      console.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
+      logger.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
     }
   }
 

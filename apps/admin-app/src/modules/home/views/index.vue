@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-home">
+  <div class="page admin-home">
     <!-- 策略监控图表分析 -->
     <div class="strategy-charts">
       <BtcChartGallery :gap="10" :cols-per-row="2" chart-height="300px" />

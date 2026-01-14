@@ -89,7 +89,7 @@ defineOptions({
 import { ref, onMounted, onUnmounted, markRaw, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { usePluginManager } from '@btc/shared-core';
+import { usePluginManager, logger } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { resolveAppLogoUrl } from '@btc/shared-core/configs/layout-bridge';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
@@ -139,7 +139,7 @@ const logoUrl = computed(() => {
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  console.warn('[Topbar] Logo image failed to load:', img.src);
+  logger.warn('[Topbar] Logo image failed to load:', img.src);
   // 如果加载失败，隐藏图片或使用占位符
   img.style.display = 'none';
 };
@@ -324,13 +324,13 @@ onMounted(async () => {
         });
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.warn('[Topbar] 加载工具栏组件失败:', error);
+          logger.warn('[Topbar] 加载工具栏组件失败:', error);
         }
       }
     }
   } catch (error) {
     if (import.meta.env.DEV) {
-      console.warn('[Topbar] 获取工具栏组件配置失败:', error);
+      logger.warn('[Topbar] 获取工具栏组件配置失败:', error);
     }
   }
 

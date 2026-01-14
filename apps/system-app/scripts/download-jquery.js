@@ -2,6 +2,7 @@
 /**
  * 下载 jQuery 3.7.1 到 public 目录
  */
+import { logger } from '@btc/shared-core';
 
 import { writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -14,13 +15,13 @@ const publicDir = resolve(__dirname, '../public');
 const jqueryPath = resolve(publicDir, 'jquery-3.7.1.min.js');
 const jqueryUrl = 'https://code.jquery.com/jquery-3.7.1.min.js';
 
-console.log('📥 正在下载 jQuery 3.7.1...');
-console.log(`   源: ${jqueryUrl}`);
-console.log(`   目标: ${jqueryPath}`);
+logger.info('📥 正在下载 jQuery 3.7.1...');
+logger.info(`   源: ${jqueryUrl}`);
+logger.info(`   目标: ${jqueryPath}`);
 
 https.get(jqueryUrl, (response) => {
   if (response.statusCode !== 200) {
-    console.error(`❌ 下载失败: HTTP ${response.statusCode}`);
+    logger.error(`❌ 下载失败: HTTP ${response.statusCode}`);
     process.exit(1);
   }
 
@@ -32,16 +33,16 @@ https.get(jqueryUrl, (response) => {
   response.on('end', () => {
     try {
       writeFileSync(jqueryPath, data, 'utf-8');
-      console.log('✅ jQuery 3.7.1 下载成功！');
-      console.log(`   文件大小: ${(data.length / 1024).toFixed(2)} KB`);
+      logger.info('✅ jQuery 3.7.1 下载成功！');
+      logger.info(`   文件大小: ${(data.length / 1024).toFixed(2)} KB`);
     } catch (error) {
-      console.error('❌ 保存文件失败:', error);
+      logger.error('❌ 保存文件失败:', error);
       process.exit(1);
     }
   });
 }).on('error', (error) => {
-  console.error('❌ 下载失败:', error.message);
-  console.error('   请检查网络连接或手动下载:');
-  console.error(`   ${jqueryUrl}`);
+  logger.error('❌ 下载失败:', error.message);
+  logger.error('   请检查网络连接或手动下载:');
+  logger.error(`   ${jqueryUrl}`);
   process.exit(1);
 });

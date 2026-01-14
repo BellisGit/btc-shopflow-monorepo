@@ -121,7 +121,7 @@ export interface BtcFilterTableGroupProps {
   /**
    * 左侧宽度类型（当 enableAutoWidth 为 false 时使用）
    */
-  leftSize?: 'default' | 'small' | 'middle';
+  leftSize?: 'small' | 'default' | 'large';
 
   // 其他配置（继承自 BtcTableGroup）
   /**
@@ -173,6 +173,11 @@ export interface BtcFilterTableGroupProps {
    * 存储 key，用于区分不同页面的尺寸设置（如果不提供，则不存储）
    */
   storageKey?: string;
+
+  /**
+   * 是否显示标签容器，默认 false
+   */
+  showTagsContainer?: boolean;
 }
 
 /**

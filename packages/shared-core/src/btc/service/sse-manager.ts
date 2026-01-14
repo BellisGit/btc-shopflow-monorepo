@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 /**
  * SSE 事件管理器
  * 提供 Server-Sent Events 客户端管理功能
@@ -99,7 +100,7 @@ function doConnect(sseUrl: string): void {
     eventSource.onopen = () => {
       sseState.status = 'connected';
       sseState.reconnectAttempts = 0;
-      console.log('[sse-manager] SSE 连接成功');
+      logger.info('[sse-manager] SSE 连接成功');
     };
 
     // 接收消息
@@ -114,7 +115,7 @@ function doConnect(sseUrl: string): void {
           try {
             handler(data);
           } catch (err) {
-            console.error(`[sse-manager] 事件处理器执行失败 (${eventType}):`, err);
+            logger.error(`[sse-manager] 事件处理器执行失败 (${eventType}):`, err);
           }
         });
 
@@ -125,18 +126,18 @@ function doConnect(sseUrl: string): void {
             try {
               handler(data);
             } catch (err) {
-              console.error('[sse-manager] message 事件处理器执行失败:', err);
+              logger.error('[sse-manager] message 事件处理器执行失败:', err);
             }
           });
         }
       } catch (err) {
-        console.error('[sse-manager] 解析 SSE 消息失败:', err);
+        logger.error('[sse-manager] 解析 SSE 消息失败:', err);
       }
     };
 
     // 连接错误
     eventSource.onerror = (err) => {
-      console.error('[sse-manager] SSE 连接错误:', err);
+      logger.error('[sse-manager] SSE 连接错误:', err);
       sseState.status = 'disconnected';
       
       // 关闭连接
@@ -154,18 +155,18 @@ function doConnect(sseUrl: string): void {
           sseState.reconnectAttempts++;
           const interval = sseState.options.reconnectInterval || 3000;
           
-          console.log(`[sse-manager] ${interval}ms 后尝试重连 (${sseState.reconnectAttempts}/${maxAttempts === -1 ? '∞' : maxAttempts})`);
+          logger.info(`[sse-manager] ${interval}ms 后尝试重连 (${sseState.reconnectAttempts}/${maxAttempts === -1 ? '∞' : maxAttempts})`);
           
           sseState.reconnectTimer = window.setTimeout(() => {
             doConnect(sseUrl);
           }, interval);
         } else {
-          console.warn('[sse-manager] 已达到最大重连次数，停止重连');
+          logger.warn('[sse-manager] 已达到最大重连次数，停止重连');
         }
       }
     };
   } catch (err) {
-    console.error('[sse-manager] 创建 SSE 连接失败:', err);
+    logger.error('[sse-manager] 创建 SSE 连接失败:', err);
     sseState.status = 'disconnected';
   }
 }

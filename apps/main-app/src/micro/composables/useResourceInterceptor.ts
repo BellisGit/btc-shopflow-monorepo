@@ -2,6 +2,7 @@
  * Qiankun 资源拦截器 Composable
  * 用于修复从错误端口加载的资源文件
  */
+import { logger } from '@btc/shared-core';
 
 import { microApps } from '../apps';
 import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
@@ -144,7 +145,7 @@ export function setupGlobalResourceInterceptor(): void {
               const fixedUrl = fixResourceUrl(url, targetAppName, targetPort, currentHost, protocol, currentPort);
 
               if (fixedUrl) {
-                console.log(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
+                logger.info(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
                 if (typeof input === 'string') {
                   return originalFetch.call(this, fixedUrl, init);
                 } else if (input instanceof URL) {
@@ -181,7 +182,7 @@ export function setupGlobalResourceInterceptor(): void {
                   const fileName = url.split('/').pop() || '';
                   const fixedUrl = `${protocol}//${currentHost}:${targetPort}/assets/${fileName}`;
 
-                  console.log(`[Resource Interceptor] 检测到 404，尝试修复路径: ${url} -> ${fixedUrl}`);
+                  logger.info(`[Resource Interceptor] 检测到 404，尝试修复路径: ${url} -> ${fixedUrl}`);
                   const retryResponse = await originalFetch.call(this, fixedUrl, init);
                   const retryContentType = retryResponse.headers.get('content-type');
 
@@ -196,7 +197,7 @@ export function setupGlobalResourceInterceptor(): void {
               }
             }
           } catch (error) {
-            console.error('[资源拦截器] 重试失败:', error);
+            logger.error('[资源拦截器] 重试失败:', error);
           }
         }
       }
@@ -213,7 +214,7 @@ export function setupGlobalResourceInterceptor(): void {
     // 强制验证：在 HTTPS 页面下，绝对不允许 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (urlStr.startsWith('http://')) {
-        console.error('[HTTP] Micro 拦截：检测到 HTTPS 页面，阻止 HTTP 请求:', urlStr);
+        logger.error('[HTTP] Micro 拦截：检测到 HTTPS 页面，阻止 HTTP 请求:', urlStr);
         try {
           const urlObj = new URL(urlStr);
           urlStr = urlObj.pathname + urlObj.search;

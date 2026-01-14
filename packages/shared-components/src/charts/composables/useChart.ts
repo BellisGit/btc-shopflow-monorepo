@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, type Ref } from 'vue';
 import { useResizeObserver } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
@@ -552,7 +553,7 @@ export function useChart(
             // 再次检查容器可见性，只有在确实可见且应该显示时才警告
             const shouldWarn = isContainerVisible();
             if (shouldWarn) {
-              console.warn('[useChart] 容器尺寸检查超时，图表可能无法正常显示', {
+              logger.warn('[useChart] 容器尺寸检查超时，图表可能无法正常显示', {
                 container: containerRef.value,
                 isQiankun: isInQiankunSubApp(),
                 clientWidth: containerRef.value.clientWidth,
@@ -594,7 +595,7 @@ export function useChart(
         // 超过最大重试次数，等待IntersectionObserver或ResizeObserver触发
         if (import.meta.env.DEV) {
           const rect = containerRef.value.getBoundingClientRect();
-          console.warn('[useChart] 容器尺寸不足，等待ResizeObserver触发', {
+          logger.warn('[useChart] 容器尺寸不足，等待ResizeObserver触发', {
             width: rect.width,
             height: rect.height,
             clientWidth: actualWidth,
@@ -623,7 +624,7 @@ export function useChart(
                     chartInstance.value.resize();
                   } catch (error) {
                     if (import.meta.env.DEV) {
-                      console.warn('[useChart] resize失败:', error);
+                      logger.warn('[useChart] resize失败:', error);
                     }
                   }
                 }
@@ -634,7 +635,7 @@ export function useChart(
     } catch (error) {
       // 忽略错误，可能图表还未初始化
       if (import.meta.env.DEV) {
-        console.warn('[useChart] 获取图表实例失败:', error);
+        logger.warn('[useChart] 获取图表实例失败:', error);
       }
     }
   };
@@ -788,7 +789,7 @@ export function useChart(
             chartInstance.value.setOption(newOption, { notMerge: false });
           } catch (error) {
             if (import.meta.env.DEV) {
-              console.warn('[useChart] 主题更新失败:', error);
+              logger.warn('[useChart] 主题更新失败:', error);
             }
           }
         }
@@ -807,7 +808,7 @@ export function useChart(
           chartInstance.value.setOption(newOption, { notMerge: false });
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.warn('[useChart] 更新图表选项失败:', error);
+            logger.warn('[useChart] 更新图表选项失败:', error);
           }
         }
       }
@@ -839,7 +840,7 @@ export function useChart(
           // 超过最大重试次数，仍然没有尺寸
           // 依赖ResizeObserver或IntersectionObserver来处理
           if (import.meta.env.DEV) {
-            console.warn('[useChart] safeUpdateChartInstance: 容器尺寸不足，等待ResizeObserver');
+            logger.warn('[useChart] safeUpdateChartInstance: 容器尺寸不足，等待ResizeObserver');
           }
         }
       };

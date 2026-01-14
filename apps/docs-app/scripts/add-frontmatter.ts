@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
@@ -98,7 +99,7 @@ async function addFrontmatter(filePath: string, dryRun: boolean = false): Promis
 
     // 如果已有 frontmatter 且包含必要字段，跳过
     if (parsed.data && parsed.data.title && parsed.data.type && parsed.data.project) {
-      console.log(`  ⏭️  跳过 (已有 frontmatter): ${path.basename(filePath)}`);
+      logger.info(`  ⏭️  跳过 (已有 frontmatter): ${path.basename(filePath)}`);
       return false;
     }
 
@@ -115,16 +116,16 @@ async function addFrontmatter(filePath: string, dryRun: boolean = false): Promis
     const newContent = matter.stringify(parsed.content, newFrontmatter);
 
     if (dryRun) {
-      console.log(`  🔍 [DRY RUN] ${path.basename(filePath)}`);
-      console.log(`     推断: ${metadata.title} | ${metadata.type} | ${metadata.project}`);
+      logger.info(`  🔍 [DRY RUN] ${path.basename(filePath)}`);
+      logger.info(`     推断: ${metadata.title} | ${metadata.type} | ${metadata.project}`);
     } else {
       await fs.writeFile(filePath, newContent);
-      console.log(`  ✅ ${path.basename(filePath)}`);
+      logger.info(`  ✅ ${path.basename(filePath)}`);
     }
 
     return true;
   } catch (error) {
-    console.error(`  ❌ 错误: ${filePath}`, error);
+    logger.error(`  ❌ 错误: ${filePath}`, error);
     return false;
   }
 }
@@ -135,9 +136,9 @@ async function main() {
   const dryRun = args.includes('--dry-run');
   const pattern = args.find(arg => !arg.startsWith('--')) || '**/*.md';
 
-  console.log('=== 批量添加 Frontmatter ===\n');
-  console.log(`模式: ${dryRun ? 'DRY RUN（预览）' : '正式执行'}`);
-  console.log(`匹配: ${pattern}\n`);
+  logger.info('=== 批量添加 Frontmatter ===\n');
+  logger.info(`模式: ${dryRun ? 'DRY RUN（预览）' : '正式执行'}`);
+  logger.info(`匹配: ${pattern}\n`);
 
   const rootDir = path.join(process.cwd(), '../..');
   const files = await glob(path.join(rootDir, pattern).replace(/\\/g, '/'), {
@@ -150,7 +151,7 @@ async function main() {
     ]
   });
 
-  console.log(`找到 ${files.length} 个文档\n`);
+  logger.info(`找到 ${files.length} 个文档\n`);
 
   let processed = 0;
   let skipped = 0;
@@ -164,13 +165,13 @@ async function main() {
     }
   }
 
-  console.log('\n=== 完成 ===');
-  console.log(`处理: ${processed} 个`);
-  console.log(`跳过: ${skipped} 个`);
+  logger.info('\n=== 完成 ===');
+  logger.info(`处理: ${processed} 个`);
+  logger.info(`跳过: ${skipped} 个`);
 
   if (dryRun) {
-    console.log('\n💡 这是预览模式，没有实际修改文件');
-    console.log('   运行 `pnpm add-frontmatter` 执行实际操作');
+    logger.info('\n💡 这是预览模式，没有实际修改文件');
+    logger.info('   运行 `pnpm add-frontmatter` 执行实际操作');
   }
 }
 

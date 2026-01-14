@@ -16,6 +16,8 @@ const routes: RouteRecordRaw[] = [
     meta: {
       public: true,
       title: '登录',
+      isPage: true,
+      pageType: 'login'
     },
   },
   {
@@ -25,6 +27,8 @@ const routes: RouteRecordRaw[] = [
     meta: {
       public: true,
       title: '短信验证码登录',
+      isPage: true,
+      pageType: 'login'
     },
   },
   {
@@ -34,6 +38,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       public: true,
       title: '新用户注册',
+      isPage: true
     },
   },
   {
@@ -43,6 +48,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       public: true,
       title: '授权登录',
+      isPage: true
     },
   },
   {
@@ -56,6 +62,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/base/pages/Home.vue'),
         meta: {
           title: '首页',
+          isPage: true
         },
       },
       {
@@ -64,6 +71,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/base/pages/Query.vue'),
         meta: {
           title: '查询',
+          isPage: true
         },
       },
       {
@@ -72,6 +80,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/inventory/pages/Scanner.vue'),
         meta: {
           title: '扫码',
+          isPage: true
         },
       },
       {
@@ -80,6 +89,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/inventory/pages/SessionList.vue'),
         meta: {
           title: '盘点会话',
+          isPage: true
         },
       },
       {
@@ -88,6 +98,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/inventory/pages/Scanner.vue'),
         meta: {
           title: '扫码盘点',
+          isPage: true
         },
       },
       {
@@ -96,6 +107,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/inventory/pages/CountEntry.vue'),
         meta: {
           title: '录入盘点',
+          isPage: true
         },
       },
       {
@@ -104,6 +116,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/sync/pages/SyncStatus.vue'),
         meta: {
           title: '数据同步',
+          isPage: true
         },
       },
     ],
@@ -116,6 +129,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/modules/base/pages/NotFound.vue'),
     meta: {
       title: '页面不存在',
+      isPage: true,
+      pageType: 'error'
     },
   },
 ];

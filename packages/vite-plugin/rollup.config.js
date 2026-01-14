@@ -1,3 +1,4 @@
+import { logger } from '@build-utils/logger';
 import typescript from "@rollup/plugin-typescript";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import { defineConfig } from "rollup";
@@ -7,17 +8,17 @@ const buildLogPlugin = () => {
 	return {
 		name: "build-log",
 		buildStart() {
-			console.log("\n📦 开始构建 @btc/vite-plugin...");
-			console.log("   - 输入文件: src/index.ts");
-			console.log("   - 输出格式: CJS + ESM");
+			logger.info("\n📦 开始构建 @btc/vite-plugin...");
+			logger.info("   - 输入文件: src/index.ts");
+			logger.info("   - 输出格式: CJS + ESM");
 		},
 		buildEnd(error) {
 			if (error) {
-				console.error("\n❌ @btc/vite-plugin 构建失败:", error.message);
+				logger.error("\n❌ @btc/vite-plugin 构建失败:", error);
 			} else {
-				console.log("\n✅ @btc/vite-plugin 构建成功！");
-				console.log("   - 输出文件: dist/index.js (CJS)");
-				console.log("   - 输出文件: dist/index.mjs (ESM)");
+				logger.success("\n✅ @btc/vite-plugin 构建成功！");
+				logger.info("   - 输出文件: dist/index.js (CJS)");
+				logger.info("   - 输出文件: dist/index.mjs (ESM)");
 			}
 		},
 	};
@@ -26,7 +27,7 @@ const buildLogPlugin = () => {
 export default defineConfig({
 	input: "src/index.ts",
 
-	external: ["vite", "rollup", "magic-string", "glob", "svgo", "axios", "prettier"],
+	external: ["vite", "rollup", "magic-string", "glob", "svgo", "axios", "prettier", "@btc/shared-core"],
 	// 注意：lodash-es 不设为 external，让它被打包进插件，确保运行时可用
 
 	output: [

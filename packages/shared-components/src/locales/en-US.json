@@ -223,6 +223,7 @@
   "sys.message.loading": "Loading...",
   "sys.message.confirm_delete": "Are you sure you want to delete?",
   "menu.home": "Home",
+  "menu.test_features.multi_column_layout_test": "Multi Column Layout Test",
   "notice.title": "Notifications",
   "notice.btnRead": "Mark all as read",
   "notice.viewAll": "View all",
@@ -295,5 +296,6 @@
   "btc.filterList.size.small": "Small",
   "btc.filterList.size.default": "Default",
   "btc.filterList.size.large": "Large",
-  "btc.filterList.tooltip.settings": "Settings"
+  "btc.filterList.tooltip.settings": "Settings",
+  "btc.filterList.tooltip.clear": "Clear all filters"
 }

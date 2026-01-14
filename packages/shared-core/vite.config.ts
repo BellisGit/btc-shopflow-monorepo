@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@btc/shared-components': resolve(__dirname, '../shared-components/src'),
       '@btc/auth-shared': resolve(__dirname, '../../auth/shared'),
+      '@btc/shared-core': resolve(__dirname, 'src'),
       '@btc/shared-core/utils': resolve(__dirname, 'src/utils'),
       '@btc/shared-core/utils/array': resolve(__dirname, 'src/utils/array'),
       '@btc/shared-core/configs': resolve(__dirname, 'src/configs'),
@@ -46,12 +47,20 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'src/index.ts'),
+        'utils/index': resolve(__dirname, 'src/utils/index.ts'),
+        'utils/form/index': resolve(__dirname, 'src/utils/form/index.ts'),
+        'utils/form/zod-validator': resolve(__dirname, 'src/utils/form/zod-validator.ts'),
+        'utils/format/index': resolve(__dirname, 'src/utils/format/index.ts'),
+        'utils/storage/index': resolve(__dirname, 'src/utils/storage/index.ts'),
+        'utils/storage/session/index': resolve(__dirname, 'src/utils/storage/session/index.ts'),
+        'utils/storage/cookie/index': resolve(__dirname, 'src/utils/storage/cookie/index.ts'),
         'configs/layout-bridge': resolve(__dirname, 'src/configs/layout-bridge.ts'),
         'configs/app-env.config': resolve(__dirname, 'src/configs/app-env.config.ts'),
         'configs/app-scanner': resolve(__dirname, 'src/configs/app-scanner.ts'),
         'configs/unified-env-config': resolve(__dirname, 'src/configs/unified-env-config.ts'),
         'configs/qiankun-config-center': resolve(__dirname, 'src/configs/qiankun-config-center.ts'),
         'configs/app-identity.types': resolve(__dirname, 'src/configs/app-identity.types.ts'),
+        'manifest/index': resolve(__dirname, 'src/manifest/index.ts'),
       },
       external: [
         'vue',
@@ -78,7 +87,34 @@ export default defineConfig({
             if (chunkInfo.name === 'index') {
               return 'index.mjs';
             }
-            return `configs/${chunkInfo.name.replace('configs/', '')}.mjs`;
+            if (chunkInfo.name === 'utils/index') {
+              return 'utils/index.mjs';
+            }
+            if (chunkInfo.name === 'utils/form/index') {
+              return 'utils/form/index.mjs';
+            }
+            if (chunkInfo.name === 'utils/form/zod-validator') {
+              return 'utils/form/zod-validator.mjs';
+            }
+            if (chunkInfo.name === 'utils/format/index') {
+              return 'utils/format/index.mjs';
+            }
+            if (chunkInfo.name === 'utils/storage/index') {
+              return 'utils/storage/index.mjs';
+            }
+            if (chunkInfo.name === 'utils/storage/session/index') {
+              return 'utils/storage/session/index.mjs';
+            }
+            if (chunkInfo.name === 'utils/storage/cookie/index') {
+              return 'utils/storage/cookie/index.mjs';
+            }
+            if (chunkInfo.name.startsWith('configs/')) {
+              return `configs/${chunkInfo.name.replace('configs/', '')}.mjs`;
+            }
+            if (chunkInfo.name === 'manifest/index') {
+              return 'manifest/index.mjs';
+            }
+            return `${chunkInfo.name}.mjs`;
           },
           globals: {
             vue: 'Vue',
@@ -94,7 +130,25 @@ export default defineConfig({
             if (chunkInfo.name === 'index') {
               return 'index.js';
             }
-            return `configs/${chunkInfo.name.replace('configs/', '')}.js`;
+            if (chunkInfo.name === 'utils/index') {
+              return 'utils/index.js';
+            }
+            if (chunkInfo.name === 'utils/form/index') {
+              return 'utils/form/index.js';
+            }
+            if (chunkInfo.name === 'utils/form/zod-validator') {
+              return 'utils/form/zod-validator.js';
+            }
+            if (chunkInfo.name === 'utils/format/index') {
+              return 'utils/format/index.js';
+            }
+            if (chunkInfo.name.startsWith('configs/')) {
+              return `configs/${chunkInfo.name.replace('configs/', '')}.js`;
+            }
+            if (chunkInfo.name === 'manifest/index') {
+              return 'manifest/index.js';
+            }
+            return `${chunkInfo.name}.js`;
           },
           globals: {
             vue: 'Vue',

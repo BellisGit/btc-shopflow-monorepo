@@ -1,4 +1,4 @@
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { service } from '@services/eps';
@@ -356,7 +356,7 @@ export function useLogisticsInventoryExport() {
 
       BtcMessage.success(t('common.ui.export_success'));
     } catch (error: any) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       BtcMessage.error(error.message || t('common.ui.export_failed'));
     }
   };

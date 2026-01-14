@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemas.style-dictionary.io/v4.0.0/schema.json",
+  "btc": {
+    "crud": {
+      "gap": {
+        "value": "{spacing.crud.gap}",
+        "type": "spacing",
+        "description": "CRUD 组件行之间的垂直间距"
+      },
+      "opWidth": {
+        "value": "{spacing.crud.opWidth}",
+        "type": "sizing",
+        "description": "CRUD 操作列的固定宽度"
+      },
+      "searchWidth": {
+        "value": "{spacing.crud.searchWidth}",
+        "type": "sizing",
+        "description": "CRUD 搜索框的宽度，默认继承操作列宽度"
+      },
+      "btnColor": {
+        "value": "{color.crud.button}",
+        "type": "color",
+        "description": "CRUD 按钮的文字颜色"
+      },
+      "iconColor": {
+        "value": "{color.crud.icon}",
+        "type": "color",
+        "description": "CRUD 图标按钮的颜色"
+      }
+    },
+    "icon": {
+      "color": {
+        "value": "{color.icon}",
+        "type": "color",
+        "description": "通用图标按钮的颜色"
+      }
+    },
+    "breath": {
+      "color": {
+        "value": "{color.breath}",
+        "type": "color",
+        "description": "通知/消息图标的呼吸灯动画颜色"
+      }
+    },
+    "table": {
+      "buttonColor": {
+        "value": "{color.table.button}",
+        "type": "color",
+        "description": "表格工具栏按钮的颜色"
+      }
+    }
+  }
+}

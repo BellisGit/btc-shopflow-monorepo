@@ -2,6 +2,7 @@
  * 模块自动扫描器
  * 参考 cool-admin-vue 的实现，自动扫描 modules 和 plugins 目录下的配置文件
  */
+import { logger } from '@btc/shared-core';
 
 import type { App } from 'vue';
 import type { Plugin } from '@btc/shared-core';
@@ -179,13 +180,13 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       for (const pluginConfig of pluginConfigs) {
         // 验证插件配置
         if (!pluginConfig.name) {
-          console.warn(`[ModuleScanner] 跳过无效插件: ${filePath} (缺少 name 属性)`);
+          logger.warn(`[ModuleScanner] 跳过无效插件: ${filePath} (缺少 name 属性)`);
           continue;
         }
 
         // 检查插件是否已经注册过（避免重复注册）
         if (processedPluginNames.has(pluginConfig.name)) {
-          console.warn(`[ModuleScanner] 跳过重复插件: ${pluginConfig.name} (已在 ${filePath} 中注册)`);
+          logger.warn(`[ModuleScanner] 跳过重复插件: ${pluginConfig.name} (已在 ${filePath} 中注册)`);
           continue;
         }
 
@@ -195,7 +196,7 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       }
 
     } catch (error) {
-      console.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
+      logger.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
     }
   }
 

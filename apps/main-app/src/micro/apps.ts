@@ -1,4 +1,4 @@
-import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getAppConfig, logger } from '@btc/shared-core/configs/app-env.config';
 import { getAppById } from '@btc/shared-core/configs/app-scanner';
 import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
 
@@ -42,7 +42,7 @@ const getAppEntry = (appName: string): string => {
   const appConfig = getAppConfig(configAppName);
 
   if (!appConfig) {
-    console.warn(`[apps.ts] 未找到应用配置: ${configAppName}`);
+    logger.warn(`[apps.ts] 未找到应用配置: ${configAppName}`);
     return `/${appName}/`;
   }
 

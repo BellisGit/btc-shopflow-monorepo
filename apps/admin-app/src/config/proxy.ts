@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 // Vite 代理配置类型
@@ -50,15 +51,15 @@ const proxy: Record<string, string | ProxyOptions> = {
         }
         // 记录后端响应状态
         if (proxyRes.statusCode && proxyRes.statusCode >= 500) {
-          console.error(`[Proxy] Backend returned ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+          logger.error(`[Proxy] Backend returned ${proxyRes.statusCode} for ${req.method} ${req.url}`);
         }
       });
 
       // 处理代理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        console.error('[Proxy] Error:', err.message);
-        console.error('[Proxy] Request URL:', req.url);
-        console.error('[Proxy] Target:', 'http://10.80.9.76:8115');
+        logger.error('[Proxy] Error:', err.message);
+        logger.error('[Proxy] Request URL:', req.url);
+        logger.error('[Proxy] Target:', 'http://10.80.9.76:8115');
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 监听代理请求（用于调试）
       proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage, res: ServerResponse) => {
-        console.log(`[Proxy] ${req.method} ${req.url} -> http://10.80.9.76:8115${req.url}`);
+        logger.info(`[Proxy] ${req.method} ${req.url} -> http://10.80.9.76:8115${req.url}`);
       });
     },
   }

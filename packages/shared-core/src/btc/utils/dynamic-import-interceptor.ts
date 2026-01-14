@@ -3,6 +3,7 @@
  * 拦截 import() 调用，识别 /assets/ 和 /assets/layout/ 路径的资源
  * 使用资源加载器加载资源，然后执行模块代码
  */
+import { logger } from '../../utils/logger';
 
 import { loadResource, type ResourceLoaderOptions } from './resource-loader';
 
@@ -110,7 +111,7 @@ async function executeModule(code: string, url: string): Promise<any> {
     // 返回模块导出
     return moduleModule.exports.default || moduleModule.exports;
   } catch (error) {
-    console.error(`[dynamic-import-interceptor] 执行模块失败: ${url}`, error);
+    logger.error(`[dynamic-import-interceptor] 执行模块失败: ${url}`, error);
     throw error;
   }
 }
@@ -157,7 +158,7 @@ async function loadModuleWithResourceLoader(
       
       return moduleExports;
     } catch (error) {
-      console.error(`[dynamic-import-interceptor] 加载模块失败: ${specifier}`, error);
+      logger.error(`[dynamic-import-interceptor] 加载模块失败: ${specifier}`, error);
       throw error;
     } finally {
       // 清除加载中的标记
