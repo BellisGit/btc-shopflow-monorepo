@@ -89,8 +89,6 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';

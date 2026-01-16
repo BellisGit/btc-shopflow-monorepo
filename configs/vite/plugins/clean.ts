@@ -1,7 +1,14 @@
 /**
  * 清理构建目录插件
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[clean]', ...args),
+  error: (...args: any[]) => console.error('[clean]', ...args),
+  info: (...args: any[]) => console.info('[clean]', ...args),
+  debug: (...args: any[]) => console.debug('[clean]', ...args),
+};
 
 import type { Plugin } from 'vite';
 import { resolve } from 'path';
@@ -12,11 +19,11 @@ import { existsSync, rmSync } from 'node:fs';
  */
 function safeLog(message: string) {
   try {
-    logger.info(message);
+    console.info(message);
   } catch (error) {
     // 如果输出失败（可能是编码问题），使用纯文本输出
     // eslint-disable-next-line no-control-regex
-    logger.info(message.replace(/[^\x00-\x7F]/g, ''));
+    console.info(message.replace(/[^\x00-\x7F]/g, ''));
   }
 }
 
@@ -25,11 +32,11 @@ function safeLog(message: string) {
  */
 function safeWarn(message: string) {
   try {
-    logger.warn(message);
+    console.warn(message);
   } catch (error) {
     // 如果输出失败（可能是编码问题），使用纯文本输出
     // eslint-disable-next-line no-control-regex
-    logger.warn(message.replace(/[^\x00-\x7F]/g, ''));
+    console.warn(message.replace(/[^\x00-\x7F]/g, ''));
   }
 }
 

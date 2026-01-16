@@ -2,11 +2,26 @@
  * 数据管理模块配置
  * 包含 inventory、files、dictionary 等页面的配置
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+
+// 延迟获取 service，避免在 EPS 服务初始化前访问导致循环依赖
+function getService() {
+  // 使用动态导入或从全局获取，避免循环依赖
+  if (typeof window !== 'undefined') {
+    return (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+  }
+  // 如果没有全局对象，尝试动态导入
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const epsModule = require('@services/eps');
+    return epsModule.service || epsModule.default || {};
+  } catch {
+    return {};
+  }
+}
 
 export default {
   // ModuleConfig 字段
@@ -475,16 +490,29 @@ export default {
   },
 
   service: {
-    inventoryList: service.system?.base?.data,
-    inventoryConfirm: service.system?.base?.approval,
-    inventoryTicket: service.logistics?.warehouse?.ticket,
-    inventoryBom: service.system?.base?.bom,
-    inventoryCheck: service.system?.base?.data,
-    checkList: service.logistics?.warehouse?.check,
+    get inventoryList() {
+      return getService()?.system?.base?.data;
+    },
+    get inventoryConfirm() {
+      return getService()?.system?.base?.approval;
+    },
+    get inventoryTicket() {
+      return getService()?.logistics?.warehouse?.ticket;
+    },
+    get inventoryBom() {
+      return getService()?.system?.base?.bom;
+    },
+    get inventoryCheck() {
+      return getService()?.system?.base?.data;
+    },
+    get checkList() {
+      return getService()?.logistics?.warehouse?.check;
+    },
     domainService: {
       list: async () => {
         try {
-          const response = await service.logistics?.base?.position?.me?.();
+          const service = getService();
+          const response = await service?.logistics?.base?.position?.me?.();
           let list: any[] = [];
           if (Array.isArray(response)) {
             list = response;
@@ -514,7 +542,7 @@ export default {
           });
           return Array.from(domainMap.values());
         } catch (error) {
-          logger.warn('[DataInventoryList] Failed to load domain list:', error);
+          console.warn('[DataInventoryList] Failed to load domain list:', error);
           return [];
         }
       },

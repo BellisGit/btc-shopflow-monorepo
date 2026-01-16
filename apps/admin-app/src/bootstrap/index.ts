@@ -1,5 +1,5 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
-import { logger } from '@btc/shared-core';
+;
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
 import '@btc/shared-components/styles/index.scss';
@@ -66,7 +66,7 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      logger.warn('[admin-app] Failed to import domain-cache module:', error);
+      console.warn('[admin-app] Failed to import domain-cache module:', error);
     }
 
     await setupSubAppGlobals({
@@ -106,7 +106,7 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
       }
     } catch (error) {
       const { t } = useI18n();
-      logger.warn('[admin-app]', t('common.error.send_i18n_message_failed'), error);
+      console.warn('[admin-app]', t('common.error.send_i18n_message_failed'), error);
     }
   }
 
@@ -128,5 +128,42 @@ export const updateAdminApp = (context: AdminAppContext, props: QiankunProps) =>
 };
 
 export const unmountAdminApp = async (context: AdminAppContext, props: QiankunProps = {}) => {
+  // 清理全局监听器（避免内存泄漏）
+  if (typeof window !== 'undefined') {
+    // 清理 micro/index.ts 中的监听器
+    const errorHandler = (window as any).__ADMIN_APP_ERROR_HANDLER__;
+    if (errorHandler) {
+      window.removeEventListener('error', errorHandler);
+      delete (window as any).__ADMIN_APP_ERROR_HANDLER__;
+    }
+
+    const readyHandler = (window as any).__ADMIN_APP_READY_HANDLER__;
+    if (readyHandler) {
+      window.removeEventListener('subapp:ready', readyHandler);
+      delete (window as any).__ADMIN_APP_READY_HANDLER__;
+    }
+
+    const routeChangeHandler = (window as any).__ADMIN_APP_ROUTE_CHANGE_HANDLER__;
+    if (routeChangeHandler) {
+      window.removeEventListener('subapp:route-change', routeChangeHandler);
+      delete (window as any).__ADMIN_APP_ROUTE_CHANGE_HANDLER__;
+    }
+
+    // 清理退出登录函数
+    if ((window as any).__APP_LOGOUT__) {
+      delete (window as any).__APP_LOGOUT__;
+    }
+  }
+
+  // 清理 ECharts 实例
+  try {
+    const { cleanupAllECharts } = await import('@btc/shared-components');
+    if (cleanupAllECharts) {
+      cleanupAllECharts();
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
   await unmountSubApp(context, props);
 };

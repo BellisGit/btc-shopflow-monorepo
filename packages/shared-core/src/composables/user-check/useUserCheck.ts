@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger';
+;
 /**
  * 用户检查接口调用
  */
@@ -38,7 +38,7 @@ export async function checkUser(): Promise<UserCheckResult | null> {
       try {
         responseData = JSON.parse(responseText);
       } catch (parseError) {
-        logger.warn('[checkUser] Failed to parse JSON response:', parseError);
+        console.warn('[checkUser] Failed to parse JSON response:', parseError);
       }
     }
 
@@ -75,7 +75,7 @@ export async function checkUser(): Promise<UserCheckResult | null> {
     }
 
     // 其他错误，默认认为正常（避免因为网络错误导致无法继续）
-    logger.warn('[checkUser] User check failed, but continue:', error);
+    console.warn('[checkUser] User check failed, but continue:', error);
     return {
       isValid: true,
     };

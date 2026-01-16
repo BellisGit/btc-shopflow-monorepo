@@ -2,7 +2,7 @@
  * 批量为文档添加 frontmatter
  * 扫描所有没有 frontmatter 的 .md 文件并自动添加
  */
-import { logger } from '@btc/shared-core';
+;
 
 import fs from 'fs';
 import path from 'path';
@@ -133,7 +133,7 @@ function addFrontmatter(filePath: string) {
   const content = fs.readFileSync(filePath, 'utf-8');
 
   if (hasFrontmatter(content)) {
-    logger.info(`⏭️  跳过（已有 frontmatter）: ${path.relative(docsRoot, filePath)}`);
+    console.info(`⏭️  跳过（已有 frontmatter）: ${path.relative(docsRoot, filePath)}`);
     return;
   }
 
@@ -143,12 +143,12 @@ function addFrontmatter(filePath: string) {
   const yaml = matter.stringify(content, frontmatter);
 
   fs.writeFileSync(filePath, yaml);
-  logger.info(`✅ 已添加 frontmatter: ${path.relative(docsRoot, filePath)}`);
+  console.info(`✅ 已添加 frontmatter: ${path.relative(docsRoot, filePath)}`);
 }
 
 // 主函数
 async function main() {
-  logger.info('📝 批量添加 frontmatter...\n');
+  console.info('📝 批量添加 frontmatter...\n');
 
   // 扫描所有 .md 文件（排除特殊目录）
   const files = await glob('**/*.md', {
@@ -161,14 +161,14 @@ async function main() {
     ],
   });
 
-  logger.info(`找到 ${files.length} 个文档文件\n`);
+  console.info(`找到 ${files.length} 个文档文件\n`);
 
   for (const file of files) {
     const fullPath = path.join(docsRoot, file);
     addFrontmatter(fullPath);
   }
 
-  logger.info('\n🎉 Frontmatter 添加完成！');
+  console.info('\n🎉 Frontmatter 添加完成！');
 }
 
 main().catch(console.error);

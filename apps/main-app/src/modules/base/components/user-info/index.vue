@@ -70,8 +70,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
@@ -136,7 +134,7 @@ const handleCommand = (command: string) => {
   switch (command) {
     case 'profile':
       // 个人信息页面属于系统域（主应用），直接使用 router.push
-      router.push('/profile');
+      router.push('/workbench/profile');
       break;
     case 'settings':
       router.push('/settings');

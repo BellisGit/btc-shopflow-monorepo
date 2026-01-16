@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { createDir, writeFile } from '../utils';
 import { epsState } from './generator/state';
 import { ensureStandardTargets } from './generator/standard-targets';
@@ -23,7 +23,7 @@ export async function createEps(
 
   // 如果 EPS 数据为空，返回空的服务对象（不抛出错误，允许构建继续）
   if (!epsState.epsList || epsState.epsList.length === 0) {
-    logger.warn('[eps] 警告: EPS 数据为空，将返回空服务对象');
+    console.warn('[eps] 警告: EPS 数据为空，将返回空服务对象');
     return {
       service: {},
       serviceCode: { content: '{}', types: [] },

@@ -4,7 +4,15 @@
  * 该插件会在构建时将 VitePress 的搜索索引导出为独立的 JSON 文件，
  * 供主应用的全局搜索功能使用。
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 因为 esbuild 无法正确解析 workspace 包
+// 使用 console 替代 logger，避免配置加载时的解析问题
+const logger = {
+  warn: (...args: any[]) => console.warn('[exportSearchIndex]', ...args),
+  error: (...args: any[]) => console.error('[exportSearchIndex]', ...args),
+  info: (...args: any[]) => console.info('[exportSearchIndex]', ...args),
+  debug: (...args: any[]) => console.debug('[exportSearchIndex]', ...args),
+};
 
 import type { Plugin } from 'vite';
 import fs from 'fs';

@@ -2,7 +2,7 @@
  * EPS Columns 转换工具
  * 提供将 EPS columns 转换为 TableColumn 和 FormItem 的工具函数
  */
-import { logger } from '../../utils/logger';
+;
 
 import type { TableColumn } from '@btc/shared-components';
 import type { FormItem } from '@btc/shared-components';
@@ -118,7 +118,7 @@ export function getEpsColumns(
   });
 
   if (!entity) {
-    logger.warn(`[getEpsColumns] 未找到对应的 EPS 实体，namespace: ${namespace}`);
+    console.warn(`[getEpsColumns] 未找到对应的 EPS 实体，namespace: ${namespace}`);
     return [];
   }
 

@@ -25,6 +25,7 @@ export function getMainAppId(): string {
  */
 export function isMainAppRoute(path: string): boolean {
   const mainApp = getMainApp();
+  
   if (!mainApp?.routes?.mainAppRoutes || mainApp.routes.mainAppRoutes.length === 0) {
     // 兜底：使用 unified-env-config 的 isMainApp 函数
     return isMainAppRouteUtil(path);
@@ -77,7 +78,7 @@ export function shouldSkipTabbar(path: string): boolean {
  */
 export function getMainAppHomeRoute(): string {
   const mainApp = getMainApp();
-  return mainApp?.routes?.homeRoute || '/overview'; // 兜底值
+  return mainApp?.routes?.homeRoute || '/workbench/overview'; // 兜底值
 }
 
 /**
@@ -154,7 +155,7 @@ export function getMainAppRoutes() {
   return mainApp?.routes || {
     mainAppRoutes: [],
     nonClosableRoutes: [],
-    homeRoute: '/overview',
+    homeRoute: '/workbench/overview',
     skipTabbarRoutes: [],
   };
 }

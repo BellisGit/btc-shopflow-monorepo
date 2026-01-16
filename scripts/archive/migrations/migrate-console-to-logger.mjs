@@ -220,11 +220,11 @@ function addLoggerImport(code, filePath) {
     // 没有找到 @btc/shared-core 导入，添加新的导入语句
     if (lastImportEnd > scriptIndex) {
       // 在最后一个 import 之后添加
-      const newImport = "\nimport { logger } from '@build-utils/logger';\n";
+      const newImport = "\nimport { logger } from '../../../utils/logger.mjs';\n";
       return code.substring(0, lastImportEnd) + newImport + code.substring(lastImportEnd);
     } else {
       // 没有 import，在 script 标签后添加
-      const newImport = "\nimport { logger } from '@build-utils/logger';\n";
+      const newImport = "\nimport { logger } from '../../../utils/logger.mjs';\n";
       return code.substring(0, scriptIndex) + newImport + code.substring(scriptIndex);
     }
   } else {

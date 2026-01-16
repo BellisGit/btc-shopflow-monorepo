@@ -37,6 +37,30 @@
         { "labelKey": "menu.operations.name", "icon": "Monitor" },
         { "labelKey": "menu.operations.deploymentTest", "icon": "Setting" }
       ]
+    },
+    {
+      "path": "/ops/log-query",
+      "labelKey": "menu.log_query",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.log_query"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.operations.name", "icon": "Monitor" },
+        { "labelKey": "menu.log_query", "icon": "Document" }
+      ]
+    },
+    {
+      "path": "/ops/log-reporter-test",
+      "labelKey": "menu.log_reporter_test",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.log_reporter_test"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.operations.name", "icon": "Monitor" },
+        { "labelKey": "menu.log_reporter_test", "icon": "Document" }
+      ]
     }
   ],
   "menus": [
@@ -54,6 +78,16 @@
           "index": "/ops/deployment-test",
           "labelKey": "menu.operations.deploymentTest",
           "icon": "Setting"
+        },
+        {
+          "index": "/ops/log-query",
+          "labelKey": "menu.log_query",
+          "icon": "Document"
+        },
+        {
+          "index": "/ops/log-reporter-test",
+          "labelKey": "menu.log_reporter_test",
+          "icon": "Document"
         }
       ]
     }

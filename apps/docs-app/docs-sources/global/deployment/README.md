@@ -6,6 +6,10 @@
 
 - [K8s 部署](./k8s.md) - Kubernetes 部署指南
 - [CDN 加速](./cdn-acceleration.md) - CDN 资源加速配置
+- [静态文件部署](./static-deployment.md) - 静态文件部署指南
+- [图标 CDN 配置](./icons-cdn-setup.md) - 图标文件 CDN 配置
+- [CORS 配置](./cors-config.md) - CORS 跨域配置说明
+- [EPS 服务共享](./eps-sharing-solution.md) - EPS 服务共享方案
 
 ## 部署方式
 

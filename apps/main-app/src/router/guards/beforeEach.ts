@@ -1,6 +1,6 @@
 import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router';
 import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
-import { getMainAppHomeRoute } from '@btc/shared-core';
+import { getMainAppHomeRoute, getMainAppRoutes } from '@btc/shared-core';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { createLogoutGuard, createLoginRedirectGuard, createAuthGuard } from '@btc/shared-router';
 import { KNOWN_SUB_APP_PREFIXES, APP_NAME_MAP, PUBLIC_PAGES } from '../constants';
@@ -65,6 +65,15 @@ function handleSubAppRoute(
   _from: RouteLocationNormalized,
   router: Router
 ) {
+  // 先检查是否是主应用路由（需要排除，因为主应用路由也以 /dashboard 开头）
+  const mainAppRoutes = getMainAppRoutes();
+  const isMainAppRoute = mainAppRoutes.mainAppRoutes.some(route => to.path === route || to.path.startsWith(route + '/'));
+
+  if (isMainAppRoute) {
+    // 主应用路由，不在这里处理
+    return false;
+  }
+
   const isSubAppRoute = KNOWN_SUB_APP_PREFIXES.some(prefix => to.path.startsWith(prefix));
 
   if (!isSubAppRoute) {
@@ -223,7 +232,7 @@ const logoutGuard = createLogoutGuard({
 
 const loginRedirectGuard = createLoginRedirectGuard({
   appName: 'main',
-  homeRoute: '/overview',
+  homeRoute: '/workbench/overview',
   getMainAppHomeRoute: () => getMainAppHomeRoute(),
   isAuthenticated,
 });
@@ -289,9 +298,45 @@ function handleUnmatchedRoute(
   }
 
   // 对于首页，应该总是匹配
-  if (to.path === getMainAppHomeRoute()) {
+  const homeRoute = getMainAppHomeRoute();
+  if (to.path === homeRoute) {
     next();
     return true;
+  }
+
+  // 检查是否是主应用路由（优先检查，避免被误判为未匹配）
+  const mainAppRoutes = getMainAppRoutes();
+  const isMainAppRoute = mainAppRoutes.mainAppRoutes.some(route => {
+    const normalizedRoute = route.replace(/\/+$/, '') || '/';
+    const normalizedPath = to.path.replace(/\/+$/, '') || '/';
+    const matches = normalizedPath === normalizedRoute || normalizedPath.startsWith(normalizedRoute + '/');
+    if (import.meta.env.DEV && to.path.includes('/workbench/todo')) {
+      console.info('[beforeEach] 检查主应用路由匹配:', {
+        route,
+        normalizedRoute,
+        normalizedPath,
+        toPath: to.path,
+        matches,
+      });
+    }
+    return matches;
+  });
+
+  if (isMainAppRoute) {
+    // 主应用路由，允许继续
+    if (import.meta.env.DEV && to.path.includes('/workbench/todo')) {
+      console.info('[beforeEach] 主应用路由匹配成功，允许继续:', to.path);
+    }
+    next();
+    return true;
+  }
+  
+  if (import.meta.env.DEV && to.path.includes('/workbench/todo')) {
+    console.warn('[beforeEach] 主应用路由未匹配，将重定向到404:', {
+      toPath: to.path,
+      mainAppRoutes: mainAppRoutes.mainAppRoutes,
+      matchedLength: to.matched.length,
+    });
   }
 
   const isPublicPageCheck = PUBLIC_PAGES.includes(to.path);
@@ -339,6 +384,10 @@ export function setupBeforeEachGuard(router: Router) {
   setupQiankunEventListener();
 
   router.beforeEach(async (to, _from, next) => {
+    // 监控系统：路由导航开始
+    const { trackRouteNavigationStart } = await import('@btc/shared-core/utils/monitor');
+    trackRouteNavigationStart(_from.path, to.path);
+
     // 处理子应用路由
     if (handleSubAppRoute(to, _from, router)) {
       // 继续处理其他逻辑
@@ -358,6 +407,9 @@ export function setupBeforeEachGuard(router: Router) {
 
     // 处理路径规范化
     if (handlePathNormalization(to, next)) {
+      if (import.meta.env.DEV && to.path.includes('/workbench/todo')) {
+        console.info('[beforeEach] 路径规范化处理，已调用 next');
+      }
       return;
     }
 

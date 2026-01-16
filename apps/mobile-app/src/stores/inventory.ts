@@ -1,5 +1,3 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
 import { db } from '@/db';
 
 export const useInventoryStore = defineStore('inventory', () => {

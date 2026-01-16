@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { type App, h } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
@@ -73,7 +73,7 @@ function registerEChartsOnce() {
   } catch (error) {
     // 重复注册在微前端场景下是可预期的，兜底不让应用崩溃
     if (import.meta.env.DEV && !alreadyMarked) {
-      logger.warn('[operations-app][echarts] ECharts use() register failed (ignored):', error);
+      console.warn('[operations-app][echarts] ECharts use() register failed (ignored):', error);
     }
   } finally {
     if (w) w[GLOBAL_ECHARTS_USE_FLAG] = true;
@@ -118,7 +118,7 @@ export default {
               } catch (error) {
                 // 静默失败
                 if (import.meta.env.DEV) {
-                  logger.warn('[echarts] Failed to register themes:', error);
+                  console.warn('[echarts] Failed to register themes:', error);
                 }
               }
             };

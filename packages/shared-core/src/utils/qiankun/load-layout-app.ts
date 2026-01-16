@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+;
 /**
  * 加载 layout-app 的共享工具函数
  *
@@ -1610,7 +1610,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到 #subapp-viewport`;
           // 生产环境下输出诊断信息
           if (!isDev && typeof window !== 'undefined') {
-            logger.warn('[loadLayoutApp] layout-app 挂载超时', {
+            console.warn('[loadLayoutApp] layout-app 挂载超时', {
               checkCount,
               maxChecks,
               viewportExists: !!document.querySelector('#subapp-viewport'),

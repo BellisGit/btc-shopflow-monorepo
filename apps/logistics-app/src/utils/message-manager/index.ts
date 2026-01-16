@@ -2,7 +2,7 @@
  * 智能消息弹窗中间件
  * 基于 BtcMessage 封装，提供消息队列管理、重复消息合并、优先级处理和徽章显示功能
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type {
   MessageType,
@@ -124,7 +124,7 @@ export class MessageManager {
         this.lifecycleManager.handleMessageUpdate(existingMessage);
       }
     } catch (error) {
-      logger.warn('[MessageManager] Failed to update badge:', error);
+      console.warn('[MessageManager] Failed to update badge:', error);
     }
   }
 

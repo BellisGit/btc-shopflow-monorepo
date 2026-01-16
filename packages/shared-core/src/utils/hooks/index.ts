@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+;
 /**
  * 消息管理组合式函数
  * 提供统一的消息发送接口
@@ -14,7 +14,7 @@ export function useMessage() {
   const messageManager = (window as any).messageManager;
 
   if (!messageManager) {
-    logger.warn('MessageManager not available');
+    console.warn('MessageManager not available');
     return {
       success: () => {},
       error: () => {},

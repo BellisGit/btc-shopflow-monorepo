@@ -101,9 +101,9 @@ const isDisabled = computed(() => Boolean(props.config.disabled));
 const buttonClasses = computed(() => [
   'btc-comm__icon',
   'btc-icon-button',
-  props.config.class,
+  props.config.class || undefined, // 空字符串转换为 undefined，避免添加空类名
   { 'is-disabled': isDisabled.value }
-]);
+].filter(Boolean)); // 过滤掉 undefined 和空值
 
 // 处理点击事件
 const handleClick = (event: MouseEvent) => {

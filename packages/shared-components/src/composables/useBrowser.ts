@@ -3,6 +3,15 @@ import { reactive, watch } from 'vue';
 
 // 获取浏览器信息
 function getBrowser() {
+  // 检查是否在浏览器环境中
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return {
+      width: 1920,
+      screen: 'full' as const,
+      isMini: false,
+    };
+  }
+  
   // 在微前端环境下，document.body 可能为 null，需要添加 null 检查
   // 使用 document.body.clientWidth，确保缩放时能正确检测
   const clientWidth = (document.body?.clientWidth) || document.documentElement?.clientWidth || window.innerWidth || 1920;
@@ -48,10 +57,12 @@ watch(
 );
 
 // 监听窗口的 resize 事件，更新浏览器信息
-useEventListener(window, 'resize', () => {
-  // 使用 Object.assign 更新响应式对象
-  Object.assign(browser, getBrowser());
-});
+if (typeof window !== 'undefined') {
+  useEventListener(window, 'resize', () => {
+    // 使用 Object.assign 更新响应式对象
+    Object.assign(browser, getBrowser());
+  });
+}
 
 // 导出一个自定义的 hook
 export function useBrowser() {

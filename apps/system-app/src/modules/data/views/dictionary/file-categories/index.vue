@@ -1,28 +1,28 @@
 <template>
   <div class="dictionary-file-categories">
     <btc-crud ref="crudRef" :service="categoryService">
-      <btc-row>
+      <btc-crud-row>
         <btc-refresh-btn />
         <btc-add-btn />
         <btc-multi-delete-btn />
-        <btc-flex1 />
-        <btc-search-key />
+        <btc-crud-flex1 />
+        <btc-crud-search-key />
         <btc-crud-actions />
-      </btc-row>
+      </btc-crud-row>
 
-      <btc-row>
+      <btc-crud-row>
         <btc-table
           ref="tableRef"
           :columns="columns"
           border
           :op="{ buttons: ['edit', 'delete'] }"
         />
-      </btc-row>
+      </btc-crud-row>
 
-      <btc-row>
-        <btc-flex1 />
+      <btc-crud-row>
+        <btc-crud-flex1 />
         <btc-pagination />
-      </btc-row>
+      </btc-crud-row>
 
       <btc-upsert ref="upsertRef" :items="formItems" width="520px" />
     </btc-crud>

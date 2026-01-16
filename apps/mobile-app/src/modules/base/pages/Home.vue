@@ -23,14 +23,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { CellGroup, Cell, Button, showToast } from 'vant';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/services/auth';
 import type { UserProfile } from '@/services/auth';
 import logoUrl from '@/assets/images/logo.png';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -74,7 +72,7 @@ async function loadUserProfile() {
     // 更新 store 中的用户信息
     authStore.setUser(profile);
   } catch (error) {
-    logger.error('Failed to load user profile:', error);
+    console.error('Failed to load user profile:', error);
     // 如果获取失败，使用 store 中的用户信息
     userInfo.value = initialUserInfo.value;
   } finally {
@@ -98,7 +96,7 @@ async function handleLogout() {
     showToast('已退出登录');
     router.replace({ name: 'Login' });
   } catch (error) {
-    logger.error('Logout failed:', error);
+    console.error('Logout failed:', error);
     // 即使 API 失败，也清除本地状态并跳转
     authStore.logout();
     router.replace({ name: 'Login' });

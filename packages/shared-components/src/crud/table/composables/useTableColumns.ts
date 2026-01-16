@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { computed, toValue, inject } from 'vue';
 import type { TableProps } from '../types';
 import { autoFormatTableColumns } from '../utils/formatters';
@@ -86,7 +86,7 @@ function getCellTextForWidth(column: any, row: any): string {
       const formatted = column.formatter(row, column, value, 0);
       return String(formatted || '');
     } catch (error) {
-      logger.warn('[useTableColumns] Formatter error:', error);
+      console.warn('[useTableColumns] Formatter error:', error);
     }
   }
 
@@ -95,7 +95,7 @@ function getCellTextForWidth(column: any, row: any): string {
       const dict = column._dictFormatter(row);
       return String(dict?.label || value || '');
     } catch (error) {
-      logger.warn('[useTableColumns] Dict formatter error:', error);
+      console.warn('[useTableColumns] Dict formatter error:', error);
     }
   }
 
@@ -104,7 +104,7 @@ function getCellTextForWidth(column: any, row: any): string {
       const tagInfo = column._codeTagFormatter(row);
       return String(tagInfo?.label || value || '');
     } catch (error) {
-      logger.warn('[useTableColumns] Code tag formatter error:', error);
+      console.warn('[useTableColumns] Code tag formatter error:', error);
     }
   }
 
@@ -141,7 +141,7 @@ export function useTableColumns(props: TableProps) {
       return String(result || key);
     } catch (error) {
       // 翻译失败，返回原 key
-      logger.warn('[useTableColumns] Translation failed:', error);
+      console.warn('[useTableColumns] Translation failed:', error);
       return key;
     }
   };

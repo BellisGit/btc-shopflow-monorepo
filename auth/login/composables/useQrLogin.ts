@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcMessage } from '@btc/shared-components';
@@ -19,7 +19,7 @@ export function useQrLogin() {
       
       BtcMessage.info(t('二维码登录功能暂未开启'));
     } catch (error: any) {
-      logger.error('刷新二维码错误:', error);
+      console.error('刷新二维码错误:', error);
       BtcMessage.error(error.message || t('刷新二维码失败'));
     }
   };

@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
@@ -29,9 +29,12 @@ import { tSync } from './i18n/getters';
 
 // 关键：在应用启动时立即设置全局错误监听器，捕获 Vue patch 过程中的 DOM 操作错误
 // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
-if (typeof window !== 'undefined') {
+// 注意：使用单例模式，避免重复添加监听器导致内存泄漏
+let globalErrorHandler: ((event: ErrorEvent) => boolean | void) | null = null;
+
+if (typeof window !== 'undefined' && !globalErrorHandler) {
   // 使用捕获阶段监听，确保能捕获所有错误（包括 Vue 内部的错误）
-  window.addEventListener('error', (event) => {
+  globalErrorHandler = (event: ErrorEvent) => {
     const errorMessage = event.message || '';
     const errorStack = event.error?.stack || '';
 
@@ -55,7 +58,7 @@ if (typeof window !== 'undefined') {
       errorStack.includes('BtcCrud')
     ) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      logger.error('CRUD component error (must fix):', errorMessage, {
+      console.error('CRUD component error (must fix):', errorMessage, {
         error: event.error,
         stack: errorStack,
       });
@@ -82,7 +85,9 @@ if (typeof window !== 'undefined') {
       return true; // 阻止默认错误处理
     }
     return false; // 其他错误继续正常处理
-  }, true); // 使用捕获阶段
+  };
+
+  window.addEventListener('error', globalErrorHandler, true); // 使用捕获阶段
 }
 
 let context: AdminAppContext | null = null;
@@ -102,12 +107,12 @@ const render = async (props: QiankunProps = {}) => {
   }
 
   isRendering = true;
-  
+
   // 关键：在独立运行模式下，隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
   // 并使用 appLoadingService 显示应用级 loading
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
   let appLoadingService: any = null;
-  
+
   if (isStandalone) {
     // 隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
     const loadingEl = document.getElementById('Loading');
@@ -119,7 +124,7 @@ const render = async (props: QiankunProps = {}) => {
       loadingEl.style.setProperty('z-index', '-1', 'important');
       loadingEl.classList.add('is-hide');
     }
-    
+
     // 显示应用级 loading
     try {
       const sharedCore = await import('@btc/shared-core');
@@ -130,11 +135,11 @@ const render = async (props: QiankunProps = {}) => {
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        logger.warn('[admin-app] Cannot display app-level loading:', error);
+        console.warn('[admin-app] Cannot display app-level loading:', error);
       }
     }
   }
-  
+
   try {
     // 先卸载前一个实例（如果存在）
     if (context) {
@@ -162,7 +167,7 @@ const render = async (props: QiankunProps = {}) => {
     }
     removeLoadingElement();
     clearNavigationFlag();
-    
+
     // 关键：确保 NProgress 和 AppSkeleton 也被关闭（避免双重 loading）
     // 在独立运行时，不应该显示 NProgress 或 AppSkeleton
     try {
@@ -171,7 +176,7 @@ const render = async (props: QiankunProps = {}) => {
       if (NProgress && typeof NProgress.done === 'function') {
         NProgress.done();
       }
-      
+
       // 隐藏 AppSkeleton（如果存在）
       const skeleton = document.getElementById('app-skeleton');
       if (skeleton) {
@@ -183,7 +188,7 @@ const render = async (props: QiankunProps = {}) => {
       // 静默失败
     }
   } catch (error) {
-    logger.error('Render failed:', error);
+    console.error('Render failed:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -260,6 +265,12 @@ async function unmount(props: QiankunProps = {}) {
     } finally {
       context = null;
     }
+  }
+
+  // 清理全局错误监听器（避免内存泄漏）
+  if (globalErrorHandler && typeof window !== 'undefined') {
+    window.removeEventListener('error', globalErrorHandler, true);
+    globalErrorHandler = null;
   }
 }
 

@@ -5,7 +5,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout as AppLayout } from '@btc/shared-components';
 import { getMainAppLoginUrl } from '@btc/shared-core';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
-import { logger } from '@btc/shared-core';
+;
 
 /**
  * 获取路由配置
@@ -24,12 +24,12 @@ function getQualityRoutes() {
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
     if (import.meta.env.DEV) {
-      logger.info(
+      console.info(
         `[QualityRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
       );
     }
   } catch (error) {
-    logger.error('[QualityRouter] Failed to scan routes from modules:', error);
+    console.error('[QualityRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 

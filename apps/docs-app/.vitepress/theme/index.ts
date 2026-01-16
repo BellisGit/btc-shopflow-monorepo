@@ -1,11 +1,39 @@
-import { logger } from '@btc/shared-core';
+// 使用 console 和 localStorage 而不是 @btc/shared-core，避免在 VitePress 配置加载时解析包
+// import { logger, storage } from '@btc/shared-core';
 import DefaultTheme from 'vitepress/theme';
 import { h } from 'vue';
 import type { Theme } from 'vitepress';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
-import { storage } from '@btc/shared-utils';
+
+// 简单的 storage 替代，使用 localStorage
+const storage = {
+  get: <T = string>(key: string): T | null => {
+    try {
+      const value = localStorage.getItem(key);
+      return value ? (JSON.parse(value) as T) : null;
+    } catch {
+      const value = localStorage.getItem(key);
+      return (value as T) || null;
+    }
+  },
+  set: (key: string, value: any): void => {
+    try {
+      localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    } catch (error) {
+      console.warn('[storage] Failed to set item:', key, error);
+    }
+  }
+};
+
+// 简单的 logger 替代
+const logger = {
+  error: (...args: any[]) => console.error('[VitePress Theme]', ...args),
+  warn: (...args: any[]) => console.warn('[VitePress Theme]', ...args),
+  info: (...args: any[]) => console.info('[VitePress Theme]', ...args),
+  debug: (...args: any[]) => console.debug('[VitePress Theme]', ...args),
+};
 
 // 复用主应用的样式（CSS 变量会被继承）
 import '../../../admin-app/src/styles/theme.scss';

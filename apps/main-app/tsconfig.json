@@ -17,12 +17,14 @@
       "@btc/shared-core/*": ["../../packages/shared-core/src/*", "../../packages/shared-core/dist/*"],
       "@btc/shared-components": ["../../packages/shared-components/src", "../../packages/shared-components/dist"],
       "@btc/shared-components/*": ["../../packages/shared-components/src/*", "../../packages/shared-components/dist/*"],
+      "@auth": ["../../auth"],
+      "@auth/*": ["../../auth/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"],
       "@workspace/locales/*": ["../../locales/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts", "../../auth/**/*.vue", "../../auth/**/*.ts"],
   "exclude": ["node_modules", "dist", "../../packages/**/dist/**/*.js", "../../packages/**/dist/**/*.mjs", "**/dist/**/*.js", "**/dist/**/*.mjs"]
 }
 

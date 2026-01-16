@@ -3,7 +3,7 @@
  * 用于过滤 qiankun 和 single-spa 产生的噪音日志
  */
 
-import { logger } from '@btc/shared-core';
+;
 
 /**
  * 检查是否应该过滤日志
@@ -77,14 +77,53 @@ export function setupQiankunLogFilter(): void {
     return false;
   };
 
+  // 安全地将参数转换为字符串，避免过长的字符串和循环引用
+  const safeStringify = (arg: any, maxLength: number = 10000): string => {
+    if (arg === null) return 'null';
+    if (arg === undefined) return 'undefined';
+    if (typeof arg === 'string') {
+      return arg.length > maxLength ? arg.substring(0, maxLength) + '...' : arg;
+    }
+    if (typeof arg === 'object') {
+      try {
+        const seen = new WeakSet();
+        const str = JSON.stringify(arg, (key, value) => {
+          // 限制深度，避免循环引用
+          if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+              return '[Circular]';
+            }
+            seen.add(value);
+          }
+          return value;
+        }, 2);
+        return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+      } catch (error) {
+        return String(arg).length > maxLength ? String(arg).substring(0, maxLength) + '...' : String(arg);
+      }
+    }
+    const str = String(arg);
+    return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+  };
+
+  // 限制消息总长度，避免过长的字符串
+  const limitMessageLength = (message: string, maxLength: number = 50000): string => {
+    return message.length > maxLength ? message.substring(0, maxLength) + '... (truncated)' : message;
+  };
+
   // 过滤 console.log
   console.log = (...args: any[]) => {
     if (shouldFilter(...args)) {
       return;
     }
-    // 使用 logger 统一输出，支持日志上报和格式统一
-    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.info(message, ...args);
+    // 使用原始方法，避免递归
+    try {
+      const message = limitMessageLength(args.map(arg => safeStringify(arg)).join(' '));
+      originalInfo(message, ...args);
+    } catch (error) {
+      // 如果转换失败，直接使用原始方法输出
+      originalLog(...args);
+    }
   };
 
   // 过滤 console.info
@@ -92,9 +131,14 @@ export function setupQiankunLogFilter(): void {
     if (shouldFilter(...args)) {
       return;
     }
-    // 使用 logger 统一输出，支持日志上报和格式统一
-    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.info(message, ...args);
+    // 使用原始方法，避免递归
+    try {
+      const message = limitMessageLength(args.map(arg => safeStringify(arg)).join(' '));
+      originalInfo(message, ...args);
+    } catch (error) {
+      // 如果转换失败，直接使用原始方法输出
+      originalInfo(...args);
+    }
   };
 
   // 过滤 console.warn
@@ -183,9 +227,14 @@ export function setupQiankunLogFilter(): void {
       });
       return; // 不打印，直接返回
     }
-    // 使用 logger 统一输出，支持日志上报和格式统一
-    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.warn(message, ...args);
+    // 使用原始方法，避免递归
+    try {
+      const message = limitMessageLength(args.map(arg => safeStringify(arg)).join(' '));
+      originalWarn(message, ...args);
+    } catch (error) {
+      // 如果转换失败，直接使用原始方法输出
+      originalWarn(...args);
+    }
   };
 
   // 过滤 console.error（single-spa 错误代码 31 通过 error 输出）
@@ -228,10 +277,15 @@ export function setupQiankunLogFilter(): void {
         return;
       }
     }
-    // 使用 logger 统一输出，支持日志上报和格式统一
-    const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    const errorArg = args.find(arg => arg instanceof Error) || args[1];
-    logger.error(message, errorArg, ...args);
+    // 使用原始方法，避免递归
+    try {
+      const message = limitMessageLength(args.map(arg => safeStringify(arg)).join(' '));
+      const errorArg = args.find(arg => arg instanceof Error) || args[1];
+      originalError(message, errorArg, ...args);
+    } catch (error) {
+      // 如果转换失败，直接使用原始方法输出
+      originalError(...args);
+    }
   };
 }
 

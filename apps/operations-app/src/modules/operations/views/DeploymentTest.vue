@@ -243,11 +243,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { BtcCrudRow, BtcCrudFlex1, BtcTableButton, BtcEmpty } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
-import { ElMessage, ElMessageBox, ElTable } from 'element-plus';
+import { ElTable } from 'element-plus';
+import { BtcMessage, BtcConfirm } from '@btc/shared-components';
 import { Check, Close, View, Download, Loading, Warning } from '@element-plus/icons-vue';
 import { startTest as startDeploymentTestAPI, getTestStatus as getDeploymentTestStatus, getTestReport as getDeploymentTestReport } from '../api/deployment-test';
 
@@ -357,11 +357,11 @@ const startTestButtonConfig = computed<BtcTableButtonConfig>(() => ({
   type: 'primary',
   onClick: () => {
     if (selectedApps.value.length === 0) {
-      ElMessage.warning(t('monitor.deploymentTest.errors.noAppSelected'));
+      BtcMessage.warning(t('monitor.deploymentTest.errors.noAppSelected'));
       return;
     }
     if (testing.value) {
-      ElMessage.info(t('monitor.deploymentTest.testing'));
+      BtcMessage.info(t('monitor.deploymentTest.testing'));
       return;
     }
     startTest();
@@ -399,26 +399,26 @@ const startTest = async () => {
   }
 
   try {
-    logger.info('[DeploymentTest] 开始测试，选中的应用:', selectedApps.value);
+    console.info('[DeploymentTest] 开始测试，选中的应用:', selectedApps.value);
     testing.value = true;
     testResults.value = [];
     progressPercentage.value = 0;
     progressStatus.value = '';
 
     // 调用测试API
-    logger.info('[DeploymentTest] 调用 startDeploymentTestAPI...');
+    console.info('[DeploymentTest] 调用 startDeploymentTestAPI...');
     const testId = await startDeploymentTestAPI({
       apps: selectedApps.value,
       timeout: testConfig.value.timeout,
       baseUrl: testConfig.value.baseUrl || undefined,
     });
-    logger.info('[DeploymentTest] 测试ID:', testId);
+    console.info('[DeploymentTest] 测试ID:', testId);
 
     // 轮询测试状态
-    logger.info('[DeploymentTest] 开始轮询测试状态...');
+    console.info('[DeploymentTest] 开始轮询测试状态...');
     await pollTestStatus(testId);
   } catch (error: unknown) {
-    logger.error('[DeploymentTest] 启动测试失败:', error);
+    console.error('[DeploymentTest] 启动测试失败:', error);
     ElMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.startFailed'));
     testing.value = false;
   }
@@ -428,7 +428,7 @@ const startTest = async () => {
 const pollTestStatus = async (testId: string) => {
   // 如果testId无效，直接返回错误
   if (!testId) {
-    logger.error('[DeploymentTest] testId无效，无法轮询状态');
+    console.error('[DeploymentTest] testId无效，无法轮询状态');
     ElMessage.error(t('monitor.deploymentTest.errors.startFailed') + ': 测试ID无效');
     testing.value = false;
     return;
@@ -449,21 +449,21 @@ const pollTestStatus = async (testId: string) => {
 
   const checkStatus = async () => {
     if (isCleanedUp) {
-      logger.info('[DeploymentTest] 已清理，跳过状态检查');
+      console.info('[DeploymentTest] 已清理，跳过状态检查');
       return;
     }
 
     try {
-      logger.info('[DeploymentTest] 检查测试状态，testId:', testId, 'attempts:', attempts);
+      console.info('[DeploymentTest] 检查测试状态，testId:', testId, 'attempts:', attempts);
       const status = await getDeploymentTestStatus(testId);
-      logger.info('[DeploymentTest] 测试状态:', status);
+      console.info('[DeploymentTest] 测试状态:', status);
 
       // 检查状态对象是否有效
       if (!status || typeof status !== 'object' || !status.status) {
-        logger.error('[DeploymentTest] 无效的状态对象:', status);
+        console.error('[DeploymentTest] 无效的状态对象:', status);
         cleanup();
         testing.value = false;
-        ElMessage.error(t('monitor.deploymentTest.errors.statusCheckFailed') + ': 状态格式错误');
+        BtcMessage.error(t('monitor.deploymentTest.errors.statusCheckFailed') + ': 状态格式错误');
         return;
       }
 
@@ -486,7 +486,7 @@ const pollTestStatus = async (testId: string) => {
         testing.value = false;
         currentTestApp.value = null;
 
-        ElMessage.success(t('monitor.deploymentTest.testCompleted'));
+        BtcMessage.success(t('monitor.deploymentTest.testCompleted'));
       } else if (status.status === 'running') {
         progressPercentage.value = Math.min(status.progress || 0, 99);
         currentTestApp.value = status.currentApp || null;
@@ -495,7 +495,7 @@ const pollTestStatus = async (testId: string) => {
         if (attempts >= maxAttempts) {
           cleanup();
           testing.value = false;
-          ElMessage.error(t('monitor.deploymentTest.errors.timeout'));
+          BtcMessage.error(t('monitor.deploymentTest.errors.timeout'));
         }
       } else if (status.status === 'pending') {
         // 处理 pending 状态：显示准备中
@@ -507,18 +507,18 @@ const pollTestStatus = async (testId: string) => {
         if (attempts > 10) {
           cleanup();
           testing.value = false;
-          ElMessage.error(t('monitor.deploymentTest.errors.startFailed') + ': 测试未能启动');
+          BtcMessage.error(t('monitor.deploymentTest.errors.startFailed') + ': 测试未能启动');
         }
       } else if (status.status === 'failed') {
         cleanup();
         testing.value = false;
-        ElMessage.error(status.error || t('monitor.deploymentTest.errors.testFailed'));
+        BtcMessage.error(status.error || t('monitor.deploymentTest.errors.testFailed'));
       }
     } catch (error: unknown) {
-      logger.error('检查测试状态失败:', error);
+      console.error('检查测试状态失败:', error);
       cleanup();
       testing.value = false;
-      ElMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.statusCheckFailed'));
+      BtcMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.statusCheckFailed'));
     }
   };
 
@@ -534,7 +534,7 @@ const pollTestStatus = async (testId: string) => {
 // 停止测试
 const stopTest = async () => {
   try {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('monitor.deploymentTest.confirmStop'),
       t('monitor.deploymentTest.confirm'),
       {

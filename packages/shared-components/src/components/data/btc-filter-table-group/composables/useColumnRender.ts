@@ -8,7 +8,7 @@
  * 
  * 注意：这个功能需要根据实际的表格组件API来实现
  * 如果 BtcTable 不支持动态显示/隐藏列，可能需要其他方案
- */import { logger } from '@btc/shared-core';
+ */;
 
 
 import { computed, type Ref, type ComputedRef } from 'vue';
@@ -91,7 +91,7 @@ export function useColumnRender(
       
       return visible;
     } catch (error) {
-      logger.warn('[BtcFilterTableGroup] 列渲染计算失败:', error);
+      console.warn('[BtcFilterTableGroup] 列渲染计算失败:', error);
       // 计算失败时返回所有列
       return sortedColumns.value;
     }

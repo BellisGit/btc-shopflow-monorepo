@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'path';
 import type { Plugin } from 'vite';
 import { getViteAppConfig } from '../../configs/vite-app-config';
+import { createBaseResolve } from '../../configs/vite/base.config';
 
 const appDir = fileURLToPath(new URL('.', import.meta.url));
 
@@ -28,11 +29,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
-  resolve: {
-    alias: {
-      '@': resolve(appDir, 'src'),
-    },
-  },
+  resolve: createBaseResolve(appDir, 'home-app'),
   css: {
     preprocessorOptions: {
       scss: {

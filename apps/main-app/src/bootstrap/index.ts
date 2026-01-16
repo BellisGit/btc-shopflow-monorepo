@@ -4,7 +4,7 @@
  *
  * 参考 cool-admin 的架构设计，采用模块化目录结构
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { App } from 'vue';
 
@@ -17,6 +17,8 @@ import { initResourceLoader, initDynamicImportInterceptor } from '@btc/shared-co
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
 import { resolveAppLogoUrl, registerManifestMenusForApp } from '@btc/shared-core/configs/layout-bridge';
+
+const MAIN_APP_ID = 'main';
 
 // 处理器模块
 import { createNotificationHandler, initNotificationManager } from './handlers';
@@ -36,12 +38,32 @@ import { initSettingsConfig } from '../plugins/user-setting/composables/useSetti
  * 负责初始化所有核心功能模块
  */
 export async function bootstrap(app: App) {
-  // 0. 初始化资源加载器和动态导入拦截器（必须在最前面）
-  initResourceLoader();
-  initDynamicImportInterceptor();
+  // 0. 初始化监控系统（必须在最前面，确保所有操作都被监控）
+  const { initMonitor, trackBootstrapStart, trackBootstrapEnd } = await import('@btc/shared-core/utils/monitor');
   
-  // 0.1. 初始化存储管理器
-  appStorage.init();
+  // 先初始化监控配置，再开始跟踪
+  initMonitor({
+    appName: 'main',
+    enableAPM: true,
+    enableErrorTracking: true,
+    enableUserBehavior: true,
+    enablePerformance: true,
+    enableResourceMonitoring: true,
+    enableBusinessTracking: true,
+    enableSystemMonitoring: false, // 主应用暂不启用系统监控
+    sampleRate: 1.0,
+  });
+  
+  trackBootstrapStart();
+  
+  try {
+
+    // 0. 初始化资源加载器和动态导入拦截器（必须在最前面）
+    initResourceLoader();
+    initDynamicImportInterceptor();
+    
+    // 0.1. 初始化存储管理器
+    appStorage.init();
 
   // 1. 核心模块初始化
   setupEps(app);        // EPS 服务（必须在最前面）
@@ -97,12 +119,30 @@ export async function bootstrap(app: App) {
     import('../modules/api-services/auth').then(({ authApi }) => {
       (window as any).__APP_AUTH_API__ = authApi;
     }).catch((error) => {
-      logger.warn('[bootstrap] Failed to expose authApi globally:', error);
+      console.warn('[bootstrap] Failed to expose authApi globally:', error);
     });
   }
 
   // 暴露 Logo URL 获取函数，保持与其他应用的一致性
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+
+  // 关键：从路由配置自动生成并注册菜单（类似其他应用的做法）
+  // 这样可以确保菜单从路由动态生成，而不是依赖硬编码的 manifest JSON
+  try {
+    const { routes } = await import('../router/routes');
+    const { generateMenusFromRoutes } = await import('./utils/menu-generator');
+    const { registerMenus } = await import('@btc/shared-components');
+    
+    // 从路由生成菜单
+    const menus = generateMenusFromRoutes(routes);
+    
+    // 注册菜单（使用 forceUpdate=true 确保覆盖缓存）
+    if (menus.length > 0) {
+      registerMenus(MAIN_APP_ID, menus, true);
+    }
+  } catch (error) {
+    console.warn('[bootstrap] 从路由生成菜单失败，将使用 manifest 菜单:', error);
+  }
 
   // 关键：设置菜单注册函数（供 layout-app 使用）
   // 这确保登录后切换到 main 应用时，菜单组件能够正确注册菜单
@@ -159,13 +199,13 @@ export async function bootstrap(app: App) {
               BtcMessage.success(message);
             }
           } catch (error) {
-            logger.warn('[bootstrap] Failed to show logout success message:', error);
+            console.warn('[bootstrap] Failed to show logout success message:', error);
           }
         },
       });
       
       if (!success) {
-        logger.error('[bootstrap] Logout core failed');
+        console.error('[bootstrap] Logout core failed');
         // 即使失败，也执行兜底逻辑
         appStorage.auth?.clear();
         appStorage.user?.clear();
@@ -187,7 +227,7 @@ export async function bootstrap(app: App) {
         window.location.href = `/login?oauth_callback=${encodeURIComponent(currentPath)}`;
       }
     } catch (error) {
-      logger.error('[bootstrap] Failed to execute logout:', error);
+      console.error('[bootstrap] Failed to execute logout:', error);
       // 简单的兜底逻辑
       try {
         const authApi = (window as any).__APP_AUTH_API__;
@@ -214,7 +254,7 @@ export async function bootstrap(app: App) {
           startUserCheckPollingIfLoggedIn();
         }).catch((error) => {
           if (import.meta.env.DEV) {
-            logger.warn('[bootstrap] Failed to start user check polling:', error);
+            console.warn('[bootstrap] Failed to start user check polling:', error);
           }
         });
       } catch (error) {
@@ -323,6 +363,11 @@ export async function bootstrap(app: App) {
       return Promise.reject(error);
     });
   };
+
+  } finally {
+    // 监控系统：标记启动完成
+    trackBootstrapEnd();
+  }
 }
 
 // 导出各个模块，供其他地方使用

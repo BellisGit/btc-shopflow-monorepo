@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue';
-import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcMasterViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
@@ -86,7 +86,7 @@ const checkService = {
   list: async (params?: any) => {
     const checkListService = service.logistics?.warehouse?.check?.list;
     if (!checkListService) {
-      logger.warn('[LogisticsInventoryResult] 盘点列表接口不存在');
+      console.warn('[LogisticsInventoryResult] 盘点列表接口不存在');
       return {
         list: [],
         pagination: {
@@ -118,7 +118,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      logger.error('[LogisticsInventoryResult] 获取盘点列表失败:', error);
+      console.error('[LogisticsInventoryResult] 获取盘点列表失败:', error);
       return {
         list: [],
         pagination: {
@@ -278,7 +278,7 @@ const handleExport = async () => {
         } catch (error) {
           // 组件可能正在卸载，静默处理
           if (import.meta.env.DEV) {
-            logger.warn('[LogisticsInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
+            console.warn('[LogisticsInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
           }
           return;
         }

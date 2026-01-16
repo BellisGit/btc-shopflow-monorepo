@@ -14,10 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import SettingItem from '../../components/shared/SettingItem.vue';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { useSettingsConfig, useSettingsHandlers, useSettingsState } from '../../composables';
 import '../../settings/basic-settings/styles/index.scss';
 
@@ -81,7 +80,7 @@ const handleSettingChange = (handlerName: string | undefined, value: any) => {
   if (typeof handler === 'function') {
     handler(value);
   } else {
-    logger.warn(`Handler "${handlerName}" not found in basicHandlers`);
+    console.warn(`Handler "${handlerName}" not found in basicHandlers`);
   }
 };
 </script>

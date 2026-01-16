@@ -122,7 +122,7 @@ import {
   BtcTable,
   BtcPagination
 } from '@btc/shared-components';
-import { useI18n, usePageColumns, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, usePageColumns, getPageConfigFull } from '@btc/shared-core';
 import { BtcEmpty } from '@btc/shared-components';
 
 defineOptions({
@@ -201,10 +201,10 @@ const detailFields = computed(() => {
 // 处理tab切换
 const handleTabChange = (tab: any) => {
   activeTab.value = tab.name;
-  logger.info('[LogsCenter] tab-change →', tab.name, 'currentStorageKey =', currentStorageKey.value);
+  console.info('[LogsCenter] tab-change →', tab.name, 'currentStorageKey =', currentStorageKey.value);
   // 等待渲染后再次打印
   nextTick(() => {
-    logger.info('[LogsCenter] after render, activeTab =', activeTab.value, 'storageKey =', currentStorageKey.value);
+    console.info('[LogsCenter] after render, activeTab =', activeTab.value, 'storageKey =', currentStorageKey.value);
   });
 };
 
@@ -212,7 +212,7 @@ const handleTabChange = (tab: any) => {
 watch(
   () => activeTab.value,
   (val, oldVal) => {
-    logger.info('[LogsCenter] activeTab changed:', oldVal, '→', val, 'storageKey =', currentStorageKey.value);
+    console.info('[LogsCenter] activeTab changed:', oldVal, '→', val, 'storageKey =', currentStorageKey.value);
   },
   { immediate: true },
 );

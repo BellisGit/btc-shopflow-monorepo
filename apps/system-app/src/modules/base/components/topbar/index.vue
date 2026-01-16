@@ -80,9 +80,8 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { ref, onMounted, markRaw, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { usePluginManager, logger } from '@btc/shared-core';
+import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
@@ -217,11 +216,11 @@ onMounted(async () => {
           component: markRaw(component.default || component)
         });
       } catch (error) {
-        logger.error('Failed to load toolbar component:', error);
+        console.error('Failed to load toolbar component:', error);
       }
     }
   } catch (error) {
-    logger.error('Failed to get toolbar components:', error);
+    console.error('Failed to get toolbar components:', error);
   }
 
 });

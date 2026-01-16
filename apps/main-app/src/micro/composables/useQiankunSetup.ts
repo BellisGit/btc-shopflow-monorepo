@@ -2,7 +2,7 @@
  * Qiankun 设置 Composable
  * 组装所有配置并初始化 qiankun
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { registerMicroApps, start, initGlobalState } from 'qiankun';
 import { microApps } from '../apps';
@@ -27,7 +27,7 @@ export function setupQiankun() {
   // 防止重复注册：如果已经初始化过，直接返回
   if ((window as any).__qiankun_setup__) {
     if (import.meta.env.DEV) {
-      logger.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
+      console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
     }
     return getGlobalState();
   }
@@ -129,7 +129,7 @@ export function setupQiankun() {
                 await registerManifestMenusForApp(appId).catch(console.error);
                 await registerManifestTabsForApp(appId).catch(console.error);
               } catch (error) {
-                logger.warn(`[QiankunSetup] 合并 ${appId} 的国际化消息失败:`, error);
+                console.warn(`[QiankunSetup] 合并 ${appId} 的国际化消息失败:`, error);
               }
             }
           }
@@ -227,7 +227,7 @@ export function setupQiankun() {
             // 超过最大重试次数，仍然找不到容器
             // 记录警告但继续启动（beforeLoad 钩子会处理）
             if (import.meta.env.DEV) {
-              logger.warn('[qiankun] 启动前未找到 #subapp-viewport 容器，将在 beforeLoad 中重试');
+              console.warn('[qiankun] 启动前未找到 #subapp-viewport 容器，将在 beforeLoad 中重试');
             }
             resolve(); // 仍然 resolve，让 qiankun 启动，beforeLoad 钩子会处理
           }
@@ -241,15 +241,15 @@ export function setupQiankun() {
   };
 
   // 等待容器存在后再启动 qiankun
-  ensureContainerBeforeStart().then(() => {
+  ensureContainerBeforeStart().then(async () => {
     // 启动 qiankun
+    // 使用统一的沙箱配置，避免样式隔离不一致导致的样式引擎累积
+    const { getQiankunSandboxConfig } = await import('@btc/shared-core');
+    const sandboxConfig = getQiankunSandboxConfig();
+
     start({
       prefetch: false,
-      sandbox: {
-        strictStyleIsolation: false, // 关闭严格样式隔离：需要共享样式（共享组件、主应用布局等）
-        experimentalStyleIsolation: true, // 开启实验性样式隔离：通过 CSS 作用域隔离样式，但不使用 Shadow DOM，允许共享样式
-        loose: false,
-      },
+      sandbox: sandboxConfig,
       singular: false, // 关闭单例模式：支持跨子域部署，允许主应用同时管理多个子应用
       // 关键：在 importEntryOpts 中配置 getTemplate 和 fetch，修复资源路径
       // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
@@ -275,7 +275,7 @@ export function setupQiankun() {
   }).catch((error) => {
     // 如果等待容器失败，仍然启动 qiankun（beforeLoad 钩子会处理）
     if (import.meta.env.DEV) {
-      logger.warn('[qiankun] 等待容器时出错，仍然启动 qiankun:', error);
+      console.warn('[qiankun] 等待容器时出错，仍然启动 qiankun:', error);
     }
 
     start({

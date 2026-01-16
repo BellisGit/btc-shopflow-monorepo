@@ -3,7 +3,7 @@
  * 封装 qiankun globalState 的初始化、访问和监听逻辑
  * 确保所有应用都通过这个中间层使用全局状态，避免重复注册和未初始化问题
  */
-import { logger } from '../utils/logger';
+;
 
 import { ref, onUnmounted } from 'vue';
 
@@ -54,7 +54,7 @@ let listenerIdCounter = 0;
 export function initGlobalStateManager(globalState: MicroAppStateActions) {
   if (initState.isInitialized) {
     if (import.meta.env.DEV) {
-      logger.warn('[GlobalStateManager] 全局状态已经被初始化，跳过重复初始化');
+      console.warn('[GlobalStateManager] 全局状态已经被初始化，跳过重复初始化');
     }
     return;
   }
@@ -87,13 +87,13 @@ export function initGlobalStateManager(globalState: MicroAppStateActions) {
       try {
         callback();
       } catch (error) {
-        logger.error('[GlobalStateManager] 执行等待回调失败:', error);
+        console.error('[GlobalStateManager] 执行等待回调失败:', error);
       }
     });
     initState.waitingCallbacks = [];
   } catch (error) {
     initState.isInitializing = false;
-    logger.error('[GlobalStateManager] 初始化全局状态失败:', error);
+    console.error('[GlobalStateManager] 初始化全局状态失败:', error);
     throw error;
   }
 }
@@ -163,7 +163,7 @@ export function waitForGlobalState(timeout = 5000): Promise<MicroAppStateActions
       const elapsed = Date.now() - startTime;
       if (elapsed > timeout) {
         if (import.meta.env.DEV) {
-          logger.warn('[GlobalStateManager] 等待全局状态初始化超时');
+          console.warn('[GlobalStateManager] 等待全局状态初始化超时');
         }
         resolve(null);
         return;
@@ -200,7 +200,7 @@ export async function setGlobalState(
   
   if (!globalState) {
     if (import.meta.env.DEV) {
-      logger.warn('[GlobalStateManager] globalState 未初始化，无法设置状态');
+      console.warn('[GlobalStateManager] globalState 未初始化，无法设置状态');
     }
     return false;
   }
@@ -209,7 +209,7 @@ export async function setGlobalState(
     globalState.setGlobalState(state);
     return true;
   } catch (error) {
-    logger.error('[GlobalStateManager] 设置全局状态失败:', error);
+    console.error('[GlobalStateManager] 设置全局状态失败:', error);
     return false;
   }
 }
@@ -228,7 +228,7 @@ export function getGlobalStateValue(): Record<string, any> | null {
   try {
     return globalState.getGlobalState();
   } catch (error) {
-    logger.error('[GlobalStateManager] 获取全局状态失败:', error);
+    console.error('[GlobalStateManager] 获取全局状态失败:', error);
     return null;
   }
 }
@@ -241,7 +241,7 @@ function unifiedListenerCallback(state: Record<string, any>, prev?: Record<strin
     try {
       callback(state, prev);
     } catch (error) {
-      logger.error('[GlobalStateManager] 执行监听回调失败:', error);
+      console.error('[GlobalStateManager] 执行监听回调失败:', error);
     }
   });
 }
@@ -259,7 +259,7 @@ function registerUnifiedListener(globalState: MicroAppStateActions, fireImmediat
         try {
           unifiedListenerCallback(currentState, currentState);
         } catch (error) {
-          logger.error('[GlobalStateManager] 立即触发统一监听器回调失败:', error);
+          console.error('[GlobalStateManager] 立即触发统一监听器回调失败:', error);
         }
       }
     }
@@ -287,7 +287,7 @@ function registerUnifiedListener(globalState: MicroAppStateActions, fireImmediat
         try {
           unifiedListenerCallback(currentState, currentState);
         } catch (error) {
-          logger.error('[GlobalStateManager] 立即触发统一监听器回调失败:', error);
+          console.error('[GlobalStateManager] 立即触发统一监听器回调失败:', error);
         }
       }
     }
@@ -310,7 +310,7 @@ function registerUnifiedListener(globalState: MicroAppStateActions, fireImmediat
     isUnifiedListenerRegistered = true;
     return true;
   } catch (error) {
-    logger.error('[GlobalStateManager] 注册统一监听器失败:', error);
+    console.error('[GlobalStateManager] 注册统一监听器失败:', error);
     return false;
   }
 }
@@ -351,7 +351,7 @@ export function onGlobalStateChange(
             try {
               listener(currentState, currentState);
             } catch (error) {
-              logger.error('[GlobalStateManager] 立即触发回调失败:', error);
+              console.error('[GlobalStateManager] 立即触发回调失败:', error);
             }
           }
         }
@@ -374,7 +374,7 @@ export function onGlobalStateChange(
         try {
           unifiedUnsubscribe();
         } catch (error) {
-          logger.error('[GlobalStateManager] 取消统一监听失败:', error);
+          console.error('[GlobalStateManager] 取消统一监听失败:', error);
         }
         unifiedUnsubscribe = null;
         isUnifiedListenerRegistered = false;
@@ -409,7 +409,7 @@ export function onGlobalStateChange(
       try {
         listener(currentState, currentState);
       } catch (error) {
-        logger.error('[GlobalStateManager] 立即触发回调失败:', error);
+        console.error('[GlobalStateManager] 立即触发回调失败:', error);
       }
     }
   }
@@ -422,7 +422,7 @@ export function onGlobalStateChange(
       try {
         unifiedUnsubscribe();
       } catch (error) {
-        logger.error('[GlobalStateManager] 取消统一监听失败:', error);
+        console.error('[GlobalStateManager] 取消统一监听失败:', error);
       }
       unifiedUnsubscribe = null;
       isUnifiedListenerRegistered = false;
@@ -442,7 +442,7 @@ export function cleanupAllListeners() {
     try {
       unifiedUnsubscribe();
     } catch (error) {
-      logger.error('[GlobalStateManager] 清理统一监听器失败:', error);
+      console.error('[GlobalStateManager] 清理统一监听器失败:', error);
     }
     unifiedUnsubscribe = null;
     isUnifiedListenerRegistered = false;

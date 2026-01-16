@@ -1,4 +1,4 @@
-﻿# BtcContainer 布局容器
+# BtcContainer 布局容器
 
 `BtcContainer` 是一个智能的布局容器组件，它继承父组件的完整宽高，根据子组件数量智能划分空间，优先宽度布局，超出时显示滚动条。
 
@@ -147,12 +147,44 @@ import { BtcContainer } from '@btc/shared-components';
 </template>
 ```
 
+## 自动填充响应式布局
+
+使用 `autoFill` 模式可以实现完全响应式的网格布局，类似于 `repeat(auto-fill, minmax(300px, 1fr))` 的效果：
+
+```vue
+<template>
+  <!-- 自动填充布局：每个项目最小宽度 300px，自动根据容器宽度调整列数 -->
+  <BtcContainer :gap="16" :auto-fill="true" :min-item-width="300">
+    <div class="card-item">卡片 1</div>
+    <div class="card-item">卡片 2</div>
+    <div class="card-item">卡片 3</div>
+    <div class="card-item">卡片 4</div>
+    <div class="card-item">卡片 5</div>
+  </BtcContainer>
+</template>
+```
+
+**自动填充模式的特点**：
+- ✅ 完全响应式：根据容器宽度自动调整列数
+- ✅ 最小宽度保证：每个项目至少保持 `minItemWidth` 的宽度
+- ✅ 自动换行：空间不足时自动换到下一行
+- ✅ 均匀分布：剩余空间在所有列之间均匀分配
+- ✅ 无滚动限制：所有内容都会显示，不会限制为2行
+
+**使用场景**：
+- 商品卡片列表
+- 内容卡片网格
+- 任何需要根据容器宽度自动调整列数的场景
+
 ## Props
 
 | 属性名           | 类型            | 默认值 | 说明                                    |
 |------------------|-----------------|--------|-----------------------------------------|
 | gap              | `number\|string`| `10`   | 子组件之间的间距                        |
-| maxColsPerRow    | `number`        | -      | 每行最大列数，不指定时使用智能计算      |
+| colsPerRow       | `number`        | -      | 每行列数，不指定时根据子组件数量智能计算 |
+| maxColsPerRow    | `number`        | -      | 每行最大列数（已废弃，使用 colsPerRow） |
+| autoFill         | `boolean`       | `false`| 是否使用自动填充响应式布局（repeat(auto-fill, minmax(...))） |
+| minItemWidth     | `number\|string`| `300`  | 自动填充模式下的最小项目宽度（单位：px） |
 
 ## 布局规则详解
 

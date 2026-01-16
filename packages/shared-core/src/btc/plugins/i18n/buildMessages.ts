@@ -1,4 +1,4 @@
-import { logger } from '../../../utils/logger';
+;
 // i18n/buildMessages.ts
 type L = Record<string, any>; // 只支持 {'zh-CN': {...}, 'en-US': {...}}
 
@@ -36,7 +36,7 @@ export function buildMessages(...bundles: L[]): L {
           } else {
             // 调试：记录被跳过的 AST 消息
             if (process.env.NODE_ENV === 'development') {
-              logger.warn(`[buildMessages] 跳过非字符串 AST 消息: ${key}`, {
+              console.warn(`[buildMessages] 跳过非字符串 AST 消息: ${key}`, {
                 type: typeof message,
                 message,
                 originalNode: messageNode
@@ -49,7 +49,7 @@ export function buildMessages(...bundles: L[]): L {
         } else {
           // 调试：记录被跳过的其他类型消息
           if (process.env.NODE_ENV === 'development') {
-            logger.warn(`[buildMessages] 跳过非字符串消息: ${key}`, {
+            console.warn(`[buildMessages] 跳过非字符串消息: ${key}`, {
               type: typeof messageNode,
               value: messageNode
             });

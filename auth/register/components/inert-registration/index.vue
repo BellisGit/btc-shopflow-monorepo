@@ -119,7 +119,7 @@
 import { onMounted } from 'vue';
 import BtcStepsForm from '/@/modules/base/components/btc/btc-steps-form/index.vue';
 import { useInertRegistration } from '../../composables/useInertRegistration';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -131,7 +131,7 @@ const viewModel = useInertRegistration();
 
 // 组件挂载后的初始化
 onMounted(() => {
-  logger.info('INERT 注册组件已挂载');
+  console.info('INERT 注册组件已挂载');
 });
 </script>
 

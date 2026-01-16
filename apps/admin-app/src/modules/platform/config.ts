@@ -5,7 +5,34 @@
 
 import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+
+// 参考 cool-admin-vue-7.x 的方式：延迟导入 service，避免初始化顺序问题
+let _serviceCache: any = null;
+
+function getService() {
+  if (_serviceCache) return _serviceCache;
+  if (typeof window === 'undefined') {
+    _serviceCache = {} as any;
+    return _serviceCache;
+  }
+  const win = window as any;
+  const globalService = win.__APP_EPS_SERVICE__ || win.__BTC_SERVICE__;
+  if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+    _serviceCache = globalService;
+    return _serviceCache;
+  }
+  if (!_serviceCache) {
+    try {
+      const cachedModule = (win as any).__EPS_MODULE_CACHE__;
+      if (cachedModule) {
+        _serviceCache = cachedModule.service || cachedModule.default || {};
+        return _serviceCache;
+      }
+    } catch (error) {}
+  }
+  _serviceCache = _serviceCache || {} as any;
+  return _serviceCache;
+}
 
 export default {
   // ModuleConfig 字段
@@ -200,18 +227,21 @@ export default {
     ] as FormItem[],
   },
 
-  service: {
-    domain: service.admin?.iam?.domain,
-    tenant: service.admin?.iam?.tenant,
-    module: service.admin?.iam?.module,
-    plugin: service.admin?.iam?.plugin,
-    // BtcMasterTableGroup 需要的域服务（左侧服务）
-    domainService: {
-      _serviceName: 'domain', // 标识服务名，用于推断 code 字段名
-      list: (params?: any) => {
-        const finalParams = params || {};
-        return service.admin?.iam?.domain?.list(finalParams);
-      }
-    },
+  get service() {
+    const epsService = getService();
+    return {
+      domain: epsService.admin?.iam?.domain,
+      tenant: epsService.admin?.iam?.tenant,
+      module: epsService.admin?.iam?.module,
+      plugin: epsService.admin?.iam?.plugin,
+      // BtcMasterTableGroup 需要的域服务（左侧服务）
+      domainService: {
+        _serviceName: 'domain', // 标识服务名，用于推断 code 字段名
+        list: (params?: any) => {
+          const finalParams = params || {};
+          return epsService.admin?.iam?.domain?.list(finalParams);
+        }
+      },
+    };
   },
 } satisfies ModuleConfig;

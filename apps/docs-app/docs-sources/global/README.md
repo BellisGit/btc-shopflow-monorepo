@@ -18,6 +18,8 @@
 ### 💻 开发指南
 - [应用开发](./development/app-development.md) - 应用开发指南
 - [脚本使用](./development/scripts-usage.md) - 脚本工具说明
+- [脚本架构重构](./development/scripts-refactoring.md) - Scripts 架构重构说明
+- [脚本归档报告](./development/scripts-archive-complete.md) - Scripts 归档完成报告
 - [Git 工作流](./development/git-workflow.md) - Git 使用规范
 
 #### 专题指南

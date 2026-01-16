@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
-import { logger } from '@btc/shared-core';
+;
 
 /**
  * 获取路由配置
@@ -34,15 +34,15 @@ export const getLogisticsRoutes = (): RouteRecordRaw[] => {
 
     // 输出扫描结果（开发环境）
     if (import.meta.env.DEV) {
-      logger.info(
+      console.info(
         `[logisticsRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
       );
       if (autoRoutes.conflicts.length > 0) {
-        logger.warn(`[logisticsRouter] Route conflicts:`, autoRoutes.conflicts);
+        console.warn(`[logisticsRouter] Route conflicts:`, autoRoutes.conflicts);
       }
     }
   } catch (error) {
-    logger.error(`[logisticsRouter] Failed to scan routes from modules:`, error);
+    console.error(`[logisticsRouter] Failed to scan routes from modules:`, error);
     pageRoutes = [];
   }
 

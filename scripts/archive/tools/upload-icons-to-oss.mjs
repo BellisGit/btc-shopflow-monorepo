@@ -2,7 +2,7 @@
  * 上传图标文件到阿里云 OSS（基于文件指纹的增量上传）
  * 只在文件变化时才上传，避免不必要的上传操作
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import OSS from 'ali-oss';
 import { createHash } from 'crypto';

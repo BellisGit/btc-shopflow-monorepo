@@ -137,7 +137,7 @@ function updateRouterFile(routerFilePath, appName) {
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
-import { logger } from '@btc/shared-core';
+// logger removed, use console instead
 
 /**
  * 获取路由配置
@@ -169,15 +169,15 @@ export const get${appName.charAt(0).toUpperCase() + appName.slice(1)}Routes = ()
 
     // 输出扫描结果（开发环境）
     if (import.meta.env.DEV) {
-      logger.info(
+      console.info(
         \`[${appName}Router] Route discovery: \${autoRoutes.views.length} views, \${autoRoutes.pages.length} pages, \${autoRoutes.conflicts.length} conflicts\`
       );
       if (autoRoutes.conflicts.length > 0) {
-        logger.warn(\`[${appName}Router] Route conflicts:\`, autoRoutes.conflicts);
+        console.warn(\`[${appName}Router] Route conflicts:\`, autoRoutes.conflicts);
       }
     }
   } catch (error) {
-    logger.error(\`[${appName}Router] Failed to scan routes from modules:\`, error);
+    console.error(\`[${appName}Router] Failed to scan routes from modules:\`, error);
     pageRoutes = [];
   }
 

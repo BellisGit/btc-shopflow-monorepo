@@ -1,7 +1,7 @@
 # 结束所有开发服务器进程的脚本
 # 注意：只结束占用开发端口的 Node.js 进程，不影响 IDE 相关进程
 
-$ports = @(8080, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8091, 8092, 8093, 8094, 8095)
+$ports = @(8080, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8091, 8092, 8093, 8094, 8095, 8096)
 
 Write-Host "🔍 检查开发端口占用情况..." -ForegroundColor Cyan
 
@@ -36,4 +36,4 @@ if ($killedProcesses.Count -eq 0) {
     Write-Host "`n✅ 已结束 $($killedProcesses.Count) 个开发服务器进程" -ForegroundColor Green
 }
 
-Write-Host "`n💡 提示：如果 8090 等端口仍被系统服务占用，可能需要重启系统或检查系统服务配置" -ForegroundColor Cyan
+Write-Host "`n💡 提示：如果某些端口仍被系统服务占用，可能需要重启系统或检查系统服务配置" -ForegroundColor Cyan

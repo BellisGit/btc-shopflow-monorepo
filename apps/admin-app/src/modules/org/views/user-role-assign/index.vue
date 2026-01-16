@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { useI18n, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, getPageConfigFull } from '@btc/shared-core';
 // @ts-ignore - BtcMultiUnbindBtn 已从 @btc/shared-components 导出，但类型定义可能未更新
 import { BtcMessage, BtcTransferPanel, BtcConfirm, BtcMasterTableGroup, BtcSvg, BtcMultiUnbindBtn } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
@@ -407,7 +407,7 @@ const searchUsers = async (query: string) => {
     // data 方法可能直接返回数组，也可能返回包含 list 的对象
     userOptions.value = Array.isArray(response) ? response : (response?.list || []);
   } catch (error) {
-    logger.error('[UserRoleAssign] search users error', error);
+    console.error('[UserRoleAssign] search users error', error);
     userOptions.value = [];
   } finally {
     userSearchLoading.value = false;
@@ -553,13 +553,13 @@ async function handleSubmit() {
       if (userCode) {
         userCodes.push(userCode);
       } else {
-        logger.warn(`[UserRoleAssign] 用户没有 userCode 字段:`, user);
+        console.warn(`[UserRoleAssign] 用户没有 userCode 字段:`, user);
         const identifier = user.username || user.realName || String(userId);
         BtcMessage.error(t('org.user_role_assign.messages.userCodeNotFound', { identifier }));
         return;
       }
     } else {
-      logger.warn(`[UserRoleAssign] 找不到用户:`, userId);
+      console.warn(`[UserRoleAssign] 找不到用户:`, userId);
       BtcMessage.error(t('org.user_role_assign.messages.userNotFound', { identifier: String(userId) }));
       return;
     }
@@ -575,13 +575,13 @@ async function handleSubmit() {
       if (roleCode) {
         roleCodes.push(roleCode);
       } else {
-        logger.warn(`[UserRoleAssign] 角色没有 roleCode 字段:`, role);
+        console.warn(`[UserRoleAssign] 角色没有 roleCode 字段:`, role);
         const identifier = role.roleName || String(roleId);
         BtcMessage.error(t('org.user_role_assign.messages.roleCodeNotFound', { identifier }));
         return;
       }
     } else {
-      logger.warn(`[UserRoleAssign] 找不到角色:`, roleId);
+      console.warn(`[UserRoleAssign] 找不到角色:`, roleId);
       BtcMessage.error(t('org.user_role_assign.messages.roleNotFound', { identifier: String(roleId) }));
       return;
     }
@@ -630,7 +630,7 @@ async function handleSubmit() {
       }
     }
   } catch (error: any) {
-    logger.error('[UserRoleAssign] submit error', error);
+    console.error('[UserRoleAssign] submit error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   } finally {
@@ -701,7 +701,7 @@ async function handleUnbind(row: any) {
     if (error?.message === 'cancel' || error === 'cancel') {
       return;
     }
-    logger.error('[UserRoleAssign] unbind error', error);
+    console.error('[UserRoleAssign] unbind error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   }
@@ -730,7 +730,7 @@ async function handleMultiUnbind(rows: any[]) {
       const roleCode = row.roleCode || row.role_code;
 
       if (!userCode || !roleCode) {
-        logger.warn('[UserRoleAssign] 行数据缺少 userCode 或 roleCode:', row);
+        console.warn('[UserRoleAssign] 行数据缺少 userCode 或 roleCode:', row);
         return null;
       }
 
@@ -781,7 +781,7 @@ async function handleMultiUnbind(rows: any[]) {
     if (error?.message === 'cancel' || error === 'cancel') {
       return;
     }
-    logger.error('[UserRoleAssign] multi unbind error', error);
+    console.error('[UserRoleAssign] multi unbind error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   }
@@ -865,7 +865,6 @@ async function handleMultiUnbind(rows: any[]) {
   color: var(--el-text-color-primary);
   flex-shrink: 0;
 }
-
 
 
 .drawer-footer {

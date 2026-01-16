@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger';
+;
 const MAX_RETRY = 120;
 
 let pendingClassName: string | null = null;
@@ -61,7 +61,7 @@ function scheduleRetry() {
 
     retryCount += 1;
     if (retryCount >= MAX_RETRY) {
-      logger.warn('[Theme] document.body 不可用，已跳过 className 设置');
+      console.warn('[Theme] document.body 不可用，已跳过 className 设置');
       return;
     }
 
@@ -106,28 +106,5 @@ if (typeof document !== 'undefined') {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

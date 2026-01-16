@@ -6,14 +6,14 @@
       class="btc-crud-action-icon"
       :config="refreshButtonConfig"
     />
-    <el-button
+    <btc-button
       v-else
       class="btc-crud-btn"
       @click="onRefresh"
     >
       <BtcSvg class="btc-crud-btn__icon" name="refresh" />
       <span class="btc-crud-btn__text">{{ t('common.button.refresh') }}</span>
-    </el-button>
+    </btc-button>
 
     <BtcCrudFlex1 />
 
@@ -59,7 +59,7 @@
       class="btc-crud-action-icon"
       :config="printButtonConfig"
     />
-    <el-button
+    <btc-button
       v-else
       type="primary"
       class="btc-crud-btn btc-crud-btn--with-icon"
@@ -67,16 +67,15 @@
     >
       <BtcSvg class="btc-crud-btn__icon" name="print" />
       <span class="btc-crud-btn__text">{{ t('inventory.ticket.print.print') }}</span>
-    </el-button>
+    </btc-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import { BtcTableButton, BtcCrudFlex1, BtcSvg } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
-import { ElInput, ElIcon, ElButton } from 'element-plus';
+import { ElInput, ElIcon } from 'element-plus';
 import { Search } from '@element-plus/icons-vue';
 
 defineOptions({

@@ -1,5 +1,3 @@
-import { ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { getActiveApp } from '@/store/tabRegistry';
 
 /**

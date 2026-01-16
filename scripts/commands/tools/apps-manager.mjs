@@ -4,7 +4,7 @@
  * 应用管理工具
  * 提供应用列表读取、过滤、查询等功能
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../utils/logger.mjs';
 
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';

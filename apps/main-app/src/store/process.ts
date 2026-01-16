@@ -1,6 +1,4 @@
-import { logger } from '@btc/shared-core';
-import { defineStore } from 'pinia';
-import { ref, watch, nextTick } from 'vue';
+;
 // 使用动态导入避免循环依赖（tabRegistry 可能导入 micro/manifests，而 micro/index.ts 导入 process.ts）
 // import { getActiveApp, resolveTabMeta } from './tabRegistry';
 
@@ -37,7 +35,7 @@ export function getCurrentAppFromPath(path: string): string {
   } catch (e) {
     // 忽略错误，继续使用兜底逻辑
   }
-  
+
   // 兜底逻辑：如果无法使用统一工具函数，使用路径匹配
   if (path.startsWith('/system')) return 'system';
   if (path.startsWith('/admin')) return 'admin';
@@ -181,7 +179,7 @@ export const useProcessStore = defineStore('process', () => {
    */
   function add(data: ProcessItem) {
     // 跳过个人信息页面和认证页面（不在菜单中，不需要添加到标签页）
-    if (data.path === '/profile' ||
+    if (data.path === '/workbench/profile' ||
         data.path === '/login' ||
         data.path === '/register' ||
         data.path === '/forget-password') {
@@ -248,6 +246,22 @@ export const useProcessStore = defineStore('process', () => {
           meta: buildMeta(),
         };
         list.value.push(newTab);
+
+        // 关键：限制标签数量，防止内存泄漏（保留固定的标签，移除最旧的非固定标签）
+        if (list.value.length > MAX_TABS) {
+          const pinnedSet = new Set(pinned.value);
+          // 分离固定和非固定标签
+          const pinnedTabs = list.value.filter(tab => pinnedSet.has(tab.fullPath));
+          const unpinnedTabs = list.value.filter(tab => !pinnedSet.has(tab.fullPath));
+
+          // 保留所有固定标签，只限制非固定标签数量
+          const maxUnpinnedTabs = MAX_TABS - pinnedTabs.length;
+          if (unpinnedTabs.length > maxUnpinnedTabs) {
+            // 移除最旧的非固定标签（保留最新的）
+            const tabsToKeep = unpinnedTabs.slice(-maxUnpinnedTabs);
+            list.value = [...pinnedTabs, ...tabsToKeep];
+          }
+        }
       } else {
         // 更新已存在的标签
         const existingTab = list.value[index];
@@ -292,7 +306,7 @@ export const useProcessStore = defineStore('process', () => {
               }
             }
           } catch (manifestError) {
-            logger.warn('[Process] Failed to resolve tab meta from manifest:', manifestError);
+            console.warn('[Process] Failed to resolve tab meta from manifest:', manifestError);
           }
         }
 
@@ -311,7 +325,7 @@ export const useProcessStore = defineStore('process', () => {
           }
         }
       } catch (error) {
-        logger.warn('[Process] Failed to resolve tab meta:', error);
+        console.warn('[Process] Failed to resolve tab meta:', error);
       }
     })();
   }
@@ -393,42 +407,42 @@ export const useProcessStore = defineStore('process', () => {
    */
   function restoreFromStorage() {
     if (typeof window === 'undefined') return;
-    
+
     try {
       // 验证并过滤无效的标签页
       const validTabs: ProcessItem[] = [];
       const validPinned: string[] = [];
-      
+
       // 验证标签页数据
       list.value.forEach((tab) => {
         // 基本验证：必须有 path 和 fullPath
         if (tab && typeof tab === 'object' && tab.path && tab.fullPath) {
           // 过滤掉不应该持久化的页面
           if (
-            tab.path === '/profile' ||
+            tab.path === '/workbench/profile' ||
             tab.path === '/login' ||
             tab.path === '/register' ||
             tab.path === '/forget-password'
           ) {
             return;
           }
-          
+
           // 确保 meta 存在
           if (!tab.meta) {
             tab.meta = {};
           }
-          
+
           // 确保 app 字段存在
           if (!tab.app) {
             tab.app = getCurrentAppFromPath(tab.path);
           }
-          
+
           // 排除 active 状态（刷新后需要重新计算）
           const { active, ...tabWithoutActive } = tab;
           validTabs.push(tabWithoutActive);
         }
       });
-      
+
       // 验证固定标签列表：只保留在有效标签中的固定标签
       const validFullPaths = new Set(validTabs.map((tab) => tab.fullPath));
       pinned.value.forEach((path) => {
@@ -436,19 +450,19 @@ export const useProcessStore = defineStore('process', () => {
           validPinned.push(path);
         }
       });
-      
+
       // 更新数据
       list.value = validTabs;
       pinned.value = validPinned;
-      
+
       // 重新排序（固定标签在前）
       reorderTabs();
-      
+
       // 根据当前路由设置 active 状态
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
         const currentFullPath = window.location.pathname + window.location.search;
-        
+
         // 优先匹配 fullPath（包含 query），其次匹配 path
         const currentTab = list.value.find((tab) => {
           if (tab.fullPath === currentFullPath) return true;
@@ -456,7 +470,7 @@ export const useProcessStore = defineStore('process', () => {
           if (tab.fullPath === currentPath) return true;
           return false;
         });
-        
+
         if (currentTab) {
           list.value.forEach((tab) => {
             tab.active = tab.fullPath === currentTab.fullPath;
@@ -468,7 +482,7 @@ export const useProcessStore = defineStore('process', () => {
         }
       }
     } catch (error) {
-      logger.warn('[Process] Failed to restore tabs from storage:', error);
+      console.warn('[Process] Failed to restore tabs from storage:', error);
       // 如果恢复失败，清空数据
       list.value = [];
       pinned.value = [];

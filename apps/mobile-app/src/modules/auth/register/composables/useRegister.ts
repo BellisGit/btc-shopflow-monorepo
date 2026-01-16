@@ -1,5 +1,3 @@
-import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { authApi, type RegisterRequest } from '@/services/auth';
 import { useAuthStore } from '@/stores/auth';

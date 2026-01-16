@@ -2,7 +2,7 @@
  * 模块自动扫描器
  * 参考 cool-admin-vue 的实现，自动扫描 modules 和 plugins 目录下的配置文件
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { App } from 'vue';
 import type { Plugin } from '@btc/shared-core';
@@ -17,6 +17,11 @@ const moduleFilesRaw = import.meta.glob('/src/{modules,plugins}/*/config.ts', {
 // 处理模块文件，尝试获取 default 导出或第一个导出
 const moduleFiles: Record<string, any> = {};
 for (const [path, exports] of Object.entries(moduleFilesRaw)) {
+  // 排除非插件配置文件（如 api-services/config.ts）
+  if (path.includes('api-services/config.ts')) {
+    continue;
+  }
+  
   if (typeof exports === 'object' && exports !== null) {
     // 优先使用 default 导出
     if ('default' in exports) {
@@ -205,13 +210,13 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       for (const pluginConfig of pluginConfigs) {
         // 验证插件配置
         if (!pluginConfig.name) {
-          logger.warn(`[ModuleScanner] 跳过无效插件: ${filePath} (缺少 name 属性)`);
+          console.warn(`[ModuleScanner] 跳过无效插件: ${filePath} (缺少 name 属性)`);
           continue;
         }
 
         // 检查插件是否已经注册过（避免重复注册）
         if (processedPluginNames.has(pluginConfig.name)) {
-          logger.warn(`[ModuleScanner] 跳过重复插件: ${pluginConfig.name} (已在 ${filePath} 中注册)`);
+          console.warn(`[ModuleScanner] 跳过重复插件: ${pluginConfig.name} (已在 ${filePath} 中注册)`);
           continue;
         }
 
@@ -221,7 +226,7 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       }
 
     } catch (error) {
-      logger.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
+      console.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
     }
   }
 

@@ -3,7 +3,7 @@
 /**
  * 验证 admin-app 构建产物，确保所有引用都正确，不会出现 404
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';

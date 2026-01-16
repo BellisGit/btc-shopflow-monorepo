@@ -1,10 +1,10 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 const fs = require('fs');
 const path = require('path');
 
 function findI18nKeys(dir, extensions = ['.vue', '.ts', '.js']) {
   const keys = new Set();
-  
+
   function scanFile(filePath) {
     try {
       const content = fs.readFileSync(filePath, 'utf8');
@@ -16,7 +16,7 @@ function findI18nKeys(dir, extensions = ['.vue', '.ts', '.js']) {
         /labelKey:\s*['"]([^'"]+)['"]/g,
         /meta:\s*\{[^}]*titleKey:\s*['"]([^'"]+)['"]/g,
       ];
-      
+
       patterns.forEach(pattern => {
         let match;
         while ((match = pattern.exec(content)) !== null) {
@@ -30,15 +30,15 @@ function findI18nKeys(dir, extensions = ['.vue', '.ts', '.js']) {
       // Ignore errors
     }
   }
-  
+
   function scanDir(dirPath) {
     try {
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
       entries.forEach(entry => {
         const fullPath = path.join(dirPath, entry.name);
         if (entry.isDirectory()) {
-          if (!entry.name.includes('node_modules') && 
-              !entry.name.includes('dist') && 
+          if (!entry.name.includes('node_modules') &&
+              !entry.name.includes('dist') &&
               !entry.name.includes('.git')) {
             scanDir(fullPath);
           }
@@ -52,7 +52,7 @@ function findI18nKeys(dir, extensions = ['.vue', '.ts', '.js']) {
       // Ignore errors
     }
   }
-  
+
   scanDir(dir);
   return Array.from(keys).sort();
 }

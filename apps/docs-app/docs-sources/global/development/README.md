@@ -7,6 +7,11 @@
 - [应用开发](./app-development.md) - 应用开发指南
 - [脚本使用](./scripts-usage.md) - 脚本工具说明
 - [Git 工作流](./git-workflow.md) - Git 使用规范
+- [端口配置](./port-configuration.md) - 应用端口配置清单
+- [发布包到 Verdaccio](./publish-packages.md) - 发布共享包到私有仓库
+- [Verdaccio 快速开始](./quick-start-verdaccio.md) - Verdaccio 使用指南
+- [发布推送指南](./release-push-guide.md) - 版本发布推送流程
+- [版本发布指南](./version-release-guide.md) - 版本发布完整指南
 
 ## 开发规范
 

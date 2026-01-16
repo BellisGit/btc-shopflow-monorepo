@@ -84,7 +84,7 @@ defineOptions({
 import { ref, onMounted, onUnmounted, markRaw, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { usePluginManager, logger } from '@btc/shared-core';
+import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
@@ -225,7 +225,7 @@ const safeEmit = (eventName: 'toggle-drawer' | 'open-drawer') => {
       // 静默处理错误，避免在生产环境中报错
       // 这通常发生在组件正在卸载时 emit 事件
       if (import.meta.env.DEV) {
-        logger.warn(`[Topbar] emit ${eventName} 失败:`, error);
+        console.warn(`[Topbar] emit ${eventName} 失败:`, error);
       }
     }
   });
@@ -283,7 +283,7 @@ try {
 } catch (error) {
   // 静默失败，使用默认值
   if (import.meta.env.DEV) {
-    logger.error('[Topbar] useSettingsState 失败:', error);
+    console.error('[Topbar] useSettingsState 失败:', error);
   }
   showGlobalSearch = ref(false);
   menuThemeType = ref(null);
@@ -294,7 +294,7 @@ try {
   const settingsConfig = useSettingsConfig();
   menuStyleList = settingsConfig.menuStyleList;
 } catch (error) {
-  logger.error('[Topbar] useSettingsConfig 失败:', error);
+  console.error('[Topbar] useSettingsConfig 失败:', error);
   menuStyleList = ref([]);
 }
 
@@ -437,7 +437,7 @@ const logoTitle = computed(() => {
     return t('app.title');
   } catch (error) {
     // 如果出现任何错误（如 getCurrentSubApp 或 getAppById 抛出错误），使用默认标题
-    logger.error('[Topbar] 计算 logoTitle 时出错:', error);
+    console.error('[Topbar] 计算 logoTitle 时出错:', error);
     try {
       return t('app.title');
     } catch {
@@ -461,8 +461,13 @@ const updateLocation = () => {
   }
 };
 
+// 保存 watch 停止函数，用于清理
+let stopRouteWatch: (() => void) | null = null;
+let stopThemeWatch: (() => void) | null = null;
+let stopMenuThemeConfigWatch: (() => void) | null = null;
+
 // 监听路由变化
-watch(
+stopRouteWatch = watch(
   () => route.path,
   () => {
     updateLocation();
@@ -471,7 +476,7 @@ watch(
 );
 
 // 监听主题变化，强制更新 Logo 区域（但不更新 Logo URL，避免频繁请求）
-watch(
+stopThemeWatch = watch(
   () => [isDark?.value, menuThemeType?.value],
   () => {
     // 使用 nextTick 确保在 DOM 更新后强制重新渲染
@@ -539,7 +544,7 @@ const menuThemeConfig = computed(() => {
     };
   } catch (error) {
     // 如果出现任何错误，返回默认配置
-    logger.warn('[Topbar] menuThemeConfig 计算错误:', error);
+    console.warn('[Topbar] menuThemeConfig 计算错误:', error);
     return {
       background: '#FFFFFF',
       systemNameColor: 'var(--el-text-color-primary)',
@@ -550,7 +555,7 @@ const menuThemeConfig = computed(() => {
 
 // 监听 menuThemeConfig 变化，确保样式立即更新
 // 关键：必须在 menuThemeConfig 定义之后才能使用
-watch(
+stopMenuThemeConfigWatch = watch(
   () => menuThemeConfig.value,
   (newConfig) => {
     // 确保 newConfig 存在且有效
@@ -614,7 +619,7 @@ const loadToolbarComponents = async () => {
         // 如果 component 不是函数，说明配置错误，不应该作为工具栏组件
         if (typeof config.component !== 'function') {
           if (import.meta.env.DEV) {
-            logger.warn('[Topbar] 跳过无效的工具栏配置（component 不是函数）:', config);
+            console.warn('[Topbar] 跳过无效的工具栏配置（component 不是函数）:', config);
           }
           continue;
         }
@@ -629,17 +634,24 @@ const loadToolbarComponents = async () => {
       } catch (error) {
         // 静默失败
         if (import.meta.env.DEV) {
-          logger.warn('[Topbar] 加载工具栏组件失败:', error);
+          console.warn('[Topbar] 加载工具栏组件失败:', error);
         }
       }
     }
   } catch (error) {
     // 静默失败
     if (import.meta.env.DEV) {
-      logger.warn('[Topbar] 获取工具栏组件配置失败:', error);
+      console.warn('[Topbar] 获取工具栏组件配置失败:', error);
     }
   }
 };
+
+// 保存事件监听器和定时器的引用，用于清理
+let appSwitchHandler: (() => void) | null = null;
+let pluginsInstalledHandler: (() => void) | null = null;
+let pluginsTimeoutId: ReturnType<typeof setTimeout> | null = null;
+let pushStateTimeoutIds: Set<ReturnType<typeof setTimeout>> = new Set();
+let replaceStateTimeoutIds: Set<ReturnType<typeof setTimeout>> = new Set();
 
 // 初始化工具栏组件和用户信息
 onMounted(async () => {
@@ -653,52 +665,84 @@ onMounted(async () => {
   if (toolbarComponents.value.length === 0) {
     const emitter = (window as any).__APP_EMITTER__;
     if (emitter) {
-      const onPluginsInstalled = async () => {
+      pluginsInstalledHandler = async () => {
         await loadToolbarComponents();
-        emitter.off('plugins-installed', onPluginsInstalled);
+        // 清理事件监听器
+        if (pluginsInstalledHandler && emitter) {
+          emitter.off('plugins-installed', pluginsInstalledHandler);
+          pluginsInstalledHandler = null;
+        }
       };
-      emitter.on('plugins-installed', onPluginsInstalled);
+      emitter.on('plugins-installed', pluginsInstalledHandler);
 
-      // 设置超时，避免无限等待
-      setTimeout(() => {
+      // 设置超时，避免无限等待（保存 ID 以便清理）
+      pluginsTimeoutId = setTimeout(() => {
         if (toolbarComponents.value.length === 0) {
           loadToolbarComponents();
         }
+        pluginsTimeoutId = null;
       }, 2000);
     }
   }
 
   // 监听应用切换事件，更新 Logo 标题和 URL
+  // 关键：保存 handler 引用，确保能正确清理
   const emitter = (window as any).__APP_EMITTER__;
   if (emitter) {
-    emitter.on('app.switch', () => {
+    appSwitchHandler = () => {
       updateLocation();
       updateLogoUrl(); // 应用切换时更新 Logo URL
-    });
+    };
+    emitter.on('app.switch', appSwitchHandler);
   }
 
   // 监听浏览器历史记录变化（popstate 事件）
   window.addEventListener('popstate', updateLocation);
 
   // 监听 pushState 和 replaceState（通过重写 history API）
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
+  // 关键：检查是否已经被其他组件重写，避免覆盖
+  const existingPushState = (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
+  const existingReplaceState = (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
+  
+  const originalPushState = existingPushState || history.pushState;
+  const originalReplaceState = existingReplaceState || history.replaceState;
 
-  history.pushState = function(...args) {
+  // 保存原始方法以便清理（如果还没有保存）
+  if (!existingPushState) {
+    (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__ = originalPushState;
+  }
+  if (!existingReplaceState) {
+    (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__ = originalReplaceState;
+  }
+
+  // 创建包装函数，保存定时器 ID 以便清理
+  const wrappedPushState = function(...args: any[]) {
     originalPushState.apply(history, args);
-    // 延迟更新，确保路径已变化
-    setTimeout(updateLocation, 0);
+    // 延迟更新，确保路径已变化（保存 ID 以便清理）
+    const timeoutId = setTimeout(() => {
+      updateLocation();
+      pushStateTimeoutIds.delete(timeoutId);
+    }, 0);
+    pushStateTimeoutIds.add(timeoutId);
   };
 
-  history.replaceState = function(...args) {
+  const wrappedReplaceState = function(...args: any[]) {
     originalReplaceState.apply(history, args);
-    // 延迟更新，确保路径已变化
-    setTimeout(updateLocation, 0);
+    // 延迟更新，确保路径已变化（保存 ID 以便清理）
+    const timeoutId = setTimeout(() => {
+      updateLocation();
+      replaceStateTimeoutIds.delete(timeoutId);
+    }, 0);
+    replaceStateTimeoutIds.add(timeoutId);
   };
 
-  // 保存原始方法以便清理
-  (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__ = originalPushState;
-  (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__ = originalReplaceState;
+  // 只有在还没有被重写时才重写（避免覆盖其他组件的重写）
+  if (!existingPushState) {
+    history.pushState = wrappedPushState;
+  }
+  if (!existingReplaceState) {
+    history.replaceState = wrappedReplaceState;
+  }
 });
 
 // 清理事件监听
@@ -706,23 +750,71 @@ onUnmounted(() => {
   // 标记组件已卸载
   isMounted = false;
 
-  // 清理应用切换事件监听
-  const emitter = (window as any).__APP_EMITTER__;
-  if (emitter) {
-    emitter.off('app.switch', updateLocation);
+  // 停止所有 watch 监听器
+  if (stopRouteWatch) {
+    stopRouteWatch();
+    stopRouteWatch = null;
   }
+  if (stopThemeWatch) {
+    stopThemeWatch();
+    stopThemeWatch = null;
+  }
+  if (stopMenuThemeConfigWatch) {
+    stopMenuThemeConfigWatch();
+    stopMenuThemeConfigWatch = null;
+  }
+
+  // 清理应用切换事件监听（使用保存的 handler 引用）
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter && appSwitchHandler) {
+    emitter.off('app.switch', appSwitchHandler);
+    appSwitchHandler = null;
+  }
+
+  // 清理插件安装事件监听
+  if (emitter && pluginsInstalledHandler) {
+    emitter.off('plugins-installed', pluginsInstalledHandler);
+    pluginsInstalledHandler = null;
+  }
+
+  // 清理定时器
+  if (pluginsTimeoutId) {
+    clearTimeout(pluginsTimeoutId);
+    pluginsTimeoutId = null;
+  }
+
+  // 清理所有 pushState 和 replaceState 的定时器
+  pushStateTimeoutIds.forEach(id => clearTimeout(id));
+  pushStateTimeoutIds.clear();
+  replaceStateTimeoutIds.forEach(id => clearTimeout(id));
+  replaceStateTimeoutIds.clear();
 
   // 清理浏览器历史记录监听
   window.removeEventListener('popstate', updateLocation);
 
-  // 恢复原始的 history API
+  // 恢复原始的 history API（只有在当前组件重写的情况下才恢复）
   const originalPushState = (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
   const originalReplaceState = (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
-  if (originalPushState) {
+  
+  // 检查当前 history API 是否还是我们重写的版本
+  // 如果是，则恢复；如果不是，说明其他组件已经重写了，不要覆盖
+  if (originalPushState && history.pushState !== originalPushState) {
+    // 当前不是原始版本，说明被其他组件重写了，不恢复
+    // 但清除保存的引用，避免内存泄漏
+    delete (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
+  } else if (originalPushState) {
+    // 当前还是我们重写的版本，恢复原始版本
     history.pushState = originalPushState;
+    delete (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
   }
-  if (originalReplaceState) {
+
+  if (originalReplaceState && history.replaceState !== originalReplaceState) {
+    // 当前不是原始版本，说明被其他组件重写了，不恢复
+    delete (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
+  } else if (originalReplaceState) {
+    // 当前还是我们重写的版本，恢复原始版本
     history.replaceState = originalReplaceState;
+    delete (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
   }
 });
 

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog
+  <btc-dialog
     v-model="visible"
     :title="t('inventory.ticket.print.select_range')"
     width="500px"
@@ -29,16 +29,15 @@
       </div>
     </div>
     <template #footer>
-      <el-button @click="handleCancel">{{ t('common.button.cancel') }}</el-button>
-      <el-button type="primary" @click="handleConfirm">{{ t('common.button.confirm') }}</el-button>
+      <btc-button @click="handleCancel">{{ t('common.button.cancel') }}</btc-button>
+      <btc-button type="primary" @click="handleConfirm">{{ t('common.button.confirm') }}</btc-button>
     </template>
-  </el-dialog>
+  </btc-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { ElDialog, ElInputNumber, ElButton } from 'element-plus';
+import { ElInputNumber } from 'element-plus';
 
 defineOptions({
   name: 'PrintRangeDialog',

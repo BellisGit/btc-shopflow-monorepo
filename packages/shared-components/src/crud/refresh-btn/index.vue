@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { computed, inject, useAttrs } from 'vue';
-import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
+import { useI18n, useThemePlugin } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
@@ -38,7 +38,7 @@ try {
   theme = useThemePlugin();
 } catch (error) {
   // 如果主题插件未初始化，使用默认配置
-  logger.warn('[BtcRefreshBtn] Theme plugin not available:', error);
+  console.warn('[BtcRefreshBtn] Theme plugin not available:', error);
 }
 
 const attrs = useAttrs();
@@ -48,7 +48,7 @@ const crud = inject<UseCrudReturn<any>>('btc-crud');
 if (!crud) {
   // 关键：在生产环境下，这个错误必须可见，不能被静默处理
   const error = new Error('[BtcRefreshBtn] Must be used inside <BtcCrud>. This usually means BtcCrud component is not properly rendered or provide/inject context is broken.');
-  logger.error('[BtcRefreshBtn] CRITICAL ERROR:', error.message, {
+  console.error('[BtcRefreshBtn] CRITICAL ERROR:', error.message, {
     componentName: 'BtcRefreshBtn',
     injectKey: 'btc-crud',
     stack: error.stack,
@@ -74,7 +74,7 @@ const handleRefreshClick = () => {
   // 关键：在生产环境下，这些错误必须可见
   if (!crud) {
     const errorMsg = '[BtcRefreshBtn] crud is not available - inject failed or BtcCrud not rendered';
-    logger.error(errorMsg, {
+    console.error(errorMsg, {
       componentName: 'BtcRefreshBtn',
       injectKey: 'btc-crud',
       timestamp: new Date().toISOString(),
@@ -84,7 +84,7 @@ const handleRefreshClick = () => {
 
   if (typeof crud.handleRefresh !== 'function') {
     const errorMsg = '[BtcRefreshBtn] crud.handleRefresh is not a function';
-    logger.error(errorMsg, {
+    console.error(errorMsg, {
       crud,
       handleRefresh: crud.handleRefresh,
       type: typeof crud.handleRefresh,
@@ -97,7 +97,7 @@ const handleRefreshClick = () => {
   try {
     crud.handleRefresh();
   } catch (error) {
-    logger.error('[BtcRefreshBtn] Error calling crud.handleRefresh:', error, {
+    console.error('[BtcRefreshBtn] Error calling crud.handleRefresh:', error, {
       errorMessage: error instanceof Error ? error.message : String(error),
       errorStack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString(),

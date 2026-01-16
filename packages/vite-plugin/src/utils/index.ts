@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { logger } from '@btc/shared-core';
+;
 import fs from 'fs';
 import { join } from 'path';
 import prettier from 'prettier';
@@ -171,14 +171,14 @@ export async function formatContent(content: string, options?: prettier.Options)
  * 错误日志
  */
 export function error(message: string): void {
-  logger.info('\x1B[31m%s\x1B[0m', message);
+  console.info('\x1B[31m%s\x1B[0m', message);
 }
 
 /**
  * 成功日志
  */
 export function success(message: string): void {
-  logger.info('\x1B[32m%s\x1B[0m', message);
+  console.info('\x1B[32m%s\x1B[0m', message);
 }
 
 /**

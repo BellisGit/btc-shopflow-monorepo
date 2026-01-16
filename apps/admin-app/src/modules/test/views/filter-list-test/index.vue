@@ -15,10 +15,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { BtcFilterTableGroup } from '@btc/shared-components';
 import type { FilterCategory, TableColumn, FormItem } from '@btc/shared-components';
-import { type { CrudService }, logger } from '@btc/shared-core';
+import { type CrudService } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -212,7 +211,7 @@ const filterService = {
       // 确保返回的是 FilterCategory[] 格式
       return Array.isArray(res) ? res : (res?.list || res?.data || []);
     } catch (error) {
-      logger.error('[FilterListTest] Failed to load filter categories:', error);
+      console.error('[FilterListTest] Failed to load filter categories:', error);
       return [];
     }
   },

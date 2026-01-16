@@ -16,7 +16,7 @@ import { useDark } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
 import { useChart } from './composables/useChart';
 import type { BaseChartProps } from './types/base';
-import { logger } from '@btc/shared-core';
+;
 
 
 export interface LineChartData {
@@ -207,7 +207,7 @@ watch(
               });
                   }
                 } catch (error) {
-            logger.error('[BtcLineChart] 更新图表失败:', error);
+            console.error('[BtcLineChart] 更新图表失败:', error);
           }
         }
       });

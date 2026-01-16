@@ -76,9 +76,10 @@ function findTurboPath() {
  * 执行 turbo 命令
  * @param {string[]} args - turbo 命令参数
  * @param {object} options - 执行选项
+ * @param {string[]} nodeArgs - Node.js 启动参数（可选，用于内存诊断等）
  * @returns {Promise<number>} 退出码
  */
-export function runTurbo(args = [], options = {}) {
+export function runTurbo(args = [], options = {}, nodeArgs = []) {
   return new Promise((resolve, reject) => {
     const turboPath = findTurboPath();
     
@@ -88,7 +89,12 @@ export function runTurbo(args = [], options = {}) {
       delete env.NODE_PATH;
     }
 
-    const child = spawn('node', [turboPath, ...args], {
+    // 合并 Node.js 参数（如果提供）
+    const finalNodeArgs = nodeArgs.length > 0 
+      ? [...nodeArgs, turboPath, ...args]
+      : [turboPath, ...args];
+
+    const child = spawn('node', finalNodeArgs, {
       cwd: options.cwd || getRootDir(),
       stdio: options.stdio || 'inherit',
       shell: false,

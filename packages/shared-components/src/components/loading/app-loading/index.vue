@@ -49,6 +49,7 @@ import CircleSpinner from '../root-loading/animations/CircleSpinner.vue';
 import DotsSpinner from '../root-loading/animations/DotsSpinner.vue';
 import GradientSpinner from '../root-loading/animations/GradientSpinner.vue';
 import ProgressSpinner from '../root-loading/animations/ProgressSpinner.vue';
+import FlowerSpinner from '../root-loading/animations/FlowerSpinner.vue';
 
 interface Props {
   visible: boolean; // 是否显示Loading
@@ -76,7 +77,7 @@ const emit = defineEmits<{
 }>();
 
 // Loading 样式类型
-type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
+type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress' | 'flower';
 
 /**
  * 动画组件映射表
@@ -87,6 +88,7 @@ const animationComponents: Record<LoadingStyle, any> = {
   dots: DotsSpinner,
   gradient: GradientSpinner,
   progress: ProgressSpinner,
+  flower: FlowerSpinner,
 };
 
 /**
@@ -99,15 +101,40 @@ function getLoadingStyle(): LoadingStyle {
     }
 
     // 尝试读取 storage 中的 settings
+    // 使用条件检查避免 require 在构建时出错
     try {
-      const { storage } = require('@btc/shared-core/utils/storage');
-      const settings: Record<string, any> | null = storage.get('settings');
-      if (settings) {
-        const style = settings.loadingStyle;
-        // 验证样式是否存在组件，如果存在则返回
-        if (style && typeof style === 'string' && animationComponents[style as LoadingStyle]) {
-          return style as LoadingStyle;
+      // 在浏览器环境中，尝试从 localStorage 读取
+      if (typeof localStorage !== 'undefined') {
+        const storedSettings = localStorage.getItem('btc_settings');
+        if (storedSettings) {
+          try {
+            const settings = JSON.parse(storedSettings);
+            const style = settings?.loadingStyle;
+            if (style && typeof style === 'string' && animationComponents[style as LoadingStyle]) {
+              return style as LoadingStyle;
+            }
+          } catch (e) {
+            // 解析失败，继续
+          }
         }
+      }
+
+      // 尝试使用动态导入（仅在运行时）
+      try {
+        // @ts-ignore - 避免构建时类型检查
+        const storageModule = typeof require !== 'undefined' ? require('@btc/shared-core/utils/storage') : null;
+        if (storageModule?.storage) {
+          const settings: Record<string, any> | null = storageModule.storage.get('settings');
+          if (settings) {
+            const style = settings.loadingStyle;
+            // 验证样式是否存在组件，如果存在则返回
+            if (style && typeof style === 'string' && animationComponents[style as LoadingStyle]) {
+              return style as LoadingStyle;
+            }
+          }
+        }
+      } catch (e) {
+        // 如果无法加载 storage，跳过
       }
 
       // 如果 storage 中没有，尝试从 Cookie 读取
@@ -276,7 +303,7 @@ onMounted(() => {
   loadingStyle.value = getLoadingStyle();
   // 监听偏好设置变化事件
   window.addEventListener('loading-style-change', handleLoadingStyleChange as EventListener);
-  
+
   // 关键：添加 ready 类，使容器显示（和根级别一致）
   nextTick(() => {
     const container = document.querySelector('.btc-app-loading-container');

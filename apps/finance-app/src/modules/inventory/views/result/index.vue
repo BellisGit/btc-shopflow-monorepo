@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
-import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService, logger } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { BtcSvg, BtcMasterViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
 import { useFinanceInventoryExport } from './composables/useFinanceInventoryExport';
 
@@ -263,7 +263,7 @@ const handleExport = async () => {
         } catch (error) {
           // 组件可能正在卸载，静默处理
           if (import.meta.env.DEV) {
-            logger.warn('[FinanceInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
+            console.warn('[FinanceInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
           }
           return;
         }

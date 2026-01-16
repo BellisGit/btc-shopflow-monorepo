@@ -2,7 +2,7 @@
  * 国际化插件 - 子应用消费（Consumer）
  * 子应用仅监听全局状态，不修改语言设置
  */
-import { logger } from '@btc/shared-core';
+;
 import type { QiankunActions } from '../types';
 import type { AppLocale } from '@btc/shared-components/i18n';
 import { createAppI18n } from '@btc/shared-components/i18n';
@@ -22,7 +22,7 @@ export function consumeI18nPluginHost(options: I18nPluginConsumerOptions = {}) {
   const { globalState, app, messages } = options;
 
   if (!globalState) {
-    logger.warn('[i18n-consumer] globalState is not provided');
+    console.warn('[i18n-consumer] globalState is not provided');
     return null;
   }
 

@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import type { App } from 'vue';
 import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
@@ -24,12 +24,12 @@ function getPersonnelRoutes() {
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
     if (import.meta.env.DEV) {
-      logger.info(
+      console.info(
         `[PersonnelRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
       );
     }
   } catch (error) {
-    logger.error('[PersonnelRouter] Failed to scan routes from modules:', error);
+    console.error('[PersonnelRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 
@@ -77,7 +77,7 @@ export const createPersonnelRouter = (): Router => {
 
       if (isProductionSubdomain && hostname === 'personnel.bellis.com.cn' && to.path.startsWith('/personnel/')) {
         const normalized = to.path.substring('/personnel'.length) || '/';
-        logger.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        console.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
         next({
           path: normalized,
           query: to.query,
@@ -122,7 +122,7 @@ export const createPersonnelRouter = (): Router => {
   });
 
   router.onError((error: any) => {
-    logger.warn('[personnel-app] Router error:', error);
+    console.warn('[personnel-app] Router error:', error);
   });
 
   return router;

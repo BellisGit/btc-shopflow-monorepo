@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout as AppLayout } from '@btc/shared-components';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
-import { logger } from '@btc/shared-core';
+;
 
 /**
  * 将相对路径转换为绝对路径（用于 system-app 的特殊路径处理）
@@ -16,8 +16,14 @@ function normalizeRoutePath(route: RouteRecordRaw, isStandalone: boolean): Route
   }
 
   // qiankun 模式或 layout-app 模式：需要将相对路径转换为绝对路径
-  // 空路径转换为 "/"
-  if (!normalized.path || normalized.path === '') {
+  // 关键：空字符串路径表示首页，在 qiankun 模式下应该转换为 "/"
+  // 因为当访问 /system 时，qiankun 会将 "/" 传递给子应用
+  if (normalized.path === undefined || normalized.path === null) {
+    // 如果路径未定义，跳过处理
+    return normalized;
+  } else if (normalized.path === '') {
+    // 空字符串表示首页，在 qiankun 模式下转换为 "/"
+    // 这样当访问 /system 时，qiankun 传递的 "/" 可以匹配到首页路由
     normalized.path = '/';
   } else if (!normalized.path.startsWith('/')) {
     // 相对路径转换为绝对路径
@@ -76,17 +82,12 @@ export const getSystemRoutes = (): RouteRecordRaw[] => {
     // 合并 views 和 pages 路由
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
-    // 输出扫描结果（开发环境）
-    if (import.meta.env.DEV) {
-      logger.info(
-        `[systemRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
-      if (autoRoutes.conflicts.length > 0) {
-        logger.warn(`[systemRouter] Route conflicts:`, autoRoutes.conflicts);
-      }
+    // 仅在存在冲突时输出警告
+    if (autoRoutes.conflicts.length > 0) {
+      console.warn(`[systemRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
-    logger.error(`[systemRouter] Failed to scan routes from modules:`, error);
+    console.error(`[systemRouter] Failed to scan routes from modules:`, error);
     pageRoutes = [];
   }
 

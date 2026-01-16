@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 export interface SettingItemConfig {
@@ -87,7 +87,7 @@ const normalizedOptions = computed(() => {
     // 确保所有选项的 value 和 label 都存在
     return options.filter(opt => opt != null && 'value' in opt && 'label' in opt);
   } catch (error) {
-    logger.warn('Error processing options for config:', props.config.key, error);
+    console.warn('Error processing options for config:', props.config.key, error);
     return [];
   }
 });

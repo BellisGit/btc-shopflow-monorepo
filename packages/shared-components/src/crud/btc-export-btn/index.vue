@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue';
 
-import { useI18n, exportTableToExcel, logger } from '@btc/shared-core';
+import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-core/utils';
 import BtcForm from '../../components/form/btc-form/index.vue';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
@@ -149,7 +149,7 @@ const fetchDataTimeRange = async () => {
       max: formatDate(dates[dates.length - 1], 'YYYY-MM-DD'),
     };
   } catch (error) {
-    logger.warn('获取数据时间范围失败:', error);
+    console.warn('获取数据时间范围失败:', error);
     return null;
   }
 };
@@ -431,7 +431,7 @@ const handleSubmit = async (data: any, { done, close }: any) => {
     BtcMessage.success(t('platform.common.export_success'));
     close();
   } catch (error) {
-    logger.error('导出失败:', error);
+    console.error('导出失败:', error);
     BtcMessage.error(t('platform.common.export_failed'));
   } finally {
     loading.value = false;

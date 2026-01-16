@@ -116,7 +116,7 @@ import TenantSelector from '../../tenant-selector/index.vue';
 import SupplierRegistration from './supplier-registration/index.vue';
 import UkHeadRegistration from './uk-head-registration/index.vue';
 import InertRegistration from './inert-registration/index.vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -136,7 +136,7 @@ const supplierRegistrationRef = ref();
 // 处理租户选择
 const handleTenantSelected = (tenant: string) => {
   selectedTenant.value = tenant;
-  logger.info('选择的租户类型:', tenant);
+  console.info('选择的租户类型:', tenant);
 };
 
 // 处理下一步
@@ -153,7 +153,7 @@ const handleCancelRegistration = () => {
   viewModel.currentStep.value = 'tenant-select';
 
   // 可以添加路由跳转到登录页
-  logger.info('取消注册');
+  console.info('取消注册');
 };
 
 // 处理返回租户选择
@@ -164,7 +164,7 @@ const handleBackToTenantSelect = () => {
 
 // 处理注册完成
 const handleRegistrationComplete = (data: any) => {
-  logger.info('注册完成:', data);
+  console.info('注册完成:', data);
 
   // 可以添加成功提示和跳转逻辑
   viewModel.app.message.success('注册成功！');
@@ -178,7 +178,7 @@ const handleRegistrationComplete = (data: any) => {
 
 // 组件挂载后的初始化
 onMounted(() => {
-  logger.info('注册组件已挂载');
+  console.info('注册组件已挂载');
 });
 </script>
 

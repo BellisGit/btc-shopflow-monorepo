@@ -85,7 +85,8 @@
 
 		.el-table__header {
 			.el-table__cell {
-				background-color: var(--el-fill-color-lighter) !important;
+				// 背景色由 header-cell-style 控制，不再使用 !important 强制设置
+				// background-color 由组件内的 mergedHeaderCellStyle 根据 headerBackground 属性动态设置
 				color: var(--el-text-color-primary);
 
 				.cell {

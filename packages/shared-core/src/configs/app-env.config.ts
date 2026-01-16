@@ -1,4 +1,7 @@
-import { logger } from '../utils/logger';
+// 注意：这里不能直接导入 logger，因为存在循环依赖：
+// logger -> env-info -> unified-env-config -> app-env.config -> logger
+// 在模块加载的早期阶段，logger 可能还未初始化，所以直接使用 console
+// console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
 /// <reference types="vite/client" />
 
 /**
@@ -99,7 +102,7 @@ const BUSINESS_APP_CONFIGS: AppEnvConfig[] = [
   {
     appName: 'production-app',
     devHost: '10.80.8.199',
-    devPort: '8090',
+    devPort: '8096',
     preHost: 'localhost',
     prePort: '4190',
     testHost: 'production.test.bellis.com.cn',
@@ -195,7 +198,8 @@ export function getAllDevPorts(): string[] {
   } catch (error) {
     if (error instanceof ReferenceError && error.message.includes('before initialization')) {
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
-        logger.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
+        // 直接使用 console.warn，避免循环依赖
+        console.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
       }
       return [];
     }
@@ -215,7 +219,8 @@ export function getAllPrePorts(): string[] {
   } catch (error) {
     if (error instanceof ReferenceError && error.message.includes('before initialization')) {
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
-        logger.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
+        // 直接使用 console.warn，避免循环依赖
+        console.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
       }
       return [];
     }

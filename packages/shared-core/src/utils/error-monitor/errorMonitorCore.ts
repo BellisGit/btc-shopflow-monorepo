@@ -1,6 +1,6 @@
 import { storage } from '../storage/local';
 import { formatError, type ErrorInfo, type FormattedError } from './formatError';
-import { logger } from '../logger';
+;
 
 /**
  * 错误监控事件名称
@@ -44,7 +44,7 @@ function getCleanupPeriod(): CleanupPeriod {
       return storageData.cleanupPeriod;
     }
   } catch (error) {
-    logger.warn('[errorMonitor] 读取清理周期失败', error);
+    console.warn('[errorMonitor] 读取清理周期失败', error);
   }
   return 'today'; // 默认保留当天
 }
@@ -60,7 +60,7 @@ export function setCleanupPeriod(period: CleanupPeriod): void {
     // 立即执行一次清理
     clearExpiredErrors();
   } catch (error) {
-    logger.warn('[errorMonitor] 设置清理周期失败', error);
+    console.warn('[errorMonitor] 设置清理周期失败', error);
   }
 }
 
@@ -102,7 +102,7 @@ function loadStorageData(): ErrorStorageData {
     const data = storage.get<ErrorStorageData>(STORAGE_KEY);
     return data || {};
   } catch (error) {
-    logger.warn('[errorMonitor] 从 storage 加载数据失败', error);
+    console.warn('[errorMonitor] 从 storage 加载数据失败', error);
   }
   return {};
 }
@@ -114,7 +114,7 @@ function saveStorageData(data: ErrorStorageData): void {
   try {
     storage.set(STORAGE_KEY, data);
   } catch (error) {
-    logger.warn('[errorMonitor] 保存数据到 storage 失败', error);
+    console.warn('[errorMonitor] 保存数据到 storage 失败', error);
   }
 }
 
@@ -129,7 +129,7 @@ function loadTodayErrorsFromStorage(): FormattedError[] {
       return storageData.errors[today];
     }
   } catch (error) {
-    logger.warn('[errorMonitor] 从 localStorage 加载错误列表失败', error);
+    console.warn('[errorMonitor] 从 localStorage 加载错误列表失败', error);
   }
   return [];
 }
@@ -147,7 +147,7 @@ function saveTodayErrorsToStorage(errorList: FormattedError[]): void {
     storageData.errors[today] = errorList;
     saveStorageData(storageData);
   } catch (error) {
-    logger.warn('[errorMonitor] 保存错误列表到 localStorage 失败', error);
+    console.warn('[errorMonitor] 保存错误列表到 localStorage 失败', error);
   }
 }
 
@@ -199,10 +199,10 @@ function clearExpiredErrors(): void {
     saveStorageData(storageData);
 
     if (datesToRemove.length > 0) {
-      logger.info(`[errorMonitor] 已清除 ${datesToRemove.length} 个过期的错误数据`);
+      console.info(`[errorMonitor] 已清除 ${datesToRemove.length} 个过期的错误数据`);
     }
   } catch (error) {
-    logger.warn('[errorMonitor] 清除过期错误数据失败', error);
+    console.warn('[errorMonitor] 清除过期错误数据失败', error);
   }
 }
 
@@ -228,7 +228,7 @@ function clearYesterdayErrors(): void {
       saveStorageData(storageData);
     }
   } catch (error) {
-    logger.warn('[errorMonitor] 清除昨天的错误数据失败', error);
+    console.warn('[errorMonitor] 清除昨天的错误数据失败', error);
   }
 }
 
@@ -280,7 +280,7 @@ function checkAndSwitchDateIfNeeded(): void {
         storageData.errors[storedDate] = window.__BTC_ERROR_LIST__;
         saveStorageData(storageData);
       } catch (error) {
-        logger.warn('[errorMonitor] 保存旧日期错误数据失败', error);
+        console.warn('[errorMonitor] 保存旧日期错误数据失败', error);
       }
     }
 
@@ -380,7 +380,7 @@ export function updateErrorList(errorInfo: ErrorInfo) {
       );
     }
   } catch (error) {
-    logger.error('[errorMonitor] 更新错误列表失败', error);
+    console.error('[errorMonitor] 更新错误列表失败', error);
   }
 }
 
@@ -402,7 +402,7 @@ export function clearErrorList() {
       })
     );
   } catch (error) {
-    logger.error('[errorMonitor] 清空错误列表失败', error);
+    console.error('[errorMonitor] 清空错误列表失败', error);
   }
 }
 

@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+;
 /**
  * 从 layout-app 加载共享资源
  *
@@ -76,7 +76,7 @@ async function getResourceFromManifest(
     // #endregion agent log H-MANIFEST
 
     if (!response.ok) {
-      logger.warn(`[load-shared-resources] 无法获取 manifest.json: ${response.status}`);
+      console.warn(`[load-shared-resources] 无法获取 manifest.json: ${response.status}`);
       return null;
     }
 
@@ -114,7 +114,7 @@ async function getResourceFromManifest(
 
     return null;
   } catch (error) {
-    logger.warn(`[load-shared-resources] 获取 manifest.json 失败:`, error);
+    console.warn(`[load-shared-resources] 获取 manifest.json 失败:`, error);
 
     // #region agent log H-MANIFEST
     fetch('http://127.0.0.1:7242/ingest/65fa8800-1c21-477b-9578-515737111923',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-MANIFEST',location:'packages/shared-utils/src/cdn/load-shared-resources.ts:getResourceFromManifest',message:'manifest fetch threw',data:{resourceName,errorName:(error as any)?.name,errorMessage:(error as any)?.message},timestamp:Date.now()})}).catch(()=>{});
@@ -217,7 +217,7 @@ async function loadScript(url: string): Promise<void> {
       }
     } catch (error) {
       // 资源加载器失败，回退到原来的方式
-      logger.warn(`[load-shared-resources] 资源加载器失败，回退到直接加载: ${url}`, error);
+      console.warn(`[load-shared-resources] 资源加载器失败，回退到直接加载: ${url}`, error);
     }
   }
   
@@ -298,7 +298,7 @@ export async function loadSharedResourcesFromLayoutApp(options?: {
     resources.map(async (resourceName) => {
       const url = await getResourceFromManifest(layoutAppBase, resourceName);
       if (!url) {
-        logger.warn(`[load-shared-resources] 无法找到资源: ${resourceName}`);
+        console.warn(`[load-shared-resources] 无法找到资源: ${resourceName}`);
       }
       return { name: resourceName, url };
     })
@@ -322,7 +322,7 @@ export async function loadSharedResourcesFromLayoutApp(options?: {
         options.onProgress(loaded, total);
       }
     } catch (error) {
-      logger.error(`[load-shared-resources] 加载资源失败: ${name}`, error);
+      console.error(`[load-shared-resources] 加载资源失败: ${name}`, error);
       // 继续加载其他资源，不中断
       loaded++;
       if (options?.onProgress) {

@@ -2,10 +2,22 @@
  * 统一的环境配置系统
  * 支持通过 .env 切换配置方案，但内部规则不变
  */
-import { logger } from '../utils/logger';
+
+// 注意：这里不能直接导入 logger，因为存在循环依赖：
+// logger -> env-info -> unified-env-config -> logger
+// 在模块加载的早期阶段，logger 可能还未初始化，所以直接使用 console
+// console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
 
 import { getAllApps, getAppById } from './app-scanner';
 import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost, isSpecialAppById } from './app-env.config';
+
+// 安全的 logger 访问函数，避免循环依赖问题
+// 在模块加载早期，直接使用 console，因为 logger 可能还未初始化
+function safeLoggerWarn(message: string, ...args: any[]) {
+  // 直接使用 console.warn，避免循环依赖
+  // console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
+  console.warn(`[unified-env-config] ${message}`, ...args);
+}
 
 export type Environment = 'development' | 'preview' | 'test' | 'production';
 export type ConfigScheme = 'default' | 'custom'; // 可以通过 .env 切换
@@ -262,7 +274,7 @@ export function getEnvironment(): Environment {
     // 使用防御性检查，提供后备方案
     const prodFlag =
       (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) ??
-      (process.env.NODE_ENV === 'production');
+      (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production');
     return prodFlag ? 'production' : 'development';
   }
 
@@ -300,7 +312,7 @@ export function getEnvironment(): Environment {
     // 如果 getAllPrePorts 或 getAllDevPorts 抛出错误（如 APP_ENV_CONFIGS 未初始化）
     // 记录警告并继续使用其他方法判断环境
     if (import.meta.env.DEV) {
-      logger.warn('[unified-env-config] getAllPrePorts/getAllDevPorts 调用失败，使用备用方法判断环境:', error);
+      safeLoggerWarn('[unified-env-config] getAllPrePorts/getAllDevPorts 调用失败，使用备用方法判断环境:', error);
     }
   }
 
@@ -332,10 +344,11 @@ export function getEnvConfig(): EnvironmentConfig {
       }
     } else {
       // Node.js 环境：从 process.env 读取
-      envCdnUrl = process.env.CDN_STATIC_ASSETS_URL || process.env.VITE_CDN_STATIC_ASSETS_URL;
+      envCdnUrl = (typeof process !== 'undefined' && process.env?.CDN_STATIC_ASSETS_URL) || (typeof process !== 'undefined' && process.env?.VITE_CDN_STATIC_ASSETS_URL);
     }
 
     if (envCdnUrl) {
+      // 返回新对象，覆盖 CDN URL
       return {
         ...config,
         cdn: {
@@ -384,14 +397,14 @@ export function isMainApp(
     const apps = getAllApps();
     const mainApp = apps.find(app => app.type === 'main');
     const mainAppRoutes = mainApp?.routes?.mainAppRoutes || [];
-    
+
     for (const app of apps) {
       // 跳过主应用、特殊应用（如 home, docs, layout, mobile）和公开应用
       // 特殊应用在 SPECIAL_APP_CONFIGS 中定义，不应该影响主应用路由的判断
       if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
         continue;
       }
-      
+
       if (app.type === 'sub' && app.enabled) {
         const normalizedPathPrefix = app.pathPrefix.endsWith('/')
           ? app.pathPrefix.slice(0, -1)
@@ -407,7 +420,7 @@ export function isMainApp(
         }
       }
     }
-    
+
     // 关键：如果路径匹配主应用的路由配置，优先判断为主应用
     // 这样可以避免 home 应用的 pathPrefix '/' 影响主应用路由的判断
     if (mainAppRoutes.length > 0) {
@@ -518,7 +531,7 @@ export function isMainApp(
       if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
         continue;
       }
-    
+
     if (app.type === 'sub' && app.enabled) {
       // 支持 pathPrefix 带或不带尾部斜杠
       const normalizedPathPrefix = app.pathPrefix.endsWith('/')
@@ -556,7 +569,7 @@ export function isMainApp(
         return true;
       }
     }
-    
+
     // 使用 locationPath 重新检查
     const normalizedLocationPath = locationPath.endsWith('/') && locationPath !== '/'
       ? locationPath.slice(0, -1)
@@ -568,7 +581,7 @@ export function isMainApp(
       if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
         continue;
       }
-      
+
       if (app.type === 'sub' && app.enabled) {
         const normalizedPathPrefix = app.pathPrefix.endsWith('/')
           ? app.pathPrefix.slice(0, -1)
@@ -665,7 +678,7 @@ export function getCurrentSubApp(): string | null {
     if (app.type === 'main' || (app.type === 'sub' && app.metadata?.public === true)) {
       continue;
     }
-    
+
     if (app.type === 'sub' && app.enabled) {
       // 支持 pathPrefix 带或不带尾部斜杠（与 isMainApp 使用相同的匹配逻辑）
       const normalizedPathPrefix = app.pathPrefix.endsWith('/')
@@ -694,7 +707,7 @@ export function getCurrentSubApp(): string | null {
 export function getSubAppEntry(appId: string): string {
   const app = getAppById(appId);
   if (!app) {
-    logger.warn(`[unified-env-config] 未找到应用: ${appId}`);
+    safeLoggerWarn(`[unified-env-config] 未找到应用: ${appId}`);
     return `/${appId}/`;
   }
 
@@ -703,7 +716,7 @@ export function getSubAppEntry(appId: string): string {
   const appEnvConfig = getAppConfig(`${appId}-app`);
 
   if (!appEnvConfig) {
-    logger.warn(`[unified-env-config] 未找到应用环境配置: ${appId}-app`);
+    safeLoggerWarn(`[unified-env-config] 未找到应用环境配置: ${appId}-app`);
     return `/${appId}/`;
   }
 
@@ -743,7 +756,7 @@ export function getSubAppEntry(appId: string): string {
 export function getSubAppActiveRule(appId: string): string | ((location: Location) => boolean) {
   const app = getAppById(appId);
   if (!app) {
-    logger.warn(`[unified-env-config] 未找到应用: ${appId}`);
+    safeLoggerWarn(`[unified-env-config] 未找到应用: ${appId}`);
     return `/${appId}`;
   }
 
@@ -797,12 +810,14 @@ export function getCurrentEnvConfig(): EnvironmentConfig {
   return _envConfig;
 }
 
-// 为了向后兼容，保留导出，但使用延迟初始化的 getter
-// 注意：这些导出会在首次访问时计算，而不是在模块加载时
-// 如果代码在模块加载时立即访问这些导出，仍然可能导致初始化顺序问题
-// 建议使用 getCurrentEnvironment() 和 getCurrentEnvConfig() 函数代替
-export const currentEnvironment = getCurrentEnvironment();
-export const envConfig = getCurrentEnvConfig();
+// 为了向后兼容，保留导出
+// 注意：不再使用 Proxy，因为 Proxy 在 Vue 响应式系统中会导致无限递归和内存溢出
+// 直接使用函数调用获取值，避免 Proxy 导致的无限递归
+// 注意：这会在模块首次被导入时计算，但由于 logger 已经改为延迟初始化，
+// 且所有配置文件中的 logger 调用都改为了 console，所以不会触发循环依赖
+// 建议：优先使用 getCurrentEnvironment() 和 getCurrentEnvConfig() 函数代替这些常量
+export const currentEnvironment: Environment = getCurrentEnvironment();
+export const envConfig: EnvironmentConfig = getCurrentEnvConfig();
 
 // 注意：移除了 currentSubApp 和 isMainAppNow 的顶层导出
 // 因为它们会在模块加载时调用 getCurrentSubApp() 和 isMainApp()

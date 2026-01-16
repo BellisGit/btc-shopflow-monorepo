@@ -1,4 +1,6 @@
-import { logger } from '../utils/logger';
+// 注意：这里不能直接导入 logger，因为可能在应用启动早期被调用
+// 在初始化阶段和早期运行时使用 console，确保不出现循环依赖问题
+// console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
 import type { Plugin } from '../btc/plugins/manager/types';
 import type { AppEnvConfig } from './app-env.config';
 import { getAppConfig, getAllDevPorts, getAllPrePorts } from './app-env.config';
@@ -199,7 +201,8 @@ export function registerManifestMenusForApp(appId: string) {
 
       if (hasOldFormat) {
         if (import.meta.env.DEV) {
-          logger.info(`[registerManifestMenusForApp] Detected old format menu cache, clearing ${appId} menu cache`);
+          // 使用 console，避免在应用启动早期出现循环依赖
+          console.info(`[registerManifestMenusForApp] Detected old format menu cache, clearing ${appId} menu cache`);
         }
         // 清除旧缓存
         clearMenus(appId);
@@ -226,7 +229,8 @@ export function registerManifestMenusForApp(appId: string) {
         }
 
         if (import.meta.env.DEV) {
-          logger.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 不存在`);
+          // 使用 console，避免在应用启动早期出现循环依赖
+          console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 不存在`);
         }
         return;
       }
@@ -244,19 +248,22 @@ export function registerManifestMenusForApp(appId: string) {
 
     if (!normalizedMenus || normalizedMenus.length === 0) {
       if (import.meta.env.DEV) {
-        logger.warn(`[registerManifestMenusForApp] 应用 ${appId} 的菜单规范化后为空`);
+        // 使用 console，避免在应用启动早期出现循环依赖
+        console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的菜单规范化后为空`);
       }
       return;
     }
 
-    // 注册菜单
-    registerMenus(appId, normalizedMenus);
+    // 关键：从 manifest 注册菜单时，使用 forceUpdate=true 强制更新菜单
+    // 这样可以确保 manifest JSON 更新后，新的菜单项能够正确显示，避免 localStorage 缓存导致的问题
+    registerMenus(appId, normalizedMenus, true);
 
     // 验证菜单是否已正确注册
     const registeredMenus = registry?.value?.[appId];
     if (!registeredMenus || registeredMenus.length === 0) {
       // 生产环境也输出警告，帮助调试
-      logger.warn(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册后验证失败，菜单为空`, {
+      // 使用 console，避免在应用启动早期出现循环依赖
+      console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册后验证失败，菜单为空`, {
         appId,
         normalizedMenusLength: normalizedMenus.length,
         registryExists: !!registry,
@@ -271,14 +278,16 @@ export function registerManifestMenusForApp(appId: string) {
       if (retryMenus && retryMenus.length > 0) {
         // 菜单注册成功，无需操作
       } else {
-        logger.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
+        // 使用 console，避免在应用启动早期出现循环依赖
+        console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
       }
     } else {
       // 生产环境也输出成功日志
     }
   } catch (error) {
     // 生产环境也输出错误信息，帮助调试
-    logger.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败:`, error);
+    // 使用 console，避免在应用启动早期出现循环依赖
+    console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败:`, error);
   }
 }
 
@@ -460,7 +469,8 @@ export async function injectDomainListResolver(
       // 注意：在生产环境下，相对路径的动态导入也会失败，因为构建后的路径不存在
       // 应该在调用方静态导入 domain-cache 模块后传递模块对象，而不是路径字符串
       if (import.meta.env.DEV) {
-        logger.warn(`[${appId}-app] Failed to load domain cache from path "${domainCachePath}". In production, dynamic imports of source paths will fail. Please pass the pre-imported module object instead. Using default resolver.`);
+        // 使用 console，避免在应用启动早期出现循环依赖
+        console.warn(`[${appId}-app] Failed to load domain cache from path "${domainCachePath}". In production, dynamic imports of source paths will fail. Please pass the pre-imported module object instead. Using default resolver.`);
       }
 
       // 如果加载失败，使用默认解析器作为兜底
@@ -472,7 +482,8 @@ export async function injectDomainListResolver(
   }
 
   if (!domainModule || (!domainModule.getDomainList && !domainModule.clearDomainCache)) {
-    logger.warn(`[${appId}-app] Domain cache module is invalid or missing required functions.`);
+    // 使用 console，避免在应用启动早期出现循环依赖
+    console.warn(`[${appId}-app] Domain cache module is invalid or missing required functions.`);
     // 如果模块无效，使用默认解析器作为兜底
     if (!win.__APP_GET_DOMAIN_LIST__) {
       win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(appId);

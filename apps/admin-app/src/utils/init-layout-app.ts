@@ -8,7 +8,8 @@
  * 3. 提供详细的错误日志，便于排查问题
  */
 
-import { sessionStorage, logger } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+;
 /**
  * 显示 Loading（如果尚未显示）
  */
@@ -169,13 +170,13 @@ async function injectAppConfigFromManifest(appId: string) {
     }
 
     if (import.meta.env.DEV) {
-      logger.info(`[initLayoutApp] Application config injected from manifest: ${appId}`, {
+      console.info(`[initLayoutApp] Application config injected from manifest: ${appId}`, {
         hasMenus: registry?.value?.[appId]?.length > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    logger.warn(`[initLayoutApp] Failed to inject config from manifest:`, error);
+    console.warn(`[initLayoutApp] Failed to inject config from manifest:`, error);
     // 继续执行，使用默认配置
   }
 }

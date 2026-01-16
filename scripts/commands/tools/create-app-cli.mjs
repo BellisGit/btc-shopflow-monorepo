@@ -9,7 +9,7 @@
  *   pnpm create-app my-app
  *   node scripts/create-app-cli.mjs
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../utils/logger.mjs';
 
 import fs from 'fs-extra';
 import path from 'path';

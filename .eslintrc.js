@@ -34,8 +34,10 @@ module.exports = {
     'import',
     'i18n',
   ],
-  rules: {
-    '@typescript-eslint/no-explicit-any': 'off',
+  rules: (() => {
+    const customRules = require('./.eslintrc-rules');
+    const rules = {
+      '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
     'no-unused-vars': 'off',
     // 日志规范：禁止使用 console，强制使用统一的 logger
@@ -99,6 +101,68 @@ module.exports = {
     ],
     'import/no-cycle': ['error', { maxDepth: 10, ignoreExternal: true }],
     'import/no-self-import': 'error',
+      {
+        utilityFunctions: [
+          // 消息和确认框工具
+          'BtcMessage',
+          'BtcConfirm',
+          'BtcAlert',
+          'BtcPrompt',
+          'BtcMessageBox',
+          // 图表相关
+          'registerEChartsThemes',
+          // 工具对象和常量
+          'CommonColumns',
+          'DEFAULT_OPERATION_WIDTH',
+          'IMPORT_FILENAME_KEY',
+          'IMPORT_FORBIDDEN_KEYWORDS_KEY',
+          // Composables
+          'useUpload',
+          'useUser',
+          'useCurrentApp',
+          'useFormRenderer',
+          'useBrowser',
+          'useContentHeight',
+          'provideContentHeight',
+          'useGlobalBreakpoints',
+          'initGlobalBreakpoints',
+          'useProcessStore',
+          'getCurrentAppFromPath',
+          // 菜单相关
+          'registerMenus',
+          'clearMenus',
+          'clearMenusExcept',
+          'getMenusForApp',
+          'getMenuRegistry',
+          // 工具函数
+          'addClass',
+          'removeClass',
+          'mountDevTools',
+          'unmountDevTools',
+          'autoMountDevTools',
+          'setIsMainAppFn',
+          'getIsMainAppFn',
+          // 事件系统
+          'mitt',
+          'globalMitt',
+          // 插件
+          'ExcelPlugin',
+          'CodePlugin',
+          'BtcExportBtn',
+          'BtcImportBtn',
+          'BtcCodeJson',
+          // 语言包
+          'sharedLocalesZhCN',
+          'sharedLocalesEnUS',
+        ],
+        allowedFiles: [
+          '**/main.ts',
+          '**/main.js',
+          '**/bootstrap/**',
+          '**/router/**',
+        ],
+      },
+    ],
     // 禁止直接使用存储 API，必须使用统一工具
     'no-restricted-syntax': [
       'error',
@@ -118,8 +182,17 @@ module.exports = {
         selector: 'MemberExpression[object.object.name="document"][object.property.name="cookie"]',
         message: '禁止直接使用 document.cookie，请使用统一的 cookie 工具：import { getCookie } from "@btc/shared-core/utils/cookie"',
       },
-    ],
-  },
+    ];
+
+    // 添加自定义规则（使用 'off' 作为占位符，实际规则在插件中定义）
+    // 注意：这些规则需要通过插件系统注册，这里只是占位
+    // 实际使用需要通过 eslint-plugin-custom 插件
+    Object.keys(customRules.rules).forEach(ruleName => {
+      rules[ruleName] = 'off'; // 暂时关闭，等待插件系统配置
+    });
+
+    return rules;
+  })(),
   settings: {
     'import/resolver': {
       typescript: {

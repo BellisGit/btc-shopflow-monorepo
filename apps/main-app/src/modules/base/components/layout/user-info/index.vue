@@ -70,10 +70,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n, logger } from '@btc/shared-core';
-import { ElMessageBox } from 'element-plus';
+import { useI18n } from '@btc/shared-core';
+import { BtcConfirm } from '@btc/shared-components';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useLogout } from '@/composables/useLogout';
@@ -134,15 +132,15 @@ const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement;
   const failedUrl = img.src;
 
-  logger.warn('[UserInfo] 头像加载失败:', failedUrl);
+  console.warn('[UserInfo] 头像加载失败:', failedUrl);
 
   // 标记已处理
   errorHandled.value = true;
 
   // 如果失败的是 logo.png，不再重试
   if (failedUrl.includes('logo.png')) {
-    logger.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
-    logger.error('[UserInfo] URL:', failedUrl);
+    console.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
+    console.error('[UserInfo] URL:', failedUrl);
     return;
   }
 
@@ -161,18 +159,18 @@ watch(() => userInfo.value?.avatar, (newAvatar, oldAvatar) => {
 // 初始化
 onMounted(async () => {
   if (import.meta.env.DEV) {
-    logger.info('[UserInfo] onMounted called');
+    console.info('[UserInfo] onMounted called');
   }
   await loadProfileInfo();
 });
 
 // 处理用户下拉菜单命令
 const handleCommand = (command: string) => {
-  logger.info('[UserInfo] handleCommand 被调用, command:', command);
+  console.info('[UserInfo] handleCommand 被调用, command:', command);
   switch (command) {
     case 'profile':
       // 个人信息页面属于系统域（主应用），直接使用 router.push
-      router.push('/profile');
+      router.push('/workbench/profile');
       break;
     case 'settings':
       router.push('/settings');
@@ -185,7 +183,7 @@ const handleCommand = (command: string) => {
       const cancelText = t('common.button.cancel') || '取消';
 
       // 直接使用 ElMessageBox.confirm，确保对话框能够显示
-      ElMessageBox.confirm(confirmMessage, confirmTitle, {
+      BtcConfirm(confirmMessage, confirmTitle, {
         confirmButtonText: confirmText,
         cancelButtonText: cancelText,
         type: 'warning',
@@ -194,7 +192,7 @@ const handleCommand = (command: string) => {
         .then(() => {
           // 用户确认退出
           logout().catch((error) => {
-            logger.error('[UserInfo] logout 执行失败:', error);
+            console.error('[UserInfo] logout 执行失败:', error);
           });
         })
         .catch(() => {

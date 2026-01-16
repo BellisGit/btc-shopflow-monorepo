@@ -5,7 +5,54 @@
 
 import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+
+// 参考 cool-admin-vue-7.x 的方式：使用默认值避免初始化顺序问题
+// cool-admin-vue-7.x 使用: service = hmr.getData('service', { request: ... })
+// 这里我们使用类似的策略：提供一个默认值，然后延迟导入实际的服务
+// 延迟导入 service，避免初始化顺序问题
+let _serviceCache: any = null;
+
+// 延迟获取 service 的函数，优先从全局获取
+function getService() {
+  // 如果已经缓存，直接返回
+  if (_serviceCache) {
+    return _serviceCache;
+  }
+
+  if (typeof window === 'undefined') {
+    _serviceCache = {} as any;
+    return _serviceCache;
+  }
+
+  // 优先从全局获取（由应用初始化时设置）
+  const win = window as any;
+  const globalService = win.__APP_EPS_SERVICE__ || win.__BTC_SERVICE__;
+
+  if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+    _serviceCache = globalService;
+    return _serviceCache;
+  }
+
+  // 如果全局服务不存在，尝试动态导入（延迟导入避免循环依赖）
+  // 注意：这里不能使用 await，所以只能尝试同步访问已加载的模块
+  // 如果失败，返回空对象作为默认值（参考 cool-admin-vue-7.x 的 hmr.getData 方式）
+  if (!_serviceCache) {
+    try {
+      // 检查是否有缓存的模块引用
+      const cachedModule = win.__EPS_MODULE_CACHE__;
+      if (cachedModule) {
+        _serviceCache = cachedModule.service || cachedModule.default || {};
+        return _serviceCache;
+      }
+    } catch (error) {
+      // 忽略错误
+    }
+  }
+
+  // 兜底：返回空对象作为默认值（类似 cool-admin-vue-7.x 的默认值策略）
+  _serviceCache = _serviceCache || {} as any;
+  return _serviceCache;
+}
 
 export default {
   // ModuleConfig 字段
@@ -527,15 +574,18 @@ export default {
     ] as FormItem[],
   },
 
-  // 服务配置
-  service: {
-    action: service.admin?.iam?.action,
-    permission: service.admin?.iam?.permission,
-    resource: service.admin?.iam?.resource,
-    role: service.admin?.iam?.role,
-    domain: service.admin?.iam?.domain,
-    // BtcMasterTableGroup 需要的左右服务
-    sysdomain: service.admin?.iam?.domain,
-    sysrole: service.admin?.iam?.role,
+  // 服务配置（使用 getter 延迟访问，避免初始化顺序问题）
+  get service() {
+    const epsService = getService();
+    return {
+      action: epsService.admin?.iam?.action,
+      permission: epsService.admin?.iam?.permission,
+      resource: epsService.admin?.iam?.resource,
+      role: epsService.admin?.iam?.role,
+      domain: epsService.admin?.iam?.domain,
+      // BtcMasterTableGroup 需要的左右服务
+      sysdomain: epsService.admin?.iam?.domain,
+      sysrole: epsService.admin?.iam?.role,
+    };
   },
 } satisfies ModuleConfig;

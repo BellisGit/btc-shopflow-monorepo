@@ -100,5 +100,23 @@ export const updateDashboardApp = (context: DashboardAppContext, props: QiankunP
 };
 
 export const unmountDashboardApp = async (context: DashboardAppContext, props: QiankunProps = {}) => {
+  // 清理全局资源（避免内存泄漏）
+  if (typeof window !== 'undefined') {
+    // 清理退出登录函数
+    if ((window as any).__APP_LOGOUT__) {
+      delete (window as any).__APP_LOGOUT__;
+    }
+  }
+
+  // 清理 ECharts 实例
+  try {
+    const { cleanupAllECharts } = await import('@btc/shared-components');
+    if (cleanupAllECharts) {
+      cleanupAllECharts();
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
   await unmountSubApp(context, props);
 };

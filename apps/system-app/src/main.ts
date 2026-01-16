@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
@@ -67,7 +67,7 @@ const render = async (props: QiankunProps = {}) => {
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        logger.warn('[system-app] 无法显示应用级 loading:', error);
+        console.warn('[system-app] 无法显示应用级 loading:', error);
       }
     }
   }
@@ -120,7 +120,7 @@ const render = async (props: QiankunProps = {}) => {
       // 静默失败
     }
   } catch (error) {
-    logger.error('[system-app] 渲染失败:', error);
+    console.error('[system-app] 渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -264,6 +264,6 @@ const shouldRunStandalone = () => {
 if (shouldRunStandalone()) {
   // 直接渲染，不需要加载 layout-app
   render().catch((error) => {
-    logger.error('[system-app] 独立运行失败:', error);
+    console.error('[system-app] 独立运行失败:', error);
   });
 }

@@ -1,4 +1,4 @@
-﻿---
+---
 title: BtcUpsert 组件
 type: package
 project: components
@@ -39,19 +39,19 @@ CRUD 专用表单组件，对标 cool-admin 的 `cl-upsert`
 ```vue
 <template>
 <BtcCrud ref="crudRef" :service="userService">
-<BtcRow>
+<BtcCrudRow>
 <BtcRefreshBtn />
 <BtcAddBtn /> <!-- 点击打开新增表单 -->
 <BtcMultiDeleteBtn />
-</BtcRow>
+</BtcCrudRow>
 
-<BtcRow>
+<BtcCrudRow>
 <BtcTable :columns="columns" />
-</BtcRow>
+</BtcCrudRow>
 
-<BtcRow>
+<BtcCrudRow>
 <BtcPagination />
-</BtcRow>
+</BtcCrudRow>
 
 <!-- BtcUpsert 组件 -->
 <BtcUpsert

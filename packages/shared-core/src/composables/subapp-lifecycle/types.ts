@@ -11,6 +11,7 @@ export interface CleanupState {
   routerAfterEach?: () => void;
   listeners: CleanupListener[];
   historyPatches?: () => void;
+  pendingPromises?: Array<{ cancel: () => void }>; // 待取消的 Promise
 }
 
 export interface SubAppContext {
@@ -23,6 +24,7 @@ export interface SubAppContext {
   props: QiankunProps;
   translate: (key?: string | null) => string;
   isUnmounted?: boolean; // 标记应用是否已卸载，用于防止卸载后继续执行路由同步等操作
+  appId?: string; // 应用 ID，用于清理样式等资源
 }
 
 export interface SubAppOptions {

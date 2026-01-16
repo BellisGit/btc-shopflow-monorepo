@@ -8,7 +8,7 @@
  * 优化：添加 localStorage 持久化，类似 cool-admin 的做法
  * 刷新页面时从 localStorage 恢复菜单数据，避免菜单重新加载导致的闪烁
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { ref, triggerRef, type Ref } from 'vue';
 import { storage } from '@btc/shared-core/utils';
@@ -72,7 +72,7 @@ function loadMenuRegistryFromStorage(): Record<string, MenuItem[]> | null {
     return hasData ? registry : null;
   } catch (error) {
     // 解析失败，清除无效缓存
-    logger.warn('[MenuRegistry] 恢复菜单缓存失败，清除无效缓存:', error);
+    console.warn('[MenuRegistry] 恢复菜单缓存失败，清除无效缓存:', error);
     // 清理所有菜单缓存键（使用 storage.remove，确保正确处理 prefix）
     // 注意：storage.info() 返回的键名已经去掉了 prefix
     try {
@@ -120,7 +120,7 @@ function saveMenuRegistryToStorage(registry: Record<string, MenuItem[]>): void {
     });
   } catch (error) {
     // 存储失败（可能是存储空间不足），静默处理
-    logger.warn('[MenuRegistry] 保存菜单缓存失败:', error);
+    console.warn('[MenuRegistry] 保存菜单缓存失败:', error);
   }
 }
 
@@ -227,8 +227,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
 
 /**
  * 注册子应用的菜单
+ * @param app 应用ID
+ * @param menus 菜单项数组
+ * @param forceUpdate 是否强制更新（即使菜单相同也更新），用于确保 manifest 更新后菜单能正确显示
  */
-export function registerMenus(app: string, menus: MenuItem[]) {
+export function registerMenus(app: string, menus: MenuItem[], forceUpdate: boolean = false) {
   // 关键：优先使用全局注册表（layout-app 创建的），确保所有模块使用同一个实例
   let reg: Ref<Record<string, MenuItem[]>>;
   if (typeof window !== 'undefined' && (window as any)[GLOBAL_REGISTRY_KEY]) {
@@ -245,13 +248,14 @@ export function registerMenus(app: string, menus: MenuItem[]) {
 
   const existingMenus = reg.value[app] || [];
 
-  // 如果菜单内容相同，跳过更新，避免触发不必要的响应式更新和存储操作
+  // 如果菜单内容相同且不强制更新，跳过更新，避免触发不必要的响应式更新和存储操作
   // 关键优化：菜单相同时不保存，提高性能（类似 cool-admin）
-  if (existingMenus.length > 0 && menusEqual(existingMenus, menus)) {
+  // 但是，从 manifest 注册菜单时，使用 forceUpdate=true 确保新菜单项能正确显示
+  if (!forceUpdate && existingMenus.length > 0 && menusEqual(existingMenus, menus)) {
     return;
   }
 
-  // 如果菜单内容不同或现有菜单为空，需要更新
+  // 如果菜单内容不同、现有菜单为空、或强制更新，需要更新
   reg.value[app] = menus;
   // 关键：手动触发响应式更新，确保 Vue 能够检测到全局对象的变化
   triggerRef(reg);

@@ -4,7 +4,7 @@
  * 端口检查工具
  * 检查所有应用的开发端口是否被占用
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { createServer } from 'net';
 import { readFileSync } from 'fs';

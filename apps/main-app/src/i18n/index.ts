@@ -9,6 +9,8 @@ import { sharedLocalesZhCN, sharedLocalesEnUS } from '@btc/shared-components';
 // 导入 overview 模块的语言包
 import overviewZhCN from '../modules/overview/locales/zh-CN.json';
 import overviewEnUS from '../modules/overview/locales/en-US.json';
+// 导入 system 应用的翻译（包含 domain.type 等通用翻译）
+import { system } from '../../../../locales/apps/system';
 
 /**
  * 转换 unplugin-vue-i18n 的 AST 格式为字符串格式
@@ -67,16 +69,18 @@ const defaultLocale = getLocaleFromStorage();
 const transformedOverviewZhCN = transformMessages(overviewZhCN);
 const transformedOverviewEnUS = transformMessages(overviewEnUS);
 
-// 初始化全局 i18n 实例（全局通用词条 + shared-components 语言包 + overview 模块词条）
+// 初始化全局 i18n 实例（全局通用词条 + shared-components 语言包 + overview 模块词条 + system 应用词条）
 // 注意：子应用的国际化数据会在 beforeMount 阶段动态加载并合并
 export const i18n = createAppI18n(defaultLocale, {
   'zh-CN': { 
     ...(sharedLocalesZhCN as Record<string, any>),
-    ...transformedOverviewZhCN 
+    ...transformedOverviewZhCN,
+    ...(system['zh-CN'] || {})
   } as any,
   'en-US': { 
     ...(sharedLocalesEnUS as Record<string, any>),
-    ...transformedOverviewEnUS 
+    ...transformedOverviewEnUS,
+    ...(system['en-US'] || {})
   } as any,
 });
 

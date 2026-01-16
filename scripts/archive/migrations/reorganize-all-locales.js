@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 const fs = require('fs');
 const path = require('path');
 
@@ -74,7 +74,7 @@ function categorizeKey(key, menuOrder) {
 // 重新组织文件
 function reorganizeLocaleFile(appName, config) {
   const localeDir = path.join(__dirname, '..', 'apps', appName, 'src', 'locales');
-  
+
   // 获取菜单顺序
   let menuOrder = [];
   if (config.manifest && fs.existsSync(config.manifest)) {
@@ -85,33 +85,33 @@ function reorganizeLocaleFile(appName, config) {
       logger.error(`Error reading manifest for ${appName}:`, e.message);
     }
   }
-  
+
   const results = [];
-  
+
   ['zh-CN.json', 'en-US.json'].forEach(locale => {
     const filePath = path.join(localeDir, locale);
     if (!fs.existsSync(filePath)) {
       return;
     }
-    
+
     try {
       const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      
+
       // 删除不规范 key
       config.removeKeys.forEach(key => {
         delete content[key];
       });
-      
+
       // 删除中文 key
       const keys = Object.keys(content);
       const chineseKeys = keys.filter(k => /[\u4e00-\u9fa5]/.test(k));
       chineseKeys.forEach(key => {
         delete content[key];
       });
-      
+
       // 重新获取 keys（删除后）
       const remainingKeys = Object.keys(content);
-      
+
       // 排序
       const sorted = remainingKeys
         .map(k => categorizeKey(k, menuOrder))
@@ -121,17 +121,17 @@ function reorganizeLocaleFile(appName, config) {
           return a.key.localeCompare(b.key);
         })
         .map(item => item.key);
-      
+
       // 构建新内容
       const newContent = {};
       sorted.forEach(k => {
         newContent[k] = content[k];
       });
-      
+
       // 写入文件
       const jsonContent = JSON.stringify(newContent, null, 2) + '\n';
       fs.writeFileSync(filePath, jsonContent, 'utf8');
-      
+
       results.push({
         app: appName,
         locale,
@@ -143,7 +143,7 @@ function reorganizeLocaleFile(appName, config) {
       logger.error(`Error processing ${appName}/${locale}:`, e.message);
     }
   });
-  
+
   return results;
 }
 
@@ -158,7 +158,7 @@ targetApps.forEach(appName => {
     logger.error(`Unknown app: ${appName}`);
     return;
   }
-  
+
   const results = reorganizeLocaleFile(appName, config);
   allResults.push(...results);
 });

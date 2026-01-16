@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import fs from 'fs-extra';
 import path from 'path';
 import matter from 'gray-matter';
@@ -53,23 +53,23 @@ async function validateDocument(filePath: string, validate: any): Promise<{
 
 // 主函数
 async function main() {
-  logger.info('=== Frontmatter 验证 ===\n');
+  console.info('=== Frontmatter 验证 ===\n');
 
   // 加载 schema
   const schema = await loadSchema();
   const validate = createValidator(schema);
-  logger.info('✅ Schema 加载完成\n');
+  console.info('✅ Schema 加载完成\n');
 
   // 查找所有已迁移的文档
   const docsDir = path.join(process.cwd(), '_ingested');
 
   if (!await fs.pathExists(docsDir)) {
-    logger.info('⚠️  _ingested 目录不存在，请先运行 ingest');
+    console.info('⚠️  _ingested 目录不存在，请先运行 ingest');
     process.exit(1);
   }
 
   const files = await glob(path.join(docsDir, '**/*.md').replace(/\\/g, '/'));
-  logger.info(`找到 ${files.length} 个文档\n`);
+  console.info(`找到 ${files.length} 个文档\n`);
 
   let validCount = 0;
   let invalidCount = 0;
@@ -81,10 +81,10 @@ async function main() {
 
     if (result.valid) {
       validCount++;
-      logger.info(`  ✅ ${path.relative(docsDir, file)}`);
+      console.info(`  ✅ ${path.relative(docsDir, file)}`);
     } else {
       invalidCount++;
-      logger.info(`  ❌ ${path.relative(docsDir, file)}`);
+      console.info(`  ❌ ${path.relative(docsDir, file)}`);
       errors.push({
         file: path.relative(docsDir, file),
         errors: result.errors || []
@@ -92,32 +92,32 @@ async function main() {
     }
   }
 
-  logger.info('\n=== 验证结果 ===');
-  logger.info(`✅ 有效: ${validCount}`);
-  logger.info(`❌ 无效: ${invalidCount}`);
+  console.info('\n=== 验证结果 ===');
+  console.info(`✅ 有效: ${validCount}`);
+  console.info(`❌ 无效: ${invalidCount}`);
 
   if (errors.length > 0) {
-    logger.info('\n=== 错误详情 ===\n');
+    console.info('\n=== 错误详情 ===\n');
     errors.forEach(({ file, errors }) => {
-      logger.info(`📄 ${file}:`);
+      console.info(`📄 ${file}:`);
       errors.forEach(err => {
         if (err.instancePath) {
-          logger.info(`  - ${err.instancePath}: ${err.message}`);
+          console.info(`  - ${err.instancePath}: ${err.message}`);
         } else {
-          logger.info(`  - ${err.message}`);
+          console.info(`  - ${err.message}`);
         }
       });
-      logger.info('');
+      console.info('');
     });
 
     process.exit(1);
   }
 
-  logger.info('\n✅ 所有文档验证通过！');
+  console.info('\n✅ 所有文档验证通过！');
 }
 
 main().catch(error => {
-  logger.error('验证过程出错:', error);
+  console.error('验证过程出错:', error);
   process.exit(1);
 });
 

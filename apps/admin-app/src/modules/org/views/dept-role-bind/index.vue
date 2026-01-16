@@ -34,8 +34,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import { createMockCrudService } from '@utils/http';

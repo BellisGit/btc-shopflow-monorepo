@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-alert-config">
     <div class="config-header">
       <div class="header-info">
@@ -162,7 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { Strategy, StrategyAlert } from '@/types/strategy';
 import { StrategyType, StrategyStatus } from '@/types/strategy';
@@ -417,7 +417,7 @@ const loadExistingAlerts = async () => {
     const alerts = await strategyService.getAlerts(props.strategy?.id);
     existingAlerts.value = alerts;
   } catch (error) {
-    logger.error('Failed to load alert list:', error);
+    console.error('Failed to load alert list:', error);
   }
 };
 

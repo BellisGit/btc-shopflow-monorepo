@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 .DS_Store
 *.log
@@ -45,3 +45,8 @@ scripts/deploy-config.sh
 !**/*.config.js
 !**/scripts/**/*.js
 **/src/**/*.map
+
+# 堆快照文件（OOM 诊断）
+.heap-snapshots/
+**/.heap-snapshots/
+*.heapsnapshot

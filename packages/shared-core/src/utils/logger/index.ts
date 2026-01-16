@@ -1,16 +1,28 @@
 /**
  * 统一日志模块
- * 基于 Pino 的日志系统，集成到现有的日志上报机制
+ * 基于 console 的日志系统，集成到现有的日志上报机制
  */
 
-import pino from 'pino';
-import { createPinoLogger } from './pino-config';
-import { createLogTransport } from './transports';
-import type { LogContext, LogLevel, LoggerOptions } from './types';
+import type { LogContext, LogLevel } from './types';
 import { getCurrentAppId } from '../env-info';
+import { reportError } from './error-reporter';
+import { reportLog, type LogEntry } from '../log-reporter';
+import { isDevelopment } from '../../env';
 
 // 全局上下文（用户信息、请求ID等）
 let globalContext: LogContext = {};
+
+// 当前日志级别
+let currentLogLevel: LogLevel = isDevelopment() ? 'debug' : 'warn';
+
+// 日志级别映射（数字越大，级别越高）
+const logLevelMap: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  fatal: 4,
+};
 
 /**
  * 设置全局日志上下文
@@ -34,44 +46,21 @@ export function clearLogContext() {
 }
 
 /**
- * 创建带上下文的 logger 实例
+ * 格式化日志消息（添加上下文信息）
  */
-function createLoggerWithContext(context?: LogContext): pino.Logger {
-  const mergedContext = {
-    ...globalContext,
-    ...context,
-    appId: context?.appId || globalContext.appId || getCurrentAppId(),
-  };
-
-  // 创建基础 logger，传入上下文用于传输器
-  const baseLogger = createPinoLogger(mergedContext);
-
-  // 如果有上下文，创建子 logger
-  if (Object.keys(mergedContext).length > 0) {
-    return baseLogger.child(mergedContext);
-  }
-
-  return baseLogger;
-}
-
-// 创建默认 logger 实例
-let defaultLogger: pino.Logger = createLoggerWithContext();
-
-/**
- * 重新初始化 logger（当上下文变化时调用）
- */
-export function reinitializeLogger(context?: LogContext) {
-  defaultLogger = createLoggerWithContext(context);
+function formatMessage(message: string, context?: LogContext): string {
+  const mergedContext = { ...globalContext, ...context };
+  const contextStr = Object.keys(mergedContext).length > 0
+    ? ` [${JSON.stringify(mergedContext)}]`
+    : '';
+  return `${message}${contextStr}`;
 }
 
 /**
- * 获取 logger 实例
+ * 检查是否应该记录该级别的日志
  */
-export function getLogger(context?: LogContext): pino.Logger {
-  if (context) {
-    return createLoggerWithContext(context);
-  }
-  return defaultLogger;
+function shouldLog(level: LogLevel): boolean {
+  return logLevelMap[level] >= logLevelMap[currentLogLevel];
 }
 
 /**
@@ -82,46 +71,183 @@ export const logger = {
    * Debug 级别日志
    */
   debug: (message: string, ...args: any[]) => {
-    defaultLogger.debug({ ...args }, message);
+    if (!shouldLog('debug')) return;
+    try {
+      const formattedMessage = formatMessage(message);
+      console.debug(formattedMessage, ...args);
+    } catch (error) {
+      console.debug(message, ...args);
+    }
   },
 
   /**
    * Info 级别日志
    */
   info: (message: string, ...args: any[]) => {
-    defaultLogger.info({ ...args }, message);
+    if (!shouldLog('info')) return;
+    try {
+      const formattedMessage = formatMessage(message);
+      console.info(formattedMessage, ...args);
+    } catch (error) {
+      console.info(message, ...args);
+    }
   },
 
   /**
    * Warn 级别日志
    */
   warn: (message: string, ...args: any[]) => {
-    defaultLogger.warn({ ...args }, message);
+    if (!shouldLog('warn')) return;
+    try {
+      const formattedMessage = formatMessage(message);
+      console.warn(formattedMessage, ...args);
+    } catch (error) {
+      console.warn(message, ...args);
+    }
   },
 
   /**
    * Error 级别日志
+   * 专门用于错误上报：将错误通过日志上报中心上报到服务器
    */
   error: (message: string, error?: Error | any, ...args: any[]) => {
-    if (error instanceof Error) {
-      defaultLogger.error({ err: error, ...args }, message);
-    } else if (error) {
-      defaultLogger.error({ ...error, ...args }, message);
-    } else {
-      defaultLogger.error({ ...args }, message);
+    if (!shouldLog('error')) return;
+
+    try {
+      const formattedMessage = formatMessage(message);
+      console.error(formattedMessage, error, ...args);
+
+      // 上报错误到日志上报中心
+      try {
+        // 获取当前上下文
+        const context = getLogContext();
+        const appId = context.appId || getCurrentAppId() || 'unknown';
+
+        // 构建日志条目
+        const logEntry: LogEntry = {
+          level: 'error',
+          message: formattedMessage,
+          timestamp: Date.now(),
+          appName: appId,
+          context: {
+            ...context,
+            args: args.length > 0 ? args : undefined,
+          },
+          error: error instanceof Error ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          } : error ? {
+            message: String(error),
+          } : undefined,
+        };
+
+        // 上报到日志上报中心（异步，不阻塞主线程）
+        setTimeout(() => {
+          try {
+            reportLog(logEntry);
+          } catch (e) {
+            // 上报失败不影响日志记录，静默处理
+          }
+        }, 0);
+
+        // 同时保留原有的错误上报机制（向后兼容）
+        try {
+          const errorReport = {
+            msg: message,
+            level: 50, // error 级别
+            appId,
+            timestamp: Date.now(),
+            errorMessage: message,
+            error: error instanceof Error ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            } : error,
+            ...args,
+          };
+          reportError(errorReport);
+        } catch (e) {
+          // 忽略错误
+        }
+      } catch (reportErr) {
+        // 上报失败不影响日志记录，静默处理
+      }
+    } catch (e) {
+      console.error(message, error, ...args);
     }
   },
 
   /**
    * Fatal 级别日志
+   * 专门用于错误上报：将致命错误通过日志上报中心上报到服务器
    */
   fatal: (message: string, error?: Error | any, ...args: any[]) => {
-    if (error instanceof Error) {
-      defaultLogger.fatal({ err: error, ...args }, message);
-    } else if (error) {
-      defaultLogger.fatal({ ...error, ...args }, message);
-    } else {
-      defaultLogger.fatal({ ...args }, message);
+    if (!shouldLog('fatal')) return;
+
+    try {
+      const formattedMessage = formatMessage(message);
+      console.error(`[FATAL] ${formattedMessage}`, error, ...args);
+
+      // 上报错误到日志上报中心
+      try {
+        // 获取当前上下文
+        const context = getLogContext();
+        const appId = context.appId || getCurrentAppId() || 'unknown';
+
+        // 构建日志条目
+        const logEntry: LogEntry = {
+          level: 'fatal',
+          message: formattedMessage,
+          timestamp: Date.now(),
+          appName: appId,
+          context: {
+            ...context,
+            args: args.length > 0 ? args : undefined,
+          },
+          error: error instanceof Error ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          } : error ? {
+            message: String(error),
+          } : undefined,
+        };
+
+        // 上报到日志上报中心（异步，不阻塞主线程）
+        setTimeout(() => {
+          try {
+            reportLog(logEntry);
+          } catch (e) {
+            // 上报失败不影响日志记录，静默处理
+          }
+        }, 0);
+
+        // 同时保留原有的错误上报机制（向后兼容）
+        try {
+          const errorReport = {
+            msg: message,
+            level: 60, // fatal 级别
+            appId,
+            timestamp: Date.now(),
+            severity: 'critical', // Fatal 级别标记为严重
+            errorMessage: message,
+            error: error instanceof Error ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            } : error,
+            ...args,
+          };
+          reportError(errorReport);
+        } catch (e) {
+          // 忽略错误
+        }
+      } catch (reportErr) {
+        // 上报失败不影响日志记录，静默处理
+      }
+    } catch (e) {
+      console.error(`[FATAL] ${message}`, error, ...args);
     }
   },
 
@@ -129,27 +255,59 @@ export const logger = {
    * 创建带上下文的子 logger
    */
   child: (context: LogContext) => {
-    return createLoggerWithContext(context);
+    return {
+      debug: (message: string, ...args: any[]) => {
+        console.debug(formatMessage(message, context), ...args);
+      },
+      info: (message: string, ...args: any[]) => {
+        console.info(formatMessage(message, context), ...args);
+      },
+      warn: (message: string, ...args: any[]) => {
+        console.warn(formatMessage(message, context), ...args);
+      },
+      error: (message: string, error?: Error | any, ...args: any[]) => {
+        console.error(formatMessage(message, context), error, ...args);
+      },
+      fatal: (message: string, error?: Error | any, ...args: any[]) => {
+        console.error(`[FATAL] ${formatMessage(message, context)}`, error, ...args);
+      },
+    };
   },
 
   /**
    * 设置日志级别
    */
   setLevel: (level: LogLevel) => {
-    defaultLogger.level = level;
+    currentLogLevel = level;
   },
 
   /**
    * 获取当前日志级别
    */
-  getLevel: () => {
-    return defaultLogger.level;
+  getLevel: (): LogLevel => {
+    return currentLogLevel;
   },
 };
 
-// 导出类型
-export type { LogContext, LogLevel, LoggerOptions } from './types';
-export type { Logger } from 'pino';
+/**
+ * 重新初始化 logger（当上下文变化时调用）
+ * 现在只是一个空函数，因为不再需要重新初始化
+ */
+export function reinitializeLogger(context?: LogContext) {
+  if (context) {
+    setLogContext(context);
+  }
+}
 
-// 默认导出 logger
-export default logger;
+/**
+ * 获取 logger 实例（为了兼容性保留）
+ */
+export function getLogger(context?: LogContext) {
+  if (context) {
+    return logger.child(context);
+  }
+  return logger;
+}
+
+// 导出错误上报相关函数（保留错误上报功能，但不导出 logger）
+export { reportError } from './error-reporter';

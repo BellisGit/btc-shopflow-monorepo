@@ -1,18 +1,7 @@
 import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
-import ElementPlus from 'element-plus';
-import { createThemePlugin } from '@btc/shared-core';
-
-// 样式文件在模块加载时同步导入，但 Vite 会优化处理
-// 开发环境：Vite 会按需加载样式
-// 生产环境：样式会被打包到单独的 CSS 文件
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
+import { createThemePlugin, initGlobalElementPlus } from '@btc/shared-core';
 import '../../styles/theme.scss';
-
-// Element Plus 国际化
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import en from 'element-plus/es/locale/lang/en';
 
 // ECharts 插件
 import EChartsPlugin from '../../plugins/echarts';
@@ -20,29 +9,10 @@ import EChartsPlugin from '../../plugins/echarts';
 export type LogisticsThemePlugin = ReturnType<typeof createThemePlugin>;
 
 /**
- * Element Plus 语言配置
- */
-export const elementLocale = {
-  'zh-CN': zhCn,
-  'en-US': en
-};
-
-/**
  * 获取当前语言设置
  */
 export const getCurrentLocale = (): string => {
   return storage.get<string>('locale') || 'zh-CN';
-};
-
-/**
- * 配置Element Plus
- */
-export const setupElementPlus = (app: App) => {
-  const currentLocale = getCurrentLocale();
-  const locale = elementLocale[currentLocale as keyof typeof elementLocale] || zhCn;
-
-  // @ts-expect-error - ElementPlus plugin options type mismatch
-  app.use(ElementPlus, { locale });
 };
 
 // 缓存 themePlugin 实例，避免重复创建
@@ -54,8 +24,9 @@ export const setupUI = (app: App) => {
     themePluginInstance = createThemePlugin();
   }
 
-  // 配置Element Plus（包含国际化）
-  setupElementPlus(app);
+  // 使用全局 Element Plus 初始化，避免重复安装
+  const currentLocale = getCurrentLocale();
+  initGlobalElementPlus(app, currentLocale);
 
   // 配置 themePlugin
   app.use(themePluginInstance);

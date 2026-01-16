@@ -1,11 +1,10 @@
 /**
  * 个人信息页面业务逻辑
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
-import { ref } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { appStorage } from '@/utils/app-storage';
 import { service } from '@services/eps';
@@ -41,9 +40,6 @@ export function useProfile() {
         
         if (cachedProfileInfo && Object.keys(cachedProfileInfo).length > 0) {
           // 使用缓存的数据
-          if (import.meta.env.DEV) {
-            logger.info('[useProfile] 使用缓存数据，不调用接口');
-          }
           userInfo.value = cachedProfileInfo;
           
           // 更新统一存储（头像和用户名）
@@ -76,10 +72,6 @@ export function useProfile() {
             };
           }
           
-          if (import.meta.env.DEV) {
-            logger.info('[useProfile] 缓存为空，但不调用接口（等待登录时加载）');
-          }
-          
           // 关键：缓存为空时不调用接口，直接返回
           // 数据会在登录时通过 loadProfileInfoOnLogin 加载
           return;
@@ -87,7 +79,7 @@ export function useProfile() {
       } catch (error) {
         // 如果读取缓存失败，也不调用接口（避免刷新时调用）
         if (import.meta.env.DEV) {
-          logger.warn('[useProfile] Failed to read cache:', error);
+          console.warn('[useProfile] Failed to read cache:', error);
         }
         // 从统一存储读取基本数据（向后兼容）
         const cachedAvatar = appStorage.user.getAvatar();
@@ -104,7 +96,7 @@ export function useProfile() {
     } else {
       // 需要显示完整信息，调用接口
       if (import.meta.env.DEV) {
-        logger.info('[useProfile] 需要显示完整信息，将调用接口');
+        console.info('[useProfile] 需要显示完整信息，将调用接口');
       }
     }
 
@@ -183,8 +175,8 @@ export function useProfile() {
 
       // 添加调用栈追踪，帮助定位问题
       if (import.meta.env.DEV) {
-        logger.info('[useProfile] 准备调用接口 /api/system/base/profile/info, showFull:', showFull);
-        logger.info('[useProfile] 调用栈:', new Error().stack);
+        console.info('[useProfile] 准备调用接口 /api/system/base/profile/info, showFull:', showFull);
+        console.info('[useProfile] 调用栈:', new Error().stack);
       }
 
       const data = await currentService.admin.base.profile.info(showFull ? { showFull: true } : undefined);
@@ -208,7 +200,7 @@ export function useProfile() {
         } catch (error) {
           // 静默失败，不影响功能
           if (import.meta.env.DEV) {
-            logger.warn('[useProfile] Failed to save to cache:', error);
+            console.warn('[useProfile] Failed to save to cache:', error);
           }
         }
       }
@@ -221,7 +213,7 @@ export function useProfile() {
         }
       }));
     } catch (error: any) {
-      logger.error('加载用户信息失败:', error);
+      console.error('加载用户信息失败:', error);
       BtcMessage.error(error?.message || '加载用户信息失败');
     } finally {
       loading.value = false;

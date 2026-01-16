@@ -2,7 +2,7 @@
  * 插件系统集成模块
  * 负责自动发现和注册插件
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { App } from 'vue';
 import type { Router } from 'vue-router';
@@ -41,7 +41,7 @@ export async function autoDiscoverPlugins(app: App, router?: Router) {
       pluginManager.register(plugin);
     } catch (error) {
       const { t } = useI18n();
-      logger.error(`[PluginManager] ${t('common.plugin.register_failed')}: ${plugin.name}`, error);
+      console.error(`[PluginManager] ${t('common.plugin.register_failed')}: ${plugin.name}`, error);
     }
   }
 
@@ -52,7 +52,7 @@ export async function autoDiscoverPlugins(app: App, router?: Router) {
         await pluginManager.install(plugin.name);
       } catch (error) {
         const { t } = useI18n();
-        logger.error(`[PluginManager] ${t('common.plugin.install_failed')}: ${plugin.name}`, error);
+        console.error(`[PluginManager] ${t('common.plugin.install_failed')}: ${plugin.name}`, error);
       }
     }
   }

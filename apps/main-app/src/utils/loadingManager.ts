@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 /**
  * Loading 管理器
  * 用于管理应用级别的 Loading 状态
@@ -16,7 +16,7 @@ export function startLoading(appName: string): void {
       module.appLoadingService.show(appName);
     }
   }).catch((error) => {
-    logger.warn('[loadingManager] Failed to load appLoadingService', error);
+    console.warn('[loadingManager] Failed to load appLoadingService', error);
   });
 }
 
@@ -31,7 +31,7 @@ export function finishLoading(appName: string): void {
       module.appLoadingService.hide(appName);
     }
   }).catch((error) => {
-    logger.warn('[loadingManager] Failed to load appLoadingService', error);
+    console.warn('[loadingManager] Failed to load appLoadingService', error);
     // 兜底方案：直接通过 DOM 关闭所有 .app-loading 元素
     const loadingEls = document.querySelectorAll('.app-loading');
     loadingEls.forEach((el) => {
@@ -60,7 +60,7 @@ export function loadingError(appName: string, error?: Error): void {
   finishLoading(appName);
 
   // 记录错误
-  logger.error(`[loadingManager] Loading error for ${appName}:`, error);
+  console.error(`[loadingManager] Loading error for ${appName}:`, error);
 
   // 可以在这里添加错误通知逻辑
   // 例如：显示错误提示、上报错误等

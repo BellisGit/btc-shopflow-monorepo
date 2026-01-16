@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import type { App } from 'vue';
 import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
@@ -24,12 +24,12 @@ function getEngineeringRoutes() {
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
     if (import.meta.env.DEV) {
-      logger.info(
+      console.info(
         `[EngineeringRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
       );
     }
   } catch (error) {
-    logger.error('[EngineeringRouter] Failed to scan routes from modules:', error);
+    console.error('[EngineeringRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 
@@ -77,7 +77,7 @@ export const createEngineeringRouter = (): Router => {
 
       if (isProductionSubdomain && hostname === 'engineering.bellis.com.cn' && to.path.startsWith('/engineering/')) {
         const normalized = to.path.substring('/engineering'.length) || '/';
-        logger.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        console.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
         next({
           path: normalized,
           query: to.query,

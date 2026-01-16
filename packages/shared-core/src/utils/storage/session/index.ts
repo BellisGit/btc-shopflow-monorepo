@@ -1,4 +1,4 @@
-import { logger } from '../../logger';
+;
 /**
  * SessionStorage 工具类
  * 提供统一的 sessionStorage 操作接口，支持前缀、自动序列化等
@@ -36,7 +36,7 @@ class SessionStorageUtil {
         return value as T;
       }
     } catch (error) {
-      logger.warn(`[SessionStorage] 获取键 "${key}" 失败:`, error);
+      console.warn(`[SessionStorage] 获取键 "${key}" 失败:`, error);
       return null;
     }
   }
@@ -56,10 +56,10 @@ class SessionStorageUtil {
       const serialized = JSON.stringify(value);
       window.sessionStorage.setItem(fullKey, serialized);
     } catch (error) {
-      logger.warn(`[SessionStorage] 设置键 "${key}" 失败:`, error);
+      console.warn(`[SessionStorage] 设置键 "${key}" 失败:`, error);
       // 如果存储失败（可能是存储空间不足），尝试清理一些旧数据
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        logger.warn('[SessionStorage] 存储空间不足，建议清理旧数据');
+        console.warn('[SessionStorage] 存储空间不足，建议清理旧数据');
       }
     }
   }
@@ -77,7 +77,7 @@ class SessionStorageUtil {
       const fullKey = this.prefix + key;
       window.sessionStorage.removeItem(fullKey);
     } catch (error) {
-      logger.warn(`[SessionStorage] 移除键 "${key}" 失败:`, error);
+      console.warn(`[SessionStorage] 移除键 "${key}" 失败:`, error);
     }
   }
 
@@ -105,7 +105,7 @@ class SessionStorageUtil {
         window.sessionStorage.removeItem(key);
       });
     } catch (error) {
-      logger.warn('[SessionStorage] 清空存储失败:', error);
+      console.warn('[SessionStorage] 清空存储失败:', error);
     }
   }
 
@@ -132,7 +132,7 @@ class SessionStorageUtil {
         }
       }
     } catch (error) {
-      logger.warn('[SessionStorage] 获取所有数据失败:', error);
+      console.warn('[SessionStorage] 获取所有数据失败:', error);
     }
 
     return data;

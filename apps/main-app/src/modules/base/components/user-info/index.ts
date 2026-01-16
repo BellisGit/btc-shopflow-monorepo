@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser';
 import { appStorage } from '@/utils/app-storage';
@@ -181,7 +181,7 @@ export function useUserInfo() {
     } catch (error) {
       // 静默失败，不影响页面显示
       if (import.meta.env.DEV) {
-        logger.warn('加载用户信息失败:', error);
+        console.warn('加载用户信息失败:', error);
       }
     }
   };
@@ -244,6 +244,11 @@ export function useUserInfo() {
 
   onUnmounted(() => {
     window.removeEventListener('userInfoUpdated', handleUserInfoUpdated as EventListener);
+    // 清理打字机定时器，防止内存泄漏
+    if (typingTimer) {
+      clearInterval(typingTimer);
+      typingTimer = null;
+    }
   });
 
   return {

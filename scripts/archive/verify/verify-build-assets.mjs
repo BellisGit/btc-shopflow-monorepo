@@ -4,7 +4,7 @@
  * 验证构建产物中的资源引用
  * 检查所有引用的文件是否存在，如果不存在则报错并退出
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { join, dirname, resolve } from 'path';

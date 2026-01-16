@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 /**
  * 通知管理器辅助函数
  * 提供统一的通知发送接口
@@ -8,7 +8,7 @@ export function useNotification() {
   const notificationManager = (window as any).notificationManager;
 
   if (!notificationManager) {
-    logger.warn('NotificationManager not available');
+    console.warn('NotificationManager not available');
     return {
       success: () => {},
       error: () => {},

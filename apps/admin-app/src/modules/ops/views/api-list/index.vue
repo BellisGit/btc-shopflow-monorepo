@@ -27,7 +27,7 @@ defineOptions({
 
 import { computed, ref } from 'vue';
 import { BtcMasterTableGroup } from '@btc/shared-components';
-import { useI18n, usePageColumns, getPageConfigFull, type CrudService, logger } from '@btc/shared-core';
+import { useI18n, usePageColumns, getPageConfigFull, type CrudService } from '@btc/shared-core';
 import { sortByLocale } from '@btc/shared-utils';
 import { sysApi } from '@/modules/api-services';
 
@@ -76,12 +76,12 @@ async function fetchApiDocsWithFallback() {
   try {
     const result = await Promise.race([sysApi.apiDocs.list(), timeoutPromise]);
     if (result === API_DOCS_TIMEOUT_TOKEN) {
-      logger.warn('[OpsApiList] API docs fetch timeout, using empty list as fallback');
+      console.warn('[OpsApiList] API docs fetch timeout, using empty list as fallback');
       return [];
     }
     return result;
   } catch (error) {
-    logger.warn('[OpsApiList] API docs fetch failed, using empty list as fallback', error);
+    console.warn('[OpsApiList] API docs fetch failed, using empty list as fallback', error);
     return [];
   }
 }

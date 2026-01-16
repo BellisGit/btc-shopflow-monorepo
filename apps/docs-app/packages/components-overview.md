@@ -91,9 +91,9 @@ CRUD 系统提供了完整的数据操作解决方案：
 - **BtcAddBtn** - 新增按钮
 - **BtcRefreshBtn** - 刷新按钮
 - **BtcMultiDeleteBtn** - 批量删除按钮
-- **BtcRow** - 行组件
-- **BtcFlex1** - 弹性布局组件
-- **BtcSearchKey** - 搜索关键字组件
+- **BtcCrudRow** - 行组件
+- **BtcCrudFlex1** - 弹性布局组件
+- **BtcCrudSearchKey** - 搜索关键字组件
 - **BtcMenuExp** - 菜单展开组件
 
 ### 图表组件 (Chart Components)
@@ -279,9 +279,9 @@ import {
   BtcAddBtn,
   BtcRefreshBtn,
   BtcMultiDeleteBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
+  BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
   BtcMenuExp,
   
   // 图表组件

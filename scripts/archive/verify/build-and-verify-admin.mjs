@@ -3,7 +3,7 @@
 /**
  * 构建并验证 admin-app，确保所有引用都正确
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';

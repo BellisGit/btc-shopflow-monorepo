@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref } from 'vue';
 import type { FilterCategory, BtcFilterListProps } from '../types';
 
@@ -23,7 +23,7 @@ export function useDataLoading(props: Pick<BtcFilterListProps, 'service' | 'cate
         const data = await props.service.list();
         categories.value = Array.isArray(data) ? data : [];
       } catch (error) {
-        logger.error('[BtcFilterList] Failed to load data:', error);
+        console.error('[BtcFilterList] Failed to load data:', error);
         categories.value = [];
       } finally {
         loading.value = false;

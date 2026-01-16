@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed, inject, useAttrs } from 'vue';
-import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
+import { useI18n, useThemePlugin } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
@@ -45,7 +45,7 @@ if (!crud) {
   // 关键：在生产环境下，这个错误必须可见，不能被静默处理
   const error = new Error('[BtcAddBtn] Must be used inside <BtcCrud>. This usually means BtcCrud component is not properly rendered or provide/inject context is broken.');
   // 确保错误在控制台可见
-  logger.error('[BtcAddBtn] CRITICAL ERROR:', error.message, {
+  console.error('[BtcAddBtn] CRITICAL ERROR:', error.message, {
     componentName: 'BtcAddBtn',
     injectKey: 'btc-crud',
     stack: error.stack,
@@ -90,7 +90,7 @@ const handleAddClick = (event?: MouseEvent) => {
   // 关键：在生产环境下，这些错误必须可见
   if (!crud) {
     const errorMsg = '[BtcAddBtn] crud is not available - inject failed or BtcCrud not rendered';
-    logger.error(errorMsg, {
+    console.error(errorMsg, {
       componentName: 'BtcAddBtn',
       injectKey: 'btc-crud',
       timestamp: new Date().toISOString(),
@@ -101,7 +101,7 @@ const handleAddClick = (event?: MouseEvent) => {
 
   if (typeof crud.handleAdd !== 'function') {
     const errorMsg = '[BtcAddBtn] crud.handleAdd is not a function';
-    logger.error(errorMsg, {
+    console.error(errorMsg, {
       crud,
       handleAdd: crud.handleAdd,
       type: typeof crud.handleAdd,

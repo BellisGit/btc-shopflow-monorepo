@@ -7,19 +7,14 @@
   },
   "routes": [
     {
-      "path": "/overview",
+      "path": "/workbench/overview",
       "labelKey": "menu.overview",
       "tab": {
-        "enabled": true,
-        "labelKey": "menu.overview"
-      },
-      "breadcrumbs": [
-        { "labelKey": "menu.dashboard", "icon": "svg:Lock" },
-        { "labelKey": "menu.overview", "icon": "svg:Location" }
-      ]
+        "enabled": false
+      }
     },
     {
-      "path": "/todo",
+      "path": "/workbench/todo",
       "labelKey": "menu.todo",
       "tab": {
         "enabled": true,
@@ -31,7 +26,7 @@
       ]
     },
     {
-      "path": "/profile",
+      "path": "/workbench/profile",
       "labelKey": "menu.profile",
       "tab": {
         "enabled": true,
@@ -45,12 +40,11 @@
   ],
   "menus": [
     {
-      "index": "dashboard",
+      "index": "/workbench",
       "labelKey": "menu.dashboard",
       "children": [
-        { "index": "/overview", "labelKey": "menu.overview" },
-        { "index": "/todo", "labelKey": "menu.todo" },
-        { "index": "/profile", "labelKey": "menu.profile" }
+        { "index": "/workbench/todo", "labelKey": "menu.todo" },
+        { "index": "/workbench/profile", "labelKey": "menu.profile" }
       ]
     }
   ],
@@ -74,18 +68,10 @@
             "showInOverview": true,
             "children": [
               {
-                "id": "main-overview-item",
-                "title": "概览",
-                "labelKey": "menu.overview",
-                "path": "/overview",
-                "sort": 1,
-                "showInOverview": true
-              },
-              {
                 "id": "main-todo-item",
                 "title": "我的待办",
                 "labelKey": "menu.todo",
-                "path": "/todo",
+                "path": "/workbench/todo",
                 "sort": 2,
                 "showInOverview": true
               },
@@ -93,7 +79,7 @@
                 "id": "main-profile-item",
                 "title": "个人中心",
                 "labelKey": "menu.profile",
-                "path": "/profile",
+                "path": "/workbench/profile",
                 "sort": 3,
                 "showInOverview": true
               }

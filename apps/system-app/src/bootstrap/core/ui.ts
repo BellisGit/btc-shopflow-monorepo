@@ -5,13 +5,7 @@
 
 import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
-import ElementPlus from 'element-plus';
-import { createThemePlugin } from '@btc/shared-core';
-// 关键：确保 Element Plus 样式在最前面加载，避免被其他样式覆盖
-// 开启样式隔离后，需要确保 Element Plus 样式在主应用中被正确加载
-// 注意：main.ts 中已经引入了，这里再次引入确保样式被正确加载
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
+import { createThemePlugin, initGlobalElementPlus, updateElementPlusLocale } from '@btc/shared-core';
 import 'virtual:uno.css';
 // 关键：在关闭样式隔离的情况下，需要直接 import 样式文件，确保样式被正确加载
 // 虽然 global.scss 中也通过 @import 引入了，但直接 import 可以确保样式在模块加载时就被处理
@@ -26,18 +20,6 @@ import EChartsPlugin from '../../plugins/echarts';
 
 // 注意：BtcSvg 组件已在 main.ts 中注册，这里不再重复注册
 
-// Element Plus 国际化
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import en from 'element-plus/es/locale/lang/en';
-
-/**
- * Element Plus 语言配置
- */
-export const elementLocale = {
-  'zh-CN': zhCn,
-  'en-US': en
-};
-
 /**
  * 获取当前语言设置
  */
@@ -46,13 +28,12 @@ export const getCurrentLocale = (): string => {
 };
 
 /**
- * 配置Element Plus
+ * 配置Element Plus（使用全局实例，避免重复安装）
  */
 export const setupElementPlus = (app: App) => {
   const currentLocale = getCurrentLocale();
-  const locale = elementLocale[currentLocale as keyof typeof elementLocale] || zhCn;
-
-  app.use(ElementPlus, { locale } as any);
+  // 使用全局 Element Plus 初始化，仅首次调用会执行 app.use，后续仅更新语言
+  initGlobalElementPlus(app, currentLocale);
 };
 
 /**

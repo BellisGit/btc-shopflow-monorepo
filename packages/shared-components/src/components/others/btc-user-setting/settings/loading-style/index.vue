@@ -40,6 +40,32 @@
                 <div class="progress-percentage">65%</div>
               </div>
             </div>
+            <div v-else-if="item.value === 'flower'" class="loading-preview-flower">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-18 -18 36 36" style="display: block; overflow: visible;">
+                <g class="flower-preview-group">
+                  <!-- 等比缩放：原始 r=75 → 缩放后 r=12 (比例 0.16) -->
+                  <circle cx="0" cy="0" r="12" fill="none" stroke="rgba(0, 0, 0, 0.08)" stroke-width="0.3"/>
+                  <!-- 原始 r=53.03 → 缩放后 r=8.48 (比例 0.16) -->
+                  <!-- 原始圆心 (37.5, -37.5) → 缩放后 (6, -6) -->
+                  <!-- 彩虹色顺序：桃色→橙→黄→绿→青→蓝→紫→粉红 -->
+                  <circle cx="6" cy="-6" r="8.48" class="petal petal-1" fill="#ff8a80" fill-opacity="0.85" stroke="#ff8a80" stroke-width="1.2"/>
+                  <!-- 原始圆心 (0, -53.03) → 缩放后 (0, -8.48) -->
+                  <circle cx="0" cy="-8.48" r="8.48" class="petal petal-2" fill="#ff9800" fill-opacity="0.85" stroke="#ff9800" stroke-width="1.2"/>
+                  <!-- 原始圆心 (-37.5, -37.5) → 缩放后 (-6, -6) -->
+                  <circle cx="-6" cy="-6" r="8.48" class="petal petal-3" fill="#ffeb3b" fill-opacity="0.85" stroke="#ffeb3b" stroke-width="1.2"/>
+                  <!-- 原始圆心 (-53.03, 0) → 缩放后 (-8.48, 0) -->
+                  <circle cx="-8.48" cy="0" r="8.48" class="petal petal-4" fill="#4caf50" fill-opacity="0.85" stroke="#4caf50" stroke-width="1.2"/>
+                  <!-- 原始圆心 (-37.5, 37.5) → 缩放后 (-6, 6) -->
+                  <circle cx="-6" cy="6" r="8.48" class="petal petal-5" fill="#00bcd4" fill-opacity="0.85" stroke="#00bcd4" stroke-width="1.2"/>
+                  <!-- 原始圆心 (0, 53.03) → 缩放后 (0, 8.48) -->
+                  <circle cx="0" cy="8.48" r="8.48" class="petal petal-6" fill="#2196f3" fill-opacity="0.85" stroke="#2196f3" stroke-width="1.2"/>
+                  <!-- 原始圆心 (37.5, 37.5) → 缩放后 (6, 6) -->
+                  <circle cx="6" cy="6" r="8.48" class="petal petal-7" fill="#9c27b0" fill-opacity="0.85" stroke="#9c27b0" stroke-width="1.2"/>
+                  <!-- 原始圆心 (53.03, 0) → 缩放后 (8.48, 0) -->
+                  <circle cx="8.48" cy="0" r="8.48" class="petal petal-8" fill="#e91e63" fill-opacity="0.85" stroke="#e91e63" stroke-width="1.2"/>
+                </g>
+              </svg>
+            </div>
           </div>
         </div>
         <p class="name">{{ item.label }}</p>
@@ -55,7 +81,7 @@ import { useI18n } from '@btc/shared-core';
 import { useSettingsHandlers, useSettingsState } from '../../composables';
 import './styles/index.scss';
 
-type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
+type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress' | 'flower';
 
 const { t } = useI18n();
 const settingsState = useSettingsState();
@@ -79,6 +105,10 @@ const loadingStyleOptions = computed(() => [
   {
     value: 'progress' as LoadingStyle,
     label: t('theme.loadingStyles.progress'),
+  },
+  {
+    value: 'flower' as LoadingStyle,
+    label: t('theme.loadingStyles.flower'),
   },
 ]);
 

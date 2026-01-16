@@ -201,35 +201,47 @@ const refreshButtonConfig = computed<BtcTableButtonConfig>(() => ({
 </script>
 
 <style lang="scss" scoped>
+.page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
+.inventory-process__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  flex-shrink: 0;
 
-  &__toolbar-left {
+  &-left {
     display: flex;
     align-items: center;
   }
 
-  &__toolbar-right {
+  &-right {
     display: flex;
     gap: 10px;
     align-items: center;
   }
+}
 
-  &__grid {
-    flex: 1 1 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 10px;
-    min-height: 0;
-    align-content: start;
-    overflow: visible;
-  }
+.inventory-process__grid {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 10px;
+  min-height: 0;
+  align-content: start;
+  overflow: visible;
+  padding: 10px;
+}
 
-  &__empty {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.inventory-process__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {

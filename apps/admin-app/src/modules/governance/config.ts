@@ -5,7 +5,52 @@
 
 import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+
+// 参考 cool-admin-vue-7.x 的方式：延迟导入 service，避免初始化顺序问题
+// 使用函数延迟获取，确保在访问时才执行导入
+let _serviceCache: any = null;
+
+// 延迟获取 service 的函数，优先从全局获取
+function getService() {
+  // 如果已经缓存，直接返回
+  if (_serviceCache) {
+    return _serviceCache;
+  }
+
+  if (typeof window === 'undefined') {
+    _serviceCache = {} as any;
+    return _serviceCache;
+  }
+
+  // 优先从全局获取（由应用初始化时设置）
+  const win = window as any;
+  const globalService = win.__APP_EPS_SERVICE__ || win.__BTC_SERVICE__;
+
+  if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+    _serviceCache = globalService;
+    return _serviceCache;
+  }
+
+  // 如果全局服务不存在，尝试同步导入（仅在模块已加载时）
+  // 注意：这里不能使用 await，所以只能尝试同步访问
+  // 如果失败，返回空对象作为默认值（参考 cool-admin-vue-7.x 的 hmr.getData 方式）
+  if (!_serviceCache) {
+    try {
+      // 检查是否有缓存的模块引用
+      const cachedModule = (win as any).__EPS_MODULE_CACHE__;
+      if (cachedModule) {
+        _serviceCache = cachedModule.service || cachedModule.default || {};
+        return _serviceCache;
+      }
+    } catch (error) {
+      // 忽略错误
+    }
+  }
+
+  // 兜底：返回空对象作为默认值
+  _serviceCache = _serviceCache || {} as any;
+  return _serviceCache;
+}
 
 export default {
   // ModuleConfig 字段
@@ -182,25 +227,29 @@ export default {
     ] as FormItem[],
   },
 
-  service: {
-    dictInfo: service.admin?.dict?.dictInfo,
-    dictData: service.admin?.dict?.dictData,
-    resource: service.admin?.iam?.resource,
-    domain: service.admin?.iam?.domain,
-    processTemplate: service.admin?.iam?.processTemplate,
-    // BtcMasterTableGroup 需要的域服务（左侧服务）
-    domainService: {
-      list: (params?: any) => {
-        const finalParams = params || {};
-        return service.admin?.iam?.domain?.list(finalParams);
-      }
-    },
-    // BtcMasterTableGroup 需要的资源服务（左侧服务，用于 dictionary.fields）
-    resourceService: {
-      list: (params?: any) => {
-        const finalParams = params || {};
-        return service.admin?.iam?.resource?.list(finalParams);
-      }
-    },
+  // 服务配置（使用 getter 延迟访问，避免初始化顺序问题）
+  get service() {
+    const epsService = getService();
+    return {
+      dictInfo: epsService.admin?.dict?.dictInfo,
+      dictData: epsService.admin?.dict?.dictData,
+      resource: epsService.admin?.iam?.resource,
+      domain: epsService.admin?.iam?.domain,
+      processTemplate: epsService.admin?.iam?.processTemplate,
+      // BtcMasterTableGroup 需要的域服务（左侧服务）
+      domainService: {
+        list: (params?: any) => {
+          const finalParams = params || {};
+          return epsService.admin?.iam?.domain?.list(finalParams);
+        }
+      },
+      // BtcMasterTableGroup 需要的资源服务（左侧服务，用于 dictionary.fields）
+      resourceService: {
+        list: (params?: any) => {
+          const finalParams = params || {};
+          return epsService.admin?.iam?.resource?.list(finalParams);
+        }
+      },
+    };
   },
 } satisfies ModuleConfig;

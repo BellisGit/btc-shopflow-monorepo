@@ -14,7 +14,6 @@ const { t } = useI18n();
 </script>
 
 <style lang="scss" scoped>
-
-}
+// 样式内容
 </style>
 

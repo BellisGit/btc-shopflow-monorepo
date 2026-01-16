@@ -162,8 +162,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
 import { Field, Button, Popup, Icon, showToast } from 'vant';
 import BtcLoginHeader from '../components/login-header/index.vue';
 import BtcAgreementCheckbox from '../components/agreement-checkbox/index.vue';

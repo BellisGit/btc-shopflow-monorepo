@@ -1,4 +1,4 @@
-﻿---
+---
 title: BtcViewGroup 组件
 type: package
 project: components
@@ -185,22 +185,22 @@ userCrud.refresh({ deptId: item.id });
 
 <template #right>
 <BtcCrud ref="userCrud" :service="userService">
-<BtcRow>
+<BtcCrudRow>
 <BtcRefreshBtn />
 <BtcAddBtn />
 <BtcMultiDeleteBtn />
-<BtcFlex1 />
-<BtcSearchKey placeholder="搜索用户名" />
-</BtcRow>
+<BtcCrudFlex1 />
+<BtcCrudSearchKey placeholder="搜索用户名" />
+</BtcCrudRow>
 
-<BtcRow>
+<BtcCrudRow>
 <BtcTable :columns="userColumns" />
-</BtcRow>
+</BtcCrudRow>
 
-<BtcRow>
-<BtcFlex1 />
+<BtcCrudRow>
+<BtcCrudFlex1 />
 <BtcPagination />
-</BtcRow>
+</BtcCrudRow>
 
 <BtcUpsert :form-items="userFormItems" />
 </BtcCrud>

@@ -5,8 +5,21 @@
 
 import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
+
+// 延迟获取 service，避免在 EPS 服务初始化前访问导致循环依赖
+function getService() {
+  if (typeof window !== 'undefined') {
+    return (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const epsModule = require('@services/eps');
+    return epsModule.service || epsModule.default || {};
+  } catch {
+    return {};
+  }
+}
 
 export default {
   // ModuleConfig 字段
@@ -238,10 +251,20 @@ export default {
   },
 
   service: {
-    info: createCrudServiceFromEps(['logistics', 'warehouse', 'check'], service),
-    detail: createCrudServiceFromEps(['logistics', 'warehouse', 'diff'], service),
-    result: createCrudServiceFromEps(['logistics', 'base', 'check'], service),
-    checkList: service.logistics?.warehouse?.check,
-    storageLocation: createCrudServiceFromEps(['logistics', 'base', 'position'], service),
+    get info() {
+      return createCrudServiceFromEps(['logistics', 'warehouse', 'check'], getService());
+    },
+    get detail() {
+      return createCrudServiceFromEps(['logistics', 'warehouse', 'diff'], getService());
+    },
+    get result() {
+      return createCrudServiceFromEps(['logistics', 'base', 'check'], getService());
+    },
+    get checkList() {
+      return getService()?.logistics?.warehouse?.check;
+    },
+    get storageLocation() {
+      return createCrudServiceFromEps(['logistics', 'base', 'position'], getService());
+    },
   },
 } satisfies ModuleConfig;

@@ -2,7 +2,7 @@
  * 退出登录路由守卫工厂
  * 检测 logout=1 参数或 sessionStorage 标记，调用 logoutCore 执行清理
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import { logoutCore, type LogoutCoreOptions } from '@btc/shared-core';
@@ -99,7 +99,7 @@ export function createLogoutGuard(config: LogoutGuardConfig) {
             isRemoteLogout: true, // 标记为远程退出，不调用 API
           });
         } catch (error) {
-          logger.warn('[logoutGuard] Failed to cleanup on logout timestamp:', error);
+          console.warn('[logoutGuard] Failed to cleanup on logout timestamp:', error);
         }
       }
 

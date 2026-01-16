@@ -18,7 +18,7 @@ import {
   watchEffect,
   watch,
 } from 'vue';
-import { useCrud, logger } from '@btc/shared-core';
+import { useCrud } from '@btc/shared-core';
 import { BtcMessage } from '../../components/feedback/btc-message';
 import {
   crudLayoutKey,
@@ -75,13 +75,17 @@ const hasPagination = ref(false);
 const crudRef = ref<HTMLElement>();
 
 // 创建 CRUD 实例
+// 注意：先展开 props.options，再设置默认的 onSuccess，这样 props.options 中的 onSuccess 可以覆盖默认值
 const crudOptions: any = {
   service: props.service,
-  onSuccess: (message: string) => {
-    BtcMessage.success(message);
-  },
   ...props.options,
 };
+// 如果 props.options 中没有 onSuccess，使用默认的
+if (!crudOptions.onSuccess) {
+  crudOptions.onSuccess = (message: string) => {
+    BtcMessage.success(message);
+  };
+}
 if (props.onBeforeRefresh !== undefined) {
   crudOptions.onBeforeRefresh = props.onBeforeRefresh;
 }
@@ -90,7 +94,7 @@ const crud = useCrud(crudOptions);
 // 关键：确保 crud 实例有效
 if (!crud) {
   const error = new Error('[BtcCrud] useCrud returned undefined or null');
-  logger.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
     service: props.service,
     options: props.options,
     timestamp: new Date().toISOString(),
@@ -101,7 +105,7 @@ if (!crud) {
 // 确保 crud.handleAdd 是函数
 if (typeof crud.handleAdd !== 'function') {
   const error = new Error('[BtcCrud] crud.handleAdd is not a function');
-  logger.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
     crud,
     handleAdd: crud.handleAdd,
     crudKeys: Object.keys(crud),

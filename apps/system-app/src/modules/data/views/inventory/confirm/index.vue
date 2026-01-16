@@ -23,8 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcMessage, BtcConfirm } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -47,7 +46,7 @@ const checkService = {
   list: async (params?: any) => {
     const checkListService = service.logistics?.warehouse?.check?.list;
     if (!checkListService) {
-      logger.warn('[InventoryConfirm] 盘点列表接口不存在');
+      console.warn('[InventoryConfirm] 盘点列表接口不存在');
       return {
         list: [],
         pagination: {

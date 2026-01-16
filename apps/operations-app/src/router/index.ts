@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import {
   createRouter,
   createWebHistory,
@@ -24,7 +24,7 @@ async function importSharedCore() {
  */
 function getOperationsRoutes() {
   let pageRoutes: any[] = [];
-  
+
   try {
     const autoRoutes = scanRoutesFromConfigFiles('/src/modules/*/config.ts', {
       enableAutoDiscovery: true,
@@ -33,14 +33,8 @@ function getOperationsRoutes() {
     });
 
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
-
-    if (import.meta.env.DEV) {
-      logger.info(
-        `[OperationsRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
-    }
   } catch (error) {
-    logger.error('[OperationsRouter] Failed to scan routes from modules:', error);
+    console.error('[OperationsRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 
@@ -88,7 +82,7 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
 
       if (isProductionSubdomain && hostname === 'operations.bellis.com.cn' && to.path.startsWith('/operations/')) {
         const normalized = to.path.substring('/operations'.length) || '/';
-        logger.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        console.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
         next({
           path: normalized,
           query: to.query,
@@ -113,8 +107,8 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
           return false;
         }
         const style = window.getComputedStyle(appLoadingEl);
-        return style.display !== 'none' && 
-               style.visibility !== 'hidden' && 
+        return style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
                style.opacity !== '0' &&
                parseFloat(style.opacity) > 0;
       } catch (e) {
@@ -146,12 +140,22 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading
     try {
       const sharedCore = await importSharedCore();
       if (sharedCore?.routeLoadingService) {
         sharedCore.routeLoadingService.hide();
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
+    // 关键：清理 ECharts 实例，防止内存泄漏
+    try {
+      const { cleanupAllECharts } = await import('@btc/shared-components');
+      if (cleanupAllECharts) {
+        cleanupAllECharts();
       }
     } catch (error) {
       // 静默失败
@@ -168,7 +172,7 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading（如果正在显示）
     try {
       const sharedCore = await importSharedCore();
@@ -189,7 +193,7 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
         loadingEl.style.setProperty('opacity', '0', 'important');
         loadingEl.style.setProperty('pointer-events', 'none', 'important');
         loadingEl.classList.add('is-hide');
-        
+
         // 延迟移除 DOM 元素（不影响显示，只是清理）
         setTimeout(() => {
           try {
@@ -198,14 +202,14 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
             // 忽略移除错误
           }
         }, 350);
-        
+
         loadingClosed = true;
       }
     }
   });
 
   router.onError((error: Error) => {
-    logger.warn('[operations-app] Router error:', error);
+    console.warn('[operations-app] Router error:', error);
   });
 
   return router;

@@ -113,8 +113,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
 import mitt from 'mitt';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@/composables/useBrowser';

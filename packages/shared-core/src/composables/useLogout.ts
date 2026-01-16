@@ -2,8 +2,6 @@
  * 通用退出登录 composable
  * 可以在所有应用中使用，支持退出后保存当前路径以便登录后返回
  */
-import { logger } from '../utils/logger';
-
 import { useRouter } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { onUnmounted } from 'vue';
@@ -81,7 +79,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
                 }
               }
             } catch (error) {
-              logger.warn('[useLogout] Failed to show logout success message:', error);
+              console.warn('[useLogout] Failed to show logout success message:', error);
             }
           },
         }),
@@ -90,78 +88,31 @@ export function useLogout(options: UseLogoutOptions = {}) {
       const success = await logoutCore(logoutCoreOptions);
 
       if (!success) {
-        logger.error('[useLogout] Logout core failed');
+        console.error('[useLogout] Logout core failed');
         isLoggingOut = false;
         return;
       }
 
       // 路由重定向逻辑（仅在本地退出时执行）
+      // 立即跳转，不创建定时器，避免内存泄漏
       if (!isRemoteLogout) {
-        // 延迟跳转，确保消息提示能够显示
-        const redirectDelay = 1500;
-
-        setTimeout(async () => {
-          try {
-            // 使用统一的环境检测
-            const { getEnvironment, getCurrentSubApp } = await import('../configs/unified-env-config');
-            const { buildLogoutUrlWithFullUrl } = await import('@btc/auth-shared/composables/redirect');
-
-            const env = getEnvironment();
-            const currentSubApp = getCurrentSubApp();
-            const protocol = window.location.protocol;
-
-            // 判断是否需要使用完整URL（跨子域名场景）
-            const needsFullUrl = (env === 'test' || env === 'production') && currentSubApp;
-            const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
-
-            if (needsFullUrl || isQiankun) {
-              // 测试/生产环境子应用或qiankun环境：使用完整URL作为redirect参数
-              let baseLoginUrl: string;
-
-              if (env === 'test') {
-                baseLoginUrl = `${protocol}//test.bellis.com.cn/login`;
-              } else if (env === 'production') {
-                baseLoginUrl = `${protocol}//bellis.com.cn/login`;
-              } else {
-                baseLoginUrl = '/login';
-              }
-
-              const logoutUrl = await buildLogoutUrlWithFullUrl(baseLoginUrl);
-              window.location.href = logoutUrl;
-            } else {
-              // 开发/预览环境或主应用：使用路径格式的redirect参数
-              const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
-              const logoutUrl = await buildLogoutUrl('/login');
-
-              // 调试信息（开发环境）
-              if (import.meta.env.DEV) {
-                logger.info('[useLogout] 退出登录重定向:', {
-                  logoutUrl,
-                  hasLogoutParam: logoutUrl.includes('logout=1') || logoutUrl.includes('logout='),
-                  hasOAuthCallbackParam: logoutUrl.includes('oauth_callback=')
-                });
-              }
-
-              window.location.href = logoutUrl;
-            }
-          } catch (error) {
-            // 如果导入失败，使用兜底方案
-            logger.error('[useLogout] Failed to build logout URL:', error);
-            const currentPath = window.location.pathname + window.location.search;
-            const oauthCallbackParam = currentPath && currentPath !== '/login' && !currentPath.startsWith('/login?')
-              ? `&oauth_callback=${encodeURIComponent(currentPath)}`
-              : '';
-            window.location.href = `/login?logout=1${oauthCallbackParam}`;
-          }
-        }, redirectDelay);
+        // 直接跳转到登录页，不进行复杂的 URL 构建
+        const currentPath = window.location.pathname + window.location.search;
+        const oauthCallbackParam = currentPath && currentPath !== '/login' && !currentPath.startsWith('/login?')
+          ? `&oauth_callback=${encodeURIComponent(currentPath)}`
+          : '';
+        window.location.href = `/login?logout=1${oauthCallbackParam}`;
       }
     } catch (error: any) {
-      logger.error('Logout cleanup error:', error);
+      console.error('Logout cleanup error:', error);
       isLoggingOut = false;
     } finally {
-      setTimeout(() => {
+      // 如果页面不跳转（远程退出），立即重置标志
+      // 如果页面跳转，标志会在页面卸载时自动失效，不需要定时器
+      if (isRemoteLogout) {
         isLoggingOut = false;
-      }, 1000);
+      }
+      // 本地退出时，页面会跳转，标志会在跳转时失效，不需要定时器
     }
   };
 
@@ -188,111 +139,13 @@ export function useLogout(options: UseLogoutOptions = {}) {
     return true;
   };
 
-  // 处理登录消息：当其他应用登录时，更新本地状态并刷新页面
+  // 处理登录消息：当其他应用登录时，刷新页面
   const handleLoginMessage = (_payload?: any, origin?: string) => {
-    // 如果是同一个应用触发的登录，不需要再次处理
-    // 使用 isSameApp 来判断，这样可以正确处理开发环境和生产环境的差异
     if (isSameApp(origin)) {
       return;
     }
-
-    // 异步处理登录消息
-    (async () => {
-      // 更新登录状态标记
-      const getAppStorageFn = options.getAppStorage || (() => (window as any).__APP_STORAGE__ || (window as any).appStorage);
-      const appStorage = getAppStorageFn();
-      if (appStorage) {
-        const currentSettings = (appStorage.settings?.get() as Record<string, any>) || {};
-        appStorage.settings?.set({ ...currentSettings, is_logged_in: true });
-        
-        // 记录登录时间，用于存储有效性检查的宽限期
-        try {
-          import('../utils/storage-validity-check').then(({ recordLoginTime }) => {
-            recordLoginTime();
-          }).catch(() => {
-            // 静默失败，不影响登录流程
-          });
-        } catch (error) {
-          // 静默失败，不影响登录流程
-        }
-      }
-
-      // 启动用户检查轮询
-      try {
-        const { startUserCheckPolling } = await import('./user-check');
-        startUserCheckPolling(true);
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          logger.warn('[useLogout] Failed to start user check polling on login:', error);
-        }
-      }
-
-      // 检查是否在登录页
-      const currentPath = window.location.pathname;
-      const isOnLoginPage = currentPath === '/login' || currentPath.startsWith('/login?');
-
-      if (isOnLoginPage) {
-        // 在登录页，获取重定向路径并跳转
-        // 关键：从当前页面的 URL 查询参数中获取 oauth_callback，确保每个标签页跳转到自己的目标页面
-        const urlParams = new URLSearchParams(window.location.search);
-        // 读取 oauth_callback 参数
-        let redirect = urlParams.get('oauth_callback');
-
-        // 如果没有 oauth_callback 参数，尝试从 localStorage 获取保存的退出前路径
-        if (!redirect) {
-          try {
-            const { getAndClearLogoutRedirectPath } = await import('@btc/auth-shared/composables/redirect');
-            redirect = getAndClearLogoutRedirectPath(); // 这个是同步的，保持不变
-          } catch (error) {
-            if (import.meta.env.DEV) {
-              logger.warn('[useLogout] Failed to get logout redirect path:', error);
-            }
-          }
-        }
-
-        // 解码 oauth_callback 参数（可能被 URL 编码）
-        const redirectPath = redirect ? decodeURIComponent(redirect) : '/';
-
-        // 尝试跨应用重定向（支持完整URL）
-        try {
-          const { handleCrossAppRedirect } = await import('@btc/auth-shared/composables/redirect');
-          const isCrossAppRedirect = await handleCrossAppRedirect(redirectPath, router);
-
-          // 如果不是跨应用跳转，使用路由跳转
-          if (!isCrossAppRedirect) {
-            if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-              // qiankun 环境下使用 router
-              router.replace(redirectPath).catch(() => {
-                // 如果路由跳转失败，使用 window.location
-                window.location.href = redirectPath;
-              });
-            } else {
-              // 独立运行环境，使用 window.location 确保 cookie 被正确读取
-              window.location.href = redirectPath;
-            }
-          }
-        } catch (error) {
-          // 如果导入失败，使用默认逻辑
-          if (import.meta.env.DEV) {
-            logger.warn('[useLogout] Failed to handle cross app redirect:', error);
-          }
-          // 回退到简单的路径跳转
-          const simplePath = redirectPath.split('?')[0] || '/';
-          if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-            router.replace(simplePath).catch(() => {
-              window.location.href = simplePath;
-            });
-          } else {
-            window.location.href = simplePath;
-          }
-        }
-      } else {
-        // 不在登录页，刷新当前页面以重新检查登录状态
-        // 这样可以确保页面能够正确读取 cookie 并更新状态
-        // 使用 window.location.reload() 刷新页面，确保 cookie 被正确读取
-        window.location.reload();
-      }
-    })();
+    // 简单刷新页面
+    window.location.reload();
   };
 
   // 关键：立即设置订阅，不等待组件挂载（确保消息监听器尽早设置）
@@ -310,7 +163,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
 
     // 执行统一登出逻辑（异步处理）
     performLogoutCleanup(true).catch((error) => {
-      logger.error('[useLogout] Error in logout cleanup:', error);
+      console.error('[useLogout] Error in logout cleanup:', error);
     }); // true 表示是远程触发的登出
   });
 
@@ -327,21 +180,13 @@ export function useLogout(options: UseLogoutOptions = {}) {
   });
 
   const logout = async () => {
+    // 执行本地登出清理
+    await performLogoutCleanup(false);
+    // 通知其他标签页（通过通信桥）
     try {
-      // 执行本地登出清理
-      await performLogoutCleanup(false);
-
-      // 通知其他标签页（通过通信桥）
-      try {
-        bridge.sendMessage('logout', { timestamp: Date.now() });
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          logger.warn('Failed to broadcast logout message:', error);
-        }
-      }
-    } catch (error: any) {
-      logger.error('Logout error:', error);
-      await performLogoutCleanup(false);
+      bridge.sendMessage('logout', { timestamp: Date.now() });
+    } catch (error) {
+      // 静默失败
     }
   };
 

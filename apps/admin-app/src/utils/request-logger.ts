@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 // 注意：不在这里导入 createHttpRetry 和 RETRY_CONFIGS，改为动态导入
 // 避免在生产环境构建时 Vue 的 ref 还未初始化就被访问
 
@@ -74,7 +74,7 @@ class RequestLogQueue {
 
     // 检查队列长度，防止内存溢出
     if (this.queue.length >= this.MAX_QUEUE_SIZE) {
-      logger.warn(`Request log queue is full (${this.MAX_QUEUE_SIZE}), dropping oldest log`);
+      console.warn(`Request log queue is full (${this.MAX_QUEUE_SIZE}), dropping oldest log`);
       this.queue.shift(); // 移除最旧的日志
     }
 
@@ -91,7 +91,7 @@ class RequestLogQueue {
         // 转换为 JSON 字符串
         paramsString = JSON.stringify(normalizedParams);
       } catch (error) {
-        logger.warn('Failed to serialize params, using empty object:', error);
+        console.warn('Failed to serialize params, using empty object:', error);
         paramsString = '{}';
       }
     }
@@ -198,7 +198,7 @@ class RequestLogQueue {
         this.tryFlush();
       }
     } catch (error) {
-        logger.error('Failed to send request logs in batch (retried):', error);
+        console.error('Failed to send request logs in batch (retried):', error);
 
       // 重试机制已经处理了重试，这里只需要暂停发送
       this.isPaused = true;
@@ -208,7 +208,7 @@ class RequestLogQueue {
       setTimeout(() => {
         this.isServiceAvailable = true;
         this.isPaused = false;
-        logger.info('Request log service re-enabled, continuing to send queued data');
+        console.info('Request log service re-enabled, continuing to send queued data');
         if (this.queue.length > 0) {
           this.tryFlush();
         }

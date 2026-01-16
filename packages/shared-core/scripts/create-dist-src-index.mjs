@@ -5,8 +5,6 @@
  * 由于 vite-plugin-dts 已经生成了 dist/src 目录结构，我们只需要创建一个 index.d.ts
  * 来重新导出所有内容，路径保持相对路径 './xxx' 即可
  */
-import { logger } from '@build-utils/logger';
-
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -30,7 +28,7 @@ if (existsSync(srcIndexDts)) {
   // 路径保持不变，因为 dist/src 目录下的文件结构和 src 目录下的结构一致
   // 所有相对路径 './xxx' 都指向 dist/src/xxx，这是正确的
   writeFileSync(distSrcIndexDts, content, 'utf-8');
-  logger.info('✓ Created dist/src/index.d.ts');
+  console.log('✓ Created dist/src/index.d.ts');
 } else {
   // 如果 src/index.d.ts 不存在，创建一个基本的重新导出文件
   const indexContent = `// Auto-generated index.d.ts for dist/src path support
@@ -44,6 +42,6 @@ export * from './utils';
 `;
 
   writeFileSync(distSrcIndexDts, indexContent, 'utf-8');
-  logger.info('✓ Created dist/src/index.d.ts (fallback)');
+  logger.success('✓ Created dist/src/index.d.ts (fallback)');
 }
 

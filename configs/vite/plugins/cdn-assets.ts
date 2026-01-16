@@ -3,7 +3,14 @@
  * 在构建时修改 HTML 中的资源 URL，将静态资源路径转换为 CDN URL
  * 支持当前应用资源 (/assets/) 和布局应用资源 (/assets/layout/)
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[cdn-assets]', ...args),
+  error: (...args: any[]) => console.error('[cdn-assets]', ...args),
+  info: (...args: any[]) => console.info('[cdn-assets]', ...args),
+  debug: (...args: any[]) => console.debug('[cdn-assets]', ...args),
+};
 
 import type { Plugin } from 'vite';
 
@@ -43,9 +50,9 @@ export function cdnAssetsPlugin(options: CdnAssetsPluginOptions): Plugin {
     apply: 'build',
     buildStart() {
       if (enabled) {
-        logger.info(`[cdn-assets] CDN 加速已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
+        console.info(`[cdn-assets] CDN 加速已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
       } else {
-        logger.info(`[cdn-assets] CDN 加速已禁用`);
+        console.info(`[cdn-assets] CDN 加速已禁用`);
       }
     },
     transformIndexHtml: {
@@ -325,7 +332,7 @@ export function cdnAssetsPlugin(options: CdnAssetsPluginOptions): Plugin {
         }
 
         if (modified) {
-          logger.info(`[cdn-assets] 已为 index.html 中的资源引用转换为 CDN URL`);
+          console.info(`[cdn-assets] 已为 index.html 中的资源引用转换为 CDN URL`);
         }
         
         return newHtml;

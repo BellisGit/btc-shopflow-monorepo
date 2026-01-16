@@ -78,6 +78,41 @@ BTC ShopFlow 是一个基于 pnpm + Turbo 的 Monorepo 项目，采用微前端�
   cat apps/admin-app/package.json
   pnpm --filter=@btc/admin-app list --depth=1
 
+## 快速启动和构建
+
+### 启动应用
+启动单个应用:
+  ```bash
+  pnpm dev:app --app=admin-app
+  pnpm dev:app --app=system-app
+  pnpm dev:app --app=logistics-app
+  ```
+
+启动多个应用（推荐）:
+  ```bash
+  pnpm dev:all              # 后台运行
+  pnpm dev:all:window       # 新窗口（推荐）
+  ```
+
+**详细说明**: 使用 `dev-workflow` 技能查看完整的启动指南和所有应用端口配置
+
+### 构建应用
+构建单个应用:
+  ```bash
+  pnpm build:app --app=admin-app
+  pnpm build:app --app=system-app
+  ```
+
+构建所有应用:
+  ```bash
+  pnpm build:all            # 基础构建
+  pnpm build-cdn:all        # CDN构建
+  pnpm build-dist:all       # 集中构建
+  pnpm build-dist-cdn:all   # 完整构建（生产）
+  ```
+
+**详细说明**: 使用 `build-guide` 技能查看完整的构建指南和4种构建模式
+
 ## 快速定位
 
 应用入口: apps/{app-name}/src/main.ts
@@ -87,13 +122,30 @@ BTC ShopFlow 是一个基于 pnpm + Turbo 的 Monorepo 项目，采用微前端�
 共享组件: packages/shared-components/src/components/
 国际化: apps/{app-name}/src/locales/{lang}.json
 
-## 应用端口
+## 应用端口和快速访问
 
-main: 5100, layout: 5101, system: 5102, admin: 5103
-logistics: 5104, quality: 5105, production: 5106
-engineering: 5107, finance: 5108, operations: 5109
-dashboard: 5110, personnel: 5111, mobile: 5112
-docs: 5113, home: 5114
+| 应用 | 端口 | 启动命令 | 访问地址 |
+|------|------|----------|----------|
+| main-app | 5100 | `pnpm dev:app --app=main-app` | http://localhost:5100 |
+| layout-app | 5101 | `pnpm dev:app --app=layout-app` | http://localhost:5101 |
+| system-app | 5102 | `pnpm dev:app --app=system-app` | http://localhost:5100/system |
+| admin-app | 5103 | `pnpm dev:app --app=admin-app` | http://localhost:5100/admin |
+| logistics-app | 5104 | `pnpm dev:app --app=logistics-app` | http://localhost:5100/logistics |
+| quality-app | 5105 | `pnpm dev:app --app=quality-app` | http://localhost:5100/quality |
+| production-app | 5106 | `pnpm dev:app --app=production-app` | http://localhost:5100/production |
+| engineering-app | 5107 | `pnpm dev:app --app=engineering-app` | http://localhost:5100/engineering |
+| finance-app | 5108 | `pnpm dev:app --app=finance-app` | http://localhost:5100/finance |
+| operations-app | 5109 | `pnpm dev:app --app=operations-app` | http://localhost:5100/operations |
+| dashboard-app | 5110 | `pnpm dev:app --app=dashboard-app` | http://localhost:5100/dashboard |
+| personnel-app | 5111 | `pnpm dev:app --app=personnel-app` | http://localhost:5100/personnel |
+| mobile-app | 5112 | `pnpm dev:app --app=mobile-app` | http://localhost:5112 |
+| docs-app | 5113 | `pnpm dev:app --app=docs-app` | http://localhost:5113 |
+| home-app | 5114 | `pnpm dev:app --app=home-app` | http://localhost:5114 |
+
+**提示**: 
+- 主应用入口: http://localhost:5100（通过主应用访问所有子应用）
+- 子应用也可直接通过端口访问: http://localhost:{port}
+- 使用 `dev-workflow` 技能查看详细的启动指南
 
 ## 技术栈
 

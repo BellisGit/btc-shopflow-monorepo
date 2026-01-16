@@ -26,7 +26,8 @@
           :config="{
             icon: 'home',
             tooltip: t('common.tooltip.home'),
-            onClick: toHome
+            onClick: toHome,
+            class: isOnHomePage ? 'is-active' : undefined
           }"
         />
       </li>
@@ -98,7 +99,7 @@ defineOptions({
 
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n, setGlobalState, logger } from '@btc/shared-core';
+import { useI18n, setGlobalState } from '@btc/shared-core';
 import { BtcConfirm } from '@btc/shared-components';
 import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 // BtcMessage 未使用
@@ -162,7 +163,7 @@ try {
   });
 } catch (error) {
   // 如果 useSettingsState() 初始化失败，使用默认值（已经设置）
-  logger.warn('[Process] useSettingsState 初始化失败，使用默认值', error);
+  console.warn('[Process] useSettingsState 初始化失败，使用默认值', error);
 }
 
 // 标签页样式类
@@ -257,9 +258,15 @@ const filteredTabs = computed(() => {
 
   // 优先级 1: 使用全局状态的 tabbarList
   if (globalTabbarList.value.length > 0) {
-    return globalTabbarList.value
-      .filter((tab: any) => tab.appName === currentApp)
-      .map(convertGlobalTabToProcessItem);
+    // 过滤当前应用的标签，同时兼容 appName 为 'main' 或 'main-app' 的情况
+    const filtered = globalTabbarList.value.filter((tab: any) => {
+      // 主应用的 appName 可能是 'main' 或 'main-app'，需要兼容处理
+      if (currentApp === 'main') {
+        return tab.appName === 'main' || tab.appName === 'main-app';
+      }
+      return tab.appName === currentApp;
+    });
+    return filtered.map(convertGlobalTabToProcessItem);
   }
 
   // 优先级 2: 兼容 processStore（过渡期）
@@ -532,6 +539,33 @@ function toRefresh() {
     emitter.emit('view.refresh');
   }
 }
+
+// 判断当前是否在首页
+const isOnHomePage = computed(() => {
+  // 检查路由 matched 中是否有 isHome 标记（因为 isHome 可能在子路由的 meta 中）
+  const hasIsHome = route.matched.some(record => record.meta?.isHome === true);
+  if (hasIsHome) {
+    return true;
+  }
+  
+  // 检查当前路径是否是应用的首页路径
+  const currentApp = getCurrentAppFromPath(route.path);
+  const homePath = getAppHomePath(currentApp);
+  const normalizedCurrentPath = route.path.replace(/\/+$/, '') || '/';
+  const normalizedHomePath = homePath.replace(/\/+$/, '') || '/';
+  
+  // 对于主应用，还需要检查 /overview 路径（兼容旧路径）
+  if (currentApp === 'main') {
+    const isMainHome = normalizedCurrentPath === '/workbench/overview' || 
+                       normalizedCurrentPath === '/overview' ||
+                       normalizedCurrentPath === normalizedHomePath;
+    if (isMainHome) {
+      return true;
+    }
+  }
+  
+  return normalizedCurrentPath === normalizedHomePath;
+});
 
 // 回到当前应用首页（使用全局配置，包含所有子应用）
 function toHome() {

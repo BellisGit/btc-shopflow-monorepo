@@ -165,7 +165,7 @@ import { Message, OfficeBuilding, Document, User, Phone, Lock } from '@element-p
 import { BtcMessage } from '@btc/shared-components';
 import BtcStepsForm from '/@/modules/base/components/btc/btc-steps-form/index.vue';
 import { useInertRegistration } from '../../composables/useInertRegistration';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -261,7 +261,7 @@ const adminFormRules = ref({
 
 // 处理步骤变化
 const handleStepChange = (step: number) => {
-  logger.info('步骤变化:', step);
+  console.info('步骤变化:', step);
 };
 
 // 处理下一步
@@ -301,7 +301,7 @@ const handleFinish = () => {
       admin: adminFormData.value
     };
 
-    logger.info('UK Head 注册数据:', registrationData);
+    console.info('UK Head 注册数据:', registrationData);
     BtcMessage.success('英国总部注册成功！');
 
     // 调用父组件的完成处理

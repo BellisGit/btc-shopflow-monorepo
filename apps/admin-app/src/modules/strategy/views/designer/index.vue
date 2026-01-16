@@ -207,7 +207,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { useSelection } from './composables/useSelection';
 import { BtcGridGroup } from '@btc/shared-components';
 import { useComponentLibrary } from './composables/useComponentLibrary';
@@ -584,7 +584,7 @@ const handleCanvasDrop = async (event: DragEvent) => {
       recordHistory();
       saveNow();
     } catch (error) {
-      logger.error('Failed to parse component data:', error);
+      console.error('Failed to parse component data:', error);
     }
   }
 };

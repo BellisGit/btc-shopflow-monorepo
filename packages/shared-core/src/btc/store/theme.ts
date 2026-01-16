@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger';
+;
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
@@ -107,13 +107,13 @@ export const useThemeStore = defineStore('theme', () => {
    * 参考 art-design-pro：使用 setAttribute 直接设置 html class，确保样式立即生效
    */
   function toggleDark(event?: MouseEvent) {
-    logger.info('[ThemeStore] toggleDark 被调用', {
+    console.info('[ThemeStore] toggleDark 被调用', {
       currentIsDark: isDark.value,
       hasEvent: !!event,
       timestamp: new Date().toISOString()
     });
     const newDarkValue = !isDark.value;
-    logger.info('[ThemeStore] 计算新值', {
+    console.info('[ThemeStore] 计算新值', {
       newDarkValue,
       currentTheme: currentTheme.value
     });
@@ -121,7 +121,7 @@ export const useThemeStore = defineStore('theme', () => {
     // 如果浏览器支持 View Transition API，使用动画
     if (event && (document as any).startViewTransition) {
       const transition = (document as any).startViewTransition(() => {
-        logger.info('[ThemeStore] ViewTransition 动画开始', { newDarkValue });
+        console.info('[ThemeStore] ViewTransition 动画开始', { newDarkValue });
         isDark.value = newDarkValue;  // useDark() 会自动保存到 localStorage
 
         // 参考 art-design-pro：直接设置 html 元素的 class 属性
@@ -129,18 +129,18 @@ export const useThemeStore = defineStore('theme', () => {
         const htmlEl = document.getElementsByTagName('html')[0];
         if (!htmlEl) return;
         const className = newDarkValue ? 'dark' : '';
-        logger.info('[ThemeStore] 设置 html class (动画模式)', {
+        console.info('[ThemeStore] 设置 html class (动画模式)', {
           className,
           beforeClass: htmlEl.className
         });
         htmlEl.setAttribute('class', className);
-        logger.info('[ThemeStore] html class 设置后 (动画模式)', {
+        console.info('[ThemeStore] html class 设置后 (动画模式)', {
           afterClass: htmlEl.className,
           hasDark: htmlEl.classList.contains('dark')
         });
 
         // 先更新主题颜色 CSS 变量
-        logger.info('[ThemeStore] 更新主题颜色 (动画模式)', {
+        console.info('[ThemeStore] 更新主题颜色 (动画模式)', {
           color: currentTheme.value.color,
           isDark: isDark.value
         });
@@ -177,7 +177,7 @@ export const useThemeStore = defineStore('theme', () => {
 
             const menuColorInfo = getMenuTextColor();
 
-            logger.info('[ThemeStore] nextTick 回调 (动画模式)', {
+            console.info('[ThemeStore] nextTick 回调 (动画模式)', {
               isDark: isDark.value,
               htmlHasDark: htmlEl.classList.contains('dark'),
               menuTextColor: menuColorInfo
@@ -219,7 +219,7 @@ export const useThemeStore = defineStore('theme', () => {
       });
     } else {
       // 不支持动画，直接切换
-      logger.info('[ThemeStore] 无动画模式，直接切换');
+      console.info('[ThemeStore] 无动画模式，直接切换');
       isDark.value = newDarkValue;  // useDark() 会自动保存到 localStorage
 
       // 参考 art-design-pro：直接设置 html 元素的 class 属性
@@ -227,18 +227,18 @@ export const useThemeStore = defineStore('theme', () => {
       const htmlEl = document.getElementsByTagName('html')[0];
       if (!htmlEl) return;
       const className = newDarkValue ? 'dark' : '';
-      logger.info('[ThemeStore] 设置 html class (无动画模式)', {
+      console.info('[ThemeStore] 设置 html class (无动画模式)', {
         className,
         beforeClass: htmlEl.className
       });
       htmlEl.setAttribute('class', className);
-      logger.info('[ThemeStore] html class 设置后 (无动画模式)', {
+      console.info('[ThemeStore] html class 设置后 (无动画模式)', {
         afterClass: htmlEl.className,
         hasDark: htmlEl.classList.contains('dark')
       });
 
       // 先更新主题颜色 CSS 变量
-      logger.info('[ThemeStore] 更新主题颜色 (无动画模式)', {
+      console.info('[ThemeStore] 更新主题颜色 (无动画模式)', {
         color: currentTheme.value.color,
         isDark: isDark.value
       });
@@ -274,7 +274,7 @@ export const useThemeStore = defineStore('theme', () => {
 
         const menuColorInfo = getMenuTextColor();
 
-        logger.info('[ThemeStore] nextTick 回调 (无动画模式)', {
+        console.info('[ThemeStore] nextTick 回调 (无动画模式)', {
           isDark: isDark.value,
           htmlHasDark: htmlEl.classList.contains('dark'),
           menuTextColor: menuColorInfo
@@ -296,7 +296,7 @@ export const useThemeStore = defineStore('theme', () => {
         AUTO: 'auto',
       };
       const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
-      logger.info('[ThemeStore] 触发 theme-toggle 事件', {
+      console.info('[ThemeStore] 触发 theme-toggle 事件', {
         newTheme,
         isDark: newDarkValue
       });
@@ -304,7 +304,7 @@ export const useThemeStore = defineStore('theme', () => {
         detail: { theme: newTheme, isDark: newDarkValue }
       }));
     } catch (e) {
-      logger.error('[ThemeStore] 触发 theme-toggle 事件失败', e);
+      console.error('[ThemeStore] 触发 theme-toggle 事件失败', e);
     }
 
     // 获取菜单文本颜色信息
@@ -329,7 +329,7 @@ export const useThemeStore = defineStore('theme', () => {
 
     const finalMenuColorInfo = getMenuTextColor();
 
-    logger.info('[ThemeStore] toggleDark 完成', {
+    console.info('[ThemeStore] toggleDark 完成', {
       finalIsDark: isDark.value,
       htmlHasDark: document.documentElement.classList.contains('dark'),
       finalMenuTextColor: finalMenuColorInfo,

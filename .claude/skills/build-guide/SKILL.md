@@ -36,6 +36,126 @@ description: BTC ShopFlow 构建指南，包括4种构建模式、单应用/全�
   产物: dist-cdn/{app}/
   特点: 生产最佳，CDN加速
 
+## 应用构建命令快速参考
+
+### 核心应用
+- **main-app** - 主应用
+  ```bash
+  pnpm build:app --app=main-app
+  pnpm build-cdn:main
+  pnpm build-dist:main
+  pnpm build-dist-cdn:main
+  ```
+
+- **layout-app** - 布局应用
+  ```bash
+  pnpm build:app --app=layout-app
+  pnpm build-cdn:layout
+  pnpm build-dist:layout
+  pnpm build-dist-cdn:layout
+  ```
+
+### 业务应用
+- **system-app** - 系统应用
+  ```bash
+  pnpm build:app --app=system-app
+  pnpm build-cdn:system
+  pnpm build-dist:system
+  pnpm build-dist-cdn:system
+  ```
+
+- **admin-app** - 管理应用
+  ```bash
+  pnpm build:app --app=admin-app
+  pnpm build-cdn:admin
+  pnpm build-dist:admin
+  pnpm build-dist-cdn:admin
+  ```
+
+- **logistics-app** - 物流应用
+  ```bash
+  pnpm build:app --app=logistics-app
+  pnpm build-cdn:logistics
+  pnpm build-dist:logistics
+  pnpm build-dist-cdn:logistics
+  ```
+
+- **quality-app** - 品质应用
+  ```bash
+  pnpm build:app --app=quality-app
+  pnpm build-cdn:quality
+  pnpm build-dist:quality
+  pnpm build-dist-cdn:quality
+  ```
+
+- **production-app** - 生产应用
+  ```bash
+  pnpm build:app --app=production-app
+  pnpm build-cdn:production
+  pnpm build-dist:production
+  pnpm build-dist-cdn:production
+  ```
+
+- **engineering-app** - 工程应用
+  ```bash
+  pnpm build:app --app=engineering-app
+  pnpm build-cdn:engineering
+  pnpm build-dist:engineering
+  pnpm build-dist-cdn:engineering
+  ```
+
+- **finance-app** - 财务应用
+  ```bash
+  pnpm build:app --app=finance-app
+  pnpm build-cdn:finance
+  pnpm build-dist:finance
+  pnpm build-dist-cdn:finance
+  ```
+
+- **operations-app** - 运维应用
+  ```bash
+  pnpm build:app --app=operations-app
+  pnpm build-cdn:operations
+  pnpm build-dist:operations
+  pnpm build-dist-cdn:operations
+  ```
+
+- **personnel-app** - 人事应用
+  ```bash
+  pnpm build:app --app=personnel-app
+  pnpm build-dist:personnel
+  pnpm build-dist-cdn:personnel
+  ```
+
+- **dashboard-app** - 仪表盘应用
+  ```bash
+  pnpm build:app --app=dashboard-app
+  pnpm build-dist:dashboard
+  pnpm build-dist-cdn:dashboard
+  ```
+
+### 工具应用
+- **docs-app** - 文档站点
+  ```bash
+  pnpm build:app --app=docs-app
+  pnpm build-cdn:docs
+  pnpm build-dist:docs
+  pnpm build-dist-cdn:docs
+  ```
+
+- **home-app** - 公司首页
+  ```bash
+  pnpm build:app --app=home-app
+  pnpm build-dist:home
+  pnpm build-dist-cdn:home
+  ```
+
+- **mobile-app** - 移动端应用
+  ```bash
+  pnpm build:app --app=mobile-app
+  # 注意: mobile-app 默认不包含在 build:all 中
+  ```
+
 ## 预览构建
 
 本地预览:

@@ -1,4 +1,7 @@
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置文件中，不能直接导入 @btc/shared-core
+// 因为 VitePress 在加载配置时使用 esbuild，无法正确解析 workspace 包
+// 使用 console 替代 logger，或者使用条件导入
+// import { logger } from '@btc/shared-core';
 import { defineConfig } from 'vitepress';
 import { exportSearchIndexPlugin } from './plugins/exportSearchIndex';
 import { fileURLToPath, URL } from 'node:url';
@@ -6,6 +9,14 @@ import { generateNav } from './utils/auto-nav';
 import { generateSidebar } from './utils/auto-sidebar';
 import { getViteAppConfig } from '../../../configs/vite-app-config';
 import { localesStaticPlugin } from '../../../configs/vite/plugins';
+
+// 简单的 logger 替代，避免在配置文件中导入 @btc/shared-core
+const logger = {
+  error: (...args: any[]) => console.error('[VitePress Config]', ...args),
+  warn: (...args: any[]) => console.warn('[VitePress Config]', ...args),
+  info: (...args: any[]) => console.info('[VitePress Config]', ...args),
+  debug: (...args: any[]) => console.debug('[VitePress Config]', ...args),
+};
 
 export default defineConfig({
   title: '拜里斯文档库',
@@ -165,6 +176,18 @@ export default defineConfig({
         '@btc/shared-components': fileURLToPath(new URL('../../../packages/shared-components/src', import.meta.url)),
         '@btc/shared-core': fileURLToPath(new URL('../../../packages/shared-core/src', import.meta.url)),
         '@btc/shared-utils': fileURLToPath(new URL('../../../packages/shared-utils/src', import.meta.url)),
+        '@btc/auth-shared': fileURLToPath(new URL('../../../auth/shared', import.meta.url)),
+        '@btc-components': fileURLToPath(new URL('../../../packages/shared-components/src/components', import.meta.url)),
+        '@btc-common': fileURLToPath(new URL('../../../packages/shared-components/src/common', import.meta.url)),
+        '@btc-crud': fileURLToPath(new URL('../../../packages/shared-components/src/crud', import.meta.url)),
+        '@btc-styles': fileURLToPath(new URL('../../../packages/shared-components/src/styles', import.meta.url)),
+        '@btc-locales': fileURLToPath(new URL('../../../packages/shared-components/src/locales', import.meta.url)),
+        '@btc-assets': fileURLToPath(new URL('../../../packages/shared-components/src/assets', import.meta.url)),
+        '@assets': fileURLToPath(new URL('../../../packages/shared-components/src/assets', import.meta.url)),
+        '@plugins': fileURLToPath(new URL('../../../packages/shared-components/src/plugins', import.meta.url)),
+        '@btc/shared-core/utils': fileURLToPath(new URL('../../../packages/shared-core/src/utils', import.meta.url)),
+        '@configs': fileURLToPath(new URL('../../../packages/shared-core/src/configs', import.meta.url)),
+        '@btc/subapp-manifests': fileURLToPath(new URL('../../../packages/shared-core/src/manifest', import.meta.url)),
       }
     },
 
@@ -180,12 +203,27 @@ export default defineConfig({
 
     // SSR 配置
     ssr: {
-      noExternal: ['element-plus', '@btc/shared-components', '@btc/shared-core']
+      noExternal: ['element-plus', '@btc/shared-components', '@btc/shared-core', 'vue', 'file-saver'],
+      // pino 和 pino-pretty 使用外部版本，避免 worker.js 构建问题
+      external: ['pino', 'pino-pretty', 'thread-stream']
+    },
+
+    // 定义全局变量（用于 SSR 构建）
+    define: {
+      __dirname: JSON.stringify(fileURLToPath(new URL('.', import.meta.url))),
+      __filename: JSON.stringify(fileURLToPath(new URL(import.meta.url))),
     },
 
     // 构建配置
     build: {
       chunkSizeWarningLimit: 1000, // 文档站点允许更大的 chunk
+      rollupOptions: {
+        external: ['pino', 'pino-pretty', 'thread-stream'], // 在构建时排除 pino 相关包
+        output: {
+          // 确保 worker 文件被正确处理
+          inlineDynamicImports: false,
+        }
+      }
     },
 
     // 服务器配置

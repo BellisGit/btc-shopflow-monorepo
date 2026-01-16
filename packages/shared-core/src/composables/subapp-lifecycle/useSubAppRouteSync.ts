@@ -276,10 +276,24 @@ export function setupRouteSync(context: SubAppContext, _appId: string, basePath:
   // 在 layout-app 模式下，保存 isUsingLayoutApp 标志，供 routerAfterEach 使用
   const layoutAppMode = isUsingLayoutApp;
 
-  context.cleanup.routerAfterEach = context.router.afterEach((to: any) => {
+  context.cleanup.routerAfterEach = context.router.afterEach(async (to: any, from: any) => {
     // 如果应用已卸载，不再同步路由
     if (context.isUnmounted) {
       return;
+    }
+
+    // 监控系统：路由导航结束
+    try {
+      const { trackRouteNavigationEnd } = await import('../../utils/monitor');
+      trackRouteNavigationEnd(
+        from?.path || '/',
+        to.path || '/',
+        to.name,
+        to.params,
+        to.query
+      );
+    } catch (error) {
+      // 静默失败，不影响路由同步
     }
 
     // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留

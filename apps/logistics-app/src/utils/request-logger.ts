@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 
 /**
@@ -61,7 +61,7 @@ class RequestLogQueue {
 
     // 检查队列长度，防止内存溢出
     if (this.queue.length >= this.MAX_QUEUE_SIZE) {
-      logger.warn('common.other.request_log_queue_full', `${this.MAX_QUEUE_SIZE}`);
+      console.warn('common.other.request_log_queue_full', `${this.MAX_QUEUE_SIZE}`);
       this.queue.shift(); // 移除最旧的日志
     }
 
@@ -78,7 +78,7 @@ class RequestLogQueue {
         // 转换为 JSON 字符串
         paramsString = JSON.stringify(normalizedParams);
       } catch (error) {
-        logger.warn('common.other.param_serialize_failed', error);
+        console.warn('common.other.param_serialize_failed', error);
         paramsString = '{}';
       }
     }
@@ -184,7 +184,7 @@ class RequestLogQueue {
         this.tryFlush();
       }
     } catch (error) {
-      logger.error('common.other.batch_send_failed', error);
+      console.error('common.other.batch_send_failed', error);
 
       // 重试机制已经处理了重试，这里只需要暂停发送
       this.isPaused = true;
@@ -194,7 +194,7 @@ class RequestLogQueue {
       setTimeout(() => {
         this.isServiceAvailable = true;
         this.isPaused = false;
-        logger.info('common.other.request_log_service_reenabled');
+        console.info('common.other.request_log_service_reenabled');
         if (this.queue.length > 0) {
           this.tryFlush();
         }

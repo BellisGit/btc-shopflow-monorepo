@@ -4,7 +4,7 @@
  * 检查构建产物中的动态导入是否按照三级降级策略进行资源引入
  * 验证 dynamic-import-cdn 插件是否正确转换了 import() 调用
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';

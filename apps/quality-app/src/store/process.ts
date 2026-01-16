@@ -1,5 +1,3 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
 import { getActiveApp } from './tabRegistry';
 
 export interface ProcessItem {

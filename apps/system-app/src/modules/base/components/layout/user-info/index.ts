@@ -175,6 +175,11 @@ export function useUserInfo() {
 
   onUnmounted(() => {
     window.removeEventListener('userInfoUpdated', handleUserInfoUpdated as EventListener);
+    // 清理打字机定时器，防止内存泄漏
+    if (typingTimer) {
+      clearInterval(typingTimer);
+      typingTimer = null;
+    }
   });
 
   return {

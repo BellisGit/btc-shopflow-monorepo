@@ -2,7 +2,7 @@
  * 自动生成导航栏配置
  * 根据一级文件夹名称自动生成 nav
  */
-import { logger } from '@btc/shared-core';
+// 使用 console 而不是 logger，避免在 VitePress 配置加载时解析 @btc/shared-core
 
 import fs from 'fs';
 import path from 'path';
@@ -74,7 +74,7 @@ function findFirstMarkdown(dir: string): string | null {
       }
     }
   } catch (error) {
-    logger.warn(`Failed to find markdown in ${dir}:`, error);
+    console.warn(`[auto-nav] Failed to find markdown in ${dir}:`, error);
   }
 
   return null;

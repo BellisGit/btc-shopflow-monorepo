@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import {
   createRouter,
   createWebHistory,
@@ -170,7 +170,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'NotFound404Page',
-        component: () => import('../modules/base/pages/error/404.vue'),
+        component: () => import('@btc/shared-components').then(m => m.BtcError404),
         meta: {
           titleKey: 'common.page_not_found',
           isPage: true,
@@ -493,7 +493,7 @@ async function updateDocumentTitle(to: RouteLocationNormalized) {
     await setPageTitle(appId, pageTitle, { isHome, sync: false, translate: tSync });
   } catch (error) {
     // 标题设置失败不影响功能
-    logger.warn('[title] 更新标题失败:', error);
+    console.warn('[title] 更新标题失败:', error);
   }
 }
 
@@ -540,7 +540,7 @@ export function isAuthenticated(): boolean {
   } catch (error) {
     // 如果检查失败，继续检查其他方式
     if (import.meta.env.DEV) {
-      logger.warn('[isAuthenticated] Failed to check is_logged_in flag:', error);
+      console.warn('[isAuthenticated] Failed to check is_logged_in flag:', error);
     }
   }
 
@@ -583,7 +583,7 @@ export function isAuthenticated(): boolean {
     return false;
   } catch (error) {
     // 解析失败，保守返回 false
-    logger.warn('[isAuthenticated] Failed to check credential expire time:', error);
+    console.warn('[isAuthenticated] Failed to check credential expire time:', error);
     return false;
   }
 }
@@ -712,7 +712,7 @@ router.beforeResolve(async (to) => {
         throw new Error('rootLoadingService 未定义或方法不存在');
       }
     } catch (error) {
-      logger.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
+      console.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
       // 备用方案：直接操作 DOM（向后兼容）
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
@@ -1295,7 +1295,7 @@ export const createSystemRouter = (): Router => {
     // 检测是否是 system 子域名
     if (currentSubdomainApp === 'system' && path.startsWith('/system/')) {
       const normalized = path.substring('/system'.length) || '/';
-      logger.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+      console.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
       return normalized;
     }
 
@@ -1442,7 +1442,7 @@ export const createSystemRouter = (): Router => {
   });
 
   systemRouter.onError((error: any) => {
-    logger.warn('[system-app] Router error:', error);
+    console.warn('[system-app] Router error:', error);
   });
 
   return systemRouter;

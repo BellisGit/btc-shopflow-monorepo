@@ -44,9 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
 import { service } from '@services/eps';
 

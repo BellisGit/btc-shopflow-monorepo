@@ -2,7 +2,14 @@
  * 上传图标文件到 OSS 的 Vite 插件
  * 在生产构建完成后，自动上传图标文件到 OSS（基于文件指纹的增量上传）
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[upload-icons-to-oss]', ...args),
+  error: (...args: any[]) => console.error('[upload-icons-to-oss]', ...args),
+  info: (...args: any[]) => console.info('[upload-icons-to-oss]', ...args),
+  debug: (...args: any[]) => console.debug('[upload-icons-to-oss]', ...args),
+};
 
 import type { Plugin, ResolvedConfig } from 'vite';
 import { spawn } from 'child_process';
@@ -70,13 +77,13 @@ export function uploadIconsToOssPlugin(): Plugin {
       // 检查是否有 OSS 配置
       if (!process.env.OSS_ACCESS_KEY_ID || !process.env.OSS_ACCESS_KEY_SECRET) {
         // 关键：如果没有上传，all.bellis.com.cn 代理到 OSS 将返回 NoSuchKey（logo.png / icons/*）
-        logger.warn('[upload-icons-to-oss] ⚠️  跳过上传（未配置 OSS 凭证）。这会导致 https://all.bellis.com.cn/logo.png 返回 NoSuchKey');
+        console.warn('[upload-icons-to-oss] ⚠️  跳过上传（未配置 OSS 凭证）。这会导致 https://all.bellis.com.cn/logo.png 返回 NoSuchKey');
         return;
       }
 
       // 关键：在 CI 中必须等待上传完成，否则构建进程退出会直接终止子进程，导致文件未上传
       const uploadScript = resolve(projectRoot, 'scripts/upload-icons-to-oss.mjs');
-      logger.info('[upload-icons-to-oss] 🚀 开始上传图标文件到 OSS...');
+      console.info('[upload-icons-to-oss] 🚀 开始上传图标文件到 OSS...');
 
       await new Promise<void>((resolvePromise, rejectPromise) => {
         const child = spawn('node', [uploadScript], {
@@ -93,7 +100,7 @@ export function uploadIconsToOssPlugin(): Plugin {
 
         child.on('exit', (code) => {
           if (code === 0) {
-            logger.info('[upload-icons-to-oss] ✅ 图标文件上传完成');
+            console.info('[upload-icons-to-oss] ✅ 图标文件上传完成');
             resolvePromise();
           } else {
             // 默认不阻塞构建：layout-app dist 里仍有 icons/logo 作为本地后备，避免 404
@@ -103,7 +110,7 @@ export function uploadIconsToOssPlugin(): Plugin {
             if (strict) {
               rejectPromise(err);
             } else {
-              logger.warn(err.message);
+              console.warn(err.message);
               resolvePromise();
             }
           }

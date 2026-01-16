@@ -2,9 +2,8 @@
  * 设置状态管理
  * 使用 localStorage 持久化设置状态
  */
-import { logger } from '@btc/shared-core';
+;
 
-import { ref, computed, nextTick } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
@@ -114,11 +113,11 @@ function createSettingsState() {
   }
 
   // Loading 样式设置
-  type LoadingStyle = 'circle' | 'dots' | 'gradient';
+  type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress' | 'flower';
   const storedLoadingStyle = initialSettings?.loadingStyle as LoadingStyle | null;
-  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : storedLoadingStyle === 'gradient' ? 'gradient' : 'circle';
+  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : storedLoadingStyle === 'gradient' ? 'gradient' : storedLoadingStyle === 'progress' ? 'progress' : storedLoadingStyle === 'flower' ? 'flower' : 'circle';
   const loadingStyle = ref<LoadingStyle>(resolvedLoadingStyle);
-  if (!initialSettings?.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots' && initialSettings.loadingStyle !== 'gradient')) {
+  if (!initialSettings?.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots' && initialSettings.loadingStyle !== 'gradient' && initialSettings.loadingStyle !== 'progress' && initialSettings.loadingStyle !== 'flower')) {
     appStorage.settings.set({ loadingStyle: resolvedLoadingStyle });
   }
 
@@ -303,7 +302,7 @@ function createSettingsState() {
           themePlugin = plugin;
         }
       } catch (e) {
-        logger.warn('Failed to get theme plugin:', e);
+        console.warn('Failed to get theme plugin:', e);
         // 如果获取失败，直接应用 DOM 变化（不使用主题插件）
         applySystemTheme();
         return;

@@ -4,7 +4,7 @@
  * 测试报告生成器
  * 生成HTML、JSON和Markdown格式的测试报告
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';

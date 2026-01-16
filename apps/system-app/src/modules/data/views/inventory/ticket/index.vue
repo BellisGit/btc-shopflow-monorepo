@@ -6,7 +6,7 @@
       :right-service="wrappedTicketService"
       :table-columns="ticketColumns"
       :form-items="ticketFormItems"
-      left-title="title.inventory.dataSource.domains"
+      :left-title="'title.inventory.dataSource.domains'"
       :right-title="t('menu.inventory.data_source.ticket')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -33,14 +33,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import { BtcSvg } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcDataInventoryTicket'
@@ -107,7 +106,7 @@ const domainService = {
       // 返回域列表
       return Array.from(domainMap.values());
     } catch (error) {
-      logger.error('[InventoryTicket] Failed to load domains from position service:', error);
+      console.error('[InventoryTicket] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -245,7 +244,7 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
     }
     return formatDateTime(value);
   } catch (error) {
-    logger.warn('[InventoryTicket] Date format error:', error, value);
+    console.warn('[InventoryTicket] Date format error:', error, value);
     return '--';
   }
 };
@@ -350,7 +349,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    logger.error('[InventoryTicket] Export failed:', error);
+    console.error('[InventoryTicket] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

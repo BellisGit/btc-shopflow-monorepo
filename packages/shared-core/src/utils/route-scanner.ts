@@ -2,9 +2,9 @@
  * 路由扫描器
  * 从模块配置中自动提取并注册路由
  */
-import type { RouteRecordRaw, Router } from 'vue-router';
+import type { RouteRecordRaw, Router } from '../types/vue-router';
 import type { ModuleConfig } from '../types/module';
-import { logger } from './logger';
+;
 
 /**
  * 扫描模块配置，提取路由
@@ -64,8 +64,9 @@ export function scanRoutesFromModules(
     // 提取 views 路由
     if (config.views && Array.isArray(config.views) && config.views.length > 0) {
       for (const route of config.views) {
-        if (!route.path) {
-          logger.warn(`[RouteScanner] Module "${moduleName}" has view route without path, skipping`);
+        // 允许空字符串作为首页路径（'' 表示首页）
+        if (route.path === undefined || route.path === null) {
+          console.warn(`[RouteScanner] Module "${moduleName}" has view route without path, skipping`);
           continue;
         }
 
@@ -73,13 +74,13 @@ export function scanRoutesFromModules(
         const existing = pathMap.get(route.path);
         if (existing) {
           if (preferManualRoutes) {
-            logger.warn(
+            console.warn(
               `[RouteScanner] Route path "${route.path}" already exists in module "${existing.module}", skipping from module "${moduleName}"`
             );
             conflicts.push({ path: route.path, module: moduleName, type: 'views' });
             continue;
           } else {
-            logger.warn(
+            console.warn(
               `[RouteScanner] Route path "${route.path}" conflict: "${existing.module}" vs "${moduleName}", using "${moduleName}"`
             );
           }
@@ -103,8 +104,9 @@ export function scanRoutesFromModules(
     // 提取 pages 路由
     if (config.pages && Array.isArray(config.pages) && config.pages.length > 0) {
       for (const route of config.pages) {
-        if (!route.path) {
-          logger.warn(`[RouteScanner] Module "${moduleName}" has page route without path, skipping`);
+        // 允许空字符串作为首页路径（'' 表示首页）
+        if (route.path === undefined || route.path === null) {
+          console.warn(`[RouteScanner] Module "${moduleName}" has page route without path, skipping`);
           continue;
         }
 
@@ -112,13 +114,13 @@ export function scanRoutesFromModules(
         const existing = pathMap.get(route.path);
         if (existing) {
           if (preferManualRoutes) {
-            logger.warn(
+            console.warn(
               `[RouteScanner] Route path "${route.path}" already exists in module "${existing.module}", skipping from module "${moduleName}"`
             );
             conflicts.push({ path: route.path, module: moduleName, type: 'pages' });
             continue;
           } else {
-            logger.warn(
+            console.warn(
               `[RouteScanner] Route path "${route.path}" conflict: "${existing.module}" vs "${moduleName}", using "${moduleName}"`
             );
           }
@@ -139,6 +141,15 @@ export function scanRoutesFromModules(
         pathMap.set(route.path, { module: moduleName, type: 'pages' });
       }
     }
+  }
+
+  // 构建路由到模块的映射，存储到全局，供日志上报使用
+  if (typeof window !== 'undefined') {
+    const routeModuleMap: Record<string, string> = {};
+    pathMap.forEach((value, path) => {
+      routeModuleMap[path] = value.module;
+    });
+    (window as any).__BTC_ROUTE_MODULE_MAP__ = routeModuleMap;
   }
 
   return {
@@ -194,7 +205,7 @@ export function scanRoutesFromConfigFiles(
       const moduleName = pathParts[pathParts.length - 2]; // modules/{module-name}/config.ts
 
       if (!moduleConfig || typeof moduleConfig !== 'object') {
-        logger.warn(`[RouteScanner] Module "${moduleName}" config is not an object, skipping`);
+        console.warn(`[RouteScanner] Module "${moduleName}" config is not an object, skipping`);
         continue;
       }
 
@@ -203,7 +214,7 @@ export function scanRoutesFromConfigFiles(
         typeof moduleConfig === 'function' ? (moduleConfig as any)() : moduleConfig;
 
       if (!config || typeof config !== 'object') {
-        logger.warn(`[RouteScanner] Module "${moduleName}" config is invalid, skipping`);
+        console.warn(`[RouteScanner] Module "${moduleName}" config is invalid, skipping`);
         continue;
       }
 
@@ -212,7 +223,7 @@ export function scanRoutesFromConfigFiles(
         config,
       });
     } catch (error) {
-      logger.error(`[RouteScanner] Failed to parse module config from "${filePath}":`, error);
+      console.error(`[RouteScanner] Failed to parse module config from "${filePath}":`, error);
     }
   }
 
@@ -263,7 +274,7 @@ export function mergeRoutes(
   // 过滤掉与手动路由冲突的自动路由
   const filteredViews = autoRoutes.views.filter((route) => {
     if (manualPaths.has(route.path || '')) {
-      logger.debug(`[RouteScanner] Filtering auto-discovered route "${route.path}" (conflicts with manual route)`);
+      console.debug(`[RouteScanner] Filtering auto-discovered route "${route.path}" (conflicts with manual route)`);
       return false;
     }
     return true;
@@ -271,7 +282,7 @@ export function mergeRoutes(
 
   const filteredPages = autoRoutes.pages.filter((route) => {
     if (manualPaths.has(route.path || '')) {
-      logger.debug(`[RouteScanner] Filtering auto-discovered route "${route.path}" (conflicts with manual route)`);
+      console.debug(`[RouteScanner] Filtering auto-discovered route "${route.path}" (conflicts with manual route)`);
       return false;
     }
     return true;
@@ -313,10 +324,10 @@ export function registerRoutes(
     try {
       router.addRoute(route);
       if (debug) {
-        logger.info(`[RouteScanner] Registered route: ${route.path} (${route.name || 'unnamed'})`);
+        console.info(`[RouteScanner] Registered route: ${route.path} (${route.name || 'unnamed'})`);
       }
     } catch (error) {
-      logger.error(`[RouteScanner] Failed to register route "${route.path}":`, error);
+      console.error(`[RouteScanner] Failed to register route "${route.path}":`, error);
     }
   }
 }

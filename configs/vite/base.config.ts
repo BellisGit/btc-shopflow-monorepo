@@ -4,6 +4,8 @@
  */
 
 import type { UserConfig } from 'vite';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
 import { createPathHelpers } from './utils/path-helpers';
 
 /**
@@ -82,6 +84,25 @@ export function createBaseResolve(
   // 使用数组形式的别名，确保更具体的别名优先匹配
   // Vite 会按数组顺序匹配，第一个匹配的别名会被使用
   const aliasArray: Array<{ find: string | RegExp; replacement: string }> = [
+    // 关键：将 util 映射到 npm 包，防止 Vite 将其视为 Node.js 内置模块并外部化
+    // 需要查找 node_modules/util 的实际路径（可能在根目录或应用目录）
+    {
+      find: /^util$/,
+      replacement: (() => {
+        // 尝试从应用目录查找
+        const appUtilPath = resolve(appDir, 'node_modules/util');
+        if (existsSync(appUtilPath)) {
+          return appUtilPath;
+        }
+        // 尝试从根目录查找
+        const rootUtilPath = resolve(appDir, '../../node_modules/util');
+        if (existsSync(rootUtilPath)) {
+          return rootUtilPath;
+        }
+        // 如果找不到，返回包名让 Vite 自动解析（应该在 optimizeDeps.include 中）
+        return 'util';
+      })(),
+    },
     // locales 子路径别名（所有应用都使用别名指向源码）
     {
       find: '@btc/shared-core/locales/zh-CN',

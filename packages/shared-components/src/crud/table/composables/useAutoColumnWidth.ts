@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref, watch, nextTick, type Ref, type ComputedRef } from 'vue';
 import type { TableColumn } from '../types';
 
@@ -90,7 +90,7 @@ function getCellText(column: TableColumn, row: any): string {
       const formatted = column.formatter(row, column, value, 0);
       return String(formatted || '');
     } catch (error) {
-      logger.warn('[useAutoColumnWidth] Formatter error:', error);
+      console.warn('[useAutoColumnWidth] Formatter error:', error);
     }
   }
 
@@ -100,7 +100,7 @@ function getCellText(column: TableColumn, row: any): string {
       const dict = column._dictFormatter(row);
       return String(dict?.label || value || '');
     } catch (error) {
-      logger.warn('[useAutoColumnWidth] Dict formatter error:', error);
+      console.warn('[useAutoColumnWidth] Dict formatter error:', error);
     }
   }
 
@@ -111,7 +111,7 @@ function getCellText(column: TableColumn, row: any): string {
           const tagInfo = column._codeTagFormatter(row);
           return String(tagInfo?.label || value || '');
         } catch (error) {
-          logger.warn('[useAutoColumnWidth] Code tag formatter error:', error);
+          console.warn('[useAutoColumnWidth] Code tag formatter error:', error);
         }
       }
 

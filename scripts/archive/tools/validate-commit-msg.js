@@ -1,9 +1,9 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 #!/usr/bin/env node
 /**
  * 提交信息验证脚本
  * 在提交前检查提交信息是否符合 Conventional Commits 规范
- * 
+ *
  * 使用方法：
  *   node scripts/validate-commit-msg.js "feat(i18n): Fix menu structure"
  */

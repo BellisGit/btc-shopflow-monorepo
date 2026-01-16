@@ -26,8 +26,6 @@ defineOptions({
   name: 'LayoutDynamicMenu',
 });
 
-import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useI18n, getMainAppId } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
@@ -53,7 +51,28 @@ const { currentApp } = useCurrentApp();
 const { uniqueOpened, menuThemeType, isDark } = useSettingsState();
 const { menuStyleList } = useSettingsConfig();
 
-const activeMenu = ref(route.path);
+// 路径规范化函数
+const normalizeActivePath = (value: string) => {
+  const raw = (value || '/').trim();
+  const noHash = raw.split('#')[0] ?? raw;
+  const noQuery = noHash.split('?')[0] ?? noHash;
+  const ensured = noQuery.startsWith('/') ? noQuery : `/${noQuery}`;
+  return ensured === '' ? '/' : ensured;
+};
+
+// 获取初始激活菜单（优先使用 window.location.pathname，更准确）
+const getInitialActiveMenu = () => {
+  try {
+    if (typeof window !== 'undefined' && window.location.pathname) {
+      return normalizeActivePath(window.location.pathname);
+    }
+  } catch {
+    // 静默失败
+  }
+  return normalizeActivePath(route.path || '/');
+};
+
+const activeMenu = ref(getInitialActiveMenu());
 
 // 菜单 ref
 const menuRef = ref();
@@ -71,13 +90,45 @@ const currentMenuItems = computed(() => {
   return menus;
 });
 
+// 监听菜单数据加载完成，确保激活状态正确设置
+watch(
+  () => currentMenuItems.value,
+  (newMenus) => {
+    // 只有当菜单数据存在且不为空时才更新激活状态
+    if (newMenus && Array.isArray(newMenus) && newMenus.length > 0) {
+      nextTick(() => {
+        const locationPath = typeof window !== 'undefined' ? window.location.pathname : route.path;
+        const normalizedPath = normalizeActivePath(locationPath || route.path || '/');
+        if (activeMenu.value !== normalizedPath) {
+          activeMenu.value = normalizedPath;
+          // 强制更新菜单 key，确保 Element Plus 重新渲染并应用激活状态
+          menuKey.value++;
+        }
+      });
+    }
+  },
+  { immediate: true }
+);
+
 // 监听菜单注册表变化，强制重新渲染菜单
 watch(
   () => menuRegistry.value[currentApp.value],
-  () => {
-    menuKey.value++;
+  (newMenus) => {
+    // 只有当菜单数据存在且不为空时才更新
+    if (newMenus && Array.isArray(newMenus) && newMenus.length > 0) {
+      menuKey.value++;
+      
+      // 菜单数据加载完成后，确保激活状态正确
+      nextTick(() => {
+        const locationPath = typeof window !== 'undefined' ? window.location.pathname : route.path;
+        const normalizedPath = normalizeActivePath(locationPath || route.path || '/');
+        if (activeMenu.value !== normalizedPath) {
+          activeMenu.value = normalizedPath;
+        }
+      });
+    }
   },
-  { deep: true }
+  { deep: true, immediate: true }
 );
 
 // 递归获取所有菜单项的 index（用于搜索匹配）
@@ -166,8 +217,8 @@ const defaultOpeneds = computed(() => {
   // 如果没有找到父级，返回默认展开项
   switch (currentApp.value) {
     case 'main':
-      // 主应用的菜单结构是 dashboard 作为父级
-      return ['dashboard'];
+      // 主应用的菜单结构是 /workbench/overview 作为父级
+      return ['/workbench/overview'];
     default:
       return [];
   }
@@ -287,10 +338,85 @@ watch(
 watch(
   () => route.path,
   (newPath) => {
-    activeMenu.value = newPath;
+    const normalizedPath = normalizeActivePath(newPath || '/');
+    if (activeMenu.value !== normalizedPath) {
+      activeMenu.value = normalizedPath;
+    }
   },
   { immediate: true }
 );
+
+// 在组件挂载时，确保菜单激活状态正确设置
+// 这解决了直接访问页面（刷新或直接输入 URL）时菜单激活状态丢失的问题
+onMounted(() => {
+  const initActiveMenu = () => {
+    // 检查菜单数据是否已加载
+    const menus = currentMenuItems.value;
+    if (!menus || !Array.isArray(menus) || menus.length === 0) {
+      return; // 菜单数据未加载，等待下次调用
+    }
+    
+    const locationPath = typeof window !== 'undefined' ? window.location.pathname : route.path;
+    const normalizedPath = normalizeActivePath(locationPath || route.path || '/');
+    
+    // 如果当前激活菜单与路径不一致，更新它
+    if (activeMenu.value !== normalizedPath) {
+      activeMenu.value = normalizedPath;
+      // 强制更新菜单 key，确保 Element Plus 重新渲染并应用激活状态
+      menuKey.value++;
+    }
+    
+    // 确保父级菜单展开
+    nextTick(() => {
+      if (menuRef.value) {
+        try {
+          const inst: any = menuRef.value;
+          if (inst && typeof inst.open === 'function') {
+            // 获取需要展开的父级菜单
+            const findParentIndexes = (items: any[], targetPath: string, parents: string[] = []): string[] => {
+              for (const item of items) {
+                if (item.index === targetPath) {
+                  return parents;
+                }
+                if (item.children && item.children.length > 0) {
+                  const found = findParentIndexes(item.children, targetPath, [...parents, item.index]);
+                  if (found.length > 0) {
+                    return found;
+                  }
+                }
+              }
+              return [];
+            };
+            
+            const parentIndexes = findParentIndexes(menus, normalizedPath);
+            parentIndexes.forEach(index => {
+              if (index && inst.open) {
+                inst.open(index);
+              }
+            });
+          }
+        } catch (error) {
+          // 静默失败
+        }
+      }
+    });
+  };
+  
+  // 立即初始化一次（处理刷新浏览器的情况）
+  initActiveMenu();
+  
+  // 延迟初始化（等待路由和菜单数据完全初始化）
+  nextTick(() => {
+    // 再次检查，确保路由已初始化
+    setTimeout(() => {
+      initActiveMenu();
+    }, 100);
+    // 再延迟一次，确保菜单数据完全加载
+    setTimeout(() => {
+      initActiveMenu();
+    }, 500);
+  });
+});
 
 const isExternalLink = (value: string) => /^(https?:|mailto:|tel:)/.test(value);
 

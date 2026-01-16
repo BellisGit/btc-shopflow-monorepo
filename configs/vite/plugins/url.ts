@@ -2,7 +2,14 @@
  * URL 相关插件
  * 确保 base URL 正确
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[url]', ...args),
+  error: (...args: any[]) => console.error('[url]', ...args),
+  info: (...args: any[]) => console.info('[url]', ...args),
+  debug: (...args: any[]) => console.debug('[url]', ...args),
+};
 
 import type { Plugin } from 'vite';
 import type { ChunkInfo, OutputOptions, OutputBundle } from 'rollup';
@@ -167,7 +174,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
       }
 
       if (modified) {
-        logger.info(`[ensure-base-url] 修复了 ${chunk.fileName} 中的资源路径 (${mainAppPort} -> ${appPort})`);
+        console.info(`[ensure-base-url] 修复了 ${chunk.fileName} 中的资源路径 (${mainAppPort} -> ${appPort})`);
         return {
           code: newCode,
           map: null,
@@ -234,7 +241,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
 
           if (modified) {
             (chunk as any).code = newCode;
-            logger.info(`[ensure-base-url] 在 generateBundle 中修复了 ${fileName} 中的资源路径`);
+            console.info(`[ensure-base-url] 在 generateBundle 中修复了 ${fileName} 中的资源路径`);
           }
         } else if (c.type === 'asset' && fileName === 'index.html') {
           // 处理 HTML 文件中的资源引用
@@ -251,7 +258,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
               // 将相对路径转换为绝对路径
               const absolutePath = path.replace(/^\./, '');
               htmlModified = true;
-              logger.info(`[ensure-base-url] 修复相对路径: ${path} -> ${absolutePath}`);
+              console.info(`[ensure-base-url] 修复相对路径: ${path} -> ${absolutePath}`);
               return `${attr}="${absolutePath}${query}"`;
             });
           }
@@ -269,7 +276,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
               htmlModified = true;
               return `import(/* @vite-ignore */ (${originExpr} + '${absPath}' + '?v=${buildTimestamp}'))`;
             });
-            logger.info(`[ensure-base-url] 修复 index.html 内联 import(/assets/index-*.js) 并追加 v=${buildTimestamp}`);
+            console.info(`[ensure-base-url] 修复 index.html 内联 import(/assets/index-*.js) 并追加 v=${buildTimestamp}`);
           }
 
           // 如果出现根目录的资源路径（如 /index.js），说明配置有问题，记录警告
@@ -278,13 +285,13 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
           if (rootJsRegex.test(htmlContent)) {
             const matches = htmlContent.match(rootJsRegex);
             if (matches) {
-              logger.warn(`[ensure-base-url] ⚠️  检测到根目录资源路径，这通常不应该出现。请检查 Vite 配置（base, assetsDir, rollupOptions.output.chunkFileNames）:`, matches);
+              console.warn(`[ensure-base-url] ⚠️  检测到根目录资源路径，这通常不应该出现。请检查 Vite 配置（base, assetsDir, rollupOptions.output.chunkFileNames）:`, matches);
               // 修复这些路径（作为兜底方案）
               htmlContent = htmlContent.replace(rootJsRegex, (_match, attr, path, fileName, _ext, query = '') => {
                 if (!path.startsWith('/assets/') && !path.startsWith('/favicon') && !path.startsWith('/logo') && !path.match(/\.(png|jpg|jpeg|gif|svg|ico|json)$/)) {
                   const newPath = `/assets/${fileName}`;
                   htmlModified = true;
-                  logger.info(`[ensure-base-url] 修复根目录资源路径（兜底）: ${path} -> ${newPath}`);
+                  console.info(`[ensure-base-url] 修复根目录资源路径（兜底）: ${path} -> ${newPath}`);
                   return `${attr}="${newPath}${query}"`;
                 }
                 return _match;
@@ -296,13 +303,13 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
           if (rootCssRegex.test(htmlContent)) {
             const matches = htmlContent.match(rootCssRegex);
             if (matches) {
-              logger.warn(`[ensure-base-url] ⚠️  检测到根目录 CSS 路径，这通常不应该出现。请检查 Vite 配置:`, matches);
+              console.warn(`[ensure-base-url] ⚠️  检测到根目录 CSS 路径，这通常不应该出现。请检查 Vite 配置:`, matches);
               // 修复这些路径（作为兜底方案）
               htmlContent = htmlContent.replace(rootCssRegex, (_match, attr, path, fileName, query = '') => {
                 if (!path.startsWith('/assets/')) {
                   const newPath = `/assets/${fileName}`;
                   htmlModified = true;
-                  logger.info(`[ensure-base-url] 修复根目录 CSS 路径（兜底）: ${path} -> ${newPath}`);
+                  console.info(`[ensure-base-url] 修复根目录 CSS 路径（兜底）: ${path} -> ${newPath}`);
                   return `${attr}="${newPath}${query}"`;
                 }
                 return _match;
@@ -312,7 +319,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
 
           if (htmlModified) {
             (chunk as any).source = htmlContent;
-            logger.info(`[ensure-base-url] 修复了 index.html 中的资源路径`);
+            console.info(`[ensure-base-url] 修复了 index.html 中的资源路径`);
           }
         }
       }

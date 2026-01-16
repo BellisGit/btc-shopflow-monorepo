@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import type { Plugin, ResolvedConfig } from 'vite';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -26,7 +26,7 @@ export function copyLogoPlugin(): Plugin {
     closeBundle() {
       try {
         if (!viteConfig) {
-          logger.warn('[copy-logo] Vite 配置未找到，跳过复制 logo.png');
+          console.warn('[copy-logo] Vite 配置未找到，跳过复制 logo.png');
           return;
         }
 
@@ -42,7 +42,7 @@ export function copyLogoPlugin(): Plugin {
         
         // 检查源文件是否存在
         if (!existsSync(logoSourcePath)) {
-          logger.warn('[copy-logo] logo.png 源文件不存在，跳过复制:', logoSourcePath);
+          console.warn('[copy-logo] logo.png 源文件不存在，跳过复制:', logoSourcePath);
           return;
         }
 
@@ -51,7 +51,7 @@ export function copyLogoPlugin(): Plugin {
         const distDir = resolve(root, outDir);
 
         if (!existsSync(distDir)) {
-          logger.warn('[copy-logo] 构建输出目录不存在，跳过复制 logo.png:', distDir);
+          console.warn('[copy-logo] 构建输出目录不存在，跳过复制 logo.png:', distDir);
           return;
         }
 
@@ -65,9 +65,9 @@ export function copyLogoPlugin(): Plugin {
 
         // 复制文件
         copyFileSync(logoSourcePath, logoDestPath);
-        logger.info(`[copy-logo] 已复制 logo.png 到: ${logoDestPath}`);
+        console.info(`[copy-logo] 已复制 logo.png 到: ${logoDestPath}`);
       } catch (error) {
-        logger.error('[copy-logo] 复制 logo.png 失败:', error);
+        console.error('[copy-logo] 复制 logo.png 失败:', error);
       }
     },
   } as unknown as Plugin;

@@ -2,7 +2,7 @@
  * 用户设置 Composables
  * 封装用户设置相关的逻辑
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin, type ThemeConfig } from '@btc/shared-core';
@@ -21,7 +21,7 @@ export function useUserSetting() {
     // 如果主题插件未初始化，尝试从全局获取
     theme = (globalThis as any).__THEME_PLUGIN__ || (typeof window !== 'undefined' && (window as any).__THEME_PLUGIN__) || null;
     if (!theme) {
-      logger.warn('[useUserSetting] Theme plugin not available');
+      console.warn('[useUserSetting] Theme plugin not available');
       // 如果主题插件不可用，返回一个基本的功能对象，避免后续代码报错
       return {
         drawerVisible: ref(false),
@@ -262,7 +262,7 @@ export function useUserSetting() {
    */
   function handleDarkToggle(event?: MouseEvent) {
     if (!themePlugin || !themePlugin.toggleDark) {
-      logger.warn('[useThemeSwitcher-shared] themePlugin 或 toggleDark 不存在', {
+      console.warn('[useThemeSwitcher-shared] themePlugin 或 toggleDark 不存在', {
         themePlugin: !!themePlugin,
         toggleDark: !!themePlugin?.toggleDark
       });

@@ -47,6 +47,9 @@ export function getCurrentAppFromPath(path: string): string {
 /**
  * 页面标签（Process）Store
  */
+// 最大标签数量限制（防止内存泄漏）
+const MAX_TABS = 50;
+
 export const useProcessStore = defineStore('process', () => {
   const list = ref<ProcessItem[]>([]);
   const pinned = ref<string[]>([]);
@@ -240,7 +243,7 @@ export const useProcessStore = defineStore('process', () => {
       // 关键优化：如果目标标签已经是激活状态且路径相同，直接返回，避免不必要的更新导致闪烁
       if (index >= 0) {
         const existingTab = list.value[index];
-        if (existingTab.active && 
+        if (existingTab.active &&
             (existingTab.fullPath === data.fullPath || existingTab.path === data.path)) {
           // 标签已经是激活状态且路径相同，不需要更新
           return;
@@ -258,6 +261,22 @@ export const useProcessStore = defineStore('process', () => {
           ...data,
           active: true,
         });
+
+        // 关键：限制标签数量，防止内存泄漏（保留固定的标签，移除最旧的非固定标签）
+        if (list.value.length > MAX_TABS) {
+          const pinnedSet = new Set(pinned.value);
+          // 分离固定和非固定标签
+          const pinnedTabs = list.value.filter(tab => pinnedSet.has(tab.fullPath));
+          const unpinnedTabs = list.value.filter(tab => !pinnedSet.has(tab.fullPath));
+
+          // 保留所有固定标签，只限制非固定标签数量
+          const maxUnpinnedTabs = MAX_TABS - pinnedTabs.length;
+          if (unpinnedTabs.length > maxUnpinnedTabs) {
+            // 移除最旧的非固定标签（保留最新的）
+            const tabsToKeep = unpinnedTabs.slice(-maxUnpinnedTabs);
+            list.value = [...pinnedTabs, ...tabsToKeep];
+          }
+        }
       } else {
         // 激活已存在的标签
         list.value[index] = {

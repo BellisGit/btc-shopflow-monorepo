@@ -1,6 +1,4 @@
-import { logger } from '@btc/shared-core';
-import { defineStore } from 'pinia';
-import { ref, watch } from 'vue';
+;
 
 /**
  * 最近访问项数据结构
@@ -56,12 +54,12 @@ export const useRecentAccessStore = defineStore('recentAccess', () => {
                 return;
               }
             } else {
-              if (item.path === '/overview') {
+              if (item.path === '/workbench/overview') {
                 return;
               }
             }
           } catch (e) {
-            if (item.path === '/overview') {
+            if (item.path === '/workbench/overview') {
               return;
             }
           }
@@ -76,7 +74,7 @@ export const useRecentAccessStore = defineStore('recentAccess', () => {
       // 限制数量
       items.value = validItems.slice(0, MAX_RECENT_ITEMS);
     } catch (error) {
-      logger.warn('[RecentAccess] Failed to restore from storage:', error);
+      console.warn('[RecentAccess] Failed to restore from storage:', error);
       items.value = [];
     }
   }
@@ -86,7 +84,7 @@ export const useRecentAccessStore = defineStore('recentAccess', () => {
    */
   function addAccess(item: Omit<RecentAccessItem, 'timestamp'>) {
     // 排除概览页面
-    if (item.path === '/overview') {
+    if (item.path === '/workbench/overview') {
       return;
     }
 

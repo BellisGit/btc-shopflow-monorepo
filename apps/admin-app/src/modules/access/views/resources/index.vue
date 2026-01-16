@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import {
   BtcCrud,
@@ -87,7 +87,7 @@ const handleSync = async () => {
     }
   } catch (error) {
     message.error(t('access.resources.sync_failed'));
-    logger.error('Data sync failed:', error);
+    console.error('Data sync failed:', error);
   } finally {
     syncLoading.value = false;
   }

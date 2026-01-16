@@ -2,7 +2,7 @@
  * Vite 插件：注入静态兜底 title 到 index.html
  * 职责：构建时统一设置初始 title，避免子应用重复写
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { Plugin, ResolvedConfig } from 'vite';
 import { readFileSync, existsSync } from 'fs';
@@ -37,14 +37,14 @@ function loadAppsConfig(root: string): AppsConfig | null {
     const configPath = resolve(root, '../../apps.config.json');
     
     if (!existsSync(configPath)) {
-      logger.warn('[inject-fallback-title] apps.config.json 不存在:', configPath);
+      console.warn('[inject-fallback-title] apps.config.json 不存在:', configPath);
       return null;
     }
 
     const configContent = readFileSync(configPath, 'utf-8');
     return JSON.parse(configContent) as AppsConfig;
   } catch (error) {
-    logger.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
+    console.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
     return null;
   }
 }
@@ -136,52 +136,52 @@ export function injectFallbackTitle(options: {
     },
 
     transformIndexHtml: {
-      enforce: 'pre', // 在其他插件之前执行
-      transform(html: string) {
-      if (!viteConfig) {
-        logger.warn('[inject-fallback-title] Vite 配置未找到，跳过注入标题');
-        return html;
-      }
-
-      try {
-        const root = viteConfig.root || process.cwd();
-        
-        // 获取应用 ID
-        let appId = options.appId;
-        if (!appId) {
-          appId = getAppIdFromContext(root, options.packageName) || null;
+      order: 'pre', // 在其他插件之前执行
+      handler(html: string) {
+        if (!viteConfig) {
+          console.warn('[inject-fallback-title] Vite 配置未找到，跳过注入标题');
+          return html;
         }
 
-        // 加载应用配置
-        const config = loadAppsConfig(root);
-        
-        // 生成兜底标题
-        const fallbackTitle = generateFallbackTitle(appId, config);
+        try {
+          const root = viteConfig.root || process.cwd();
+          
+          // 获取应用 ID
+          let appId = options.appId;
+          if (!appId) {
+            appId = getAppIdFromContext(root, options.packageName) || null;
+          }
 
-        // 替换或添加 <title> 标签
-        const titleRegex = /<title[^>]*>.*?<\/title>/i;
-        let updatedHtml = html;
-        
-        if (titleRegex.test(updatedHtml)) {
-          // 如果已存在 title 标签，替换它
-          updatedHtml = updatedHtml.replace(titleRegex, `<title>${fallbackTitle}</title>`);
-        } else {
-          // 如果不存在 title 标签，在 </head> 前添加
-          updatedHtml = updatedHtml.replace('</head>', `<title>${fallbackTitle}</title></head>`);
+          // 加载应用配置
+          const config = loadAppsConfig(root);
+          
+          // 生成兜底标题
+          const fallbackTitle = generateFallbackTitle(appId, config);
+
+          // 替换或添加 <title> 标签
+          const titleRegex = /<title[^>]*>.*?<\/title>/i;
+          let updatedHtml = html;
+          
+          if (titleRegex.test(updatedHtml)) {
+            // 如果已存在 title 标签，替换它
+            updatedHtml = updatedHtml.replace(titleRegex, `<title>${fallbackTitle}</title>`);
+          } else {
+            // 如果不存在 title 标签，在 </head> 前添加
+            updatedHtml = updatedHtml.replace('</head>', `<title>${fallbackTitle}</title></head>`);
+          }
+
+          // 注入 apps.config.json 到 window 全局变量（如果配置存在）
+          if (config) {
+            const configScript = `<script>window.__BTC_APPS_CONFIG__ = ${JSON.stringify(config)};</script>`;
+            // 在 </head> 前注入配置脚本
+            updatedHtml = updatedHtml.replace('</head>', `${configScript}</head>`);
+          }
+
+          return updatedHtml;
+        } catch (error) {
+          console.error('[inject-fallback-title] 注入标题失败:', error);
+          return html;
         }
-
-        // 注入 apps.config.json 到 window 全局变量（如果配置存在）
-        if (config) {
-          const configScript = `<script>window.__BTC_APPS_CONFIG__ = ${JSON.stringify(config)};</script>`;
-          // 在 </head> 前注入配置脚本
-          updatedHtml = updatedHtml.replace('</head>', `${configScript}</head>`);
-        }
-
-        return updatedHtml;
-      } catch (error) {
-        logger.error('[inject-fallback-title] 注入标题失败:', error);
-        return html;
-      }
       },
     },
   } as unknown as Plugin;

@@ -88,12 +88,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { Field, Icon, showToast, Empty, List, Cell } from 'vant';
 import scanIcon from '@/assets/scan.svg';
 import { inventoryApi } from '@/services/inventory';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -118,9 +116,9 @@ function closeMenu() {
 }
 
 function handleScan() {
-  logger.info('Scan clicked');
+  console.info('Scan clicked');
   router.push('/scanner').catch(err => {
-    logger.error('Navigation error:', err);
+    console.error('Navigation error:', err);
   });
   closeMenu();
 }
@@ -143,7 +141,7 @@ async function onSearch() {
     resultList.value = rows;
     finished.value = true; // 简单起见，一次性加载
   } catch (error) {
-    logger.error('Search failed:', error);
+    console.error('Search failed:', error);
     showToast('搜索失败');
     finished.value = true;
   } finally {

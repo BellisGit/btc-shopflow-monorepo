@@ -4,7 +4,7 @@
  * 
  * 此模块用于所有应用共享 EPS 服务代码，避免每个应用都独立打包
  */
-import { logger } from '../utils/logger';
+;
 
 import { wrapServiceTree } from '../btc/service';
 
@@ -270,7 +270,7 @@ export function initDictDataFromEps(epsList: any[]): void {
   }).catch((err) => {
     // 静默失败，不影响应用运行
     if (import.meta.env.DEV) {
-      logger.warn('[eps] 初始化字典数据失败:', err);
+      console.warn('[eps] 初始化字典数据失败:', err);
     }
   });
 }

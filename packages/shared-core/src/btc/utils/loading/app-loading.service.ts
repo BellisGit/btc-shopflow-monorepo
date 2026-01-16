@@ -23,7 +23,7 @@ interface BtcAppLoadingInstance {
   showTime: number; // 显示时间戳
 }
 
-type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
+type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress' | 'flower';
 
 /**
  * 获取当前的 Loading 样式（同步版本）
@@ -34,15 +34,15 @@ function getLoadingStyle(): LoadingStyle {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       return 'circle';
     }
-    
+
     // 直接读取 storage 中的 settings（因为这是同步函数）
     // 注意：由于 appStorage.settings 可能存储在 Cookie 中，这里需要同时检查 storage 和 Cookie
     try {
       // 尝试读取 storage 中的 settings
       const settings = storage.get<Record<string, any>>('settings');
-      
+
       if (settings) {
-        
+
         if (settings.loadingStyle === 'dots') {
           return 'dots';
         }
@@ -52,8 +52,14 @@ function getLoadingStyle(): LoadingStyle {
         if (settings.loadingStyle === 'gradient') {
           return 'gradient';
         }
+        if (settings.loadingStyle === 'progress') {
+          return 'progress';
+        }
+        if (settings.loadingStyle === 'flower') {
+          return 'flower';
+        }
       }
-      
+
       // 如果 localStorage 中没有，尝试从 Cookie 读取（如果可用）
       try {
         const cookieSettings = document.cookie
@@ -62,7 +68,7 @@ function getLoadingStyle(): LoadingStyle {
         if (cookieSettings) {
           const cookieValue = decodeURIComponent(cookieSettings.split('=')[1]);
           const settings = JSON.parse(cookieValue);
-          
+
           if (settings.loadingStyle === 'dots') {
             return 'dots';
           }
@@ -72,11 +78,17 @@ function getLoadingStyle(): LoadingStyle {
           if (settings.loadingStyle === 'gradient') {
             return 'gradient';
           }
+          if (settings.loadingStyle === 'progress') {
+            return 'progress';
+          }
+          if (settings.loadingStyle === 'flower') {
+            return 'flower';
+          }
         }
       } catch (cookieError) {
         // 忽略 Cookie 读取错误
       }
-      
+
     } catch (e) {
       // 忽略解析错误
     }
@@ -92,7 +104,7 @@ function getLoadingStyle(): LoadingStyle {
  */
 class BtcAppLoadingService {
   private instances: Map<string, BtcAppLoadingInstance> = new Map();
-  
+
   constructor() {
     // 监听 loading 样式变化事件
     // 组件内部已监听此事件，这里不需要额外处理
@@ -124,11 +136,11 @@ class BtcAppLoadingService {
       // 动态导入 Vue 组件
       const sharedComponents = await import('@btc/shared-components');
       const BtcAppLoading = sharedComponents.BtcAppLoading;
-      
+
       if (!BtcAppLoading) {
         throw new Error('BtcAppLoading component not found in @btc/shared-components');
       }
-      
+
       const { createApp: createVueApp } = await import('vue');
 
       // 创建容器元素
@@ -173,7 +185,7 @@ class BtcAppLoadingService {
   private findOrCreateSkeleton(container: HTMLElement): HTMLElement | null {
     // 优先查找已存在的骨架屏
     let skeleton = container.querySelector('#app-skeleton') as HTMLElement;
-    
+
     if (!skeleton) {
       // 如果不存在，不自动创建（由组件提供）
       return null;
@@ -193,7 +205,7 @@ class BtcAppLoadingService {
     if (appDisplayName === '应用') {
       return;
     }
-    
+
     // 关键：在显示新的loading之前，先清除所有#Loading元素（包括system-app的"拜里斯科技"）
     // 确保不会被子应用的index.html中的loading覆盖，也不会被system-app的loading覆盖
     // 使用 is-hide 类，样式已在 loading.css 中定义
@@ -205,7 +217,7 @@ class BtcAppLoadingService {
       }
     });
 
-    
+
     // 关键：隐藏所有其他应用的loading实例（只显示当前应用的loading）
     // 遍历所有实例，隐藏不是当前应用的loading
     this.instances.forEach((instance, key) => {
@@ -213,7 +225,7 @@ class BtcAppLoadingService {
         this.hide(key);
       }
     });
-    
+
     // 查找容器（如果找不到，使用document.body作为占位符，因为loading使用fixed定位）
     const appContainer = this.findContainer(appDisplayName, container) || document.body;
 
@@ -251,7 +263,7 @@ class BtcAppLoadingService {
     // 记录显示时间戳
     const showTime = Date.now();
     instance.showTime = showTime;
-    
+
     // 优先使用骨架屏
     const skeleton = this.findOrCreateSkeleton(instance.container);
     if (skeleton) {
@@ -271,7 +283,7 @@ class BtcAppLoadingService {
           instance.vueInstance = vueInstance;
           // 关键：由于使用fixed定位，应该添加到body而不是container，确保覆盖整个屏幕
           document.body.appendChild(loadingElement);
-          
+
           // 关键修复：确保背景色在有内容时显示（和根级别一样使用深色背景）
           requestAnimationFrame(() => {
             const mask = loadingElement.querySelector('.btc-app-loading-mask');
@@ -289,12 +301,12 @@ class BtcAppLoadingService {
           // 如果 Vue 应用已存在，更新 props（如果需要）
           // 注意：Vue 3 中 props 是只读的，如果需要更新，需要重新挂载
           // 这里暂时不更新，因为 BtcAppLoading 组件内部已经通过响应式状态管理
-          
+
           // 确保loading元素在body中（如果不在，移动到body）
           if (instance.loadingElement.parentNode !== document.body) {
             document.body.appendChild(instance.loadingElement);
           }
-          
+
           // 关键修复：确保背景色在有内容时显示（和根级别一样使用深色背景）
           requestAnimationFrame(() => {
             const mask = instance.loadingElement?.querySelector('.btc-app-loading-mask');
@@ -309,7 +321,7 @@ class BtcAppLoadingService {
             }
           });
         }
-        
+
         instance.isVisible = true;
       } catch (error) {
         // 如果 Vue 组件加载失败，降级方案：创建一个简单的 loading 元素
@@ -349,9 +361,9 @@ class BtcAppLoadingService {
    */
   hide(appDisplayName: string): void {
     const hideTime = Date.now();
-    
+
     const instance = this.instances.get(appDisplayName);
-    
+
     // 如果实例不存在，尝试通过 DOM 直接查找并关闭所有 .app-loading 元素（兜底方案）
     if (!instance) {
       // 查找所有 .app-loading 元素并强制关闭
@@ -405,7 +417,7 @@ class BtcAppLoadingService {
         mask.style.setProperty('visibility', 'hidden', 'important');
         mask.style.setProperty('opacity', '0', 'important');
       }
-      
+
       // 等待过渡完成后再卸载和移除
       setTimeout(() => {
         try {
@@ -436,7 +448,7 @@ class BtcAppLoadingService {
       instance.loadingElement.style.setProperty('visibility', 'hidden', 'important');
       instance.loadingElement.style.setProperty('opacity', '0', 'important');
       instance.loadingElement.style.setProperty('pointer-events', 'none', 'important');
-      
+
       // 等待过渡完成后再移除
       setTimeout(() => {
         try {
@@ -485,6 +497,46 @@ class BtcAppLoadingService {
    */
   destroyAll(): void {
     this.hideAll();
+    this.instances.clear();
+  }
+
+  /**
+   * 清理所有实例（用于应用卸载时，彻底清理资源）
+   */
+  cleanupAll(): void {
+    // 清理所有实例的 Vue 应用和 DOM 元素
+    this.instances.forEach((instance, appName) => {
+      try {
+        // 清理定时器
+        if (instance.timeoutId) {
+          clearTimeout(instance.timeoutId);
+          instance.timeoutId = null;
+        }
+
+        // 卸载 Vue 应用
+        if (instance.vueApp) {
+          try {
+            instance.vueApp.unmount();
+          } catch (error) {
+            // 忽略卸载错误
+          }
+          instance.vueApp = null;
+        }
+
+        // 移除 DOM 元素
+        if (instance.loadingElement && instance.loadingElement.parentNode) {
+          instance.loadingElement.parentNode.removeChild(instance.loadingElement);
+        }
+        instance.loadingElement = null;
+        instance.vueInstance = null;
+        instance.skeletonElement = null;
+        instance.isVisible = false;
+      } catch (error) {
+        // 忽略清理错误
+      }
+    });
+
+    // 清空 Map
     this.instances.clear();
   }
 

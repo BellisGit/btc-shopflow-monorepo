@@ -4,7 +4,14 @@
  * 避免这些文件被 Vue Router 处理
  * 在构建时，将 public 目录下的 HTML、CSS、JS 文件复制到 dist/duty/ 目录
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[duty-static]', ...args),
+  error: (...args: any[]) => console.error('[duty-static]', ...args),
+  info: (...args: any[]) => console.info('[duty-static]', ...args),
+  debug: (...args: any[]) => console.debug('[duty-static]', ...args),
+};
 
 import type { Plugin, ViteDevServer } from 'vite';
 import type { ResolvedConfig } from 'vite';
@@ -57,7 +64,7 @@ export function dutyStaticPlugin(appDir: string): Plugin {
       res.end(fileContent);
     } catch (error) {
       // 读取文件失败，继续下一个中间件
-      logger.error('[duty-static] 读取文件失败:', filePath, error);
+      console.error('[duty-static] 读取文件失败:', filePath, error);
       next();
     }
   };
@@ -120,8 +127,8 @@ export function dutyStaticPlugin(appDir: string): Plugin {
         const stableVersion = jqueryFiles.find(f => f.includes('jquery-3.'));
         jqueryFile = (stableVersion || jqueryFiles[0]) ?? null;
         if (jqueryFiles.length > 1) {
-          logger.info(`[duty-static] 📋 找到多个 jQuery 文件: ${jqueryFiles.join(', ')}`);
-          logger.info(`[duty-static] 📌 使用: ${jqueryFile}`);
+          console.info(`[duty-static] 📋 找到多个 jQuery 文件: ${jqueryFiles.join(', ')}`);
+          console.info(`[duty-static] 📌 使用: ${jqueryFile}`);
         }
       }
 
@@ -131,12 +138,12 @@ export function dutyStaticPlugin(appDir: string): Plugin {
         const jqueryDestPath = resolve(dutyDir, jqueryFile);
         try {
           copyFileSync(jquerySourcePath, jqueryDestPath);
-          logger.info(`[duty-static] 📦 已复制 ${jqueryFile} 到 dist/duty/`);
+          console.info(`[duty-static] 📦 已复制 ${jqueryFile} 到 dist/duty/`);
         } catch (error) {
-          logger.error(`[duty-static] ⚠️  复制 jQuery 文件失败:`, error);
+          console.error(`[duty-static] ⚠️  复制 jQuery 文件失败:`, error);
         }
       } else {
-        logger.warn(`[duty-static] ⚠️  警告: 未找到 jQuery 文件（jquery*.min.js）在 public 目录`);
+        console.warn(`[duty-static] ⚠️  警告: 未找到 jQuery 文件（jquery*.min.js）在 public 目录`);
       }
 
       let copiedCount = 0;
@@ -189,16 +196,16 @@ export function dutyStaticPlugin(appDir: string): Plugin {
                 copyFileSync(sourcePath, destPath);
               }
               copiedCount++;
-              logger.info(`[duty-static] 📦 已复制 ${file} 到 dist/duty/`);
+              console.info(`[duty-static] 📦 已复制 ${file} 到 dist/duty/`);
             }
           } catch (error) {
-            logger.error(`[duty-static] ⚠️  复制文件失败 ${file}:`, error);
+            console.error(`[duty-static] ⚠️  复制文件失败 ${file}:`, error);
           }
         }
       }
 
       if (copiedCount > 0) {
-        logger.info(`[duty-static] ✅ 构建完成：已复制 ${copiedCount} 个文件到 dist/duty/`);
+        console.info(`[duty-static] ✅ 构建完成：已复制 ${copiedCount} 个文件到 dist/duty/`);
       }
     },
   } as Plugin;

@@ -1,7 +1,7 @@
 /**
  * 消息生命周期管理
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { QueuedMessage, MessageDisplayHandler } from './types';
 
@@ -76,7 +76,7 @@ export class LifecycleManager {
 
     if (!state) {
       // 不重新创建，仅初始化状态
-      logger.warn('[LifecycleManager] Message state not found, skipping update:', messageId);
+      console.warn('[LifecycleManager] Message state not found, skipping update:', messageId);
       return;
     }
 
@@ -114,7 +114,7 @@ export class LifecycleManager {
 
         return;
       } catch (error) {
-        logger.error('[LifecycleManager] Failed to update badge:', error);
+        console.error('[LifecycleManager] Failed to update badge:', error);
         // 如果更新徽章失败，说明消息实例无效，抛出错误让上层处理
         throw new Error('Message instance is invalid, cannot update badge');
       }

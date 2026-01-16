@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref, reactive } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
@@ -88,12 +88,12 @@ export function usePasswordLogin() {
         router.push(redirectPath).catch((error) => {
           // 如果路由跳转失败（可能是路由未匹配或认证检查失败），使用 window.location 作为回退
           // 这样可以确保 cookie 被正确读取，路由守卫能够正确识别认证状态
-          logger.warn('[usePasswordLogin] Router push failed, using window.location as fallback:', error);
+          console.warn('[usePasswordLogin] Router push failed, using window.location as fallback:', error);
           window.location.href = redirectPath;
         });
       }
     } catch (error: any) {
-      logger.error('登录错误:', error);
+      console.error('登录错误:', error);
       BtcMessage.error(error.message || t('登录失败'));
       throw error;
     } finally {

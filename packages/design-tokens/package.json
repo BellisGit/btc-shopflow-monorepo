@@ -23,10 +23,11 @@
   },
   "scripts": {
     "build": "style-dictionary build --config config/style-dictionary.config.js",
-    "dev": "style-dictionary build --config config/style-dictionary.config.js --watch",
+    "dev": "node scripts/watch.mjs",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
+    "chokidar": "^3.6.0",
     "style-dictionary": "^4.3.1"
   }
 }
