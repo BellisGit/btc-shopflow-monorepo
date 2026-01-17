@@ -1,4 +1,4 @@
-﻿# @btc/shared-components
+# @btc/shared-components
 
 BTC 共享组件库，提供项目中所有应用共享的可复用 Vue 组件。
 
@@ -50,8 +50,8 @@ import { BtcCrud, BtcForm, BtcDialog } from '@btc/shared-components';
   - 📄 [文档](./src/components/btc-views-tabs-group/README.md)
 - **BtcCascader** - 级联选择器组件
   - 📄 [文档](./src/components/btc-cascader/README.md)
-- **BtcTableGroup** - 表格组组件，用于多表格场景
-  - 📄 [文档](./src/components/btc-table-group/README.md)
+- **BtcMasterTableGroup** - 主列表表格组组件，左侧 MasterList + 右侧 CRUD 表格
+  - 📄 [文档](./src/components/data/btc-master-table-group/README.md)
 - **BtcDoubleGroup** - 双列分组组件，提供双左栏 + CRUD 联动
   - 📄 [文档](./src/components/btc-double-group/README.md)
 - **BtcMessage** - 消息提示组件（全局 API）
@@ -251,7 +251,7 @@ import {
   BtcTabs,
   BtcViewsTabsGroup,
   BtcCascader,
-  BtcTableGroup,
+  BtcMasterTableGroup,
   BtcMessage,
   BtcNotification,
   
@@ -305,9 +305,9 @@ import type {
   BtcFormProps,
   BtcViewsTabsGroupConfig,
   TabViewConfig,
-  TableGroupProps,
-  TableGroupEmits,
-  TableGroupExpose,
+  MasterTableGroupProps,
+  MasterTableGroupEmits,
+  MasterTableGroupExpose,
   BtcContainerProps,
   BtcGridGroupProps,
 } from '@btc/shared-components';

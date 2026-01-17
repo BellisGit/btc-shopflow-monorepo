@@ -6,7 +6,7 @@
       :right-service="wrappedMaterialService"
       :table-columns="materialColumns"
       :form-items="materialFormItems"
-      :left-title="'title.inventory.dataSource.domains'"
+      left-title="title.inventory.domains"
       :right-title="t('menu.inventory.data_source.list')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -216,7 +216,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       domainId = dataDomainIds[0];
     } else if (!domainId) {
       // 如果既没有选中域，数据中也没有 domainId，则提示错误
-      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域或在导入数据中包含域ID');
+      message.warning(t('title.inventory.domainsSelectRequired') || '请先选择左侧域或在导入数据中包含域ID');
       done();
       return;
     }

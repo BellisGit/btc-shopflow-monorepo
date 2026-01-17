@@ -6,7 +6,7 @@
       :right-service="wrappedTicketService"
       :table-columns="ticketColumns"
       :form-items="ticketFormItems"
-      :left-title="'title.inventory.dataSource.domains'"
+      left-title="title.inventory.domains"
       :right-title="t('menu.inventory.data_source.ticket')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -50,6 +50,45 @@ const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
 const exportLoading = ref(false);
+
+// 调试：打印标题翻译
+import { getCurrentInstance, onMounted } from 'vue';
+import { getLocaleMessages } from '@/i18n/getters';
+
+const leftTitleKey = 'title.inventory.domains';
+const translatedTitle = t(leftTitleKey);
+
+// 在 onMounted 中检查（确保 i18n 已初始化）
+onMounted(() => {
+  // 获取 i18n 实例
+  const instance = getCurrentInstance();
+  const i18nInstance = instance?.appContext.config.globalProperties.$i18n;
+  const composer = instance?.appContext.config.globalProperties.$i18n?.global;
+
+  // 检查配置中是否有该键
+  const messages = getLocaleMessages();
+  const zhCNMessages = messages['zh-CN'];
+  const hasKey = zhCNMessages && (zhCNMessages.title?.inventory?.dataSource?.domains !== undefined);
+
+  console.log('[InventoryTicket] 标题翻译调试:');
+  console.log('  - 原始键:', leftTitleKey);
+  console.log('  - 翻译结果:', translatedTitle);
+  console.log('  - 是否找到翻译:', translatedTitle !== leftTitleKey);
+  console.log('  - i18n 实例:', i18nInstance ? '找到' : '未找到');
+  console.log('  - composer:', composer ? '找到' : '未找到');
+  console.log('  - getLocaleMessages() 结果:', messages);
+  console.log('  - zh-CN messages 中的 title.inventory:', zhCNMessages?.title?.inventory);
+  console.log('  - 配置中是否有该键:', hasKey);
+  console.log('  - zh-CN messages 中 title.inventory.dataSource.domains:', zhCNMessages?.title?.inventory?.dataSource?.domains);
+  if (composer) {
+    const currentLocale = composer.locale.value;
+    const localeMessages = composer.getLocaleMessage(currentLocale);
+    console.log('  - 当前语言:', currentLocale);
+    console.log('  - composer 中的 messages:', localeMessages);
+    console.log('  - composer 中 title.inventory.dataSource.domains:', localeMessages?.title?.inventory?.dataSource?.domains);
+    console.log('  - composer.te 检查:', composer.te(leftTitleKey));
+  }
+});
 
 // 统一导出/导入文件名
 const exportFilename = computed(() => t('menu.inventory.data_source.ticket'));
@@ -176,7 +215,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
   try {
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域');
+      message.warning(t('title.inventory.domainsSelectRequired') || '请先选择左侧域');
       done();
       return;
     }

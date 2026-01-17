@@ -246,7 +246,15 @@ async function main() {
   const isClean = checkWorkingDirectory();
   if (!isClean) {
     if (isAuto) {
-      log('⚠️  工作区有未提交的更改，自动模式继续执行', 'yellow');
+      // 自动模式：自动提交所有更改
+      log('⚠️  工作区有未提交的更改，自动模式下将自动提交', 'yellow');
+      try {
+        execInteractive('git add -A');
+        execInteractive('git commit -m "chore: prepare for release"');
+        log('✅ 已自动提交所有更改', 'green');
+      } catch (error) {
+        log('⚠️  自动提交失败，继续执行', 'yellow');
+      }
     } else {
       log('⚠️  工作区有未提交的更改', 'yellow');
       const shouldContinue = await confirm('是否先提交这些更改？', true);

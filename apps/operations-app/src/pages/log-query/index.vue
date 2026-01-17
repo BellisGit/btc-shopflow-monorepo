@@ -152,7 +152,13 @@
         </div>
       </BtcCrudRow>
       <BtcCrudRow>
-        <BtcTable :columns="columns" :header-background="false" border :disable-auto-created-at="true" />
+        <BtcTable 
+          :columns="columns" 
+          :header-background="false" 
+          border 
+          :disable-auto-created-at="true"
+          :auto-height="true"
+        />
       </BtcCrudRow>
       <BtcCrudRow>
         <BtcCrudFlex1 />
@@ -547,16 +553,6 @@ const handleBeforeRefresh = (params: Record<string, any>) => {
 </script>
 
 <style lang="scss" scoped>
-// 修复 .page 容器中 BtcCrud 的滚动问题
-// .page > * { flex-shrink: 0; } 会阻止 BtcCrud 收缩，需要覆盖
-.page {
-  // 让 BtcCrud 可以收缩并占据剩余空间
-  > .btc-crud {
-    flex: 1;
-    min-height: 0;
-    flex-shrink: 1; // 覆盖 .page > * { flex-shrink: 0; }
-  }
-}
 
 .filter-form-container {
   width: 100%;

@@ -164,8 +164,8 @@ export default {
       'menu.inventory.result': '实盘数据',
       'menu.inventory.confirm': '流程确认',
       // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
-      'title.inventory.dataSource.domains': '域列表',
-      'title.inventory.dataSource.domains.select_required': '请先选择左侧域',
+      'title.inventory.domains': '域列表',
+      'title.inventory.domainsSelectRequired': '请先选择左侧域',
       'title.inventory.check.list': '盘点列表',
       'title.data.files.template.categories': '模板分类',
       'title.data.files.template.templateList': '模板列表',
@@ -256,8 +256,8 @@ export default {
       'menu.inventory.result': 'Live Inventory Data',
       'menu.inventory.confirm': 'Process Confirmation',
       // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title  and right-title）
-      'title.inventory.dataSource.domains': 'Domain List',
-      'title.inventory.dataSource.domains.select_required': 'Please select a domain on the left first',
+      'title.inventory.domains': 'Domain List',
+      'title.inventory.domainsSelectRequired': 'Please select a domain on the left first',
       'title.inventory.check.list': 'Check List',
       'title.data.files.template.categories': 'Template Categories',
       'title.data.files.template.templateList': 'Template List',

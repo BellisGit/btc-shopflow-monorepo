@@ -225,7 +225,7 @@ body.theme-brand-red {
 	flex-direction: column;
 
 	.el-scrollbar__wrap {
-		overflow-x: hidden !important;
+		overflow-x: auto !important; // 允许水平滚动，让 el-table 自己处理水平滚动条
 		overflow-y: auto !important;
 		flex: 1 !important;
 		min-height: 0 !important;

@@ -1,10 +1,20 @@
 import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
-import { createThemePlugin, initGlobalElementPlus } from '@btc/shared-core';
+import { createThemePlugin, initGlobalElementPlus, updateElementPlusLocale } from '@btc/shared-core';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import en from 'element-plus/es/locale/lang/en';
 import '../../styles/theme.scss';
 
 // ECharts 插件
 import EChartsPlugin from '../../plugins/echarts';
+
+/**
+ * Element Plus 语言配置
+ */
+export const elementLocale = {
+  'zh-CN': zhCn,
+  'en-US': en,
+};
 
 export type LogisticsThemePlugin = ReturnType<typeof createThemePlugin>;
 

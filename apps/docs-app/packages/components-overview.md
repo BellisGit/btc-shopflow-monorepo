@@ -66,8 +66,8 @@ import { BtcCrud, BtcForm, BtcDialog } from '@btc/shared-components';
   - 📄 [文档](../../../packages/shared-components/src/components/btc-views-tabs-group/README.md)
 - **BtcCascader** - 级联选择器组件
   - 📄 [文档](../../../packages/shared-components/src/components/btc-cascader/README.md)
-- **BtcTableGroup** - 表格组组件，用于多表格场景
-  - 📄 [文档](../../../packages/shared-components/src/components/btc-table-group/README.md)
+- **BtcMasterTableGroup** - 主列表表格组组件，左侧 MasterList + 右侧 CRUD 表格
+  - 📄 [文档](../../../packages/shared-components/src/components/data/btc-master-table-group/README.md)
 - **BtcDoubleGroup** - 双列分组组件，提供双左栏 + CRUD 联动
   - 📄 [文档](../../../packages/shared-components/src/components/btc-double-group/README.md)
 - **BtcMessage** - 消息提示组件（全局 API）
@@ -137,7 +137,7 @@ import { CodePlugin, BtcCodeJson } from '@btc/shared-components';
 - [BtcSearch 文档](../../../packages/shared-components/src/common/search/README.md) - 搜索组件
 - [BtcGridGroup 文档](../../../packages/shared-components/src/common/grid-group/README.md) - 网格组组件
 - [BtcViewsTabsGroup 文档](../../../packages/shared-components/src/components/btc-views-tabs-group/README.md) - 视图标签组组件
-- [BtcTableGroup 文档](../../../packages/shared-components/src/components/btc-table-group/README.md) - 表格组组件
+- [BtcMasterTableGroup 文档](../../../packages/shared-components/src/components/data/btc-master-table-group/README.md) - 主列表表格组组件
 - [BtcDoubleGroup 文档](../../../packages/shared-components/src/components/btc-double-group/README.md) - 双列分组组件
 - [BtcCascader 文档](../../../packages/shared-components/src/components/btc-cascader/README.md) - 级联选择器组件
 - [BtcMessage 文档](../../../packages/shared-components/src/components/btc-message/README.md) - 消息提示组件
@@ -267,7 +267,7 @@ import {
   BtcTabs,
   BtcViewsTabsGroup,
   BtcCascader,
-  BtcTableGroup,
+  BtcMasterTableGroup,
   BtcMessage,
   BtcNotification,
   

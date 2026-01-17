@@ -32,14 +32,9 @@ export const getFinanceRoutes = (): RouteRecordRaw[] => {
     // 合并 views 和 pages 路由
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
-    // 输出扫描结果（开发环境）
-    if (import.meta.env.DEV) {
-      console.info(
-        `[financeRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
-      if (autoRoutes.conflicts.length > 0) {
-        console.warn(`[financeRouter] Route conflicts:`, autoRoutes.conflicts);
-      }
+    // 仅在存在冲突时输出警告
+    if (autoRoutes.conflicts.length > 0) {
+      console.warn(`[financeRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
     console.error(`[financeRouter] Failed to scan routes from modules:`, error);

@@ -252,6 +252,54 @@ export function estimateLogSize(entry: ServerLogEntry): number {
 }
 
 /**
+ * 计算日志条目的hash值（用于去重和累加）
+ * 基于关键字段：message + level + eventType + route
+ */
+export function calculateLogHash(entry: LogEntry): string {
+  try {
+    const key = [
+      entry.message || '',
+      entry.level || '',
+      entry.extensions?.eventType || '',
+      entry.extensions?.route?.to || '',
+      entry.extensions?.route?.from || '',
+      entry.extensions?.userAction?.actionType || '',
+      entry.extensions?.business?.eventName || '',
+    ].join('|');
+    
+    // 简单的hash函数（基于字符串长度和字符码）
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      const char = key.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 转换为32位整数
+    }
+    
+    return hash.toString(36);
+  } catch {
+    // 如果计算失败，使用时间戳作为fallback
+    return Date.now().toString(36);
+  }
+}
+
+/**
+ * 生成批次号ID
+ * 格式：batch-{timestamp}-{appId}
+ */
+export function generateBatchId(appId: string): string {
+  const timestamp = Date.now();
+  const shortAppId = appId.replace(/btc-shopflow-|-app/g, '');
+  return `batch-${timestamp}-${shortAppId}`;
+}
+
+/**
+ * 判断两个日志条目是否相同（用于去重）
+ */
+export function isLogEntryEqual(entry1: LogEntry, entry2: LogEntry): boolean {
+  return calculateLogHash(entry1) === calculateLogHash(entry2);
+}
+
+/**
  * 日志筛选选项类型
  */
 export interface LogFilterOptions {

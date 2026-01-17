@@ -69,7 +69,6 @@ export { default as BtcSplitterPanel } from './components/basic/btc-splitter/btc
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
 export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
 export { default as BtcDoubleLayout } from './components/layout/btc-double-layout/index.vue';
-export { default as BtcMasterViewGroup } from './components/layout/btc-double-layout/index.vue';
 export { default as BtcViews } from './components/layout/btc-views/index.vue';
 export { default as BtcAppSkeleton } from './components/basic/app-skeleton/index.vue';
 export { default as BtcGlobalSearch } from './components/layout/app-layout/global-search/index.vue';

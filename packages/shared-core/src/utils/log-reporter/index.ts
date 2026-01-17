@@ -9,6 +9,19 @@ export * from './utils';
 export { getLogFilterOptions } from './utils';
 export type { LogFilterOptions } from './utils';
 
+// 日志累加器导出（应用层使用）
+export { LogAccumulator } from './accumulator';
+export type { LogAccumulatorOptions, LogEntryWithCount } from './types';
+
+// 日志分类器导出
+export { LogClassifier } from './classifier';
+
+// 日志处理器导出
+export { LogProcessor } from './processor';
+
+// 自适应限流器导出
+export { AdaptiveRateLimiter } from './rate-limiter';
+
 // Pino 集成导出
 export {
   createPinoLogger,

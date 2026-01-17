@@ -6,7 +6,7 @@
       :right-service="wrappedBomService"
       :table-columns="bomColumns"
       :form-items="bomFormItems"
-      :left-title="'title.inventory.dataSource.domains'"
+      left-title="title.inventory.domains"
       :right-title="t('menu.inventory.data_source.bom')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -207,7 +207,7 @@ const handleImport = async (
 
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域');
+      message.warning(t('title.inventory.domainsSelectRequired') || '请先选择左侧域');
       done();
       return;
     }

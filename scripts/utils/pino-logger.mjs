@@ -66,7 +66,9 @@ function convertPinoLogToLogEntry(log, appName = 'scripts') {
 
 /**
  * 直接通过 HTTP 上报日志到日志中心
- * 注意：在 Node.js 环境中，需要确保有可用的 HTTP 客户端（如 node-fetch 或原生 fetch）
+ * @deprecated 此函数为内部使用，应用应该通过 SDK (reportLog) 上报日志
+ * 注意：此函数仅在 Node.js 环境（scripts）中使用，前端应用必须使用 SDK
+ * 在 Node.js 环境中，需要确保有可用的 HTTP 客户端（如 node-fetch 或原生 fetch）
  */
 async function reportLogViaHttp(logEntry) {
   try {

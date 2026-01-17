@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <BtcMasterViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.template.categories" right-title="title.data.files.template.templateList">
+    <BtcDoubleLayout ref="viewGroupRef" left-width="280px" left-title="title.data.files.template.categories" right-title="title.data.files.template.templateList">
       <!-- 左侧标题栏操作 -->
       <template #left-header>
         <span class="label">{{ t('data.file.template.categories') }}</span>
@@ -173,14 +173,14 @@
           </div>
         </div>
       </template>
-    </BtcMasterViewGroup>
+    </BtcDoubleLayout>
   </div>
 </template>
 
 <script setup lang="ts">
 import { BtcConfirm, BtcMessage, BtcInput } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
-import { BtcMasterViewGroup } from '@btc/shared-components';
+import { BtcDoubleLayout } from '@btc/shared-components';
 import { Document, Picture, VideoPlay, Check, ZoomIn, Download, Delete, Search } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 

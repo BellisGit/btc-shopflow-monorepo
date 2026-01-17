@@ -325,3 +325,78 @@ export interface LogReportResponse {
   message?: string;
   count?: number;
 }
+
+/**
+ * 日志频率类型
+ */
+export type LogFrequency = 'low' | 'high';
+
+/**
+ * 日志优先级
+ */
+export type LogPriority = 'high' | 'normal' | 'low';
+
+/**
+ * 日志频率阈值配置
+ */
+export interface LogFrequencyThresholds {
+  /**
+   * 单位时间内（如10秒）相同类型日志数量阈值
+   * @default 10
+   */
+  highFrequencyThreshold: number;
+  /**
+   * 检查时间窗口（毫秒）
+   * @default 10000
+   */
+  checkWindow: number;
+}
+
+/**
+ * 日志累加器选项
+ */
+export interface LogAccumulatorOptions {
+  /**
+   * 累加时间窗口（毫秒），相同日志在此时间窗口内会合并
+   * @default 1000
+   */
+  timeWindow?: number;
+  /**
+   * 是否自动刷新（定期将累加的日志上报）
+   * @default false
+   */
+  autoFlush?: boolean;
+  /**
+   * 自动刷新间隔（毫秒）
+   * @default 5000
+   */
+  autoFlushInterval?: number;
+}
+
+/**
+ * 日志条目（带累加计数）
+ */
+export interface LogEntryWithCount extends LogEntry {
+  /**
+   * 重复次数（累加后的计数）
+   */
+  repeatCount?: number;
+}
+
+/**
+ * 日志分类结果
+ */
+export interface LogClassificationResult {
+  /**
+   * 频率类型
+   */
+  frequency: LogFrequency;
+  /**
+   * 优先级
+   */
+  priority: LogPriority;
+  /**
+   * 是否需要数据整理
+   */
+  needsProcessing: boolean;
+}

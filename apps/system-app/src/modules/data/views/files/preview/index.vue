@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <BtcMasterViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.preview.categories" right-title="title.data.files.preview.fileList">
+    <BtcDoubleLayout ref="viewGroupRef" left-width="280px" left-title="title.data.files.preview.categories" right-title="title.data.files.preview.fileList">
       <!-- 左侧标题栏操作 -->
       <template #left-header>
         <span class="label">{{ t('data.file.preview.categories') }}</span>
@@ -169,14 +169,14 @@
             />
         </btc-crud-row>
       </template>
-    </BtcMasterViewGroup>
+    </BtcDoubleLayout>
   </div>
 </template>
 
 <script setup lang="ts">
 import { BtcConfirm, BtcMessage, BtcCrudRow, BtcCrudFlex1, BtcEmpty, BtcInput } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
-import { BtcMasterViewGroup } from '@btc/shared-components';
+import { BtcDoubleLayout } from '@btc/shared-components';
 import { Document, Picture, VideoPlay, Check, ZoomIn, Download, Delete, Search } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 
@@ -674,15 +674,6 @@ onMounted(() => {
         }
       }
     }
-      
-  // 无数据时：BtcEmpty 占据剩余高度
-  :deep(.btc-empty) {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 0;
-  }
 }
 
 // 第三个 btc-crud-row：分页（底部 padding）

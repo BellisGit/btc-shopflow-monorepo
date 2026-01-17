@@ -59,10 +59,9 @@ import { ref, computed, onMounted } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcMasterTableGroup, BtcDialog } from '@btc/shared-components';
+import { BtcMasterTableGroup, BtcDialog, BtcSvg } from '@btc/shared-components';
 import { formatDateTime, formatTableNumber } from '@btc/shared-utils';
 import { service } from '@services/eps';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
   name: 'btc-logistics-inventory-detail',

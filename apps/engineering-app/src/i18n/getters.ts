@@ -26,7 +26,7 @@ const sharedMessages = loadFlatI18nMessages([
 const mergedAppZhCN = { ...sharedMessages['zh-CN'], ...zhCN };
 const mergedAppEnUS = { ...sharedMessages['en-US'], ...enUS };
 
-export const { getLocaleMessages, normalizeLocale, clearLocaleMessagesCache } = setupAppI18n({
+export const { getLocaleMessages, normalizeLocale, clearLocaleMessagesCache, tSync } = setupAppI18n({
   appId: 'engineering',
   configFiles,
   sharedCoreZh,
@@ -35,6 +35,7 @@ export const { getLocaleMessages, normalizeLocale, clearLocaleMessagesCache } = 
   sharedComponentsEn,
   appZhCN: mergedAppZhCN,
   appEnUS: mergedAppEnUS,
+  needsTSync: true,
 });
 
 export type { SupportedLocale, LocaleMessages };

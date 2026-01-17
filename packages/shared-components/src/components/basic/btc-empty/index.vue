@@ -69,6 +69,9 @@ const props = withDefaults(defineProps<BtcEmptyProps>(), {
   justify-content: center;
   padding: 40px 20px;
   box-sizing: border-box;
+  // 关键：在 flex 布局中占据剩余空间
+  flex: 1 1 auto;
+  min-height: 0; // 允许收缩，避免内容溢出
 
   :deep(.el-empty) {
     display: flex;

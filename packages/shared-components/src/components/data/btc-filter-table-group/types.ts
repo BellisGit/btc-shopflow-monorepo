@@ -123,7 +123,7 @@ export interface BtcFilterTableGroupProps {
    */
   leftSize?: 'small' | 'default' | 'large';
 
-  // 其他配置（继承自 BtcTableGroup）
+  // 其他配置（继承自 BtcMasterTableGroup）
   /**
    * 是否显示新增按钮，默认 true
    */

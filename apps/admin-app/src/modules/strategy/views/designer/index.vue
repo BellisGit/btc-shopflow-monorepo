@@ -209,7 +209,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import { useSelection } from './composables/useSelection';
-import { BtcGridGroup } from '@btc/shared-components';
+// import { BtcGridGroup } from '@btc/shared-components'; // ⚠️ 组件不存在，已从导出中移除，需要实现或使用替代方案
 import { useComponentLibrary } from './composables/useComponentLibrary';
 import { useCanvasInteraction } from './composables/useCanvasInteraction';
 import { useNodeManagement } from './composables/useNodeManagement';

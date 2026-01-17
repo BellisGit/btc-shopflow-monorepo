@@ -23,10 +23,9 @@ function getQualityRoutes() {
 
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
-    if (import.meta.env.DEV) {
-      console.info(
-        `[QualityRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
+    // 仅在存在冲突时输出警告
+    if (autoRoutes.conflicts.length > 0) {
+      console.warn(`[QualityRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
     console.error('[QualityRouter] Failed to scan routes from modules:', error);

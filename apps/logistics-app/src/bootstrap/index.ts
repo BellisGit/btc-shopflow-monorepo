@@ -13,6 +13,7 @@ import {
   mountSubApp,
   unmountSubApp,
   updateSubApp,
+  updateElementPlusLocale,
   // setupRouteSync 未使用，已移除
   setupHostLocationBridge,
   ensureCleanUrl,
@@ -26,10 +27,8 @@ import {
 import App from '../App.vue';
 import { userSettingPlugin } from '../plugins/user-setting';
 import { createLogisticsRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
-// LogisticsI18nPlugin 和 LogisticsThemePlugin 未使用，已移除导入
-import { elementLocale } from './core/ui';
 import type { RouteRecordRaw } from 'vue-router';
-import { pageRoutes } from '../router/routes/logistics';
+import { getLogisticsPageRoutes } from '../router/routes/logistics';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import type { MenuItem } from '../store/menuRegistry';
 import type { TabMeta } from '../store/tabRegistry';
@@ -455,8 +454,8 @@ const setupLogisticsRouteSync = (context: LogisticsAppContext) => {
     const relativeFullPath = ensureLeadingSlash(to.fullPath || to.path || '');
     const fullPath = normalizeToHostPath(relativeFullPath, LOGISTICS_BASE_PATH);
 
-    // 关键：如果是首页（meta.isHome === true），不触发路由变化事件，避免添加 tab
-    if (to.meta?.isHome === true) {
+    // 关键：如果是首页（meta.isHome === true 或路径是根路径 /），不触发路由变化事件，避免添加 tab
+    if (to.meta?.isHome === true || to.path === '/') {
       return;
     }
 
@@ -539,7 +538,9 @@ const setupLogisticsRouteSync = (context: LogisticsAppContext) => {
       nextTick(() => {
         const currentRoute = context.router.currentRoute.value;
         // 只有当路由已匹配时才触发事件（避免在路由未匹配时触发）
-        if (currentRoute.matched.length > 0) {
+        // 跳过首页，避免在首页显示标签
+        const isHomePath = currentRoute.path === '/' || currentRoute.matched.some(m => m.meta?.isHome === true);
+        if (currentRoute.matched.length > 0 && !isHomePath) {
           triggerRouteChangeEvent(currentRoute);
         }
       });
@@ -558,11 +559,8 @@ const setupLogisticsEventBridge = (context: LogisticsAppContext) => {
     if (newLocale && context.i18n?.i18n?.global) {
       context.i18n.i18n.global.locale.value = newLocale;
 
-      // 更新 Element Plus 的 locale
-      const locale = elementLocale[newLocale];
-      if (locale && context.app?.config?.globalProperties?.$ELEMENT) {
-        context.app.config.globalProperties.$ELEMENT.locale = locale;
-      }
+      // 更新 Element Plus 的 locale（使用 shared-core 的统一函数）
+      updateElementPlusLocale(newLocale);
     }
   }) as EventListener;
 
@@ -690,15 +688,13 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
   setupLogisticsEventBridge(context);
   ensureCleanUrl(context);
 
-  // 从路由配置自动生成并注册菜单和标签页
+  // 从路由配置自动生成并注册菜单（标签页由路由守卫动态添加，不需要预先注册）
   const { registerMenus } = await import('../store/menuRegistry');
-  const { registerTabs } = await import('../store/tabRegistry');
 
+  const pageRoutes = getLogisticsPageRoutes();
   const menus = generateMenusFromRoutes(pageRoutes);
-  const tabs = generateTabsFromRoutes(pageRoutes);
 
   registerMenus(LOGISTICS_APP_ID, menus);
-  registerTabs(LOGISTICS_APP_ID, tabs);
 
   // 设置退出登录函数（使用 useLogout composable）
   import('vue').then(({ nextTick }) => {

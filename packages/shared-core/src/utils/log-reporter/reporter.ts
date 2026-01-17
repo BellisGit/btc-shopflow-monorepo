@@ -1,12 +1,16 @@
 /**
  * 日志上报核心逻辑
  * 负责将日志上报到服务器
+ * 集成分类器、处理器、限流器
  */
 
-import type { LogEntry, LogReporterOptions, LogReportResponse, LogReportRequest } from './types';
+import type { LogEntry, LogReporterOptions, LogReportResponse, LogReportRequest, LogPriority } from './types';
 import { LogQueue } from './queue';
+import { LogClassifier } from './classifier';
+import { LogProcessor } from './processor';
+import { AdaptiveRateLimiter } from './rate-limiter';
 import { getCurrentAppId } from '../env-info';
-import { getFullAppId, convertToServerLogEntry, toISOString, estimateLogSize } from './utils';
+import { getFullAppId, convertToServerLogEntry, toISOString, estimateLogSize, generateBatchId } from './utils';
 import { isBusinessApp, isSpecialAppById } from '../../configs/app-env.config';
 
 /**
@@ -14,14 +18,18 @@ import { isBusinessApp, isSpecialAppById } from '../../configs/app-env.config';
  */
 export class LogReporter {
   private queue: LogQueue;
+  private classifier: LogClassifier;
+  private processor: LogProcessor;
+  private rateLimiter: AdaptiveRateLimiter;
   private readonly maxRetries: number;
   private readonly retryDelay: number;
   private readonly enabled: boolean;
   private readonly silent: boolean;
   private appName: string;
-  // 限流：记录最近 1 秒内的请求时间戳（后端限制 QPS 为每秒 5 次）
-  private readonly requestTimestamps: number[] = [];
-  private readonly maxRequestsPerSecond: number = 5;
+  
+  // 最小批次大小配置（用于处理后的日志数量检查）
+  private readonly highFrequencyMinBatchSize: number = 15;
+  private readonly lowFrequencyMinBatchSize: number = 50;
 
   constructor(options: LogReporterOptions = {}) {
     this.maxRetries = options.maxRetries || 3;
@@ -32,16 +40,32 @@ export class LogReporter {
     // 获取应用名称
     this.appName = this.getAppName();
 
+    // 初始化分类器
+    this.classifier = new LogClassifier();
+
+    // 初始化处理器
+    this.processor = new LogProcessor();
+
+    // 初始化自适应限流器（默认QPS为5）
+    this.rateLimiter = new AdaptiveRateLimiter({
+      defaultQPS: 5,
+      maxQueueSize: 200,
+    });
+
     // 创建日志队列
-    // 注意：reportLogs 需要接收 skipRetry 参数，但 LogQueue 的 onFlush 签名不支持
-    // 所以我们需要通过闭包来传递 skipRetry
+    // onFlush 现在支持传递 isHighFrequency 参数，用于判断处理后的日志数量是否达到最小批次大小
     this.queue = new LogQueue(
-      (logs, skipRetry) => this.reportLogs(logs, skipRetry),
+      (logs, skipRetry, isHighFrequency) => this.reportLogs(logs, skipRetry, isHighFrequency),
       {
         batchSize: options.batchSize || 10,
         maxWaitTime: options.maxWaitTime || 5000,
       }
     );
+
+    // 定期清理分类器数据（防止内存泄漏）
+    setInterval(() => {
+      this.classifier.cleanup(60000); // 清理60秒前的数据
+    }, 30000); // 每30秒清理一次
   }
 
   /**
@@ -72,8 +96,10 @@ export class LogReporter {
   /**
    * 上报日志（批量）
    * @param skipRetry 是否跳过重试（用于测试场景）
+   * @param isHighFrequency 是否来自高频队列（用于确定最小批次大小）
+   * @returns true 表示上报成功，false 表示日志数量太少需要重新放回队列，void 表示其他情况
    */
-  private async reportLogs(logs: LogEntry[], skipRetry: boolean = false): Promise<void> {
+  private async reportLogs(logs: LogEntry[], skipRetry: boolean = false, isHighFrequency?: boolean): Promise<boolean | void> {
     if (!this.enabled || logs.length === 0) {
       return;
     }
@@ -105,8 +131,87 @@ export class LogReporter {
       return;
     }
 
-    // 限流：确保不超过每秒 5 次请求
-    await this.waitForRateLimit();
+    // 重要：按应用分组，确保同一批次只包含同一个应用的日志
+    // appId 是唯一应用标识，不能混用
+    const logsByApp = new Map<string, LogEntry[]>();
+    for (const log of logsWithAppName) {
+      const appName = log.appName || this.appName;
+      const fullAppId = getFullAppId(appName);
+      if (!logsByApp.has(fullAppId)) {
+        logsByApp.set(fullAppId, []);
+      }
+      logsByApp.get(fullAppId)!.push(log);
+    }
+
+    // 如果日志来自多个应用，应该只处理当前应用的日志（其他应用的日志应该重新放回队列）
+    // 但通常情况下，每个应用都有自己的LogReporter实例，所以应该只有一个应用
+    // 为了安全，我们只处理第一个应用的日志，其他应用的日志可以丢弃或记录警告
+    const appIds = Array.from(logsByApp.keys());
+    if (appIds.length > 1) {
+      // 多个应用的日志混在一起，这是不应该发生的情况
+      // 应该只处理当前应用的日志，其他应用的日志应该被过滤掉
+      if (!this.silent && import.meta.env.DEV) {
+        console.warn('[LogReporter] 检测到多个应用的日志混在一起，只处理当前应用的日志:', {
+          currentApp: this.appName,
+          allApps: appIds,
+        });
+      }
+    }
+
+    // 获取当前应用的日志（优先使用当前应用的日志，如果存在）
+    const currentAppId = getFullAppId(this.appName);
+    const appLogs = logsByApp.get(currentAppId) || logsByApp.get(appIds[0]) || logsWithAppName;
+
+    // 数据整理：处理日志（去重、合并、采样）
+    const processed = this.processor.process(appLogs);
+    const logsToSend = processed.logs;
+
+    if (logsToSend.length === 0) {
+      return;
+    }
+
+    // 检查处理后的日志数量是否达到最小批次大小
+    // 如果不知道是否高频，通过日志内容判断（大部分监控类日志是高频）
+    let shouldBeHighFrequency = isHighFrequency;
+    if (shouldBeHighFrequency === undefined) {
+      // 通过日志内容判断：如果有监控类日志，很可能是高频
+      const hasMonitorLogs = logsToSend.some(log => {
+        const eventType = log.extensions?.eventType;
+        return eventType && (
+          eventType.includes('performance') ||
+          eventType.includes('route') ||
+          eventType.includes('app:lifecycle') ||
+          eventType.includes('user:')
+        );
+      });
+      shouldBeHighFrequency = hasMonitorLogs;
+    }
+
+    // 根据频率类型确定最小批次大小
+    const minBatchSize = shouldBeHighFrequency 
+      ? this.highFrequencyMinBatchSize  // 高频：15条
+      : this.lowFrequencyMinBatchSize;  // 低频：50条
+
+    // 如果处理后的日志数量少于最小批次大小，应该重新放回队列等待更多日志
+    // 但需要设置一个绝对最小值阈值，避免日志永远不上报
+    const absoluteMinThreshold = shouldBeHighFrequency ? 3 : 10;
+    
+    if (logsToSend.length < minBatchSize && logsToSend.length >= absoluteMinThreshold) {
+      // 处理后的日志数量少于最小批次大小，但大于绝对最小值
+      // 这种情况下，应该等待更多日志，重新放回队列
+      // 返回 false，让队列知道应该重新放回日志
+      return false;
+    }
+    
+    // 如果处理后的日志数量太少（小于绝对最小值），仍然上报（避免日志丢失）
+    // 或者已经达到最小批次大小，正常上报
+
+    // 获取应用ID（用于批次号生成和限流）
+    const appName = logsToSend[0]?.appName || this.appName;
+    const fullAppId = getFullAppId(appName);
+
+    // 自适应限流：等待直到可以发送请求（确保不超过QPS限制）
+    await this.rateLimiter.waitForSlot();
 
     // 重试机制（测试场景可以跳过）
     const maxAttempts = skipRetry ? 1 : this.maxRetries + 1;
@@ -114,21 +219,25 @@ export class LogReporter {
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const response = await this.sendLogs(logsWithAppName);
+        const response = await this.sendLogs(logsToSend, fullAppId);
         if (response.success) {
-          return; // 上报成功
+          // 上报成功，通知限流器
+          this.rateLimiter.onSuccess();
+          return true; // 上报成功，返回 true
         }
         throw new Error(response.message || '上报失败');
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
-        // 如果是 429 错误（Too Many Requests），增加等待时间
+        // 如果是 429 错误（Too Many Requests），通知限流器
         if (error instanceof Error && error.message.includes('429')) {
+          this.rateLimiter.on429Error();
           // 429 错误表示限流，等待更长时间后重试
           await this.sleep(2000); // 等待 2 秒
-          // 清理请求时间戳，重置限流窗口
-          this.requestTimestamps.length = 0;
           continue;
+        } else {
+          // 其他错误
+          this.rateLimiter.onFailure();
         }
 
         // 如果是最后一次尝试，直接抛出错误（不等待）
@@ -153,13 +262,13 @@ export class LogReporter {
   /**
    * 发送日志到服务器
    */
-  private async sendLogs(logs: LogEntry[]): Promise<LogReportResponse> {
+  private async sendLogs(logs: LogEntry[], fullAppId: string): Promise<LogReportResponse> {
     if (logs.length === 0) {
       return { success: true, count: 0 };
     }
 
+    // 获取应用名称（从日志或fullAppId中提取）
     const appName = logs[0]?.appName || this.appName;
-    const fullAppId = getFullAppId(appName);
 
     // 转换为服务器格式并过滤过大的日志
     const serverLogs = logs
@@ -177,17 +286,20 @@ export class LogReporter {
       return { success: true, count: 0, message: '所有日志条目都被过滤' };
     }
 
+    // 生成批次号（格式：batch-{timestamp}-{appId}）
+    const batchId = generateBatchId(fullAppId);
+
     // 构建请求体
     // 注意：logs 字段需要是 JSON 字符串，后端会反序列化
-    // 批次时间戳使用第一条日志的时间戳，确保时间戳一致性
-    const batchTimestamp = serverLogs.length > 0 
-      ? serverLogs[0].timestamp 
-      : toISOString(Date.now());
+    // 批次时间戳使用当前时间（而非日志内部时间戳），因为上报时间一定晚于日志生成时间
+    const batchTimestamp = toISOString(Date.now());
     
     const requestBody: LogReportRequest = {
       appId: fullAppId,
       timestamp: batchTimestamp,
       logs: JSON.stringify(serverLogs),
+      // 如果后端支持批次号，可以添加到请求体中
+      // batchId: batchId,
     };
 
     // URL 使用不带 -app 后缀的应用名
@@ -285,7 +397,18 @@ export class LogReporter {
       return;
     }
 
-    this.queue.add(logEntry);
+    // 获取应用ID（用于分类）
+    const fullAppId = getFullAppId(appName);
+
+    // 分类日志：确定频率和优先级
+    const classification = this.classifier.classify(logEntry, fullAppId);
+
+    // 根据分类结果添加到对应队列
+    this.queue.add(
+      logEntry,
+      classification.priority,
+      classification.frequency === 'high'
+    );
   }
 
   /**
@@ -314,43 +437,18 @@ export class LogReporter {
   }
 
   /**
-   * 销毁上报器
-   */
-  destroy(): void {
-    this.queue.destroy();
-  }
-
-  /**
-   * 限流：等待直到可以发送请求（确保不超过每秒 5 次）
-   */
-  private async waitForRateLimit(): Promise<void> {
-    const now = Date.now();
-    const oneSecondAgo = now - 1000;
-
-    // 清理 1 秒之前的请求时间戳
-    while (this.requestTimestamps.length > 0 && this.requestTimestamps[0] < oneSecondAgo) {
-      this.requestTimestamps.shift();
-    }
-
-    // 如果当前 1 秒内的请求数已达到限制，等待
-    if (this.requestTimestamps.length >= this.maxRequestsPerSecond) {
-      const oldestRequestTime = this.requestTimestamps[0];
-      const waitTime = 1000 - (now - oldestRequestTime) + 50; // 额外等待 50ms 确保安全
-      if (waitTime > 0) {
-        await this.sleep(waitTime);
-        // 递归检查，确保等待后仍然符合限制
-        return this.waitForRateLimit();
-      }
-    }
-
-    // 记录本次请求时间戳
-    this.requestTimestamps.push(Date.now());
-  }
-
-  /**
    * 睡眠函数（用于重试延迟）
    */
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * 销毁上报器
+   */
+  destroy(): void {
+    this.queue.destroy();
+    this.classifier.reset();
+    this.rateLimiter.reset();
   }
 }

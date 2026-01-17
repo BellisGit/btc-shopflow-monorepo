@@ -1,16 +1,19 @@
 <template>
   <div class="page">
-    <BtcMasterViewGroup
+    <BtcDoubleLayout
       ref="tableGroupRef"
-      :left-service="checkService"
       left-title="title.logistics.inventory.check.list"
       :right-title="t('menu.inventory_management.result')"
-      :show-unassigned="false"
-      :enable-key-search="true"
       :left-size="'small'"
-      :label-field="'checkType'"
-      @select="onCheckSelect"
     >
+      <template #left>
+        <BtcMasterList
+          :service="checkService"
+          :label-field="'checkType'"
+          :enable-key-search="true"
+          @select="onCheckSelect"
+        />
+      </template>
       <template #right>
         <BtcCrud
           ref="crudRef"
@@ -49,7 +52,7 @@
           />
         </BtcCrud>
       </template>
-    </BtcMasterViewGroup>
+    </BtcDoubleLayout>
   </div>
 </template>
 
@@ -57,7 +60,7 @@
 import { computed, ref, onBeforeUnmount } from 'vue';
 import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcMasterViewGroup, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
+import { BtcDoubleLayout, BtcMasterList, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 import { formatTableNumber } from '@btc/shared-utils';
 import { service } from '@services/eps';
