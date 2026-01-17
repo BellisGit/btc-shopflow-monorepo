@@ -59,7 +59,8 @@ function log(message, color = 'reset') {
 function parseArgs() {
   const args = process.argv.slice(2);
   const config = {
-    auto: false,
+    auto: true, // 默认自动模式
+    manualCommit: false, // 默认自动提交
     version: null,
     tagMessage: null,
     skipPull: false,
@@ -71,6 +72,10 @@ function parseArgs() {
   for (const arg of args) {
     if (arg === '--auto') {
       config.auto = true;
+    } else if (arg === '--manual') {
+      config.auto = false; // 手动模式
+    } else if (arg === '--manual-commit') {
+      config.manualCommit = true; // 手动提交模式（不自动提交）
     } else if (arg.startsWith('--version=')) {
       config.version = arg.split('=')[1];
     } else if (arg.startsWith('--tag-message=')) {
