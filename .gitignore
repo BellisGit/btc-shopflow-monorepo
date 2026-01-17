@@ -45,3 +45,6 @@ scripts/deploy-config.sh
 !**/*.config.js
 !**/scripts/**/*.js
 **/src/**/*.map
+
+# Claude/Cursor 相关文件
+.claude/

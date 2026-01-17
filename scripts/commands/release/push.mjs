@@ -59,7 +59,8 @@ function log(message, color = 'reset') {
 function parseArgs() {
   const args = process.argv.slice(2);
   const config = {
-    auto: false,
+    auto: true, // 默认自动模式
+    manualCommit: false, // 默认自动提交
     version: null,
     tagMessage: null,
     skipPull: false,
@@ -71,6 +72,10 @@ function parseArgs() {
   for (const arg of args) {
     if (arg === '--auto') {
       config.auto = true;
+    } else if (arg === '--manual') {
+      config.auto = false; // 手动模式
+    } else if (arg === '--manual-commit') {
+      config.manualCommit = true; // 手动提交模式（不自动提交）
     } else if (arg.startsWith('--version=')) {
       config.version = arg.split('=')[1];
     } else if (arg.startsWith('--tag-message=')) {
@@ -126,6 +131,32 @@ function execInteractive(command) {
   } catch (error) {
     log(`执行命令失败: ${command}`, 'red');
     throw error;
+  }
+}
+
+/**
+ * 清理可能锁定的文件（如 .claude/ 目录）
+ * 在切换分支前调用，避免文件锁定导致切换失败
+ */
+async function cleanupLockedFiles() {
+  const { existsSync, rmSync } = await import('fs');
+  const claudePath = join(rootDir, '.claude');
+  
+  if (existsSync(claudePath)) {
+    try {
+      // 尝试删除整个 .claude 目录
+      rmSync(claudePath, { recursive: true, force: true });
+      log('✅ 已清理 .claude 目录', 'green');
+    } catch (error) {
+      // 如果删除失败（文件被锁定），尝试使用 git clean
+      try {
+        exec('git clean -fdx .claude', { silent: true });
+        log('✅ 已通过 git clean 清理 .claude 目录', 'green');
+      } catch (cleanError) {
+        log('⚠️  无法清理 .claude 目录（可能被其他进程占用），继续执行', 'yellow');
+        log('提示：如果后续切换分支失败，请关闭 Cursor/VS Code 后重试', 'yellow');
+      }
+    }
   }
 }
 
@@ -245,8 +276,18 @@ async function main() {
   log('\n📋 步骤 2: 检查工作区状态...', 'cyan');
   const isClean = checkWorkingDirectory();
   if (!isClean) {
-    if (isAuto) {
-      log('⚠️  工作区有未提交的更改，自动模式继续执行', 'yellow');
+    if (!config.manualCommit) {
+      // 默认自动提交所有更改
+      log('⚠️  工作区有未提交的更改，自动模式下将自动提交', 'yellow');
+      try {
+        execInteractive('git add -A');
+        execInteractive('git commit -m "chore: prepare for release"');
+        log('✅ 已自动提交所有更改', 'green');
+      } catch (error) {
+        log('⚠️  自动提交失败，继续执行', 'yellow');
+      }
+    } else if (isAuto) {
+      log('⚠️  工作区有未提交的更改，自动模式继续执行（手动提交模式）', 'yellow');
     } else {
       log('⚠️  工作区有未提交的更改', 'yellow');
       const shouldContinue = await confirm('是否先提交这些更改？', true);
@@ -399,6 +440,7 @@ async function main() {
   }
 
   log(`创建并切换到 ${releaseBranch} 分支...`, 'yellow');
+  await cleanupLockedFiles();
   execInteractive(`git checkout -b ${releaseBranch}`);
   log(`✅ 已创建 ${releaseBranch} 分支`, 'green');
 
@@ -416,6 +458,7 @@ async function main() {
   
   if (shouldMergeToMain) {
     log('切换到 main 分支...', 'yellow');
+    await cleanupLockedFiles();
     execInteractive('git checkout main');
     
     log('拉取最新 main 分支...', 'yellow');
@@ -489,6 +532,7 @@ async function main() {
     const shouldMergeBack = isAuto ? !config.skipMergeBack : await confirm('是否合并回 develop 分支？', true);
     if (shouldMergeBack) {
       log('切换到 develop 分支...', 'yellow');
+      await cleanupLockedFiles();
       execInteractive('git checkout develop');
       
       log('拉取最新 develop 分支...', 'yellow');
@@ -540,6 +584,7 @@ async function main() {
 
     // 切换回 develop 分支
     log('\n切换到 develop 分支...', 'yellow');
+    await cleanupLockedFiles();
     execInteractive('git checkout develop');
   }
 
