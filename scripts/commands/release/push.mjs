@@ -469,6 +469,7 @@ async function main() {
     }
 
     log(`合并 ${releaseBranch} 到 main...`, 'yellow');
+    await cleanupLockedFiles();
     execInteractive(`git merge --no-ff ${releaseBranch} -m "chore: merge ${releaseBranch} to main for ${tagName} release"`);
     log('✅ 已合并到 main 分支', 'green');
 
@@ -543,6 +544,7 @@ async function main() {
       }
 
       log(`合并 ${releaseBranch} 到 develop...`, 'yellow');
+      await cleanupLockedFiles();
       execInteractive(`git merge --no-ff ${releaseBranch} -m "chore: merge ${releaseBranch} back to develop"`);
       log('✅ 已合并回 develop 分支', 'green');
     }
