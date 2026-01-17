@@ -20,8 +20,8 @@
       "@charts-types/*": ["src/charts/types/*"],
       "@charts-utils/*": ["src/charts/utils/*"],
       "@charts-composables/*": ["src/charts/composables/*"],
-      "@btc/shared-core": ["../shared-core/dist/src"],
-      "@btc/shared-core/*": ["../shared-core/dist/*", "../shared-core/dist/src/*"],
+      "@btc/shared-core": ["../shared-core/src"],
+      "@btc/shared-core/*": ["../shared-core/src/*"],
       "@configs/*": ["../shared-core/src/configs/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"]

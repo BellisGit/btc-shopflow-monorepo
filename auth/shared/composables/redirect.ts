@@ -4,7 +4,6 @@
  */
 
 import { storage } from '@btc/shared-core/utils/storage';
-import { logger } from '@btc/shared-core';
 
 /**
  * storage 键名：保存退出前的路径
@@ -159,7 +158,7 @@ export async function saveLogoutRedirectPath(): Promise<void> {
     // 但可以在同一域名下使用（开发环境或主域名下）
     storage.set(LOGOUT_REDIRECT_KEY, currentPath);
   } catch (error) {
-    logger.warn('[saveLogoutRedirectPath] Failed to save logout redirect path:', error);
+    console.warn('[saveLogoutRedirectPath] Failed to save logout redirect path:', error);
   }
 }
 
@@ -183,7 +182,7 @@ export function getAndClearLogoutRedirectPath(): string | null {
     }
     return null;
   } catch (error) {
-    logger.warn('[getAndClearLogoutRedirectPath] Failed to get logout redirect path:', error);
+    console.warn('[getAndClearLogoutRedirectPath] Failed to get logout redirect path:', error);
     return null;
   }
 }
@@ -223,7 +222,7 @@ export async function buildLogoutUrl(baseLoginUrl: string = '/login'): Promise<s
       return urlObj.pathname + urlObj.search;
     }
   } catch (error) {
-    logger.warn('[buildLogoutUrl] Failed to build logout URL:', error);
+    console.warn('[buildLogoutUrl] Failed to build logout URL:', error);
     // 回退方案
     const separator = baseLoginUrl.includes('?') ? '&' : '?';
     return `${baseLoginUrl}${separator}logout=1`;
@@ -324,7 +323,7 @@ export async function buildLogoutUrlWithFullUrl(baseLoginUrl: string = '/login')
       return urlObj.pathname + urlObj.search;
     }
   } catch (error) {
-    logger.warn('[buildLogoutUrlWithFullUrl] Failed to build logout URL with full URL:', error);
+    console.warn('[buildLogoutUrlWithFullUrl] Failed to build logout URL with full URL:', error);
       // 回退：使用当前URL
       try {
         const currentFullUrl = window.location.href;
@@ -411,11 +410,11 @@ export async function handleCrossAppRedirect(redirectPath: string, _router?: any
         window.location.href = redirectPath;
         return true;
       } else {
-        logger.warn('[handleCrossAppRedirect] Redirect URL not allowed:', redirectPath);
+        console.warn('[handleCrossAppRedirect] Redirect URL not allowed:', redirectPath);
         return false;
       }
     } catch (error) {
-      logger.warn('[handleCrossAppRedirect] Invalid redirect URL:', redirectPath, error);
+      console.warn('[handleCrossAppRedirect] Invalid redirect URL:', redirectPath, error);
       return false;
     }
   }
@@ -509,7 +508,7 @@ export async function handleCrossAppRedirect(redirectPath: string, _router?: any
     window.location.href = targetUrl;
     return true;
   } catch (error) {
-    logger.warn('[handleCrossAppRedirect] Failed to build target URL:', error);
+    console.warn('[handleCrossAppRedirect] Failed to build target URL:', error);
     return false;
   }
 }

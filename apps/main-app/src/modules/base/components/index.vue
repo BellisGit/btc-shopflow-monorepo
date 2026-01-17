@@ -99,8 +99,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
 import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';

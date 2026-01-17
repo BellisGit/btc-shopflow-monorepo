@@ -2,7 +2,7 @@
  * 用户设置 Composables
  * 封装用户设置相关的逻辑
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin, type ThemeConfig } from '@btc/shared-core';
@@ -231,7 +231,7 @@ export function useUserSetting() {
    */
   function handleDarkToggle(event?: MouseEvent) {
     if (!theme || !theme.toggleDark) {
-      logger.warn('[useThemeSwitcher] theme 或 toggleDark 不存在', {
+      console.warn('[useThemeSwitcher] theme 或 toggleDark 不存在', {
         theme: !!theme,
         toggleDark: !!theme?.toggleDark
       });

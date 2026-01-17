@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger';
+;
 import adminManifestJson from "./manifests/admin.json" with { type: "json" };
 import logisticsManifestJson from "./manifests/logistics.json" with { type: "json" };
 import systemManifestJson from "./manifests/system.json" with { type: "json" };
@@ -84,7 +84,7 @@ export function registerManifest(app: string, manifest: SubAppManifest) {
       throw error;
     }
     // 生产环境：记录警告并上报，但继续注册
-    logger.warn(`[registerManifest] 应用 ${app} 的清单配置验证失败:`, error);
+    console.warn(`[registerManifest] 应用 ${app} 的清单配置验证失败:`, error);
     // 上报验证失败（异步，不阻塞）
     if (error instanceof Error && 'errors' in error) {
       import('../utils/zod/reporting').then(({ reportValidationError }) => {

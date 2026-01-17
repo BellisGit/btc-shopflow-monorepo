@@ -225,7 +225,7 @@ body.theme-brand-red {
 	flex-direction: column;
 
 	.el-scrollbar__wrap {
-		overflow-x: hidden !important;
+		overflow-x: auto !important; // 允许水平滚动，让 el-table 自己处理水平滚动条
 		overflow-y: auto !important;
 		flex: 1 !important;
 		min-height: 0 !important;
@@ -276,4 +276,43 @@ body.theme-brand-red {
 			width: 4px; // 移动端使用更窄的滚动条
 		}
 	}
+}
+
+// =========================
+// 策略监控图表容器样式（公共样式）
+// =========================
+// 说明：
+// - 用于所有应用的 home 页面中的图表展示
+// - 统一管理图表容器的高度、布局和卡片间距
+.strategy-charts {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+
+	:deep(.btc-chart-gallery) {
+		height: 100%;
+		min-height: 0;
+	}
+
+	:deep(.btc-container) {
+		height: 100%;
+		min-height: 0;
+	}
+
+	:deep(.chart-item) {
+		min-height: 300px;
+	}
+
+	// 设置图表卡片之间的垂直间距
+	// 针对 btc-chart-gallery 中的 el-col（使用 ElRow 和 ElCol 布局）
+	// 注意：ElRow 的 gutter 属性只设置水平间距，需要手动设置垂直间距
+	:deep(.btc-chart-gallery__container .el-col),
+	:deep(.btc-chart-demo .el-col) {
+		margin-bottom: 10px;
+	}
+	
+	// 针对 btc-container 中的子元素（使用 CSS Grid 布局，gap 属性已经处理了间距）
+	// 这里不需要额外设置，因为 btc-container 的 gap 属性已经处理了垂直间距
 }

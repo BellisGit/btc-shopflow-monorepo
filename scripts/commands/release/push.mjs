@@ -327,6 +327,13 @@ async function main() {
   if (!version) {
     if (isAuto) {
       // 自动模式：从 package.json 读取当前版本并自动递增
+      // 但如果在 release 分支上，应该报错，因为不应该在 release 分支上发布新版本
+      if (currentBranch.startsWith('release/')) {
+        log('❌ 错误：当前在 release 分支上，无法自动计算版本号', 'red');
+        log('请在 develop 分支上运行发布脚本，或使用 --version 参数指定版本号', 'yellow');
+        process.exit(1);
+      }
+      
       const packageJsonPath = join(rootDir, 'package.json');
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const currentVersion = packageJson.version;

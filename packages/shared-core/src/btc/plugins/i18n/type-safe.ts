@@ -1,4 +1,4 @@
-import { logger } from '../../../utils/logger';
+;
 ﻿/**
  * 绫诲瀷瀹夊叏鐨勫浗闄呭寲宸ュ叿
  * 鎻愪緵缂栬瘧鏃剁被鍨嬫鏌ュ拰杩愯鏃堕獙璇? */
@@ -121,7 +121,7 @@ export function createTypeSafeI18n(t: any): TypeSafeT {
     try {
       return t(key, params);
     } catch (_error) {
-      logger.warn(`[i18n] Translation failed for key: ${key}`, _error);
+      console.warn(`[i18n] Translation failed for key: ${key}`, _error);
       return String(key);
     }
   };

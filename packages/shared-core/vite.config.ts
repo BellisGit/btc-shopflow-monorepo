@@ -1,6 +1,31 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
+import type { Plugin } from 'vite';
+
+// 构建日志插件
+function buildLogPlugin(): Plugin {
+  return {
+    name: 'build-log',
+    buildStart() {
+      console.log('\n📦 开始构建 @btc/shared-core...');
+      console.log('   - 输入文件: src/index.ts');
+      console.log('   - 输出格式: ESM + CJS');
+      console.log('   - 类型声明: dist/*.d.ts\n');
+    },
+    buildEnd(error) {
+      if (error) {
+        console.error('\n❌ @btc/shared-core 构建失败！');
+        console.error('   错误:', error.message);
+      } else {
+        console.log('\n✅ @btc/shared-core 构建成功！');
+        console.log('   - 输出文件: dist/index.mjs (ESM)');
+        console.log('   - 输出文件: dist/index.js (CJS)');
+        console.log('   - 类型声明: dist/*.d.ts\n');
+      }
+    },
+  };
+}
 
 export default defineConfig({
   logLevel: 'error', // 只显示错误，抑制警告
@@ -16,6 +41,7 @@ export default defineConfig({
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
   },
   plugins: [
+    buildLogPlugin(), // 添加构建日志插件
     dts({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.d.ts', 'node_modules', 'dist', '**/*.test.ts', '**/*.spec.ts', 'src/configs/app-configs-collected.ts'],
@@ -45,12 +71,25 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
+      onwarn(warning, warn) {
+        // 抑制空 chunk 警告（如 configs/app-identity.types 只包含类型）
+        if (warning.message?.includes('Generated an empty chunk')) {
+          return;
+        }
+        // 抑制 named 和 default exports 一起使用的警告
+        if (warning.message?.includes('named and default exports together')) {
+          return;
+        }
+        // 其他警告正常显示
+        warn(warning);
+      },
       input: {
         index: resolve(__dirname, 'src/index.ts'),
         'utils/index': resolve(__dirname, 'src/utils/index.ts'),
         'utils/form/index': resolve(__dirname, 'src/utils/form/index.ts'),
         'utils/form/zod-validator': resolve(__dirname, 'src/utils/form/zod-validator.ts'),
         'utils/format/index': resolve(__dirname, 'src/utils/format/index.ts'),
+        'utils/profile-info-cache': resolve(__dirname, 'src/utils/profile-info-cache.ts'),
         'utils/storage/index': resolve(__dirname, 'src/utils/storage/index.ts'),
         'utils/storage/session/index': resolve(__dirname, 'src/utils/storage/session/index.ts'),
         'utils/storage/cookie/index': resolve(__dirname, 'src/utils/storage/cookie/index.ts'),
@@ -70,6 +109,9 @@ export default defineConfig({
         'dayjs',
         'file-type',
         'zod',
+        'winston',
+        'winston-transport',
+        'util',
         '@vueuse/core',
         '@btc/shared-components',
         /^@btc\/shared-components\/.*/,
@@ -99,6 +141,9 @@ export default defineConfig({
             if (chunkInfo.name === 'utils/format/index') {
               return 'utils/format/index.mjs';
             }
+            if (chunkInfo.name === 'utils/profile-info-cache') {
+              return 'utils/profile-info-cache.mjs';
+            }
             if (chunkInfo.name === 'utils/storage/index') {
               return 'utils/storage/index.mjs';
             }
@@ -115,6 +160,17 @@ export default defineConfig({
               return 'manifest/index.mjs';
             }
             return `${chunkInfo.name}.mjs`;
+          },
+          chunkFileNames: (chunkInfo) => {
+            // 对于共享的 chunk，使用固定的文件名而不是 hash
+            // 这样可以确保导入路径稳定
+            // 注意：get-main-app-login-url 应该被内联，不应该作为单独的 chunk
+            // 如果它被分离为 chunk，使用相对路径引用
+            if (chunkInfo.name && chunkInfo.name.includes('get-main-app-login-url')) {
+              return 'utils/get-main-app-login-url.mjs';
+            }
+            // 其他 chunk 使用默认命名（带 hash）
+            return '[name]-[hash].mjs';
           },
           globals: {
             vue: 'Vue',
@@ -142,6 +198,9 @@ export default defineConfig({
             if (chunkInfo.name === 'utils/format/index') {
               return 'utils/format/index.js';
             }
+            if (chunkInfo.name === 'utils/profile-info-cache') {
+              return 'utils/profile-info-cache.js';
+            }
             if (chunkInfo.name.startsWith('configs/')) {
               return `configs/${chunkInfo.name.replace('configs/', '')}.js`;
             }
@@ -149,6 +208,16 @@ export default defineConfig({
               return 'manifest/index.js';
             }
             return `${chunkInfo.name}.js`;
+          },
+          chunkFileNames: (chunkInfo) => {
+            // 对于共享的 chunk，使用固定的文件名而不是 hash
+            // 注意：get-main-app-login-url 应该被内联，不应该作为单独的 chunk
+            // 如果它被分离为 chunk，使用相对路径引用
+            if (chunkInfo.name && chunkInfo.name.includes('get-main-app-login-url')) {
+              return 'utils/get-main-app-login-url.js';
+            }
+            // 其他 chunk 使用默认命名（带 hash）
+            return '[name]-[hash].js';
           },
           globals: {
             vue: 'Vue',

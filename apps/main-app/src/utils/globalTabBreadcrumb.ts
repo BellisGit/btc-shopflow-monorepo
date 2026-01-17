@@ -3,8 +3,7 @@
  * 基于 qiankun 全局状态统一管理主应用和微应用的 Tab/面包屑
  */
 
-import { ref } from 'vue';
-import { getMainAppId, isRouteClosable, getMainAppHomeRoute, shouldSkipTabbar, getGlobalState, setGlobalState as setGlobalStateSafe } from '@btc/shared-core';
+import { getMainAppId, isRouteClosable, getMainAppHomeRoute, shouldSkipTabbar, setGlobalState as setGlobalStateSafe } from '@btc/shared-core';
 import { getMenusForApp } from '../store/menuRegistry';
 import { tSync } from '../i18n/getters';
 
@@ -112,8 +111,9 @@ export async function addTab(tabItem: TabbarItem): Promise<void> {
   }
 
   // 添加新 Tab
+  const newTabbarList = [...currentTabbarList, finalTab];
   await setGlobalStateSafe({
-    tabbarList: [...currentTabbarList, finalTab],
+    tabbarList: newTabbarList,
     activeTabKey: finalTab.key,
     currentApp: finalTab.appName,
   });
@@ -261,6 +261,11 @@ export async function updateMainAppTabBreadcrumb(route: any): Promise<void> {
     return;
   }
 
+  // 检查路由 meta 中的 process 字段，如果为 false，不添加到 tabbar
+  if (route.meta?.process === false) {
+    return;
+  }
+
   // 主应用自身的面包屑（从路由 meta 取）
   const rawBreadcrumbList = route.meta?.breadcrumb || route.meta?.breadcrumbs || [];
   const mainAppId = getMainAppId();
@@ -279,10 +284,11 @@ export async function updateMainAppTabBreadcrumb(route: any): Promise<void> {
     }
     // 如果菜单注册表中没有找到图标，使用 manifest/路由 meta 中指定的图标（兜底）
     if (!icon && item.icon) {
-      icon = item.icon;
+      const itemIcon = item.icon;
+      icon = itemIcon;
       // 确保图标格式正确
-      if (!icon.startsWith('svg:') && !icon.includes(':')) {
-        icon = `svg:${icon}`;
+      if (itemIcon && !itemIcon.startsWith('svg:') && !itemIcon.includes(':')) {
+        icon = `svg:${itemIcon}`;
       }
     }
     // 翻译标签：优先使用 item.label（如果已翻译），否则使用 i18nKey 翻译
@@ -309,12 +315,9 @@ export async function updateMainAppTabBreadcrumb(route: any): Promise<void> {
     };
   });
 
-  // 如果是首页，不添加到 Tabbar，但仍然需要更新面包屑
+  // 如果是首页，不添加到 Tabbar，也不显示面包屑
   if (route.meta?.isHome === true) {
-    // 首页仍然需要显示面包屑
-    if (breadcrumbList.length > 0) {
-      updateBreadcrumb(breadcrumbList);
-    }
+    // 首页不显示面包屑
     return;
   }
 
@@ -364,6 +367,7 @@ export async function updateMainAppTabBreadcrumb(route: any): Promise<void> {
 
   // 同步更新全局状态（去重由 addTab 内部的函数式更新处理）
   await addTab(mainTab);
+
   if (breadcrumbList.length > 0) {
     await updateBreadcrumb(breadcrumbList);
   }

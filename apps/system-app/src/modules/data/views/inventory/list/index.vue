@@ -6,7 +6,7 @@
       :right-service="wrappedMaterialService"
       :table-columns="materialColumns"
       :form-items="materialFormItems"
-      left-title="title.inventory.dataSource.domains"
+      left-title="title.inventory.domains"
       :right-title="t('menu.inventory.data_source.list')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -34,14 +34,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService, logger } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import { BtcSvg } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcDataInventoryList'
@@ -108,7 +107,7 @@ const domainService = {
       // 返回域列表
       return Array.from(domainMap.values());
     } catch (error) {
-      logger.error('[InventoryList] Failed to load domains from position service:', error);
+      console.error('[InventoryList] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -217,7 +216,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       domainId = dataDomainIds[0];
     } else if (!domainId) {
       // 如果既没有选中域，数据中也没有 domainId，则提示错误
-      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域或在导入数据中包含域ID');
+      message.warning(t('title.inventory.domainsSelectRequired') || '请先选择左侧域或在导入数据中包含域ID');
       done();
       return;
     }
@@ -262,7 +261,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     tableGroupRef.value?.crudRef?.refresh?.();
     close();
   } catch (error: any) {
-    logger.error('[InventoryList] import failed:', error);
+    console.error('[InventoryList] import failed:', error);
     // 优先从错误对象中提取后端返回的 msg
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.data_source.list.import.failed');
     message.error(errorMsg);
@@ -278,7 +277,7 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
     }
     return formatDateTime(value);
   } catch (error) {
-    logger.warn('[InventoryList] Date format error:', error, value);
+    console.warn('[InventoryList] Date format error:', error, value);
     return '--';
   }
 };
@@ -382,7 +381,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    logger.error('[InventoryList] Export failed:', error);
+    console.error('[InventoryList] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

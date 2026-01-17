@@ -2,7 +2,7 @@
  * 验证失败上报服务（预留）
  * 用于将验证失败信息上报到运维子应用和后端API
  */
-import { logger } from '../logger';
+;
 
 import type { ZodError } from 'zod';
 
@@ -94,7 +94,7 @@ export function reportValidationError(
   // 如果未启用上报，直接返回
   if (!currentConfig.enabled) {
     if (import.meta.env.DEV) {
-      logger.warn('[验证失败上报] 上报功能未启用', { type, schema, errors: error.errors });
+      console.warn('[验证失败上报] 上报功能未启用', { type, schema, errors: error.errors });
     }
     return;
   }
@@ -154,10 +154,10 @@ function flushErrorQueue(): void {
 
   // 当前仅记录日志
   if (import.meta.env.DEV) {
-    logger.info('[验证失败上报] 待上报的错误:', reports);
+    console.info('[验证失败上报] 待上报的错误:', reports);
   } else {
     // 生产环境静默记录
-    logger.warn(`[验证失败上报] ${reports.length} 个验证错误待上报`);
+    console.warn(`[验证失败上报] ${reports.length} 个验证错误待上报`);
   }
 }
 

@@ -30,8 +30,6 @@ defineOptions({
   name: 'LayoutBreadcrumb',
 });
 
-import { computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { tSync } from '@/i18n/getters';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';

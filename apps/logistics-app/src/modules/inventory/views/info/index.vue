@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n, useThemePlugin, usePageColumns, usePageForms, usePageService, logger } from '@btc/shared-core';
+import { useI18n, useThemePlugin, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert, BtcMessage, BtcSvg, BtcTableButton, BtcDialog } from '@btc/shared-components';
@@ -150,7 +150,7 @@ const handlePullData = async () => {
     // 刷新表格数据
     crudRef.value?.crud?.loadData?.();
   } catch (error: any) {
-    logger.error('[InventoryInfo] Pull data failed:', error);
+    console.error('[InventoryInfo] Pull data failed:', error);
     BtcMessage.error(error?.message || t('logistics.inventory.base.pull.failed'));
   } finally {
     pullLoading.value = false;
@@ -304,7 +304,7 @@ const handleSubProcessSubmit = async (data: any, { close, done }: { close: () =>
     close();
     subProcessCrudRef.value?.crud?.loadData();
   } catch (error: any) {
-    logger.error('[SubProcess] Submit failed:', error);
+    console.error('[SubProcess] Submit failed:', error);
     done();
     BtcMessage.error(error?.message || t('common.saveFailed'));
   }

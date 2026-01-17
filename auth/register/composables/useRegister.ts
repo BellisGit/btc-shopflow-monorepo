@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref, reactive, computed } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
@@ -50,7 +50,7 @@ export function useRegister() {
         router.push('/login?from=register');
       }, 1500);
     } catch (error: any) {
-      logger.error('注册失败:', error);
+      console.error('注册失败:', error);
       BtcMessage.error(error.message || t('auth.message.register_failed'));
     } finally {
       loading.value = false;

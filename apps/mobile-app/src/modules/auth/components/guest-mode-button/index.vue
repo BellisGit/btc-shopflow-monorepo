@@ -8,7 +8,6 @@
 
 <script setup lang="ts">
 import { Button, showToast } from 'vant';
-import { useRouter } from 'vue-router';
 
 defineOptions({
   name: 'BtcGuestModeButton',

@@ -100,14 +100,16 @@ body .btc-app-loading-dots-svg {
 }
 
 body .btc-app-loading-dots-spinner {
-	transform-origin: 22px 22px;
+	// SVG viewBox 是 0 0 40 40，中心点是 (20, 20)，transform-origin 使用 SVG 坐标系统
+	// 但这里 SVG 尺寸是 44px，如果使用 viewBox 坐标，应该是 20px 20px
+	transform-origin: 20px 20px; // 使用 viewBox 的中心点坐标
 	animation: btc-app-loading-dots-rotate 1.6s linear infinite;
 }
 
 body .btc-app-loading-dot {
 	animation:
-		btc-app-loading-dots-fade 1.6s infinite,
-		btc-app-loading-dots-color-change 3.2s infinite ease-in-out;
+		btc-app-loading-dots-fade 1.6s linear infinite,
+		btc-app-loading-dots-color-change 3.2s linear infinite;
 }
 
 body .btc-app-loading-dot-1 {

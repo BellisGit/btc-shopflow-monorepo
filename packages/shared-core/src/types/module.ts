@@ -3,7 +3,7 @@
  * 扩展 PageConfig，添加模块元数据和路由配置
  */
 import type { Component, App } from 'vue';
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteRecordRaw } from './vue-router';
 import type { PageConfig } from '../../../../types/locale';
 
 /**

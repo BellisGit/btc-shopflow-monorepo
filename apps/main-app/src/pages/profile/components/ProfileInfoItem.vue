@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { Edit, CopyDocument } from '@element-plus/icons-vue';
 import { BtcMessage } from '@btc/shared-components';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -89,7 +89,7 @@ const handleCopy = async () => {
       BtcMessage.error('复制失败');
     }
   } catch (error) {
-    logger.error('复制失败:', error);
+    console.error('复制失败:', error);
     BtcMessage.error('复制失败');
   }
 };

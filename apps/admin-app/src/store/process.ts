@@ -1,6 +1,4 @@
-import { logger } from '@btc/shared-core';
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
+;
 import { getActiveApp, resolveTabMeta } from './tabRegistry';
 
 export interface ProcessItem {
@@ -30,6 +28,9 @@ export function getCurrentAppFromPath(path: string): string {
 /**
  * 页面标签（Process）Store
  */
+// 最大标签数量限制（防止内存泄漏）
+const MAX_TABS = 50;
+
 export const useProcessStore = defineStore('process', () => {
   const list = ref<ProcessItem[]>([]); // 所有标签
   const pinned = ref<string[]>([]);
@@ -168,7 +169,7 @@ export const useProcessStore = defineStore('process', () => {
       // 从路由的 meta 中获取 titleKey 或 title
       const titleKey = data.meta.titleKey as string | undefined;
       const title = data.meta.title as string | undefined;
-      
+
       if (titleKey || title) {
         // 创建一个临时的 TabMeta
         tabMeta = {
@@ -182,7 +183,7 @@ export const useProcessStore = defineStore('process', () => {
 
     // 如果解析失败（没有元数据），拒绝添加（防止脏 Tab）
     if (!tabMeta) {
-      logger.warn('[Process] Failed to resolve tab meta for:', data.path, data.name);
+      console.warn('[Process] Failed to resolve tab meta for:', data.path, data.name);
       return;
     }
 
@@ -235,6 +236,22 @@ export const useProcessStore = defineStore('process', () => {
           meta: buildMeta(),
         };
         list.value.push(newTab);
+
+        // 关键：限制标签数量，防止内存泄漏（保留固定的标签，移除最旧的非固定标签）
+        if (list.value.length > MAX_TABS) {
+          const pinnedSet = new Set(pinned.value);
+          // 分离固定和非固定标签
+          const pinnedTabs = list.value.filter(tab => pinnedSet.has(tab.fullPath));
+          const unpinnedTabs = list.value.filter(tab => !pinnedSet.has(tab.fullPath));
+
+          // 保留所有固定标签，只限制非固定标签数量
+          const maxUnpinnedTabs = MAX_TABS - pinnedTabs.length;
+          if (unpinnedTabs.length > maxUnpinnedTabs) {
+            // 移除最旧的非固定标签（保留最新的）
+            const tabsToKeep = unpinnedTabs.slice(-maxUnpinnedTabs);
+            list.value = [...pinnedTabs, ...tabsToKeep];
+          }
+        }
       } else {
         // 更新已存在的标签
         list.value[index].active = true;

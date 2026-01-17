@@ -90,8 +90,6 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useI18n, getMainAppId, setGlobalState } from '@btc/shared-core';
 import { tSync } from '@/i18n/getters';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
@@ -362,10 +360,12 @@ function getTabLabel(item: ProcessItem) {
   // 路径到 i18n key 的映射
   const pathToI18nKey: Record<string, string> = {
     // 主应用路由
-    '/overview': 'menu.overview',
-    '/todo': 'menu.todo',
+    '/workbench/overview': 'menu.overview',
+    '/workbench/todo': 'menu.todo',
     // 个人中心
-    '/profile': 'common.profile',
+    '/workbench/profile': 'common.profile',
+    // 错误页面
+    '/404': 'common.page_not_found',
 
     // 测试功能
     '/test/components': 'menu.test_features.components',

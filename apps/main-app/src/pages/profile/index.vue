@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { View, Hide } from '@element-plus/icons-vue';
 import { appStorage } from '@/utils/app-storage';
 import { useProfile } from './composables/useProfile';
@@ -61,7 +61,7 @@ import { useProfileForm } from './composables/form';
 import ProfileCard from './components/ProfileCard.vue';
 import BtcIdentityVerifyWrapper from './components/BtcIdentityVerifyWrapper.vue';
 import { BtcMessage } from '@btc/shared-components';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -206,14 +206,38 @@ const handleAvatarChange = async (avatarUrl: string) => {
     // 重新加载用户信息
     await loadUserInfo(showFullInfo.value);
   } catch (error: any) {
-    logger.error('保存头像失败:', error);
+    console.error('保存头像失败:', error);
     BtcMessage.error(error?.message || '保存头像失败');
+  }
+};
+
+// 事件监听器清理函数
+const handleRockStyleChanged = (event: Event) => {
+  const customEvent = event as CustomEvent;
+  if (customEvent.detail !== undefined) {
+    rockStyleEnabled.value = customEvent.detail;
   }
 };
 
 // 组件挂载时加载数据（默认脱敏）
 onMounted(() => {
   loadUserInfo(false);
+  // 监听摇滚风格变化事件
+  window.addEventListener('avatarRockStyleChanged', handleRockStyleChanged);
+});
+
+// 组件卸载时清理资源，防止内存泄漏
+onBeforeUnmount(() => {
+  // 移除事件监听器
+  window.removeEventListener('avatarRockStyleChanged', handleRockStyleChanged);
+  
+  // 清理响应式数据引用，帮助 GC
+  userInfo.value = {};
+  verifyVisible.value = false;
+  verifySuccessCallback = null;
+  skipVerification.value = false;
+  bindField.value = null;
+  editingField.value = null;
 });
 </script>
 

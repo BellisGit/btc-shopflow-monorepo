@@ -4,7 +4,7 @@
  */
 
 import type { ErrorInfo } from './formatError';
-import { logger } from '../logger';
+;
 
 /**
  * 获取监控应用的域名
@@ -98,7 +98,7 @@ export function reportErrorToMonitorApp(errorInfo: ErrorInfo): void {
     );
   } catch (error) {
     // 静默失败，避免错误上报本身导致错误
-    logger.warn('[CrossDomainReporter] 上报错误到监控应用失败', error);
+    console.warn('[CrossDomainReporter] 上报错误到监控应用失败', error);
   }
 }
 
@@ -132,7 +132,7 @@ export function listenForErrorReports(
       if (isSameOrigin || isExpectedOrigin) {
         callback(report.errorInfo);
       } else {
-        logger.warn('[CrossDomainReporter] 收到来自未知来源的错误上报', { origin: event.origin });
+        console.warn('[CrossDomainReporter] 收到来自未知来源的错误上报', { origin: event.origin });
       }
     }
   };

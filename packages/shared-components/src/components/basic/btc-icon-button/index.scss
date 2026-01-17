@@ -41,3 +41,29 @@
   font-size: 13px;
 }
 
+// 激活状态样式（用于 home 图标等）
+// 注意：只改变背景色，图标颜色和边框色保持不变
+.btc-comm__icon.btc-icon-button.is-active,
+.btc-icon-button-wrapper .btc-comm__icon.btc-icon-button.is-active {
+  // 背景色变为主题色
+  background-color: var(--el-color-primary) !important;
+  @supports (background-color: color-mix(in srgb, red 50%, blue)) {
+    background-color: var(--el-color-primary) !important;
+  }
+  
+  // 边框色保持不变（使用默认值）
+  // 不设置 border-color，让它保持默认颜色
+  
+  // 图标颜色保持不变（不设置 color 和 --btc-icon-color，让它保持默认值）
+  // 不修改 --btc-icon-color，让它保持默认的 var(--el-text-color-primary)
+  // 不设置 color，让它保持默认的文本颜色
+  
+  // SVG 图标颜色保持不变（不覆盖，让它使用默认的 currentColor）
+  // 不设置 .btc-svg 的颜色，让它继承父元素的默认颜色（通过 --btc-icon-color）
+  
+  // 暗黑模式下背景色也使用主题色
+  html.dark & {
+    background-color: var(--el-color-primary) !important;
+  }
+}
+

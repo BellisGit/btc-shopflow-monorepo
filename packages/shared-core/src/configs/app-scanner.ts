@@ -2,7 +2,11 @@
  * 应用动态扫描器
  * 参考 cool-admin 的实现，自动扫描 apps 目录下的所有应用
  */
-import { logger } from '../utils/logger';
+
+// 注意：这里不能直接导入 logger，因为存在循环依赖：
+// logger -> env-info -> unified-env-config -> app-scanner -> logger
+// 在模块加载的早期阶段，logger 可能还未初始化，所以直接使用 console
+// console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
 
 import type { AppIdentity } from './app-identity.types';
 // 导入 Zod 验证工具（可选）
@@ -24,8 +28,8 @@ function getAppRegistry(): Map<string, AppIdentity> {
   // 关键：确保 globalThis 存在，并且总是返回一个有效的 Map 实例
   try {
     if (typeof globalThis === 'undefined') {
-      // 如果 globalThis 不存在（极少数情况），使用 window 或 global
-      const globalObj = typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : {});
+      // 如果 globalThis 不存在（极少数情况），使用 window 或空对象
+      const globalObj = typeof window !== 'undefined' ? window : {};
       if (typeof (globalObj as any).__BTC_APP_REGISTRY__ === 'undefined' || !((globalObj as any).__BTC_APP_REGISTRY__ instanceof Map)) {
         (globalObj as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
       }
@@ -38,7 +42,8 @@ function getAppRegistry(): Map<string, AppIdentity> {
     }
   } catch (error) {
     // 如果所有尝试都失败，创建一个新的 Map 实例（虽然不应该发生）
-    logger.warn('[app-scanner] getAppRegistry() 初始化失败，创建新实例', error);
+    // 直接使用 console.warn，避免循环依赖
+    console.warn('[app-scanner] getAppRegistry() 初始化失败，创建新实例', error);
     return new Map<string, AppIdentity>();
   }
 }
@@ -73,7 +78,8 @@ function validateAppIdentity(identity: any, appName: string): identity is AppIde
   } catch (error) {
     // 验证失败，记录警告但返回 false（向后兼容）
     if (import.meta.env.DEV) {
-      logger.warn(`[app-scanner] 应用 ${appName} 的配置验证失败:`, error);
+      // 直接使用 console.warn，避免循环依赖
+      console.warn(`[app-scanner] 应用 ${appName} 的配置验证失败:`, error);
     }
     return false;
   }
@@ -93,17 +99,19 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       registry.clear();
     } catch (error) {
       // 如果 clear 失败，重新初始化 registry
-      logger.warn('[app-scanner] registry.clear() 失败，重新初始化', error);
+      // 直接使用 console.warn，避免循环依赖
+      console.warn('[app-scanner] registry.clear() 失败，重新初始化', error);
       try {
         if (typeof globalThis !== 'undefined') {
           (globalThis as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
         } else {
-          const globalObj = typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : {});
+          const globalObj = typeof window !== 'undefined' ? window : {};
           (globalObj as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
         }
       } catch (e) {
         // 如果重新初始化也失败，继续使用当前 registry（虽然可能有问题）
-        logger.error('[app-scanner] 无法重新初始化 registry', e);
+        // 直接使用 console.error，避免循环依赖
+        console.error('[app-scanner] 无法重新初始化 registry', e);
       }
     }
   } else {
@@ -112,11 +120,12 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       if (typeof globalThis !== 'undefined') {
         (globalThis as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
       } else {
-        const globalObj = typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : {});
+        const globalObj = typeof window !== 'undefined' ? window : {};
         (globalObj as any).__BTC_APP_REGISTRY__ = new Map<string, AppIdentity>();
       }
     } catch (e) {
-      logger.error('[app-scanner] 无法初始化 registry', e);
+      // 直接使用 console.error，避免循环依赖
+      console.error('[app-scanner] 无法初始化 registry', e);
     }
   }
 
@@ -128,7 +137,8 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
   if (!appConfigsMap || typeof appConfigsMap !== 'object' || appConfigsMap === null || Array.isArray(appConfigsMap)) {
     // 只在开发环境或真正有问题时才警告
     if (import.meta.env.DEV) {
-      logger.warn('[app-scanner] appConfigsMap 不存在或不是对象，跳过扫描', { appConfigsMap });
+      // 直接使用 console.warn，避免循环依赖
+      console.warn('[app-scanner] appConfigsMap 不存在或不是对象，跳过扫描', { appConfigsMap });
     }
     return finalRegistry;
   }
@@ -155,7 +165,8 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
 
       finalRegistry.set(identity.id, identity);
     } catch (error) {
-      logger.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
+      // 直接使用 console.error，避免循环依赖
+      console.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
     }
   }
 

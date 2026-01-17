@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
-import { logger } from '@btc/shared-core';
+;
 
 /**
  * 获取路由配置
@@ -32,17 +32,12 @@ export const getAdminRoutes = (): RouteRecordRaw[] => {
     // 合并 views 和 pages 路由
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
-    // 输出扫描结果（开发环境）
-    if (import.meta.env.DEV) {
-      logger.info(
-        `[AdminRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
-      if (autoRoutes.conflicts.length > 0) {
-        logger.warn('[AdminRouter] Route conflicts:', autoRoutes.conflicts);
-      }
+    // 输出扫描结果（开发环境）- 已删除日志打印
+    if (import.meta.env.DEV && autoRoutes.conflicts.length > 0) {
+      console.warn('[AdminRouter] Route conflicts:', autoRoutes.conflicts);
     }
   } catch (error) {
-    logger.error('[AdminRouter] Failed to scan routes from modules:', error);
+    console.error('[AdminRouter] Failed to scan routes from modules:', error);
     // 如果扫描失败，返回空数组
     pageRoutes = [];
   }

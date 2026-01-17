@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 ﻿import fs from "fs";
 import path from "path";
 

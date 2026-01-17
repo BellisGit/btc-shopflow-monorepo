@@ -2,7 +2,7 @@
  * 子应用插件消费模块
  * 子应用通过此模块消费主应用提供的全局插件状态和能力
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { App } from 'vue';
 import {
@@ -20,7 +20,7 @@ export function initPluginConsumer(app: App) {
   const globalState = (window as any).globalState;
 
   if (!globalState) {
-    logger.warn('[plugin-consumer] globalState is not available');
+    console.warn('[plugin-consumer] globalState is not available');
     return;
   }
 

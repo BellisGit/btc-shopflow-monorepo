@@ -1,7 +1,7 @@
 /**
  * TenantSelector Storybook 故事
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { Meta, StoryObj } from '@storybook/vue3';
 import TenantSelector from '../register/tenant-selector/index.vue';
@@ -60,7 +60,7 @@ export const Interactive: Story = {
       const selectedTenant = ref('');
 
       const handleNext = () => {
-        logger.info('选择的租户类型:', selectedTenant.value);
+        console.info('选择的租户类型:', selectedTenant.value);
         alert(`选择了: ${selectedTenant.value}`);
       };
 

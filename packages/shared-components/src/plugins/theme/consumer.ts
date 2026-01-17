@@ -1,7 +1,7 @@
 /**
  * 主题插件 - 子应用消费（Consumer）
  */
-import { logger } from '@btc/shared-core';
+;
 import { useDark } from '@vueuse/core';
 import type { QiankunActions } from '../types';
 import { setThemeColor } from './utils';
@@ -18,7 +18,7 @@ export function consumeThemePluginHost(options: ThemePluginConsumerOptions = {})
   const { globalState } = options;
 
   if (!globalState) {
-    logger.warn('[theme-consumer] globalState is not provided');
+    console.warn('[theme-consumer] globalState is not provided');
     return null;
   }
 

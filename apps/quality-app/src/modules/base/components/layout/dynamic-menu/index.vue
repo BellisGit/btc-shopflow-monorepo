@@ -26,8 +26,6 @@ defineOptions({
   name: 'LayoutDynamicMenu',
 });
 
-import { ref, computed, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';

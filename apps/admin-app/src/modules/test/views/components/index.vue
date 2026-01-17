@@ -75,11 +75,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, markRaw, shallowRef } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { BtcMessage, BtcCrudRow, BtcCrudFlex1 } from '@btc/shared-components';
 import { BtcDialog } from '@btc/shared-components';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import {
   getAllTestInstanceConfigs,
   loadTestInstanceComponent,
@@ -126,7 +125,7 @@ const loadTestInstances = async () => {
             component: markRaw(component) // 使用 markRaw 标记组件为非响应式
           };
         } catch (error) {
-          logger.warn(`Failed to load test instance: ${config.name}`, error);
+          console.warn(`Failed to load test instance: ${config.name}`, error);
           return null;
         }
       })
@@ -135,7 +134,7 @@ const loadTestInstances = async () => {
     // 过滤掉加载失败的实例
     testInstances.value = testModules.filter(Boolean) as TestInstance[];
   } catch (error) {
-    logger.error('加载测试实例失败:', error);
+    console.error('加载测试实例失败:', error);
     BtcMessage.error('加载测试实例失败');
   }
 };

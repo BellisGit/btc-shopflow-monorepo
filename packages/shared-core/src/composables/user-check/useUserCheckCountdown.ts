@@ -1,8 +1,6 @@
 /**
  * 用户检查倒计时和退出逻辑
  */
-import { logger } from '../../utils/logger';
-
 import { getCredentialExpireTime, getUserCheckDataFromStorage } from './useUserCheckStorage';
 import { stopPolling } from './useUserCheckPolling';
 
@@ -27,7 +25,7 @@ async function performLogout(): Promise<void> {
         await globalLogout();
         return;
       } catch (error) {
-        logger.error('[useUserCheckCountdown] Logout function failed:', error);
+        console.error('[useUserCheckCountdown] Logout function failed:', error);
       }
     }
   }
@@ -65,10 +63,10 @@ function showWarning(): void {
         warningShown = true;
       }
     }).catch((error) => {
-      logger.error('[useUserCheckCountdown] Failed to import BtcMessage:', error);
+      console.error('[useUserCheckCountdown] Failed to import BtcMessage:', error);
     });
   } catch (error) {
-    logger.error('[useUserCheckCountdown] Failed to show warning:', error);
+    console.error('[useUserCheckCountdown] Failed to show warning:', error);
   }
 }
 
@@ -105,7 +103,7 @@ function checkCountdown(): void {
     // 如果剩余时间为0且状态为expired，执行退出
     if (remainingTime <= 0 && status === 'expired') {
       performLogout().catch((error) => {
-        logger.error('[useUserCheckCountdown] Failed to perform logout:', error);
+        console.error('[useUserCheckCountdown] Failed to perform logout:', error);
       });
       return;
     }
@@ -116,7 +114,7 @@ function checkCountdown(): void {
       warningShown = false;
     }
   } catch (error) {
-    logger.error('[useUserCheckCountdown] Countdown check failed:', error);
+    console.error('[useUserCheckCountdown] Countdown check failed:', error);
   }
 }
 

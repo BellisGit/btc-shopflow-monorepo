@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -75,12 +75,12 @@ sidebar_group: guides-backend
 
       const newContent = content.replace(frontmatterRegex, newFrontmatter);
       fs.writeFileSync(filePath, newContent, 'utf-8');
-      logger.info(`✅ Updated frontmatter for ${path.basename(filePath)}`);
+      console.info(`✅ Updated frontmatter for ${path.basename(filePath)}`);
     } else {
-      logger.info(`❌ No frontmatter found in ${path.basename(filePath)}`);
+      console.info(`❌ No frontmatter found in ${path.basename(filePath)}`);
     }
   } catch (error) {
-    logger.error(`❌ Error updating ${filePath}:`, error);
+    console.error(`❌ Error updating ${filePath}:`, error);
   }
 }
 
@@ -90,8 +90,8 @@ Object.entries(serviceConfigs).forEach(([filename, config]) => {
   if (fs.existsSync(filePath)) {
     updateFrontmatter(filePath, config);
   } else {
-    logger.info(`❌ File not found: ${filePath}`);
+    console.info(`❌ File not found: ${filePath}`);
   }
 });
 
-logger.info('🎉 Backend frontmatter update completed!');
+console.info('🎉 Backend frontmatter update completed!');

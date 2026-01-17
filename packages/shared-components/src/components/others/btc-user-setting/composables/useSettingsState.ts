@@ -74,11 +74,11 @@ export function useSettingsState() {
   }
 
   // Loading 样式设置
-  type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
+  type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress' | 'flower';
   const storedLoadingStyle = initialSettings.loadingStyle as LoadingStyle | null;
-  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : storedLoadingStyle === 'gradient' ? 'gradient' : storedLoadingStyle === 'progress' ? 'progress' : 'circle';
+  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : storedLoadingStyle === 'gradient' ? 'gradient' : storedLoadingStyle === 'progress' ? 'progress' : storedLoadingStyle === 'flower' ? 'flower' : 'circle';
   const loadingStyle = ref<LoadingStyle>(resolvedLoadingStyle);
-  if (!initialSettings.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots' && initialSettings.loadingStyle !== 'gradient')) {
+  if (!initialSettings.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots' && initialSettings.loadingStyle !== 'gradient' && initialSettings.loadingStyle !== 'progress' && initialSettings.loadingStyle !== 'flower')) {
     storage.set('settings', { ...initialSettings, loadingStyle: resolvedLoadingStyle });
   }
 

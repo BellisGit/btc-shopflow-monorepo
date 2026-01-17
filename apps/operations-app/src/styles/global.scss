@@ -278,9 +278,10 @@ html.dark {
 // }
 
 // Element Plus 内部滚动容器，使用原生滚动并稳定滚动槽
+// 注意：对于表格，水平滚动由 el-table 自己处理，所以这里允许水平滚动
 :deep(.el-scrollbar__wrap) {
   overflow-y: scroll !important; // 始终保留滚动条空间，避免出现/消失导致重排
-  overflow-x: hidden !important;
+  overflow-x: auto !important; // 允许水平滚动，让 el-table 自己处理水平滚动条
   // 移除 scrollbar-gutter，按用户要求取消滚动条预留
 }
 

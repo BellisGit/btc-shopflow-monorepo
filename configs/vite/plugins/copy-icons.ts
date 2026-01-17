@@ -3,7 +3,14 @@
  * 用于在构建时复制 public/icons 目录到 dist/icons
  * 主要用于 admin-app，因为它需要显示图标内容
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[copy-icons]', ...args),
+  error: (...args: any[]) => console.error('[copy-icons]', ...args),
+  info: (...args: any[]) => console.info('[copy-icons]', ...args),
+  debug: (...args: any[]) => console.debug('[copy-icons]', ...args),
+};
 
 import type { Plugin, ResolvedConfig } from 'vite';
 import { resolve } from 'path';
@@ -67,7 +74,7 @@ export function copyIconsPlugin(appDir: string): Plugin {
         if (existsSync(faviconDest)) {
           try {
             unlinkSync(faviconDest);
-            logger.info(`[copy-icons] 已删除不需要的 favicon.ico: ${faviconDest}`);
+            console.info(`[copy-icons] 已删除不需要的 favicon.ico: ${faviconDest}`);
           } catch (error) {
             // 静默失败
           }
@@ -120,10 +127,10 @@ export function copyIconsPlugin(appDir: string): Plugin {
           }
         }
 
-        logger.info(`[copy-icons] 已复制 icons 目录到: ${iconsDestDir}`);
+        console.info(`[copy-icons] 已复制 icons 目录到: ${iconsDestDir}`);
       } catch (error) {
         // 静默失败，避免阻塞构建
-        logger.warn('[copy-icons] 复制 icons 目录失败:', error);
+        console.warn('[copy-icons] 复制 icons 目录失败:', error);
       }
     },
   } as Plugin;

@@ -1,5 +1,5 @@
 ---
-title: BtcTableGroup 组件
+title: BtcMasterTableGroup 组件
 type: package
 project: components
 owner: dev-team
@@ -9,15 +9,15 @@ publish: true
 tags:
 - packages
 - components
-- table-group
-sidebar_label: BtcTableGroup
+- master-table-group
+sidebar_label: BtcMasterTableGroup
 sidebar_order: 9
 sidebar_group: packages
 ---
 
-# BtcTableGroup 组件
+# BtcMasterTableGroup 组件
 
-`BtcTableGroup` 是一个增强型的复合组件，它在 `BtcViewGroup` 的基础上，内置了 `BtcMasterList` 作为左侧内容，并内置了 `BtcCrud` 作为右侧内容，旨在提供一个开箱即用的"左树右表"联动解决方案。
+`BtcMasterTableGroup` 是一个增强型的复合组件，它在 `BtcDoubleLayout` 的基础上，内置了 `BtcMasterList` 作为左侧内容，并内置了 `BtcCrud` 作为右侧内容，旨在提供一个开箱即用的"左树右表"联动解决方案。
 
 ## 功能特性
 
@@ -35,7 +35,7 @@ sidebar_group: packages
 
 ```vue
 <template>
-  <BtcTableGroup
+  <BtcMasterTableGroup
     ref="tableGroupRef"
     :left-service="services.sysdepartment"
     :right-service="services.sysuser"
@@ -52,7 +52,7 @@ sidebar_group: packages
 </template>
 
 <script setup lang="ts">
-import { BtcTableGroup } from '@btc/shared-components';
+import { BtcMasterTableGroup } from '@btc/shared-components';
 import { userColumns, getUserFormItems, services } from './config';
 
 const tableGroupRef = ref();
@@ -71,7 +71,7 @@ const handleRefresh = (params?: any) => {
 
 ### 自动参数传递
 
-`BtcTableGroup` 会自动处理左侧和右侧服务的参数传递，确保都使用相同的对象格式：
+`BtcMasterTableGroup` 会自动处理左侧和右侧服务的参数传递，确保都使用相同的对象格式：
 
 #### 左侧服务（list 请求）
 ```typescript
@@ -105,7 +105,7 @@ const handleRefresh = (params?: any) => {
 
 ```vue
 <template>
-  <BtcTableGroup :right-service="services.sysuser">
+  <BtcMasterTableGroup :right-service="services.sysuser">
     <template #left>
       <!-- 完全自定义左侧内容，例如一个自定义的部门树 -->
       <CustomDepartmentTree @select="handleCustomSelect" />
@@ -118,7 +118,7 @@ const handleRefresh = (params?: any) => {
 </template>
 
 <script setup lang="ts">
-import { BtcTableGroup } from '@btc/shared-components';
+import { BtcMasterTableGroup } from '@btc/shared-components';
 import CustomDepartmentTree from './CustomDepartmentTree.vue';
 import CustomUserTable from './CustomUserTable.vue';
 import { services } from './config';
@@ -170,7 +170,7 @@ const handleCustomSelect = (item: any) => {
 
 ## 数据共享机制
 
-`BtcTableGroup` 通过以下机制实现数据共享：
+`BtcMasterTableGroup` 通过以下机制实现数据共享：
 
 1. **左侧数据自动注入**：左侧列表数据会自动注入到右侧表单的级联选择器中
 2. **参数自动传递**：左侧选中项的 ID 会自动作为 `keyword` 传递给右侧 `page` 请求

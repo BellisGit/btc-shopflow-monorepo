@@ -345,7 +345,17 @@ export function setupAfterEachGuard(router: Router) {
   });
 
   // 第二个 afterEach：处理标签页、面包屑、最近访问等
-  router.afterEach((to) => {
+  router.afterEach(async (to, from) => {
+    // 监控系统：路由导航结束
+    const { trackRouteNavigationEnd } = await import('@btc/shared-core/utils/monitor');
+    trackRouteNavigationEnd(
+      from.path,
+      to.path,
+      to.name as string | undefined,
+      to.params as Record<string, any> | undefined,
+      to.query as Record<string, any> | undefined
+    );
+
     // 清理所有 ECharts 实例
     handleEChartsCleanup();
 

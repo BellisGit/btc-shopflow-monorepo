@@ -22,8 +22,6 @@ defineOptions({
   name: 'LayoutBreadcrumb',
 });
 
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';

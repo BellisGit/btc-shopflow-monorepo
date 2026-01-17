@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, type ComponentPublicInstance } from 'vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 export interface BtcTab {
@@ -192,11 +192,11 @@ const updateInkPosition = () => {
           width: `${targetWidth}px`,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         };
-        logger.warn('Failed to update ink position with latest values, using fallback:', error);
+        console.warn('Failed to update ink position with latest values, using fallback:', error);
       }
     });
   } catch (error) {
-    logger.warn('Failed to update ink position:', error);
+    console.warn('Failed to update ink position:', error);
   }
 };
 

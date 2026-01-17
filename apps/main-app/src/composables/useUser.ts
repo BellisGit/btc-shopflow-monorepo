@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
 import { appStorage } from '@/utils/app-storage';
@@ -36,7 +36,7 @@ export function useUser() {
         return user;
       }
     } catch (err) {
-      logger.error('获取用户信息失败:', err);
+      console.error('获取用户信息失败:', err);
     }
     return null;
   };
@@ -50,7 +50,7 @@ export function useUser() {
       appStorage.user.set(user);
       userInfo.value = user;
     } catch (err) {
-      logger.error('设置用户信息失败:', err);
+      console.error('设置用户信息失败:', err);
     }
   };
 

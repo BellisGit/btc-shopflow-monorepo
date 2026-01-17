@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 ﻿import { ref, computed, type Ref } from 'vue';
 import type { NodeType } from '@/types/strategy';
 import { NodeType as NodeTypeEnum } from '@/types/strategy';
@@ -164,7 +164,7 @@ export function useComponentLibrary(nodes?: Ref<any[]>) {
     try {
       return JSON.parse(event.dataTransfer.getData('application/json'));
     } catch (error) {
-      logger.error('Failed to parse drop data:', error);
+      console.error('Failed to parse drop data:', error);
       return null;
     }
   };

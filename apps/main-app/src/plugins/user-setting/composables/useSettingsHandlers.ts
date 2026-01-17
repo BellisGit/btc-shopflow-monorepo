@@ -5,7 +5,7 @@
 
 // 使用延迟加载避免循环依赖
 // 静态导入会导致模块加载时立即执行，可能形成循环依赖
-import { logger } from '@btc/shared-core';
+;
 import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
@@ -136,7 +136,7 @@ export function useSettingsHandlers() {
         }
       } catch (e) {
         // 如果主题插件不可用，忽略错误
-        logger.warn('Theme plugin not available:', e);
+        console.warn('Theme plugin not available:', e);
       }
       // 触发页面重新加载或更新主题
       window.dispatchEvent(new CustomEvent('theme-color-change', { detail: { color } }));

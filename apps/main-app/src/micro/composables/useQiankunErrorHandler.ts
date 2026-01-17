@@ -3,7 +3,8 @@
  * 处理子应用加载错误和资源加载错误
  */
 
-import { getAppConfig, logger } from '@btc/shared-core/configs/app-env.config';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+;
 import { microApps } from '../apps';
 
 // 获取主应用配置（用于判断当前是否在主应用预览端口）
@@ -79,7 +80,7 @@ export function setupQiankunErrorHandler(): void {
         const { appLoadingService } = await import('@btc/shared-core');
         appLoadingService.hide(appName);
       } catch (error) {
-        logger.warn('[qiankun] 无法加载 AppLoadingService，尝试强制关闭loading', error);
+        console.warn('[qiankun] 无法加载 AppLoadingService，尝试强制关闭loading', error);
         // 兜底方案：直接通过 DOM 关闭所有 .app-loading 元素
         const loadingEls = document.querySelectorAll('.app-loading');
         loadingEls.forEach((el) => {
@@ -119,7 +120,7 @@ export function setupQiankunErrorHandler(): void {
       // 如果是源文件路径错误，直接忽略（这些文件应该在构建时被打包）
       // 包括所有 /packages/ 和 /src/ 路径，这些都不应该在生产环境出现
       if (isSourcePathError) {
-        logger.warn(`[错误处理] 忽略源文件路径错误: ${src} (此文件应在构建时被打包)`);
+        console.warn(`[错误处理] 忽略源文件路径错误: ${src} (此文件应在构建时被打包)`);
         event.preventDefault();
         event.stopPropagation();
         return;
@@ -148,7 +149,7 @@ export function setupQiankunErrorHandler(): void {
                 entryUrl = new URL(appEntry, window.location.origin);
               }
             } catch (e) {
-              logger.warn('[错误处理] 解析 appEntry URL 失败:', appEntry, e);
+              console.warn('[错误处理] 解析 appEntry URL 失败:', appEntry, e);
             }
 
             if (entryUrl) {
@@ -171,7 +172,7 @@ export function setupQiankunErrorHandler(): void {
 
                 // 重新加载资源
                 if (fixedUrl !== src) {
-                  logger.info(`[错误处理] 修复资源路径: ${src} -> ${fixedUrl}`);
+                  console.info(`[错误处理] 修复资源路径: ${src} -> ${fixedUrl}`);
                   if (target instanceof HTMLScriptElement) {
                     const newScript = document.createElement('script');
                     newScript.src = fixedUrl;

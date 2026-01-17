@@ -6,7 +6,7 @@
  * 2. 包含全局404处理（当qiankun子应用加载失败或路由未匹配时显示）
  * 3. 其他路由交给 qiankun 子应用处理
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { createRouter, createWebHistory } from 'vue-router';
 import { getManifestRoute, getManifest } from '@btc/shared-core/manifest';
@@ -19,7 +19,7 @@ const routes = [
   {
     path: '/404',
     name: 'NotFound404',
-    component: () => import('./modules/base/pages/error/404.vue'),
+    component: () => import('@btc/shared-components').then(m => m.BtcError404),
     meta: {
       titleKey: 'common.page_not_found',
       isPage: true,
@@ -120,7 +120,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
   const isMainAppRoute = isMainApp(pathToCheck, pathToCheck, isStandalone);
 
   if (import.meta.env.DEV) {
-    logger.info('[layout-app router] beforeEach:', {
+    console.info('[layout-app router] beforeEach:', {
       path: to.path,
       locationPath,
       pathToCheck,
@@ -135,7 +135,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
     // 主应用路由应该由 main-app 处理，但 layout-app 没有注册 main-app
     // 所以应该重定向到404，提示用户主应用路由在 layout-app 环境下不可用
     if (import.meta.env.DEV) {
-      logger.warn(`[layout-app router] ${tSync('common.error.router_unavailable')}:`, to.path);
+      console.warn(`[layout-app router] ${tSync('common.error.router_unavailable')}:`, to.path);
     }
     next('/404');
     return;

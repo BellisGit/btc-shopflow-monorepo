@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 #!/usr/bin/env node
 
 // 通用包装脚本，用于避免 Windows PowerShell 的"输入行太长"问题
@@ -30,7 +30,7 @@ if (command.includes('/') || command.includes('\\')) {
 } else {
   // 尝试在 node_modules/.bin 中查找（pnpm monorepo 的结构）
   const rootNodeModulesBin = path.join(__dirname, '..', 'node_modules', '.bin');
-  
+
   // 在 Windows 上，优先查找 .cmd 文件
   if (isWindows) {
     const windowsCmd = path.join(rootNodeModulesBin, `${command}.cmd`);
@@ -38,23 +38,23 @@ if (command.includes('/') || command.includes('\\')) {
       commandPath = windowsCmd;
     }
   }
-  
+
   // 如果没有找到 .cmd，尝试通过 require.resolve 找到命令的 package.json，然后找到 bin 文件
   if (!commandPath) {
     try {
       // 保存原始的 Module._resolveFilename，以便我们可以自定义查找逻辑
       // 首先尝试从根目录的 node_modules 查找（pnpm monorepo 的结构）
       const rootNodeModules = path.join(__dirname, '..', 'node_modules');
-      
+
       // 尝试直接构建路径（pnpm 可能将包放在 .pnpm 目录下）
       // 先尝试在根目录的 node_modules/.bin 中查找
       let pkgPath = null;
       let moduleDir = null;
-      
+
       // 尝试使用 require.resolve，但指定从根目录查找
       // 由于 Node.js 的模块解析会从当前工作目录查找，我们可以在 cleanEnv 中设置 NODE_PATH
       // 但为了避免 PowerShell 的问题，我们手动查找
-      
+
       // 尝试在 .pnpm 目录中查找（pnpm 的结构）
       const pnpmDir = path.join(rootNodeModules, '.pnpm');
       if (fs.existsSync(pnpmDir)) {
@@ -71,7 +71,7 @@ if (command.includes('/') || command.includes('\\')) {
           }
         }
       }
-      
+
       // 如果没找到，尝试直接在 node_modules 中查找
       if (!pkgPath) {
         const directPkgPath = path.join(rootNodeModules, command, 'package.json');
@@ -80,7 +80,7 @@ if (command.includes('/') || command.includes('\\')) {
           moduleDir = path.dirname(directPkgPath);
         }
       }
-      
+
       // 如果还是没找到，使用 require.resolve（从当前工作目录查找）
       if (!pkgPath) {
         try {
@@ -90,11 +90,11 @@ if (command.includes('/') || command.includes('\\')) {
           // 仍然找不到，继续下面的逻辑
         }
       }
-      
+
       if (pkgPath && moduleDir && fs.existsSync(pkgPath)) {
         const pkg = require(pkgPath);
         let binPath = null;
-        
+
         // 检查 bin 字段
         if (pkg.bin) {
           if (typeof pkg.bin === 'string') {
@@ -105,7 +105,7 @@ if (command.includes('/') || command.includes('\\')) {
             binPath = path.join(moduleDir, pkg.bin.default);
           }
         }
-        
+
         // 如果找到了 bin 路径且文件存在，使用它
         if (binPath && fs.existsSync(binPath)) {
           commandPath = binPath;
@@ -118,7 +118,7 @@ if (command.includes('/') || command.includes('\\')) {
             path.join(moduleDir, 'dist', 'index.js'),
             path.join(moduleDir, 'cli.js'),
           ];
-          
+
           for (const possibleBin of possibleBins) {
             if (fs.existsSync(possibleBin)) {
               commandPath = possibleBin;
@@ -131,7 +131,7 @@ if (command.includes('/') || command.includes('\\')) {
       // require.resolve 失败，继续下面的逻辑
     }
   }
-  
+
   // 如果上面没有找到 commandPath，尝试其他方法
   if (!commandPath) {
     // 尝试查找其他格式

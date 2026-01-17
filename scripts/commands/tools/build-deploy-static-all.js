@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../utils/logger.mjs';
 #!/usr/bin/env node
 
 const { spawnSync } = require('node:child_process');
@@ -55,9 +55,9 @@ appsToClean.forEach((appName) => {
   const distPath = path.join(repoRoot, 'apps', appName, 'dist');
   const viteCachePath1 = path.join(repoRoot, 'apps', appName, 'node_modules', '.vite');
   const viteCachePath2 = path.join(repoRoot, 'apps', appName, '.vite');
-  
+
   let cleaned = false;
-  
+
   // 清理构建产物（但保留 build/eps 目录）
   if (fs.existsSync(distPath)) {
     try {
@@ -72,9 +72,9 @@ appsToClean.forEach((appName) => {
         fs.cpSync(epsDir, tempBackup, { recursive: true });
         epsBackup = tempBackup;
       }
-      
+
       fs.rmSync(distPath, { recursive: true, force: true });
-      
+
       // 恢复 build/eps 目录
       if (epsBackup && fs.existsSync(epsBackup)) {
         const targetEpsDir = path.join(repoRoot, 'apps', appName, 'build', 'eps');
@@ -84,13 +84,13 @@ appsToClean.forEach((appName) => {
         fs.cpSync(epsBackup, targetEpsDir, { recursive: true });
         fs.rmSync(epsBackup, { recursive: true, force: true });
       }
-      
+
       cleaned = true;
     } catch (error) {
       logger.warn(`⚠️  ${appName}: 清理构建产物失败:`, error.message);
     }
   }
-  
+
   // 清理 Vite 缓存
   [viteCachePath1, viteCachePath2].forEach((cachePath, index) => {
     if (fs.existsSync(cachePath)) {
@@ -102,7 +102,7 @@ appsToClean.forEach((appName) => {
       }
     }
   });
-  
+
   if (cleaned) {
     logger.info(`✓ ${appName}: 已清理构建产物和缓存`);
   }
@@ -135,7 +135,7 @@ packagesToClean.forEach((pkgName) => {
   const pkgDistPath = path.join(repoRoot, pkgName, 'dist');
   const pkgViteCachePath1 = path.join(repoRoot, pkgName, 'node_modules', '.vite');
   const pkgViteCachePath2 = path.join(repoRoot, pkgName, '.vite');
-  
+
   [pkgDistPath, pkgViteCachePath1, pkgViteCachePath2].forEach((cachePath) => {
     if (fs.existsSync(cachePath)) {
       try {
@@ -179,7 +179,7 @@ if (!fs.existsSync(mainEpsPath)) {
 }
 
 const mainEpsData = JSON.parse(fs.readFileSync(mainEpsPath, 'utf-8'));
-const mainEpsCount = Array.isArray(mainEpsData) ? mainEpsData.length : 
+const mainEpsCount = Array.isArray(mainEpsData) ? mainEpsData.length :
                        (mainEpsData.data ? Object.values(mainEpsData.data).flat().length : 0);
 logger.info(`✅ main-app EPS 数据: ${mainEpsCount} 个实体`);
 
@@ -191,12 +191,12 @@ for (const appName of targetApps) {
     allValid = false;
     continue;
   }
-  
+
   try {
     const targetEpsData = JSON.parse(fs.readFileSync(targetEpsPath, 'utf-8'));
     const targetEpsCount = Array.isArray(targetEpsData) ? targetEpsData.length :
                            (targetEpsData.data ? Object.values(targetEpsData.data).flat().length : 0);
-    
+
     if (targetEpsCount === 0) {
       logger.error(`❌ ${appName}: EPS 数据为空`);
       allValid = false;

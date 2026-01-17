@@ -3,7 +3,7 @@
 /**
  * 完整验证管理应用构建产物中的所有引用
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname, resolve } from 'path';

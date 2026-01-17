@@ -2,12 +2,22 @@
  * Locales 静态文件插件
  * 在开发服务器层面提供 src/locales/*.json 文件，供主应用通过 fetch 加载
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 因为 esbuild 无法正确解析 workspace 包
+// 使用 console 替代 logger，避免配置加载时的解析问题
 
 import type { Plugin, ViteDevServer } from 'vite';
 import type { ResolvedConfig } from 'vite';
 import { readFileSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
+
+// 使用 console 作为 logger，避免在配置加载时解析 @btc/shared-core
+const logger = {
+  warn: (...args: any[]) => console.warn('[locales-static]', ...args),
+  error: (...args: any[]) => console.error('[locales-static]', ...args),
+  info: (...args: any[]) => console.info('[locales-static]', ...args),
+  debug: (...args: any[]) => console.debug('[locales-static]', ...args),
+};
 
 /**
  * Locales 静态文件插件
@@ -42,7 +52,7 @@ export function localesStaticPlugin(appDir: string): Plugin {
     // 检查文件是否存在
     if (!existsSync(fullPath)) {
       // 文件不存在，记录警告并继续下一个中间件
-      logger.warn(`[locales-static] File not found: ${fullPath} (requested: ${req.url})`);
+      console.warn(`[locales-static] File not found: ${fullPath} (requested: ${req.url})`);
       next();
       return;
     }
@@ -62,7 +72,7 @@ export function localesStaticPlugin(appDir: string): Plugin {
       res.end(content);
     } catch (error) {
       // 读取文件失败，继续下一个中间件
-      logger.warn(`[locales-static] Failed to read file: ${fullPath}`, error);
+      console.warn(`[locales-static] Failed to read file: ${fullPath}`, error);
       next();
     }
   };

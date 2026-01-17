@@ -60,6 +60,8 @@ export { default as BtcCard } from './components/basic/btc-card/index.vue';
 export { default as BtcTag } from './components/basic/btc-tag/index.vue';
 export { default as BtcCollapse } from './components/basic/btc-collapse/index.vue';
 export { default as BtcCollapseItem } from './components/basic/btc-collapse/CollapseItem.vue';
+export { default as BtcRow } from './components/basic/btc-row/index.vue';
+export { default as BtcCol } from './components/basic/btc-col/index.vue';
 export { default as BtcSplitter } from './components/basic/btc-splitter/index.vue';
 export { default as BtcSplitterPanel } from './components/basic/btc-splitter/btc-splitter-panel.vue';
 
@@ -79,6 +81,8 @@ export { default as BtcCascader } from './components/navigation/btc-cascader/ind
 export { default as BtcForm } from './components/form/btc-form/index.vue';
 export { default as BtcFormCard } from './components/form/btc-form/components/form-card.vue';
 export { default as BtcFormTabs } from './components/form/btc-form/components/form-tabs.vue';
+export { default as BtcFilterForm } from './components/form/btc-filter-form/index.vue';
+export type { BtcFilterFormProps, BtcFilterFormEmits } from './components/form/btc-filter-form/types';
 export { default as BtcSelectButton } from './components/form/btc-select-button/index.vue';
 export { default as BtcColorPicker } from './components/form/btc-color-picker/index.vue';
 export { default as BtcUpload } from './components/form/btc-upload/index.vue';

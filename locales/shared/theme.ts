@@ -36,6 +36,7 @@ export const theme = {
     'theme.loadingStyles.dots': '四个圆点',
     'theme.loadingStyles.gradient': '渐变圆环',
     'theme.loadingStyles.progress': '进度条',
+    'theme.loadingStyles.flower': '八瓣花',
 
     // 设置相关
     'setting.theme.title': '主题风格',
@@ -117,6 +118,7 @@ export const theme = {
     'theme.loadingStyles.dots': 'Four Dots',
     'theme.loadingStyles.gradient': 'Gradient Ring',
     'theme.loadingStyles.progress': 'Progress Bar',
+    'theme.loadingStyles.flower': 'Eight Petals',
 
     // Settings
     'setting.theme.title': 'Theme Style',

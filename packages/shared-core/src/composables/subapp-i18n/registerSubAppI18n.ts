@@ -3,7 +3,7 @@
  * 用于从 config.ts 提取国际化配置并注册到主应用
  * 让主应用能够访问子应用的国际化配置（特别是 app 和 menu 部分）
  */
-import { logger } from '../../utils/logger';
+;
 
 import { LocaleConfigSchema, validateConfig } from '../../configs/schemas';
 
@@ -470,7 +470,7 @@ function extractI18nFromConfigFiles(
             throw error;
           }
           // 生产环境：记录警告并上报，但继续处理
-          logger.warn(`[extractI18nFromConfigFiles] 配置验证失败 (${path}):`, error);
+          console.warn(`[extractI18nFromConfigFiles] 配置验证失败 (${path}):`, error);
           // 上报验证失败（异步，不阻塞）
           if (error instanceof Error && 'errors' in error) {
             import('../../utils/zod/reporting').then(({ reportValidationError }) => {
@@ -620,6 +620,6 @@ export function registerSubAppI18n(
 
     (window as any).__SUBAPP_I18N_GETTERS__.set(appId, getLocaleMessages);
   } catch (error) {
-    logger.error(`[registerSubAppI18n] 注册 ${appId} 的国际化消息获取器失败:`, error);
+    console.error(`[registerSubAppI18n] 注册 ${appId} 的国际化消息获取器失败:`, error);
   }
 }

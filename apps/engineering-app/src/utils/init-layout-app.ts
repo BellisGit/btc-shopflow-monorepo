@@ -7,7 +7,7 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { tSync } from '../i18n/getters';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
@@ -171,13 +171,13 @@ async function injectAppConfigFromManifest(appId: string) {
     }
 
     if (import.meta.env.DEV) {
-      logger.info(`[initLayoutApp] ${tSync('common.error.manifest_injected')}: ${appId}`, {
+      console.info(`[initLayoutApp] ${tSync('common.error.manifest_injected')}: ${appId}`, {
         hasMenus: registry?.value?.[appId]?.length > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    logger.warn(`[initLayoutApp] ${tSync('common.error.manifest_inject_failed')}:`, error);
+    console.warn(`[initLayoutApp] ${tSync('common.error.manifest_inject_failed')}:`, error);
     // 继续执行，使用默认配置
   }
 }

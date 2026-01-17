@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 #!/usr/bin/env node
 
 /**
@@ -48,17 +48,17 @@ if (fs.existsSync(assetsPath)) {
       const filePath = path.join(assetsPath, file);
       const stats = fs.statSync(filePath);
       const content = fs.readFileSync(filePath, 'utf-8');
-      
+
       // 检查是否包含关键代码
-      const hasNumberAuth = content.includes('getNumberAuthConfig') || 
+      const hasNumberAuth = content.includes('getNumberAuthConfig') ||
                            content.includes('loginByNumberAuth') ||
                            content.includes('NumberAuth') ||
                            content.includes('numberAuth');
-      
+
       const hasOneClick = content.includes('handleOneClickLogin') ||
                          content.includes('oneClickLoading') ||
                          content.includes('triggerOneClick');
-      
+
       logger.info(`    ${file} (${(stats.size / 1024).toFixed(2)} KB)`);
       logger.info(`      - 号码认证 API: ${hasNumberAuth ? '✓' : '✗'}`);
       logger.info(`      - 一键登录逻辑: ${hasOneClick ? '✓' : '✗'}`);
@@ -77,7 +77,7 @@ if (fs.existsSync(indexPath)) {
   const content = fs.readFileSync(indexPath, 'utf-8');
   const hasLoginScript = content.includes('Login') && content.includes('.js');
   logger.info(`  - 引用 Login 组件: ${hasLoginScript ? '✓' : '✗'}`);
-  
+
   // 检查是否有 Service Worker
   const hasSW = content.includes('sw.js') || content.includes('serviceWorker');
   logger.info(`  - Service Worker: ${hasSW ? '✓' : '✗'}`);

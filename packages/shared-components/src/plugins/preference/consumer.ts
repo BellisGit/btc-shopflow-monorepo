@@ -1,7 +1,7 @@
 /**
  * 偏好设置插件 - 子应用消费（Consumer）
  */
-import { logger } from '@btc/shared-core';
+;
 import type { QiankunActions } from '../types';
 import { onGlobalStateChange } from '@btc/shared-core';
 
@@ -16,7 +16,7 @@ export function consumePreferencePluginHost(options: PreferencePluginConsumerOpt
   const { globalState } = options;
 
   if (!globalState) {
-    logger.warn('[preference-consumer] globalState is not provided');
+    console.warn('[preference-consumer] globalState is not provided');
     return null;
   }
 

@@ -21,9 +21,7 @@ defineOptions({
   name: 'LayoutTopMenu',
 });
 
-import { ref, computed, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useCurrentApp } from '@/composables/useCurrentApp';
 import { getMenusForApp } from '@/store/menuRegistry';
@@ -52,7 +50,7 @@ watch(
 
 const handleMenuSelect = (index: string) => {
   if (import.meta.env.DEV) {
-    logger.info('[main-app] top-menu select', { index, currentApp: currentApp.value });
+    console.info('[main-app] top-menu select', { index, currentApp: currentApp.value });
   }
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
   router.push(absolutePath);

@@ -7,7 +7,7 @@
       :right-title="rightTitle"
     >
       <template #left-header>
-        <span class="label">{{ leftTitle ? t(leftTitle) : t('common.list') }}</span>
+        <span class="label">{{ leftTitleDisplay }}</span>
         <div class="left-header-actions">
           <el-tooltip :content="t('common.button.refresh')">
             <button
@@ -170,7 +170,7 @@ import BtcCrudSearchKey from '@btc-crud/crud-search-key/index.vue';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import BtcCrudActions from '@btc-crud/actions/index.vue';
 import { useContentHeight } from '../../../composables/content-height';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import type { MasterTableGroupProps, MasterTableGroupEmits, MasterTableGroupExpose } from './types';
 
 defineOptions({
@@ -226,6 +226,18 @@ const emit = defineEmits<MasterTableGroupEmits>();
 
 // 国际化
 const { t } = useI18n();
+
+// 判断字符串是否是国际化 key（包含点号）
+const isI18nKey = (str: string | undefined): boolean => {
+  if (!str) return false;
+  return typeof str === 'string' && str.includes('.') && /^[a-zA-Z]/.test(str);
+};
+
+// 显示左侧标题（支持国际化）
+const leftTitleDisplay = computed(() => {
+  if (!props.leftTitle) return t('common.list');
+  return isI18nKey(props.leftTitle) ? t(props.leftTitle) : props.leftTitle;
+});
 
 // 组件引用
 const doubleLayoutRef = ref<InstanceType<typeof BtcDoubleLayout>>();
@@ -655,7 +667,7 @@ async function handleFormSubmit(data: any, event: any) {
     } catch (e) {
       // 推断失败，不传递
       if (import.meta.env.DEV) {
-        logger.error('[BtcMasterTableGroup] handleFormSubmit 推断失败:', e);
+        console.error('[BtcMasterTableGroup] handleFormSubmit 推断失败:', e);
       }
     }
   }

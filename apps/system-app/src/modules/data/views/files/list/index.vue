@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <btc-crud ref="crudRef" class="page__body" :service="fileService">
-      <btc-row>
+      <btc-crud-row>
         <div class="btc-crud-primary-actions">
           <!-- 刷新按钮 -->
           <btc-refresh-btn />
@@ -10,7 +10,7 @@
             class="btc-crud-action-icon"
             :config="uploadButtonConfig"
           />
-          <el-button
+          <btc-button
             v-else
             type="primary"
             class="btc-crud-btn"
@@ -19,13 +19,13 @@
           >
             <BtcSvg class="btc-crud-btn__icon" name="upload" />
             <span class="btc-crud-btn__text">上传文件</span>
-          </el-button>
+          </btc-button>
           <BtcTableButton
             v-if="isMinimal"
             class="btc-crud-action-icon"
             :config="deleteButtonConfig"
           />
-          <el-button
+          <btc-button
             v-else
             type="danger"
             class="btc-crud-btn"
@@ -35,16 +35,16 @@
           >
             <BtcSvg class="btc-crud-btn__icon" name="delete" />
             <span class="btc-crud-btn__text">删除文件</span>
-          </el-button>
+          </btc-button>
         </div>
 
-        <btc-flex1 />
+        <btc-crud-flex1 />
         <!-- 关键字搜索 -->
-        <btc-search-key />
+        <btc-crud-search-key />
         <btc-crud-actions />
-      </btc-row>
+      </btc-crud-row>
 
-      <btc-row>
+      <btc-crud-row>
         <!-- 数据表格 -->
         <btc-table
           ref="tableRef"
@@ -53,18 +53,18 @@
           border
           rowKey="id"
         />
-      </btc-row>
+      </btc-crud-row>
 
-      <btc-row>
-        <btc-flex1 />
+      <btc-crud-row>
+        <btc-crud-flex1 />
         <!-- 分页控件 -->
         <btc-pagination />
-      </btc-row>
+      </btc-crud-row>
     </btc-crud>
 
     <!-- 上传文件对话框 -->
-    <el-dialog v-model="uploadVisible" title="上传文件" width="500px">
-      <el-upload
+    <btc-dialog v-model="uploadVisible" title="上传文件" width="500px">
+      <btc-upload
         ref="uploadRef"
         class="upload-demo"
         drag
@@ -83,18 +83,18 @@
             支持单个或批量上传，单个文件不超过50MB
           </div>
         </template>
-      </el-upload>
+      </btc-upload>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="uploadVisible = false">取消</el-button>
-          <el-button type="primary" :loading="uploading" @click="handleConfirmUpload">
+          <btc-button @click="uploadVisible = false">取消</btc-button>
+          <btc-button type="primary" :loading="uploading" @click="handleConfirmUpload">
             确认上传
-          </el-button>
+          </btc-button>
         </span>
       </template>
-    </el-dialog>
+    </btc-dialog>
 
-    <el-dialog v-model="detailVisible" title="文件详情" width="420px">
+    <btc-dialog v-model="detailVisible" title="文件详情" width="420px">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="文件名">
           {{ detailRow?.originalName || '-' }}
@@ -121,22 +121,21 @@
         </el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button @click="detailVisible = false">关闭</el-button>
+        <btc-button @click="detailVisible = false">关闭</btc-button>
       </template>
-    </el-dialog>
+    </btc-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
-import { ElButton, ElDialog, ElUpload, ElIcon } from 'element-plus';
+import { ElIcon } from 'element-plus';
 import type { UploadFile } from 'element-plus';
 import { BtcConfirm, BtcMessage, BtcTableButton, BtcSvg, CommonColumns } from '@btc/shared-components';
 import type { TableColumn } from '@btc/shared-components';
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import { service } from '@/services/eps';
-import { type { CrudService }, logger } from '@btc/shared-core';
+import { type CrudService } from '@btc/shared-core';
 import BtcFileThumbnailCell from '@/components/btc-file-thumbnail-cell/BtcFileThumbnailCell.vue';
 import { useThemePlugin, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { DEFAULT_OPERATION_WIDTH } from '@btc/shared-components';
@@ -485,7 +484,7 @@ async function handleShare(row: any) {
     }
     BtcMessage.success('文件链接已复制');
   } catch (error) {
-    logger.error('copy link error', error);
+    console.error('copy link error', error);
     BtcMessage.error('复制链接失败，请手动复制');
   }
 }
@@ -498,8 +497,5 @@ function handleDetail(row: any) {
 </script>
 
 <style lang="scss" scoped>
-
-  }
-}
 </style>
 

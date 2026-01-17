@@ -26,8 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
 import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcCrudRow, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions } from '@btc/shared-components';
 import { usePageColumns, getPageConfigFull } from '@btc/shared-core';
 import { service } from '@services/eps';

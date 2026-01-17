@@ -179,7 +179,7 @@ import type {
   BtcFilterTableGroupEmits,
   BtcFilterTableGroupExpose,
 } from './types';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -590,7 +590,7 @@ defineExpose<BtcFilterTableGroupExpose>({
   },
   updateColumns: (columns: TableColumn[]) => {
     // 暂未实现，未来可以支持手动更新列
-    logger.warn('[BtcFilterTableGroup] updateColumns 暂未实现');
+    console.warn('[BtcFilterTableGroup] updateColumns 暂未实现');
   },
 });
 </script>

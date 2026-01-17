@@ -1,7 +1,7 @@
 /**
  * 用户检查轮询统一接口
  */
-import { logger } from '../../utils/logger';
+;
 
 import { startPolling, stopPolling, isPollingActive } from './useUserCheckPolling';
 import { startCountdown, stopCountdown } from './useUserCheckCountdown';
@@ -19,7 +19,7 @@ export function startUserCheckPolling(forceImmediate = false): void {
   // 如果已经在轮询，且不是强制立即检查，不重复启动
   if (isPollingActive() && !forceImmediate) {
     if (import.meta.env.DEV) {
-      logger.warn('[startUserCheckPolling] Polling is already active, skipping');
+      console.warn('[startUserCheckPolling] Polling is already active, skipping');
     }
     return;
   }
@@ -162,7 +162,7 @@ function doStartUserCheckPollingIfLoggedIn(): void {
   } catch (error) {
     // 静默失败，不影响应用启动
     if (import.meta.env.DEV) {
-      logger.warn('[startUserCheckPollingIfLoggedIn] Failed to check login status:', error);
+      console.warn('[startUserCheckPollingIfLoggedIn] Failed to check login status:', error);
     }
   }
 }
@@ -205,7 +205,7 @@ function checkIfAppSwitch(): boolean {
   } catch (error) {
     // 如果获取失败，默认不算应用切换（保守策略）
     if (import.meta.env.DEV) {
-      logger.warn('[checkIfAppSwitch] Failed to check app switch:', error);
+      console.warn('[checkIfAppSwitch] Failed to check app switch:', error);
     }
     return false;
   }
@@ -266,7 +266,7 @@ function updateCurrentAppId(): void {
   } catch (error) {
     // 静默失败
     if (import.meta.env.DEV) {
-      logger.warn('[updateCurrentAppId] Failed to update app id:', error);
+      console.warn('[updateCurrentAppId] Failed to update app id:', error);
     }
   }
 }
@@ -322,7 +322,7 @@ export async function reinitializeUserCheckOnAppSwitch(): Promise<void> {
     if (!result || !result.isValid || !result.data) {
       // 检查失败，不启动轮询
       if (import.meta.env.DEV) {
-        logger.warn('[reinitializeUserCheckOnAppSwitch] User check failed, not starting polling');
+        console.warn('[reinitializeUserCheckOnAppSwitch] User check failed, not starting polling');
       }
       return;
     }
@@ -335,7 +335,7 @@ export async function reinitializeUserCheckOnAppSwitch(): Promise<void> {
   } catch (error) {
     // 静默失败，不影响应用切换
     if (import.meta.env.DEV) {
-      logger.warn('[reinitializeUserCheckOnAppSwitch] Failed to reinitialize user check:', error);
+      console.warn('[reinitializeUserCheckOnAppSwitch] Failed to reinitialize user check:', error);
     }
   }
 }

@@ -6,7 +6,7 @@
     @mouseleave="handleMouseLeave"
     ref="scrollbarRef"
   >
-    <div class="btc-container__content">
+    <div class="btc-container__content" :data-auto-fill="autoFill">
       <slot></slot>
     </div>
   </el-scrollbar>
@@ -22,10 +22,16 @@ export interface BtcContainerProps {
   colsPerRow?: number;
   /** 每行最大列数（已废弃，使用 colsPerRow） */
   maxColsPerRow?: number;
+  /** 是否使用自动填充响应式布局（repeat(auto-fill, minmax(...))），默认 false */
+  autoFill?: boolean;
+  /** 自动填充模式下的最小项目宽度，默认 300px */
+  minItemWidth?: number | string;
 }
 
 const props = withDefaults(defineProps<BtcContainerProps>(), {
-  gap: 10
+  gap: 10,
+  autoFill: false,
+  minItemWidth: 300
 });
 
 const slots = useSlots();
@@ -79,6 +85,10 @@ const totalRows = computed(() => {
 
 // 判断是否需要滚动（当实际行数超过2行时，需要滚动）
 const needsScroll = computed(() => {
+  // 自动填充模式下不需要滚动限制
+  if (props.autoFill) {
+    return false;
+  }
   const count = childrenCount.value;
   const cols = colsPerRow.value;
   const rows = Math.ceil(count / cols);
@@ -89,6 +99,11 @@ const needsScroll = computed(() => {
 // 计算间距值
 const gapValue = computed(() => {
   return typeof props.gap === 'number' ? `${props.gap}px` : props.gap;
+});
+
+// 计算最小项目宽度值
+const minItemWidthValue = computed(() => {
+  return typeof props.minItemWidth === 'number' ? `${props.minItemWidth}px` : props.minItemWidth;
 });
 
 // 处理鼠标进入
@@ -148,13 +163,22 @@ onUnmounted(() => {
 
 // 容器样式
 const containerStyle = computed(() => {
-  return {
+  const baseStyle: Record<string, string> = {
     '--btc-container-gap': gapValue.value,
-    '--btc-container-cols': colsPerRow.value.toString(),
-    '--btc-container-rows': needsScroll.value ? '2' : totalRows.value.toString(),
     '--btc-container-total-items': childrenCount.value.toString(),
     '--btc-container-mobile-rows': childrenCount.value.toString()
   };
+
+  if (props.autoFill) {
+    // 自动填充模式：使用 minmax 布局
+    baseStyle['--btc-container-min-width'] = minItemWidthValue.value;
+  } else {
+    // 固定列数模式：使用原有的列数和行数
+    baseStyle['--btc-container-cols'] = colsPerRow.value.toString();
+    baseStyle['--btc-container-rows'] = needsScroll.value ? '2' : totalRows.value.toString();
+  }
+
+  return baseStyle;
 });
 </script>
 
@@ -204,20 +228,30 @@ const containerStyle = computed(() => {
     height: 100%;
     min-height: 100%;
 
-    // 默认桌面端布局：使用计算出的列数和行数
-    grid-template-columns: repeat(var(--btc-container-cols), 1fr);
-    // 使用 1fr 行高，让行高填充可用空间，确保图表能够充分利用空间
-    grid-auto-rows: 1fr;
     // 确保内容区域至少填充父容器
     align-content: start;
 
-    // 响应式断点：中等屏幕及以下强制单列布局
-    @media (max-width: 1200px) {
-      // 中等屏幕时强制单列布局
-      grid-template-columns: 1fr !important;
+    // 自动填充模式：使用 repeat(auto-fill, minmax(...))
+    &[data-auto-fill="true"] {
+      grid-template-columns: repeat(auto-fill, minmax(var(--btc-container-min-width), 1fr));
+      // 使用 1fr 行高，让行高填充可用空间
+      grid-auto-rows: 1fr;
+    }
 
-      // 保持 auto 行高
-      grid-auto-rows: auto !important;
+    // 固定列数模式：使用计算出的列数和行数
+    &:not([data-auto-fill="true"]) {
+      grid-template-columns: repeat(var(--btc-container-cols), 1fr);
+      // 使用 1fr 行高，让行高填充可用空间，确保图表能够充分利用空间
+      grid-auto-rows: 1fr;
+
+      // 响应式断点：中等屏幕及以下强制单列布局
+      @media (max-width: 1200px) {
+        // 中等屏幕时强制单列布局
+        grid-template-columns: 1fr !important;
+
+        // 保持 auto 行高
+        grid-auto-rows: auto !important;
+      }
     }
 
     // 平板屏幕

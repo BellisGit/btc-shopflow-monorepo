@@ -3,7 +3,7 @@
 /**
  * 检查 layout-app 的加载顺序和依赖关系
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';

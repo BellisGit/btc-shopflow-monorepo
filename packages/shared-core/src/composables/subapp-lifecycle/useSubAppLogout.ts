@@ -1,4 +1,3 @@
-import { logger } from '../../utils/logger';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { sessionStorage } from '../../utils/storage/session';
 import type { SubAppContext } from './types';
@@ -10,7 +9,7 @@ import type { SubAppContext } from './types';
  * @param getAuthApi - 可选的获取 authApi 的函数，如果不提供，则使用全局 __APP_AUTH_API__
  */
 export function createLogoutFunction(
-  context: SubAppContext, 
+  context: SubAppContext,
   _appId: string,
   getAuthApi?: () => Promise<{ logout: () => Promise<void> } | undefined>
 ): () => Promise<void> {
@@ -26,11 +25,11 @@ export function createLogoutFunction(
         if (authApi?.logout) {
           await authApi.logout();
         } else {
-          logger.warn('[useLogout] Auth API logout function not available.');
+          console.warn('[useLogout] Auth API logout function not available.');
         }
       } catch (error: any) {
         // 后端 API 失败不影响前端清理
-        logger.warn('Logout API failed, but continue with frontend cleanup:', error);
+        console.warn('Logout API failed, but continue with frontend cleanup:', error);
       }
 
       // 关键：先清除登录状态标记，确保 isAuthenticated() 立即返回 false
@@ -111,7 +110,7 @@ export function createLogoutFunction(
       // 清除 cookie 中的 token
       const { deleteCookie } = await import('../../utils/cookie');
       deleteCookie('access_token');
-      
+
       // 关键：清除 btc_user cookie（用于用户认证检查）
       // 注意：btc_user cookie 可能设置了 domain，需要确保清除时也使用相同的 domain
       try {
@@ -125,7 +124,7 @@ export function createLogoutFunction(
         } catch (e) {
           // 静默失败
         }
-        
+
         // 清除 btc_user cookie
         if (cookieDomain) {
           deleteCookie('btc_user', { domain: cookieDomain, path: '/' });
@@ -173,19 +172,19 @@ export function createLogoutFunction(
         // 使用统一的环境检测
         const { getEnvironment, getCurrentSubApp } = await import('../../configs/unified-env-config');
         const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
-        
+
         const env = getEnvironment();
         const currentSubApp = getCurrentSubApp();
         const protocol = window.location.protocol;
-        
+
         // 判断是否需要使用完整URL（跨子域名场景）
         const needsFullUrl = (env === 'test' || env === 'production') && currentSubApp;
         const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
-        
+
         if (needsFullUrl || isQiankun) {
           // 测试/生产环境子应用或qiankun环境：使用完整URL作为redirect参数
           let baseLoginUrl: string;
-          
+
           if (env === 'test') {
             baseLoginUrl = `${protocol}//test.bellis.com.cn/login`;
           } else if (env === 'production') {
@@ -193,7 +192,7 @@ export function createLogoutFunction(
           } else {
             baseLoginUrl = '/login';
           }
-          
+
           const logoutUrl = await buildLogoutUrlWithFullUrl(baseLoginUrl);
           window.location.href = logoutUrl;
         } else {
@@ -201,7 +200,7 @@ export function createLogoutFunction(
           const currentPath = await getCurrentUnifiedPath();
           context.router.replace({
             path: '/login',
-            query: { 
+            query: {
               logout: '1',
               ...(currentPath && currentPath !== '/login' ? { oauth_callback: currentPath } : {})
             }
@@ -209,7 +208,7 @@ export function createLogoutFunction(
         }
       } catch (error) {
         // 如果导入失败，使用兜底方案
-        logger.error('[useSubAppLogout] Failed to build logout URL:', error);
+        console.error('[useSubAppLogout] Failed to build logout URL:', error);
         context.router.replace({
           path: '/login',
           query: { logout: '1' }
@@ -217,7 +216,7 @@ export function createLogoutFunction(
       }
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
-      logger.error('Logout error:', error);
+      console.error('Logout error:', error);
 
       // 关键：先清除登录状态标记，确保 isAuthenticated() 立即返回 false
       const getAppStorage = () => {
@@ -277,13 +276,7 @@ export function createLogoutFunction(
       // 关键：设置退出登录标记到 sessionStorage
       try {
         sessionStorage.set('logout_timestamp', Date.now());
-        setTimeout(() => {
-          try {
-            sessionStorage.remove('logout_timestamp');
-          } catch (e) {
-            // 静默失败
-          }
-        }, 5000);
+        // 不创建定时器，避免内存泄漏
       } catch (e) {
         // 静默失败
       }
@@ -292,7 +285,7 @@ export function createLogoutFunction(
       try {
         const { deleteCookie } = await import('../../utils/cookie');
         deleteCookie('access_token');
-        
+
         // 清除 btc_user cookie
         try {
           let cookieDomain: string | undefined;
@@ -303,7 +296,7 @@ export function createLogoutFunction(
           } catch (e) {
             // 静默失败
           }
-          
+
           if (cookieDomain) {
             deleteCookie('btc_user', { domain: cookieDomain, path: '/' });
           } else {
@@ -344,19 +337,19 @@ export function createLogoutFunction(
         // 使用统一的环境检测
         const { getEnvironment, getCurrentSubApp } = await import('../../configs/unified-env-config');
         const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
-        
+
         const env = getEnvironment();
         const currentSubApp = getCurrentSubApp();
         const protocol = window.location.protocol;
-        
+
         // 判断是否需要使用完整URL（跨子域名场景）
         const needsFullUrl = (env === 'test' || env === 'production') && currentSubApp;
         const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
-        
+
         if (needsFullUrl || isQiankun) {
           // 测试/生产环境子应用或qiankun环境：使用完整URL作为redirect参数
           let baseLoginUrl: string;
-          
+
           if (env === 'test') {
             baseLoginUrl = `${protocol}//test.bellis.com.cn/login`;
           } else if (env === 'production') {
@@ -364,7 +357,7 @@ export function createLogoutFunction(
           } else {
             baseLoginUrl = '/login';
           }
-          
+
           const logoutUrl = await buildLogoutUrlWithFullUrl(baseLoginUrl);
           window.location.href = logoutUrl;
         } else {
@@ -372,7 +365,7 @@ export function createLogoutFunction(
           const currentPath = await getCurrentUnifiedPath();
           context.router.replace({
             path: '/login',
-            query: { 
+            query: {
               logout: '1',
               ...(currentPath && currentPath !== '/login' ? { oauth_callback: currentPath } : {})
             }
@@ -380,7 +373,7 @@ export function createLogoutFunction(
         }
       } catch (error) {
         // 如果导入失败，使用兜底方案
-        logger.error('[useSubAppLogout] Failed to build logout URL:', error);
+        console.error('[useSubAppLogout] Failed to build logout URL:', error);
         context.router.replace({
           path: '/login',
           query: { logout: '1' }

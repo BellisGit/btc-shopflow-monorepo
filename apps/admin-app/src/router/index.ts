@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { storage } from '@btc/shared-utils';
 import {
   createRouter,
@@ -109,7 +109,7 @@ export const createAdminRouter = (): Router => {
             // 获取当前语言
             const localeValue = mainI18n.global.locale;
             const currentLocale = (typeof localeValue === 'string' ? localeValue : localeValue.value) as 'zh-CN' | 'en-US';
-            
+
             // 更新语言（如果需要）
             if (typeof mainI18n.global.locale === 'object' && 'value' in mainI18n.global.locale) {
               const stored = storage.get<string>('locale');
@@ -117,7 +117,7 @@ export const createAdminRouter = (): Router => {
                 mainI18n.global.locale.value = stored;
               }
             }
-            
+
             // 尝试翻译
             const g = mainI18n.global as any;
             if (g && g.te && g.t) {
@@ -135,7 +135,7 @@ export const createAdminRouter = (): Router => {
                   }
                 }
               }
-              
+
               // 使用 g.te 和 g.t
               if (g.te(key, currentLocale)) {
                 const translated = g.t(key, currentLocale);
@@ -149,18 +149,18 @@ export const createAdminRouter = (): Router => {
           }
         }
       }
-      
+
       // 后备：使用子应用的 tSync 函数
       return tSync(key);
     };
-    
+
     // 创建自定义的 getAppId 函数，确保在 qiankun 环境下使用 'admin' 作为应用 ID
     const getAppId = (to: RouteLocationNormalized): string => {
       // 在 qiankun 环境下，子应用的路由路径不包含应用前缀
       // 但是我们需要确保应用 ID 是 'admin'
       return 'admin';
     };
-    
+
     createTitleGuard(router, {
       getAppId,
       translate,
@@ -169,7 +169,7 @@ export const createAdminRouter = (): Router => {
   } catch (error) {
     // 如果导入失败，不影响路由功能
     if (import.meta.env.DEV) {
-      logger.warn('[admin-app router] Failed to setup title guard:', error);
+      console.warn('[admin-app router] Failed to setup title guard:', error);
     }
   }
 
@@ -246,7 +246,7 @@ export const createAdminRouter = (): Router => {
         } catch (error) {
           // 如果获取失败，静默失败，不调用 checkUser
           if (import.meta.env.DEV) {
-            logger.warn('[router] Failed to get app ID from path:', error);
+            console.warn('[router] Failed to get app ID from path:', error);
           }
           return false;
         }
@@ -265,13 +265,13 @@ export const createAdminRouter = (): Router => {
         // 如果检查失败，会在后续的认证检查中处理
         checkUser().catch((error) => {
           if (import.meta.env.DEV) {
-            logger.warn('[router] User check failed:', error);
+            console.warn('[router] User check failed:', error);
           }
         });
       } catch (error) {
         // 静默失败，不影响路由跳转
         if (import.meta.env.DEV) {
-          logger.warn('[router] Failed to import checkUser:', error);
+          console.warn('[router] Failed to import checkUser:', error);
         }
       }
     }
@@ -405,6 +405,16 @@ export const createAdminRouter = (): Router => {
       // 静默失败
     }
 
+    // 关键：清理 ECharts 实例，防止内存泄漏
+    try {
+      const { cleanupAllECharts } = await import('@btc/shared-components');
+      if (cleanupAllECharts) {
+        cleanupAllECharts();
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
     // 关键：在独立运行模式下，添加 tabbar 逻辑
     // 检查是否是独立运行模式（非 qiankun 且非 layout-app）
     const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
@@ -485,7 +495,7 @@ export const createAdminRouter = (): Router => {
       } catch (error) {
         // 静默失败
         if (import.meta.env.DEV) {
-          logger.warn('[admin-app router] Failed to add tab:', error);
+          console.warn('[admin-app router] Failed to add tab:', error);
         }
       }
     }

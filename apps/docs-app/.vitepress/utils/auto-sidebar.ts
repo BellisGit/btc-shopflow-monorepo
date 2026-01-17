@@ -2,7 +2,7 @@
  * 自动生成侧边栏配置
  * 根据 frontmatter 的元数据生成 sidebar
  */
-import { logger } from '@btc/shared-core';
+// 使用 console 而不是 logger，避免在 VitePress 配置加载时解析 @btc/shared-core
 
 import fs from 'fs';
 import path from 'path';
@@ -87,7 +87,7 @@ function scanMarkdownFiles(dir: string): string[] {
       }
     }
   } catch (error) {
-    logger.warn(`Failed to scan directory ${dir}:`, error);
+    console.warn(`[auto-sidebar] Failed to scan directory ${dir}:`, error);
   }
 
   return files;
@@ -118,7 +118,7 @@ function parseFrontmatter(filePath: string): { data: FrontmatterData; relativePa
       displayPath
     };
   } catch (error) {
-    logger.warn(`Failed to parse frontmatter for ${filePath}:`, error);
+    console.warn(`[auto-sidebar] Failed to parse frontmatter for ${filePath}:`, error);
     return null;
   }
 }

@@ -1,5 +1,3 @@
-import { ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 
 /**
  * 获取当前应用名称

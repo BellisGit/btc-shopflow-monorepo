@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
-import { logger } from '@btc/shared-core';
+;
 
 /**
  * 获取路由配置
@@ -32,17 +32,12 @@ export const getFinanceRoutes = (): RouteRecordRaw[] => {
     // 合并 views 和 pages 路由
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
-    // 输出扫描结果（开发环境）
-    if (import.meta.env.DEV) {
-      logger.info(
-        `[financeRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
-      if (autoRoutes.conflicts.length > 0) {
-        logger.warn(`[financeRouter] Route conflicts:`, autoRoutes.conflicts);
-      }
+    // 仅在存在冲突时输出警告
+    if (autoRoutes.conflicts.length > 0) {
+      console.warn(`[financeRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
-    logger.error(`[financeRouter] Failed to scan routes from modules:`, error);
+    console.error(`[financeRouter] Failed to scan routes from modules:`, error);
     pageRoutes = [];
   }
 

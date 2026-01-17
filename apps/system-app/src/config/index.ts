@@ -20,11 +20,14 @@ export const env = {
 };
 
 // 导出配置
-export const config = {
+// 注意：使用 Object.freeze 防止 Vue 响应式系统深度处理配置对象，避免内存溢出
+// config 对象包含从 envConfig 读取的嵌套对象，如果被 Vue 响应式系统处理，会导致深度遍历和内存问题
+export const config = Object.freeze({
   // 应用配置
   app: appConfig,
 
   // API 配置（从统一环境配置读取）
+  // 注意：直接读取值，而不是引用整个对象，避免 Vue 响应式系统处理嵌套对象
   api: {
     baseURL: envConfig.api.baseURL,
     timeout: envConfig.api.timeout,
@@ -81,24 +84,27 @@ export const config = {
   },
   
   // 文档配置
+  // 注意：直接读取值，而不是引用整个对象，避免 Vue 响应式系统处理嵌套对象
   docs: {
     url: envConfig.docs.url,
     port: envConfig.docs.port,
   },
   
   // WebSocket 配置
+  // 注意：直接读取值，而不是引用整个对象，避免 Vue 响应式系统处理嵌套对象
   ws: {
     url: envConfig.ws.url,
   },
   
   // 上传配置
+  // 注意：直接读取值，而不是引用整个对象，避免 Vue 响应式系统处理嵌套对象
   upload: {
     url: envConfig.upload.url,
   },
   
-  // 环境信息
+  // 环境信息（字符串类型，不需要冻结）
   environment: currentEnvironment,
-};
+});
 
 export default config;
 

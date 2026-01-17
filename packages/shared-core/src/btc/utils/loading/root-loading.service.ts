@@ -14,7 +14,7 @@
 
 import type { App, ComponentPublicInstance } from 'vue';
 
-type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
+type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress' | 'flower';
 
 // 增加初始化状态标记，解决异步竞态
 let isInitializing = false;
@@ -48,6 +48,11 @@ class BtcRootLoadingService {
    * 确保 #Loading 元素存在（核心：防止挂载时找不到元素）
    */
   private ensureLoadingElementExists(): void {
+    // 检查是否在浏览器环境中
+    if (typeof document === 'undefined') {
+      return;
+    }
+
     let el = document.getElementById('Loading');
     if (!el) {
       el = document.createElement('div');

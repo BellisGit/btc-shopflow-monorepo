@@ -5,7 +5,7 @@
       <div class="btc-double-layout__left">
         <div class="btc-double-layout__left-header">
           <slot name="left-header">
-            <span class="label">{{ props.leftTitle || '左侧' }}</span>
+            <span class="label">{{ leftTitleDisplay }}</span>
           </slot>
         </div>
         <div class="btc-double-layout__left-content">
@@ -23,7 +23,7 @@
           </div>
 
           <slot name="right-header">
-            <span class="title">{{ props.rightTitle || '右侧' }}</span>
+            <span class="title">{{ rightTitleDisplay }}</span>
           </slot>
 
           <div class="right-op">
@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import BtcSvg from '../../basic/btc-svg/index.vue';
 
 defineOptions({
@@ -59,6 +60,27 @@ const props = withDefaults(defineProps<{
   leftSize?: 'small' | 'default' | 'large'; // 左侧宽度类型：small（150px）、default（300px）、large（400px）
 }>(), {
   leftSize: 'default',
+});
+
+// 国际化
+const { t } = useI18n();
+
+// 判断字符串是否是国际化 key（包含点号）
+const isI18nKey = (str: string | undefined): boolean => {
+  if (!str) return false;
+  return typeof str === 'string' && str.includes('.') && /^[a-zA-Z]/.test(str);
+};
+
+// 显示左侧标题（支持国际化）
+const leftTitleDisplay = computed(() => {
+  if (!props.leftTitle) return '左侧';
+  return isI18nKey(props.leftTitle) ? t(props.leftTitle) : props.leftTitle;
+});
+
+// 显示右侧标题（支持国际化）
+const rightTitleDisplay = computed(() => {
+  if (!props.rightTitle) return '右侧';
+  return isI18nKey(props.rightTitle) ? t(props.rightTitle) : props.rightTitle;
 });
 
 // 计算左侧宽度：如果指定了 leftWidth 则使用，否则根据 leftSize 计算
@@ -215,13 +237,17 @@ defineExpose({
       .right-op {
         position: absolute;
         right: 10px;
+        padding: 10px 0;
       }
     }
 
     .content {
-      height: calc(100% - 40px);
+      flex: 1;
+      min-height: 0;
       overflow: hidden;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
   }
 

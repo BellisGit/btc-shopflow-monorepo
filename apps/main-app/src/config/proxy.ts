@@ -1,8 +1,5 @@
-import { logger } from '@btc/shared-core';
+;
 import type { IncomingMessage, ServerResponse } from 'http';
-// 使用相对路径，因为 Vite 配置文件在 Node.js 环境中执行，无法解析路径别名
-// 从 apps/main-app/src/config/ 到 configs/ 需要向上 4 级
-import { envConfig } from '@btc/shared-core/configs/unified-env-config';
 
 // Vite 代理配置类型
 interface ProxyOptions {
@@ -17,7 +14,19 @@ interface ProxyOptions {
 // 开发环境代理目标：从统一环境配置获取
 // 开发环境：Vite 代理 /api 到配置的后端地址
 // 生产环境：由 Nginx 代理，不需要 Vite 代理
-const backendTarget = envConfig.api.backendTarget || 'http://10.80.9.76:8115';
+// 注意：延迟导入 envConfig，避免在 vite.config 中导入时模块未构建的问题
+function getBackendTarget(): string {
+  try {
+    // 动态导入，避免在 vite.config 加载时模块未构建
+    const { envConfig } = require('@btc/shared-core/configs/unified-env-config');
+    return envConfig?.api?.backendTarget || 'http://10.80.9.76:8115';
+  } catch (error) {
+    // 如果导入失败，使用默认值
+    return 'http://10.80.9.76:8115';
+  }
+}
+
+const backendTarget = getBackendTarget();
 
 const proxy: Record<string, string | ProxyOptions> = {
   '/api': {
@@ -174,7 +183,7 @@ const proxy: Record<string, string | ProxyOptions> = {
                 res.writeHead(proxyRes.statusCode || 200, originalHeaders);
                 res.end(newBody);
               } catch (error) {
-                logger.error('[Proxy] ✗ 处理登录响应时出错:', error);
+                console.error('[Proxy] ✗ 处理登录响应时出错:', error);
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
                 res.end(Buffer.concat(chunks));
               }
@@ -186,7 +195,7 @@ const proxy: Record<string, string | ProxyOptions> = {
           });
 
           proxyRes.on('error', (err: Error) => {
-            logger.error('[Proxy] ✗ 读取响应流时出错:', err);
+            console.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
@@ -200,9 +209,9 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 处理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        logger.error('[Proxy] Error:', err.message);
-        logger.error('[Proxy] Request URL:', req.url);
-        logger.error('[Proxy] Target:', backendTarget);
+        console.error('[Proxy] Error:', err.message);
+        console.error('[Proxy] Request URL:', req.url);
+        console.error('[Proxy] Target:', backendTarget);
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',

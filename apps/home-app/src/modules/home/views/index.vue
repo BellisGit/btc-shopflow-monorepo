@@ -265,7 +265,7 @@ import SMART_COIN_SYSTEM_Png from '@/assets/bellis_model/SMART_COIN_SYSTEM.png';
 import SMART_HOPPER_Png from '@/assets/bellis_model/SMART_HOPPER.png';
 import SPECTRAL_PAYOUT_Png from '@/assets/bellis_model/SPECTRAL_PAYOUT.png';
 import TWIN_SMART_COIN_SYSTEM_Png from '@/assets/bellis_model/TWIN_SMART_COIN_SYSTEM.png';
-import { logger } from '@btc/shared-core';
+;
 
 
 // 产品数据（优先使用 WebP，降级到 PNG，最后降级到 CDN）
@@ -349,7 +349,7 @@ const handleScroll = () => {
   // 调试：输出滚动位置（仅在需要时启用）
   // const mainContainerEl = document.querySelector('.main') as HTMLElement;
   // const scrollTopValue = mainContainerEl ? mainContainerEl.scrollTop : (window.scrollY || document.documentElement.scrollTop);
-  // logger.info('🔵 handleScroll 被调用 - scrollTop:', scrollTopValue);
+  // console.info('🔵 handleScroll 被调用 - scrollTop:', scrollTopValue);
 
   // 优先使用ref，如果不存在则使用ID选择器作为后备
   const sectionElement = productsSectionRef.value || document.getElementById('products-showcase');
@@ -394,7 +394,7 @@ const handleScroll = () => {
   ratio = Math.max(0, Math.min(1, ratio));
 
   // 调试：输出 ratio 值（仅在需要时启用）
-  // logger.info('滚动比例 ratio:', ratio.toFixed(3), 'viewportBottom:', viewportBottom.toFixed(0), 'sectionTop:', sectionTop.toFixed(0), 'sectionBottom:', sectionBottom.toFixed(0));
+  // console.info('滚动比例 ratio:', ratio.toFixed(3), 'viewportBottom:', viewportBottom.toFixed(0), 'sectionTop:', sectionTop.toFixed(0), 'sectionBottom:', sectionBottom.toFixed(0));
 
   // 3. 获取所有卡片
   const cards = sceneElement.querySelectorAll('.sub-scene');
@@ -489,7 +489,7 @@ const handleScroll = () => {
 
     // 调试：输出第一个卡片的变化（仅在需要时启用）
     // if (index === 0) {
-    //   logger.info(`卡片0: ratio=${ratio.toFixed(3)}, scale=${scale.toFixed(2)}, opacity=${opacity.toFixed(2)}, top=${newTop.toFixed(1)}%, left=${newLeft.toFixed(1)}%`);
+    //   console.info(`卡片0: ratio=${ratio.toFixed(3)}, scale=${scale.toFixed(2)}, opacity=${opacity.toFixed(2)}, top=${newTop.toFixed(1)}%, left=${newLeft.toFixed(1)}%`);
     // }
   });
 };
@@ -626,8 +626,8 @@ onMounted(async () => {
   });
 
   // 调试：输出初始位置（仅在需要时启用）
-  // logger.info('卡片数量:', cards.length, '初始位置（百分比）:', cardInitialPositions.value);
-  // logger.info('容器宽度:', sceneWidth, '起始位置:', startLeft);
+  // console.info('卡片数量:', cards.length, '初始位置（百分比）:', cardInitialPositions.value);
+  // console.info('容器宽度:', sceneWidth, '起始位置:', startLeft);
 
   // 创建滚动处理函数（使用节流优化性能）
   const scrollHandler = throttle(() => {

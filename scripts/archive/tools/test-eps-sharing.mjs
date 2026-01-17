@@ -4,7 +4,7 @@
  * 测试 EPS 数据共享功能
  * 验证所有应用是否能从共享位置（main-app/build/eps）读取 EPS 数据
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { existsSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';

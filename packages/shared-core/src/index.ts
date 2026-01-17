@@ -84,6 +84,14 @@ export { getProfileInfoFromCache, loadProfileInfoOnLogin, clearProfileInfoCache 
 export * from './btc/utils/loading';
 export { appLoadingService, rootLoadingService, routeLoadingService } from './btc/utils/loading';
 
+// Element Plus 全局初始化相关导出
+export { initGlobalElementPlus, updateElementPlusLocale, getGlobalElementPlus, isElementPlusInstalled } from './btc/utils/element-plus';
+export { cleanupElementPlus } from './btc/utils/element-plus/cleanup';
+
+// Qiankun 沙箱配置相关导出
+export { globalQiankunSandboxConfig, getQiankunSandboxConfig } from './configs/qiankun-sandbox-config';
+export type { QiankunSandboxConfig } from './configs/qiankun-sandbox-config';
+
 // 页面标题相关导出
 export {
   setPageTitle,
@@ -133,9 +141,11 @@ export * from './eps';
 // ========== 从 shared-utils 迁移的工具模块 ==========
 export * from './utils';
 export { getCookieDomain } from './utils/storage/cookie';
-// 日志模块
-export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
-export type { LogContext, LogLevel, LoggerOptions, Logger } from './utils/logger';
+// 日志模块已移除，请直接使用 console
+// 但保留错误上报功能（reportError）
+export { reportError } from './utils/logger';
+// export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
+// export type { LogContext, LogLevel, LoggerOptions, Logger } from './utils/logger';
 // 显式导出存储工具（确保 Pinia 插件正确导出）
 export { persistedStatePlugin, persistedStatePluginSession, createPersistedStatePlugin } from './utils/storage/pinia-persist';
 export type { PersistedStatePluginOptions } from './utils/storage/pinia-persist';
@@ -170,12 +180,12 @@ export type { AppIdentity } from './configs/app-identity.types';
 export * from './utils/zod';
 // 注意：createBaseResponseSchema 在 utils/http/schemas 和 types/schemas 中都有定义
 // 优先使用 utils/http/schemas 中的版本（更通用）
-export { 
-  createBaseResponseSchema, 
-  createPageResponseSchema, 
-  createApiResponseSchema, 
-  validateResponse, 
-  safeValidateResponse, 
+export {
+  createBaseResponseSchema,
+  createPageResponseSchema,
+  createApiResponseSchema,
+  validateResponse,
+  safeValidateResponse,
   emptyDataSchema,
   // API 类型验证相关
   validateApiResponseByType,
@@ -192,4 +202,16 @@ export * from './configs/schemas';
 // 从 types/schemas 导出类型和 schema，但排除 createBaseResponseSchema（已在上面导出）
 export { DictItemSchema, PageParamsSchema, PageResponseSchema } from './types/schemas';
 export type { DictItem, PageParams, PageResponse } from './types/schemas';
+
+// ========== API 中心导出 ==========
+export * from './utils/api-center';
+export { createApiClient } from './utils/api-center/client';
+export type { ApiClient, ApiRequestOptions } from './utils/api-center/types';
+export type { RequestAdapter } from './utils/api-center/client';
+
+// ========== 日志上报中心导出 ==========
+export * from './utils/log-reporter';
+export { getLogReporter, initLogReporter, reportLog, getQueueLength, getLogFilterOptions } from './utils/log-reporter';
+export type { LogEntry, LogLevel, ErrorInfo, LogReporterOptions, LogReportResponse } from './utils/log-reporter/types';
+export type { LogFilterOptions } from './utils/log-reporter/utils';
 

@@ -6,6 +6,7 @@
 
 - [Jenkins 配置](./jenkins-setup.md) - Jenkins 安装和配置
 - [部署策略](./deployment-strategy.md) - 部署策略说明
+- [GitHub Actions 缓存](./github-actions-cache.md) - GitHub Actions 缓存配置
 
 ## CI/CD 流程
 

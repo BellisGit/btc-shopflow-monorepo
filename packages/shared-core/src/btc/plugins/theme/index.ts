@@ -1,4 +1,4 @@
-import { logger } from '../../../utils/logger';
+;
 import type { App, Plugin } from 'vue';
 import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
@@ -32,6 +32,9 @@ export interface ThemePlugin {
 let themePluginInstance: ThemePlugin | null = null;
 // 保存 setThemeColor 函数的最新引用，用于动态绑定
 let latestSetThemeColor: ((color: string, dark: boolean) => void) | null = null;
+// 保存定时器和观察器的引用，用于清理（防止内存泄漏）
+let themeSyncInterval: ReturnType<typeof setInterval> | null = null;
+let themeSyncObserver: MutationObserver | null = null;
 
 /**
  * 创建主题插件
@@ -172,7 +175,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
    */
   function updateThemeColor(color: string) {
     if (!color) {
-      logger.warn('[Theme] updateThemeColor: color is empty');
+      console.warn('[Theme] updateThemeColor: color is empty');
       return;
     }
 
@@ -195,7 +198,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     const updatedSettings = { ...currentSettings, theme: currentTheme.value };
     storage.set('settings', updatedSettings);
 
-    logger.info('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
+    console.info('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
   }
 
   /**
@@ -233,7 +236,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
           }
         );
       }).catch((error: any) => {
-        logger.error('[ThemePlugin] View Transition 错误:', error);
+        console.error('[ThemePlugin] View Transition 错误:', error);
       });
     } else {
       // 不支持动画，直接执行回调
@@ -290,10 +293,21 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 使用 MutationObserver 监听子应用的加载，确保主题色变量能够同步到新加载的子应用
   // 这样可以确保子应用加载后立即获取到正确的主题色
   if (typeof window !== 'undefined' && typeof MutationObserver !== 'undefined') {
+    // 清理之前的观察器和定时器（如果存在，防止重复创建）
+    if (themeSyncObserver) {
+      themeSyncObserver.disconnect();
+      themeSyncObserver = null;
+    }
+    if (themeSyncInterval) {
+      clearInterval(themeSyncInterval);
+      themeSyncInterval = null;
+    }
+
     // 监听子应用容器的变化
     const observer = new MutationObserver(() => {
       syncThemeColorToSubApps();
     });
+    themeSyncObserver = observer;
 
     // 开始观察
     const observeTarget = document.body;
@@ -310,7 +324,8 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
       }, 500);
 
       // 定期同步（作为备用方案，确保子应用加载后也能获取到主题色）
-      setInterval(() => {
+      // 关键：保存定时器引用，以便后续清理（防止内存泄漏）
+      themeSyncInterval = setInterval(() => {
         syncThemeColorToSubApps();
       }, 2000);
     }
@@ -323,6 +338,14 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
 
       // 提供给 composition API 使用
       app.provide('theme', theme);
+
+      // 在应用卸载时清理资源（防止内存泄漏）
+      app.mixin({
+        beforeUnmount() {
+          // 注意：这里不能直接清理，因为可能有多个组件实例
+          // 实际的清理应该在应用级别进行
+        }
+      });
     },
     theme,
   };
@@ -353,6 +376,21 @@ export function useThemePlugin(): ThemePlugin {
     instance.setThemeColor = latestSetThemeColor;
   }
   return instance;
+}
+
+/**
+ * 清理主题插件的资源（防止内存泄漏）
+ * 在应用卸载或需要清理时调用
+ */
+export function cleanupThemePlugin() {
+  if (themeSyncObserver) {
+    themeSyncObserver.disconnect();
+    themeSyncObserver = null;
+  }
+  if (themeSyncInterval) {
+    clearInterval(themeSyncInterval);
+    themeSyncInterval = null;
+  }
 }
 
 /**

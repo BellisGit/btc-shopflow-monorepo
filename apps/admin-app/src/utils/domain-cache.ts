@@ -2,7 +2,7 @@
  * 域列表缓存工具
  * 用于避免多个组件同时请求域列表接口
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
@@ -58,7 +58,7 @@ export async function checkUser(): Promise<boolean> {
           responseData = JSON.parse(responseText);
         } catch (parseError) {
           // JSON 解析失败，但继续处理状态码
-          logger.warn('[checkUser] Failed to parse JSON response:', parseError);
+          console.warn('[checkUser] Failed to parse JSON response:', parseError);
         }
       }
       const code = responseData?.code;
@@ -88,7 +88,7 @@ export async function checkUser(): Promise<boolean> {
       }
 
       // 其他错误，默认认为正常（避免因为网络错误导致无法加载域列表）
-      logger.warn('[getDomainList] User check failed, but continue:', error);
+      console.warn('[getDomainList] User check failed, but continue:', error);
       const result = true;
       userCheckCache = { result, timestamp: Date.now() };
       return result;
@@ -119,7 +119,7 @@ function getDomainListFromStorage(): any | null {
   } catch (error) {
     // 静默失败，不影响功能
     if (import.meta.env.DEV) {
-      logger.warn('[getDomainList] Failed to read from storage:', error);
+      console.warn('[getDomainList] Failed to read from storage:', error);
     }
   }
   return null;
@@ -136,7 +136,7 @@ function saveDomainListToStorage(data: any): void {
   } catch (error) {
     // 静默失败，不影响功能
     if (import.meta.env.DEV) {
-      logger.warn('[getDomainList] Failed to save to storage:', error);
+      console.warn('[getDomainList] Failed to save to storage:', error);
     }
   }
 }
@@ -165,7 +165,7 @@ export async function loadDomainListOnLogin(service: any): Promise<any> {
   try {
     // 确保 service 存在
     if (!service) {
-      logger.warn('[loadDomainListOnLogin] EPS service not available');
+      console.warn('[loadDomainListOnLogin] EPS service not available');
       return null;
     }
     const response = await service.admin?.iam?.domain?.me();
@@ -175,7 +175,7 @@ export async function loadDomainListOnLogin(service: any): Promise<any> {
   } catch (error) {
     // 静默失败，不影响登录流程
     if (import.meta.env.DEV) {
-      logger.warn('[loadDomainListOnLogin] Failed to load domain list:', error);
+      console.warn('[loadDomainListOnLogin] Failed to load domain list:', error);
     }
     return null;
   }

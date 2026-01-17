@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 const fs = require('fs');
 const path = require('path');
 
@@ -80,21 +80,21 @@ function sortKeys(keys) {
 // 重新组织文件
 function reorganizeLocaleFile(filePath) {
   const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  
+
   // 删除不规范 key
   delete content['AdminInventoryTicketPrint'];
-  
+
   const keys = Object.keys(content);
   const sortedKeys = sortKeys(keys);
-  
+
   const newContent = {};
   sortedKeys.forEach(key => {
     newContent[key] = content[key];
   });
-  
+
   const jsonContent = JSON.stringify(newContent, null, 2) + '\n';
   fs.writeFileSync(filePath, jsonContent, 'utf8');
-  
+
   return {
     total: sortedKeys.length,
     removed: keys.length - sortedKeys.length

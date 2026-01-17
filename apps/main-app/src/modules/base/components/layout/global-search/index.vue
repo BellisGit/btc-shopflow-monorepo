@@ -249,9 +249,7 @@ defineOptions({
 });
 
 import { storage } from '@btc/shared-utils';
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { Star, Search, Clock } from '@element-plus/icons-vue';
 import { searchDocs, type DocSearchResult } from '@services/docsSearch';
 
@@ -361,7 +359,7 @@ watch(searchKeyword, async (keyword) => {
     const allResults = [...menuResults, ...docResults];
     searchResults.value = allResults.map((item, index) => ({ ...item, globalIndex: index }));
   } catch (_error) {
-    logger.error('[GlobalSearch] Search failed:', _error);
+    console.error('[GlobalSearch] Search failed:', _error);
     // 搜索失败时仍然显示菜单结果
     const menuResults = searchData.value
       .filter(item =>

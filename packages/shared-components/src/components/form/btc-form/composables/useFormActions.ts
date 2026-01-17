@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { nextTick } from 'vue';
 import { formHook } from '@btc/shared-core/utils/form';
 import { cloneDeep, invokeData } from './useFormItems';
@@ -155,7 +155,7 @@ export function useFormActions(formSetup: any) {
   // 打开表单
   function open(options?: any, plugins?: any[]) {
     if (!options) {
-      return logger.error('Options is not null');
+      return console.error('Options is not null');
     }
 
     // 清空

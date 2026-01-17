@@ -57,7 +57,7 @@ import { storage } from '@btc/shared-utils';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { clearErrorList, getErrorListSync, onErrorListUpdate, setCleanupPeriod, type CleanupPeriod } from '@btc/shared-utils/error-monitor';
 import { BtcCrud, BtcCrudRow, BtcCrudFlex1 } from '@btc/shared-components';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import BtcErrorMonitor from '../components/BtcErrorMonitor.vue';
 import BtcErrorMonitorExport from '../components/BtcErrorMonitorExport.vue';
 
@@ -131,7 +131,7 @@ const getStoredCleanupPeriod = (): CleanupPeriod => {
       }
     }
   } catch (error) {
-    logger.warn('[ErrorMonitor] 读取清理周期失败:', error);
+    console.warn('[ErrorMonitor] 读取清理周期失败:', error);
   }
   return 'today'; // 默认保留当天
 };

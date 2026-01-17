@@ -60,14 +60,20 @@ function goBack() {
 
 <style lang="scss" scoped>
 .page {
+  // 确保页面容器本身也垂直居中
+  justify-content: center;
+  align-items: center;
+  
   &__wrap {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100%;
+    width: 100%;
     position: relative;
     z-index: 1;
+    flex-shrink: 0; // 防止被压缩
   }
 
   &__icon {

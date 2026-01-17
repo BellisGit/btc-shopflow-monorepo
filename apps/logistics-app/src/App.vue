@@ -4,10 +4,10 @@
   <div v-if="!isStandalone" :class="['logistics-app']">
     <router-view v-slot="{ Component, route: currentRoute }">
       <transition :name="pageTransition" mode="out-in">
-        <keep-alive :key="viewKey" :include="keepAliveList">
-          <component 
-            v-if="Component" 
-            :is="Component" 
+        <keep-alive :key="viewKey" :include="keepAliveList" :max="10">
+          <component
+            v-if="Component"
+            :is="Component"
             :key="currentRoute.fullPath"
             :class="getPageClass(currentRoute)"
           />
@@ -18,9 +18,9 @@
   <router-view v-else v-slot="{ Component, route: currentRoute }">
     <transition :name="pageTransition" mode="out-in">
       <keep-alive :key="viewKey" :include="keepAliveList">
-        <component 
-          v-if="Component" 
-          :is="Component" 
+        <component
+          v-if="Component"
+          :is="Component"
           :key="currentRoute.fullPath"
           :class="getPageClass(currentRoute)"
         />
@@ -30,8 +30,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
 import { useLogout } from '@/composables/useLogout';

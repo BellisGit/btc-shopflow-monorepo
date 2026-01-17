@@ -13,7 +13,7 @@
 
 ```vue
 <template>
-  <BtcTableGroup>
+  <BtcMasterTableGroup>
     <template #add-btn>
       <BtcImportExportGroup
         :export-filename="t('menu.inventory.dataSource.list')"
@@ -121,7 +121,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
 ```vue
 <template>
   <div class="inventory-page">
-    <BtcTableGroup>
+    <BtcMasterTableGroup>
       <template #add-btn>
         <BtcImportExportGroup
           :export-filename="exportFilename"

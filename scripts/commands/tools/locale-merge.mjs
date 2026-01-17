@@ -4,7 +4,7 @@
  * 国际化配置合并脚本
  * 扫描应用内所有 config.ts 文件，合并配置并生成扁平化的 JSON 文件
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../utils/logger.mjs';
 
 import { readdir, readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';

@@ -3,7 +3,8 @@
  * 处理 qiankun 应用的生命周期事件
  */
 
-import { sessionStorage, logger } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+;
 import { clearLoadingElement } from './useQiankunUtils';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from './useQiankunMenuRegistry';
 import { showLoading, hideLoading, markLoadingFail } from '../../composables/useAppLoading';
@@ -161,7 +162,7 @@ export function createBeforeLoadHook() {
             loadAndMergeSubAppI18n(i18n, app.name).catch(err => {
               // 静默失败，beforeMount 时会重试
               if (import.meta.env.DEV) {
-                logger.warn(`[QiankunLifecycle] Pre-load i18n failed in beforeLoad for ${app.name}:`, err);
+                console.warn(`[QiankunLifecycle] Pre-load i18n failed in beforeLoad for ${app.name}:`, err);
               }
             });
           } catch (error) {
@@ -265,15 +266,15 @@ export function createBeforeMountHook() {
           const missingKeys = testKeys.filter(key => !foundKeys.includes(key));
 
           if (missingKeys.length > 0) {
-            logger.warn(`[QiankunLifecycle] ⚠️ Missing keys after merge for ${_app.name}:`, missingKeys);
+            console.warn(`[QiankunLifecycle] ⚠️ Missing keys after merge for ${_app.name}:`, missingKeys);
             const sampleKeys = Object.keys(messages).filter(k =>
               k.includes('menu.data') || k.includes('menu.test_features') || k.startsWith('menu.')
             );
-            logger.info(`[QiankunLifecycle] 🔍 Available menu keys:`, sampleKeys.slice(0, 20));
+            console.info(`[QiankunLifecycle] 🔍 Available menu keys:`, sampleKeys.slice(0, 20));
           }
         }
       } catch (error) {
-        logger.warn(`[QiankunLifecycle] Failed to load i18n for ${_app.name}:`, error);
+        console.warn(`[QiankunLifecycle] Failed to load i18n for ${_app.name}:`, error);
         // 不阻塞应用挂载
       }
 
@@ -457,7 +458,7 @@ export function createAfterMountHook() {
         reinitializeUserCheckOnAppSwitch().catch((error) => {
           // 静默失败，不影响应用切换
           if (import.meta.env.DEV) {
-            logger.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
+            console.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
           }
         });
       } else {
@@ -470,7 +471,7 @@ export function createAfterMountHook() {
     } catch (error) {
       // 静默失败，不影响应用挂载
       if (import.meta.env.DEV) {
-        logger.warn('[qiankun:afterMount] Failed to check app switch:', error);
+        console.warn('[qiankun:afterMount] Failed to check app switch:', error);
       }
     }
 
@@ -510,7 +511,7 @@ export function createErrorHook() {
     if (targetApp) {
       markLoadingFail(`【${targetApp.title || targetApp.name}】加载失败：${err.message}`);
     }
-    logger.error('[qiankun] 微应用加载失败：', app.name, err);
+    console.error('[qiankun] 微应用加载失败：', app.name, err);
     return Promise.resolve();
   };
 }

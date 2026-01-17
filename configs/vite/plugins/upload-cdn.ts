@@ -2,7 +2,14 @@
  * 上传应用构建产物到 CDN 的 Vite 插件
  * 在生产构建完成后，自动上传应用构建产物到 OSS/CDN（基于文件指纹的增量上传）
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[upload-cdn]', ...args),
+  error: (...args: any[]) => console.error('[upload-cdn]', ...args),
+  info: (...args: any[]) => console.info('[upload-cdn]', ...args),
+  debug: (...args: any[]) => console.debug('[upload-cdn]', ...args),
+};
 
 import type { Plugin, ResolvedConfig } from 'vite';
 import { spawn } from 'child_process';
@@ -71,7 +78,7 @@ export function uploadCdnPlugin(appName: string, _appDir: string): Plugin {
 
       // 检查是否跳过上传
       if (process.env.SKIP_CDN_UPLOAD === 'true') {
-        logger.info(`[upload-cdn] ⏭️  跳过 ${appName} 的 CDN 上传（SKIP_CDN_UPLOAD=true）`);
+        console.info(`[upload-cdn] ⏭️  跳过 ${appName} 的 CDN 上传（SKIP_CDN_UPLOAD=true）`);
         return;
       }
 
@@ -85,13 +92,13 @@ export function uploadCdnPlugin(appName: string, _appDir: string): Plugin {
 
       // 检查是否有 OSS 配置
       if (!process.env.OSS_ACCESS_KEY_ID || !process.env.OSS_ACCESS_KEY_SECRET) {
-        logger.warn(`[upload-cdn] ⚠️  跳过 ${appName} 的 CDN 上传（未配置 OSS 凭证）`);
+        console.warn(`[upload-cdn] ⚠️  跳过 ${appName} 的 CDN 上传（未配置 OSS 凭证）`);
         return;
       }
 
       // 关键：在 CI 中必须等待上传完成，否则构建进程退出会直接终止子进程，导致文件未上传
       const uploadScript = resolve(projectRoot, 'scripts/upload-app-to-cdn.mjs');
-      logger.info(`[upload-cdn] 🚀 开始上传 ${appName} 到 CDN...`);
+      console.info(`[upload-cdn] 🚀 开始上传 ${appName} 到 CDN...`);
 
       await new Promise<void>((resolvePromise, rejectPromise) => {
         const child = spawn('node', [uploadScript, appName], {
@@ -108,7 +115,7 @@ export function uploadCdnPlugin(appName: string, _appDir: string): Plugin {
 
         child.on('exit', (code) => {
           if (code === 0) {
-            logger.info(`[upload-cdn] ✅ ${appName} 上传完成`);
+            console.info(`[upload-cdn] ✅ ${appName} 上传完成`);
             resolvePromise();
           } else {
             // 默认不阻塞构建：如需严格失败（CI 强制上传成功），设置 OSS_UPLOAD_STRICT=true
@@ -117,7 +124,7 @@ export function uploadCdnPlugin(appName: string, _appDir: string): Plugin {
             if (strict) {
               rejectPromise(err);
             } else {
-              logger.warn(err.message);
+              console.warn(err.message);
               resolvePromise();
             }
           }

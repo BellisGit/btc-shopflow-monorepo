@@ -1,6 +1,5 @@
-import { h, markRaw, type Ref } from 'vue';
-import { ElButton } from 'element-plus';
-import { BtcMessage } from '@btc/shared-components';
+import type { Ref } from 'vue';
+import { BtcMessage, BtcButton } from '@btc/shared-components';
 import BtcSmsCodeInput from '@auth/shared/components/sms-code-input/index.vue';
 import type { PhoneSmsState } from './phoneVerification';
 
@@ -80,7 +79,7 @@ function createEmailItems({
           placeholder: '请输入新邮箱'
         },
         slots: {
-          suffix: ({ scope }: any) => h(ElButton as any, {
+          suffix: ({ scope }: any) => h(BtcButton as any, {
             link: true,
             size: 'small',
             disabled: emailUpdateCountdown.value > 0 || emailUpdateSending.value || !scope.email,
@@ -125,7 +124,7 @@ function createPhoneItems({ phoneUpdateSmsCodeState }: FieldConfigContext): Fiel
           placeholder: '请输入新手机号'
         },
         slots: {
-          suffix: ({ scope }: any) => h(ElButton as any, {
+          suffix: ({ scope }: any) => h(BtcButton as any, {
             link: true,
             size: 'small',
             disabled: !phoneUpdateSmsCodeState.canSend.value || !scope.phone,

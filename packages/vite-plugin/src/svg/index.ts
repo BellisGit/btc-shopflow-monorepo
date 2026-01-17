@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { logger } from '@btc/shared-core';
+;
 import type { Plugin } from 'vite';
 import { readFileSync, readdirSync } from 'fs';
 import { basename, extname, join } from 'path';
@@ -137,7 +137,7 @@ function compilerSvg(): string {
         .slice(0, 5)
         .map((file) => file.replace(`${rootDir('./')}`, ''))
         .join(', ');
-      logger.warn(
+      console.warn(
         `[btc:svg] 检测到 ${localSvgFiles.length} 个应用内 SVG 图标（src/assets/icons）。已跳过处理，请迁移到 packages/shared-components/src/assets/icons。` +
           (sample ? ` 示例: ${sample}` : '')
       );
@@ -152,8 +152,8 @@ function compilerSvg(): string {
   if (process.env.NODE_ENV !== 'production') {
     const sharedSvgFiles = listSvgFiles(sharedAssetsDir);
     if (sharedSvgFiles.length > 0) {
-      logger.debug(`[btc:svg] 扫描共享组件图标目录: ${sharedAssetsDir}`);
-      logger.debug(`[btc:svg] 找到 ${sharedSvgFiles.length} 个共享 SVG 文件`);
+      console.debug(`[btc:svg] 扫描共享组件图标目录: ${sharedAssetsDir}`);
+      console.debug(`[btc:svg] 找到 ${sharedSvgFiles.length} 个共享 SVG 文件`);
     }
   }
 
@@ -256,7 +256,7 @@ export function svgPlugin(): Plugin {
     iconList = result.svgIcons;
 
     if (iconList.length > 0) {
-      logger.info(`[btc:svg] 找到 ${iconList.length} 个 svg 图标`);
+      console.info(`[btc:svg] 找到 ${iconList.length} 个 svg 图标`);
     }
 
     isInitialized = true;

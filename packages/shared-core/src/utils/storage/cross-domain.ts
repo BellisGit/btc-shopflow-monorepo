@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+;
 /**
  * 跨子域名共享存储工具
  * 使用 Cookie 实现跨子域名共享用户偏好设置
@@ -165,7 +165,7 @@ export function syncSettingsFromCookie(): void {
  */
 export function syncSettingsToCookie(settings: Record<string, any>): void {
   if (typeof window === 'undefined') {
-    logger.warn('[CrossDomain] window 未定义，无法同步到 Cookie');
+    console.warn('[CrossDomain] window 未定义，无法同步到 Cookie');
     return;
   }
 
@@ -177,7 +177,7 @@ export function syncSettingsToCookie(settings: Record<string, any>): void {
     
     // Cookie 大小限制检查（单个 Cookie 通常限制 4KB）
     if (encodedStr.length > 4000) {
-      logger.warn('[CrossDomain] 用户偏好设置过大，无法同步到 Cookie:', {
+      console.warn('[CrossDomain] 用户偏好设置过大，无法同步到 Cookie:', {
         originalLength: settingsStr.length,
         encodedLength: encodedStr.length,
         settingsKeys: Object.keys(settings),
@@ -206,7 +206,7 @@ export function syncSettingsToCookie(settings: Record<string, any>): void {
     
     document.cookie = cookieString;
   } catch (error) {
-    logger.error('[CrossDomain] 同步用户偏好设置到 Cookie 失败:', error);
+    console.error('[CrossDomain] 同步用户偏好设置到 Cookie 失败:', error);
   }
 }
 
@@ -245,7 +245,7 @@ export function syncUserToCookie(user: Record<string, any>): void {
     
     document.cookie = cookieString;
   } catch (error) {
-    logger.error('[CrossDomain] 同步用户信息到 Cookie 失败:', error);
+    console.error('[CrossDomain] 同步用户信息到 Cookie 失败:', error);
   }
 }
 
@@ -278,7 +278,7 @@ export function clearCrossDomainCookies(): void {
     }
     deleteCookie(USER_COOKIE_KEY, userCookieOptions);
   } catch (error) {
-    logger.error('[CrossDomain] 清除跨子域名共享的 Cookie 失败:', error);
+    console.error('[CrossDomain] 清除跨子域名共享的 Cookie 失败:', error);
   }
 }
 

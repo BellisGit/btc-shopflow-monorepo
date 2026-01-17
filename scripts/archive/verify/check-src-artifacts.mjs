@@ -18,7 +18,7 @@
  *   node scripts/check-src-artifacts.mjs packages/shared-core
  */
 
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 import { existsSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { join, dirname, extname, basename } from 'path';
 import { fileURLToPath } from 'url';

@@ -5,8 +5,8 @@
   }
 
   .setting-item {
-    flex: 1 1 calc(50% - 8px); // 每排展示2个
-    max-width: calc(50% - 8px); // 每排展示2个
+    flex: 1 1 calc(33.333% - 11px); // 每排展示3个
+    max-width: calc(33.333% - 11px); // 每排展示3个
     min-width: 0;
     border: none;
     background: transparent;
@@ -36,7 +36,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 80px;
+    height: 100px; // 从 80px 增加到 100px，增加高度
     border: 2px solid var(--el-border-color-light);
     border-radius: 10px;
     transition: border-color 0.2s ease;
@@ -97,14 +97,15 @@
     }
 
     .spinner {
+      // SVG viewBox 是 0 0 40 40，中心点是 (20, 20)，transform-origin 使用 SVG 坐标系统
       transform-origin: 20px 20px;
       animation: loading-dots-rotate 1.6s linear infinite;
     }
 
     .dot {
       animation:
-        loading-dots-fade 1.6s infinite,
-        loading-dots-color-change 3.2s infinite ease-in-out;
+        loading-dots-fade 1.6s linear infinite,
+        loading-dots-color-change 3.2s linear infinite;
 
       &.dot-1 {
         fill: #409eff;
@@ -312,6 +313,104 @@
     }
     100% {
       transform: rotate(360deg);
+    }
+  }
+
+  .loading-preview-flower {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+
+    svg {
+      width: 40px;
+      height: 40px;
+      display: block;
+      // 确保 SVG 居中，与 dots 预览保持一致
+      vertical-align: middle;
+    }
+
+    .flower-preview-group {
+      // 旋转中心应该是主圆圆心，在 viewBox="-90 -90 180 180" 中，主圆圆心在 (0, 0)
+      // 使用 0 0 确保围绕主圆圆心定点旋转
+      transform-origin: 0 0;
+      animation: loading-flower-rotate 3s linear infinite;
+    }
+
+    .petal {
+      stroke-width: 1.2;
+      stroke-dasharray: none;
+      animation: loading-flower-petal-pulse 2s ease-in-out infinite;
+      opacity: 1;
+    }
+
+    .petal-1 {
+      stroke: #ff8a80;
+      fill: #ff8a80;
+      animation-delay: 0s;
+    }
+
+    .petal-2 {
+      stroke: #ff9800;
+      fill: #ff9800;
+      animation-delay: 0.25s;
+    }
+
+    .petal-3 {
+      stroke: #ffeb3b;
+      fill: #ffeb3b;
+      animation-delay: 0.5s;
+    }
+
+    .petal-4 {
+      stroke: #4caf50;
+      fill: #4caf50;
+      animation-delay: 0.75s;
+    }
+
+    .petal-5 {
+      stroke: #00bcd4;
+      fill: #00bcd4;
+      animation-delay: 1s;
+    }
+
+    .petal-6 {
+      stroke: #2196f3;
+      fill: #2196f3;
+      animation-delay: 1.25s;
+    }
+
+    .petal-7 {
+      stroke: #9c27b0;
+      fill: #9c27b0;
+      animation-delay: 1.5s;
+    }
+
+    .petal-8 {
+      stroke: #e91e63;
+      fill: #e91e63;
+      animation-delay: 1.75s;
+    }
+  }
+
+  @keyframes loading-flower-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes loading-flower-petal-pulse {
+    0%,
+    100% {
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 1;
     }
   }
 }

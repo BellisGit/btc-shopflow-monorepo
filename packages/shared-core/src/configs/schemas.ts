@@ -2,7 +2,10 @@
  * 配置验证 Zod Schemas
  * 用于验证应用配置、菜单配置、清单配置等
  */
-import { logger } from '../utils/logger';
+
+// 注意：这里不能直接导入 logger，因为可能在初始化阶段被调用（如 app-scanner 在模块加载时调用 validateConfig）
+// 在初始化阶段使用 console，运行时可以使用 logger（如果需要的话）
+// console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
 
 import { z } from 'zod';
 
@@ -237,7 +240,8 @@ export function validateConfig<T>(
       return schema.parse(preprocessedConfig);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        logger.error(`[配置验证] ${configName}验证失败:`, error.errors);
+        // 在初始化阶段使用 console，避免循环依赖
+        console.error(`[配置验证] ${configName}验证失败:`, error.errors);
         throw new Error(
           `${configName}验证失败: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
         );
@@ -251,7 +255,8 @@ export function validateConfig<T>(
       return result.data;
     } else {
       // 生产环境静默失败，返回原始配置，并上报
-      logger.warn(`[配置验证] ${configName}验证失败，使用原始配置`);
+      // 在初始化阶段使用 console，避免循环依赖
+      console.warn(`[配置验证] ${configName}验证失败，使用原始配置`);
       // 上报验证失败（异步，不阻塞）
       import('../utils/zod/reporting').then(({ reportValidationError }) => {
         reportValidationError(

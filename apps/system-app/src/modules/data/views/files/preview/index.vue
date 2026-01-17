@@ -1,24 +1,29 @@
 <template>
   <div class="page">
-    <BtcMasterViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.preview.categories" right-title="title.data.files.preview.fileList">
+    <BtcDoubleLayout ref="viewGroupRef" left-width="280px" left-title="title.data.files.preview.categories" right-title="title.data.files.preview.fileList">
+      <!-- 左侧标题栏操作 -->
+      <template #left-header>
+        <span class="label">{{ t('data.file.preview.categories') }}</span>
+        <div class="header-actions">
+          <div class="icon" @click="handleRefreshCategories">
+            <btc-svg name="refresh" />
+          </div>
+        </div>
+      </template>
+      
       <!-- 左侧分类列表 -->
       <template #left>
         <div class="file-preview-left">
-          <div class="header">
-            <el-text class="label">{{ t('data.file.preview.categories') }}</el-text>
-            <div class="header-actions">
-              <div class="icon" @click="handleRefreshCategories">
-                <btc-svg name="refresh" />
-              </div>
-            </div>
-          </div>
           <div class="search">
-            <el-input
+            <BtcInput
               v-model="categoryKeyword"
               :placeholder="t('data.file.preview.search_category')"
               clearable
-              :prefix-icon="Search"
-            />
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </BtcInput>
           </div>
           <el-scrollbar class="category-list">
             <div
@@ -40,9 +45,8 @@
 
       <!-- 右侧文件预览区域 -->
       <template #right="{ selected, keyword }">
-        <div class="file-preview-right">
-          <!-- 操作栏 -->
-          <div class="header">
+        <!-- 第一行：操作栏 -->
+        <btc-crud-row>
             <el-button @click="refreshFileList">{{ t('common.button.refresh') }}</el-button>
             <el-upload
               ref="uploadRef"
@@ -53,7 +57,6 @@
               :before-upload="beforeUpload"
               :on-success="handleUploadSuccess"
               :on-error="handleUploadError"
-              style="margin: 0 10px;"
             >
               <el-button type="primary">{{ t('data.file.preview.click_to_upload') }}</el-button>
             </el-upload>
@@ -64,12 +67,13 @@
             >
               {{ t('data.file.preview.delete_selected') }}
             </el-button>
-          </div>
+          </btc-crud-row>
 
-          <!-- 文件列表 -->
-          <el-scrollbar v-loading="loading" class="file-list">
+          <!-- 第二行：文件列表 -->
+          <btc-crud-row>
             <template v-if="fileList.length > 0">
-              <div class="file-grid">
+              <el-scrollbar v-loading="loading" class="file-list">
+                <div class="file-grid">
                 <div
                   v-for="file in fileList"
                   :key="file.id"
@@ -143,18 +147,16 @@
                     </el-icon>
                   </div>
                 </div>
-              </div>
+                </div>
+              </el-scrollbar>
             </template>
 
             <!-- 空状态 -->
-            <div v-else class="empty-state">
-              <el-icon class="empty-icon"><Document /></el-icon>
-              <p>{{ t('data.file.preview.empty_tip') }}</p>
-            </div>
-          </el-scrollbar>
+            <BtcEmpty v-else :description="t('data.file.preview.empty_tip')" />
+          </btc-crud-row>
 
-          <!-- 分页 -->
-          <div class="pagination">
+          <!-- 第三行：分页（居中显示） -->
+          <btc-crud-row justify="center">
             <el-pagination
               v-model:current-page="pagination.page"
               v-model:page-size="pagination.size"
@@ -165,18 +167,16 @@
               @size-change="handleSizeChange"
               @current-change="handlePageChange"
             />
-          </div>
-        </div>
+        </btc-crud-row>
       </template>
-    </BtcMasterViewGroup>
+    </BtcDoubleLayout>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import { useI18n, logger } from '@btc/shared-core';
-import { BtcMasterViewGroup } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrudRow, BtcCrudFlex1, BtcEmpty, BtcInput } from '@btc/shared-components';
+import { useI18n } from '@btc/shared-core';
+import { BtcDoubleLayout } from '@btc/shared-components';
 import { Document, Picture, VideoPlay, Check, ZoomIn, Download, Delete, Search } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 
@@ -245,8 +245,8 @@ const handleCategorySelect = (category: any) => {
   selectedCategoryId.value = category.id;
   pagination.page = 1;
   
-  // 手动触发 ViewGroup 的 select 方法，使右侧内容显示
-  viewGroupRef.value?.select(category);
+  // BtcDoubleLayout 只是一个布局组件，不需要 select 方法
+  // 直接刷新文件列表即可
   
   refreshFileList();
 };
@@ -381,7 +381,7 @@ const refreshFileList = async () => {
       loading.value = false;
     }, 500);
   } catch (error) {
-    logger.error('加载文件列表失败:', error);
+    console.error('加载文件列表失败:', error);
     loading.value = false;
   }
 };
@@ -404,110 +404,114 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+// 左侧标题栏的操作按钮样式（在 BtcDoubleLayout 的 left-header 插槽中）
+:deep(.btc-double-layout__left-header) {
+  .header-actions {
+    display: flex;
+    align-items: center;
 
+    .icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: 5px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 16px;
+      height: 26px;
+      width: 26px;
+      color: var(--el-text-color-primary);
 
-      .header-actions {
-        display: flex;
-        align-items: center;
-
-        .icon {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-left: 5px;
-          cursor: pointer;
-          border-radius: 6px;
-          font-size: 16px;
-          height: 26px;
-          width: 26px;
-          color: var(--el-text-color-primary);
-
-          &:hover {
-            background-color: var(--el-fill-color-light);
-          }
-        }
+      &:hover {
+        background-color: var(--el-fill-color-light);
       }
     }
+  }
+}
 
-    .search {
-      padding: 10px 10px 0 10px;
+.file-preview-left {
+  .search {
+    padding: 10px 10px 0 10px;
 
-      :deep(.el-input) {
-        .el-input__wrapper {
-          border-radius: 6px;
-        }
-      }
-    }
-
-    .category-list {
-      flex: 1;
-      padding: 8px;
-      margin-top: 10px;
-      box-sizing: border-box;
-
-      .category-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        margin-bottom: 4px;
+    :deep(.el-input) {
+      .el-input__wrapper {
         border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          background-color: var(--el-fill-color-light);
-        }
-
-        &.active {
-          background-color: var(--el-color-primary-light-9);
-          color: var(--el-color-primary);
-
-          .category-icon {
-            color: var(--el-color-primary);
-          }
-        }
-
-        .category-icon {
-          margin-right: 8px;
-          font-size: 18px;
-        }
-
-        .category-name {
-          flex: 1;
-          font-size: 14px;
-        }
-
-        .category-count {
-          font-size: 12px;
-          color: var(--el-text-color-secondary);
-        }
       }
     }
   }
 
-  .file-preview-right {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+  .category-list {
+    flex: 1;
+    padding: 8px;
+    margin-top: 10px;
+    box-sizing: border-box;
 
-    .header {
+    .category-item {
       display: flex;
       align-items: center;
-      height: 50px;
-      padding: 0 10px;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background-color: var(--el-fill-color-light);
+      }
+
+      &.active {
+        background-color: var(--el-color-primary-light-9);
+        color: var(--el-color-primary);
+
+        .category-icon {
+          color: var(--el-color-primary);
+        }
+      }
+
+      .category-icon {
+        margin-right: 8px;
+        font-size: 18px;
+      }
+
+      .category-name {
+        flex: 1;
+        font-size: 14px;
+      }
+
+      .category-count {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
     }
+  }
+}
 
-    .file-list {
-      height: calc(100% - 110px);
-      padding: 10px;
-      position: relative;
+// 第一个 btc-crud-row：操作栏（顶部 padding）
+.btc-crud-row:nth-child(1) {
+  padding: 10px;
+}
 
-      .file-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 16px;
+// 第二个 btc-crud-row：文件列表（占据剩余空间）
+.btc-crud-row:nth-child(2) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; // 确保子元素占据全部宽度
+  
+  // 有数据时：文件列表滚动区域
+  .file-list {
+    flex: 1;
+    min-height: 0;
+    padding: 10px;
+    position: relative;
 
-        .file-item {
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+
+      .file-item {
           position: relative;
           width: 140px;
           height: 140px;
@@ -669,36 +673,11 @@ onMounted(() => {
           }
         }
       }
-
-      .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        margin: auto;
-        color: var(--el-text-color-placeholder);
-
-        .empty-icon {
-          font-size: 96px;
-          margin-bottom: 16px;
-        }
-
-        p {
-          font-size: 16px;
-        }
-      }
     }
+}
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-    }
-  }
+// 第三个 btc-crud-row：分页（底部 padding）
+.btc-crud-row:nth-child(3) {
+  padding: 0 10px 10px 10px;
 }
 </style>

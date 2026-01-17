@@ -19,7 +19,6 @@ export { default as BtcTableButton } from './components/basic/btc-table-button/i
 export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
-export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
 export { default as BtcDoubleLayout } from './components/layout/btc-double-layout/index.vue';
 export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
 export { default as BtcAppSkeleton } from './components/basic/app-skeleton/index.vue';
@@ -33,8 +32,7 @@ export { default as BtcSelectButton } from './components/form/btc-select-button/
 export { default as BtcColorPicker } from './components/form/btc-color-picker/index.vue';
 export { default as BtcUpload } from './components/form/btc-upload/index.vue';
 export { default as BtcMasterList } from './components/data/btc-master-list/index.vue';
-export { default as BtcTableGroup } from './components/data/btc-table-group/index.vue';
-export { default as BtcDoubleLeftGroup } from './components/data/btc-double-group/index.vue';
+export { default as BtcMasterTableGroup } from './components/data/btc-master-table-group/index.vue';
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
@@ -47,7 +45,6 @@ export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
 export { BtcBindingDialog } from './components/feedback/btc-binding-dialog';
 export { BtcMessageBox, BtcConfirm, BtcAlert, BtcPrompt } from './components/feedback/btc-message-box';
 export { default as BtcSvg } from './components/basic/btc-svg/index.vue';
-export { default as BtcMasterViewGroup } from './components/layout/btc-view-group/index.vue';
 export { default as BtcSearch } from './components/form/btc-search/index.vue';
 export { default as BtcInput } from './components/form/btc-input/index.vue';
 export { default as BtcAppLoading } from './components/loading/app-loading/index.vue';
@@ -79,8 +76,7 @@ export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
 export type { DialogProps } from './components/feedback/btc-dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './components/form/btc-form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
-export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
-export type { DoubleGroupProps as BtcDoubleLeftGroupProps, DoubleGroupEmits as BtcDoubleLeftGroupEmits, DoubleGroupExpose as BtcDoubleLeftGroupExpose } from './components/data/btc-double-group/types';
+export type { MasterTableGroupProps as BtcMasterTableGroupProps, MasterTableGroupEmits as BtcMasterTableGroupEmits, MasterTableGroupExpose as BtcMasterTableGroupExpose } from './components/data/btc-master-table-group/types';
 export type {
   TransferKey,
   TransferPanelProps,
@@ -92,7 +88,6 @@ export type {
   TransferPanelRemovePayload,
 } from './components/data/btc-transfer-panel/types';
 export type { BtcContainerProps } from './components/layout/btc-container/types';
-export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
 export type { IconButtonConfig, IconButtonDropdown, IconButtonDropdownItem, IconButtonPopover } from './components/basic/btc-icon-button';
 export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';
 export type { BtcTab } from './components/navigation/btc-tabs/index.vue';

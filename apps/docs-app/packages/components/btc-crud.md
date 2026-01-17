@@ -1,4 +1,4 @@
-﻿---
+---
 title: BTC CRUD 组件系统
 type: package
 project: components
@@ -47,9 +47,9 @@ sidebar_group: packages
 
 | 组件 | 说明 | 对应 cool-admin |
 |------|------|----------------|
-| `<BtcRow>` | 行布局 | `<cl-row>` |
-| `<BtcFlex1>` | 弹性空间 | `<cl-flex1>` |
-| `<BtcSearchKey>` | 搜索框 | `<cl-search-key>` |
+| `<BtcCrudRow>` | 行布局 | `<cl-row>` |
+| `<BtcCrudFlex1>` | 弹性空间 | `<cl-flex1>` |
+| `<BtcCrudSearchKey>` | 搜索框 | `<cl-search-key>` |
 
 ---
 
@@ -61,16 +61,16 @@ sidebar_group: packages
 <template>
 <BtcCrud :service="userService">
 <!-- 工具栏 -->
-<BtcRow>
+<BtcCrudRow>
 <BtcAddBtn />
 <BtcMultiDeleteBtn />
 <BtcRefreshBtn />
-<BtcFlex1 />
-<BtcSearchKey placeholder="搜索用户名姓名" />
-</BtcRow>
+<BtcCrudFlex1 />
+<BtcCrudSearchKey placeholder="搜索用户名姓名" />
+</BtcCrudRow>
 
 <!-- 表格 -->
-<BtcRow>
+<BtcCrudRow>
 <BtcTable :columns="columns">
 <!-- 自定义列 -->
 <template #column-status="{ row }">
@@ -84,13 +84,13 @@ sidebar_group: packages
 <el-button link @click="handleCustom(row)">自定义</el-button>
 </template>
 </BtcTable>
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 分页 -->
-<BtcRow>
-<BtcFlex1 />
+<BtcCrudRow>
+<BtcCrudFlex1 />
 <BtcPagination />
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 新增/编辑弹窗 -->
 <BtcUpsert :items="formItems" />
@@ -106,9 +106,9 @@ BtcPagination,
 BtcAddBtn,
 BtcRefreshBtn,
 BtcMultiDeleteBtn,
-BtcRow,
-BtcFlex1,
-BtcSearchKey,
+BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
 type TableColumn,
 type FormItem,
 } from '@btc/shared-components';
@@ -304,26 +304,26 @@ rules?: any | any[]; // 验证规则
 
 ### 5. 辅助组件
 
-**BtcRow** - 行布局
+**BtcCrudRow** - 行布局
 ```vue
-<BtcRow margin-bottom="20px" align="flex-start">
+<BtcCrudRow margin-bottom="20px" align="flex-start">
 <BtcAddBtn />
 <BtcRefreshBtn />
-</BtcRow>
+</BtcCrudRow>
 ```
 
-**BtcFlex1** - 弹性空间（占据剩余空间）
+**BtcCrudFlex1** - 弹性空间（占据剩余空间）
 ```vue
-<BtcRow>
+<BtcCrudRow>
 <BtcAddBtn />
-<BtcFlex1 /> <!-- 占据剩余空间 -->
-<BtcSearchKey />
-</BtcRow>
+<BtcCrudFlex1 /> <!-- 占据剩余空间 -->
+<BtcCrudSearchKey />
+</BtcCrudRow>
 ```
 
-**BtcSearchKey** - 搜索框
+**BtcCrudSearchKey** - 搜索框
 ```vue
-<BtcSearchKey
+<BtcCrudSearchKey
 placeholder="搜索关键词"
 field="keyword" <!-- 搜索字段名 -->
 />
@@ -338,15 +338,15 @@ field="keyword" <!-- 搜索字段名 -->
 ```vue
 <BtcCrud :service="service">
 <!-- 第一行：主要操作 -->
-<BtcRow>
+<BtcCrudRow>
 <BtcAddBtn />
 <BtcMultiDeleteBtn />
 <el-button type="success">导出</el-button>
 <el-button type="warning">导入</el-button>
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 第二行：搜索区域 -->
-<BtcRow>
+<BtcCrudRow>
 <el-form inline>
 <el-form-item label="状态">
 <el-select v-model="searchForm.status">
@@ -355,20 +355,20 @@ field="keyword" <!-- 搜索字段名 -->
 </el-select>
 </el-form-item>
 </el-form>
-<BtcFlex1 />
-<BtcSearchKey />
-</BtcRow>
+<BtcCrudFlex1 />
+<BtcCrudSearchKey />
+</BtcCrudRow>
 
 <!-- 第三行：表格 -->
-<BtcRow>
+<BtcCrudRow>
 <BtcTable :columns="columns" stripe border />
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 第四行：分页 -->
-<BtcRow>
-<BtcFlex1 />
+<BtcCrudRow>
+<BtcCrudFlex1 />
 <BtcPagination />
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 弹窗 -->
 <BtcUpsert :items="formItems" />
@@ -482,19 +482,19 @@ console.log(crud.pagination); // 访问分页信息
 <template>
 <BtcCrud ref="Crud" :service="userService">
 <!-- 工具栏 -->
-<BtcRow>
+<BtcCrudRow>
 <BtcRefreshBtn />
 <BtcAddBtn />
 <BtcMultiDeleteBtn />
 <el-button type="success" :disabled="Table?.selection.length === 0" @click="handleMove">
 转移
 </el-button>
-<BtcFlex1 />
-<BtcSearchKey placeholder="搜索用户名姓名" />
-</BtcRow>
+<BtcCrudFlex1 />
+<BtcCrudSearchKey placeholder="搜索用户名姓名" />
+</BtcCrudRow>
 
 <!-- 表格 -->
-<BtcRow>
+<BtcCrudRow>
 <BtcTable ref="Table" :columns="columns">
 <!-- 自定义操作按钮 -->
 <template #slot-move="{ row }">
@@ -503,13 +503,13 @@ console.log(crud.pagination); // 访问分页信息
 </el-button>
 </template>
 </BtcTable>
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 分页 -->
-<BtcRow>
-<BtcFlex1 />
+<BtcCrudRow>
+<BtcCrudFlex1 />
 <BtcPagination />
-</BtcRow>
+</BtcCrudRow>
 
 <!-- 新增/编辑弹窗 -->
 <BtcUpsert
@@ -532,9 +532,9 @@ BtcPagination,
 BtcAddBtn,
 BtcRefreshBtn,
 BtcMultiDeleteBtn,
-BtcRow,
-BtcFlex1,
-BtcSearchKey,
+BtcCrudRow,
+  BtcCrudFlex1,
+  BtcCrudSearchKey,
 type TableColumn,
 type FormItem,
 } from '@btc/shared-components';
@@ -644,10 +644,10 @@ crud.handleEdit(row) // 编辑
 
 <!-- 进阶：添加工具栏 -->
 <BtcCrud :service="service">
-<BtcRow>
+<BtcCrudRow>
 <BtcAddBtn />
 <BtcRefreshBtn />
-</BtcRow>
+</BtcCrudRow>
 <BtcTable :columns="columns" />
 </BtcCrud>
 

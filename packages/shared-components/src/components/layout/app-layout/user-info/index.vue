@@ -75,7 +75,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm } from '@btc/shared-components';
 import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
-import { logger } from '@btc/shared-core';
+;
 // useMessage 不再需要，直接使用 BtcMessage
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
@@ -170,17 +170,17 @@ const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement;
   const failedUrl = img.src;
 
-  logger.warn('[UserInfo] ❌ 头像加载失败:', failedUrl);
+  console.warn('[UserInfo] ❌ 头像加载失败:', failedUrl);
 
   // 标记已处理，防止重复触发
   errorHandled.value = true;
 
   // 如果失败的是 logo.png，说明默认图片也不存在
   if (failedUrl.includes('logo.png')) {
-    logger.error('[UserInfo] ❌❌❌ CRITICAL: logo.png 文件加载失败！');
-    logger.error('[UserInfo] 请检查文件是否存在于: public/logo.png');
-    logger.error('[UserInfo] 当前完整 URL:', failedUrl);
-    logger.error('[UserInfo] 当前域名:', window.location.origin);
+    console.error('[UserInfo] ❌❌❌ CRITICAL: logo.png 文件加载失败！');
+    console.error('[UserInfo] 请检查文件是否存在于: public/logo.png');
+    console.error('[UserInfo] 当前完整 URL:', failedUrl);
+    console.error('[UserInfo] 当前域名:', window.location.origin);
     // logo.png 失败就不再尝试了
     return;
   }
@@ -188,7 +188,7 @@ const handleAvatarError = (event: Event) => {
   // 标记头像加载失败，这会触发 computed 重新计算，切换到默认 Logo
   avatarLoadError.value = true;
 
-  logger.info('[UserInfo] 已切换到默认 Logo');
+  console.info('[UserInfo] 已切换到默认 Logo');
 };
 
 // 监听头像 URL 变化，重置错误状态
@@ -225,13 +225,13 @@ const handleCommand = (command: string) => {
           if (emitter && typeof emitter.emit === 'function') {
             emitter.emit('open-preferences-drawer');
             if (import.meta.env.DEV || import.meta.env.PROD) {
-              logger.info('[UserInfo] 已通过事件总线触发 open-preferences-drawer 事件');
+              console.info('[UserInfo] 已通过事件总线触发 open-preferences-drawer 事件');
             }
           } else {
             // 如果没有事件总线，尝试通过 window 事件
             window.dispatchEvent(new CustomEvent('open-preferences-drawer'));
             if (import.meta.env.DEV || import.meta.env.PROD) {
-              logger.info('[UserInfo] 事件总线不可用，已通过 window 事件触发 open-preferences-drawer');
+              console.info('[UserInfo] 事件总线不可用，已通过 window 事件触发 open-preferences-drawer');
             }
           }
         };
@@ -252,14 +252,14 @@ const handleCommand = (command: string) => {
               clearInterval(retryTimer);
               triggerPreferencesDrawer();
               if (import.meta.env.DEV || import.meta.env.PROD) {
-                logger.info(`[UserInfo] 重试成功（${retryCount}次），已触发 open-preferences-drawer 事件`);
+                console.info(`[UserInfo] 重试成功（${retryCount}次），已触发 open-preferences-drawer 事件`);
               }
             } else if (retryCount >= maxRetries) {
               clearInterval(retryTimer);
               // 最后一次尝试使用 window 事件
               window.dispatchEvent(new CustomEvent('open-preferences-drawer'));
               if (import.meta.env.DEV || import.meta.env.PROD) {
-                logger.warn(`[UserInfo] 重试 ${maxRetries} 次后事件总线仍不可用，已使用 window 事件作为兜底方案`);
+                console.warn(`[UserInfo] 重试 ${maxRetries} 次后事件总线仍不可用，已使用 window 事件作为兜底方案`);
               }
             }
           }, retryInterval);
@@ -326,7 +326,7 @@ const handleCommand = (command: string) => {
             currentLogoutFn().catch((error: any) => {
               // 生产环境可能无法显示日志，但保留错误处理
               if (import.meta.env.DEV) {
-                logger.error('[user-info] Logout failed:', error);
+                console.error('[user-info] Logout failed:', error);
               }
             });
           }

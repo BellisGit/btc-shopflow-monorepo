@@ -3,7 +3,7 @@
  * 生成 overview.json - 收集所有应用的菜单国际化配置
  * 在构建 shared-core 时自动执行
  */
-import { logger } from '@btc/shared-core';
+// logger removed, use console instead
 
 import { readdirSync, readFileSync, writeFileSync, existsSync, statSync } from 'fs';
 import { join, resolve, dirname } from 'path';
@@ -120,7 +120,7 @@ async function extractMenuI18nFromConfig(configPath) {
       return menuI18n;
     }
   } catch (error) {
-    logger.warn(`[generate-overview-i18n] ⚠️  无法读取配置文件 ${configPath}:`, error.message);
+    console.warn(`[generate-overview-i18n] ⚠️  无法读取配置文件 ${configPath}:`, error.message);
     return null;
   }
 }
@@ -140,7 +140,7 @@ async function collectOverviewI18n() {
     .map((dirent) => dirent.name)
     .sort();
 
-  logger.info('[generate-overview-i18n] 开始收集菜单国际化配置...');
+  console.info('[generate-overview-i18n] 开始收集菜单国际化配置...');
 
   /**
    * 递归查找所有 config.ts 文件
@@ -176,7 +176,7 @@ async function collectOverviewI18n() {
       continue;
     }
 
-    logger.info(`[generate-overview-i18n] 处理应用 ${appDir}，找到 ${configFiles.length} 个模块配置`);
+    console.info(`[generate-overview-i18n] 处理应用 ${appDir}，找到 ${configFiles.length} 个模块配置`);
 
     for (const configFile of configFiles) {
       const menuI18n = await extractMenuI18nFromConfig(configFile);
@@ -200,12 +200,12 @@ async function collectOverviewI18n() {
   const zhCNCount = Object.keys(overviewI18n['zh-CN']).length;
   const enUSCount = Object.keys(overviewI18n['en-US']).length;
   
-  logger.info(`[generate-overview-i18n] ✅ 已生成 overview.json`);
-  logger.info(`[generate-overview-i18n] 📊 统计: 中文菜单 key ${zhCNCount} 个，英文菜单 key ${enUSCount} 个`);
-  logger.info(`[generate-overview-i18n] 📁 输出文件: ${outputFile}`);
+  console.info(`[generate-overview-i18n] ✅ 已生成 overview.json`);
+  console.info(`[generate-overview-i18n] 📊 统计: 中文菜单 key ${zhCNCount} 个，英文菜单 key ${enUSCount} 个`);
+  console.info(`[generate-overview-i18n] 📁 输出文件: ${outputFile}`);
 }
 
 collectOverviewI18n().catch((error) => {
-  logger.error(`[generate-overview-i18n] ❌ 执行失败:`, error);
+  console.error(`[generate-overview-i18n] ❌ 执行失败:`, error);
   process.exit(1);
 });

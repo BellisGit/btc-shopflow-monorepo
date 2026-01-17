@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
@@ -47,7 +47,7 @@ export class Http {
         // 调试日志（仅在开发/预览环境）
         if (import.meta.env.DEV || window.location.port.startsWith('41')) {
           if (!token && config.url?.includes('/api/')) {
-            logger.warn(`[HTTP] 请求 ${config.url} 没有 token:`, {
+            console.warn(`[HTTP] 请求 ${config.url} 没有 token:`, {
               hasCookieToken: !!cookieToken,
               hasStorageToken: !!storageToken,
               cookies: document.cookie.split(';').map(c => c.trim()),
@@ -148,7 +148,7 @@ export class Http {
               startUserCheckPolling(true);
             }).catch((error) => {
               if (import.meta.env.DEV) {
-                logger.warn('[http] Failed to start user check polling after login:', error);
+                console.warn('[http] Failed to start user check polling after login:', error);
               }
             });
           } catch (error) {
@@ -162,7 +162,7 @@ export class Http {
               bridge.sendMessage('login', { timestamp: Date.now() });
             }).catch((error) => {
               if (import.meta.env.DEV) {
-                logger.warn('[http] Failed to broadcast login message:', error);
+                console.warn('[http] Failed to broadcast login message:', error);
               }
             });
           } catch (error) {
@@ -307,7 +307,7 @@ export class Http {
         }
       } catch (err) {
         // 获取用户信息失败，仍然记录日志但不包含用户信息
-        logger.warn('获取用户信息失败:', err);
+        console.warn('获取用户信息失败:', err);
       }
 
       // 如果没有用户ID，说明未登录或用户信息不完整，不记录日志
@@ -373,7 +373,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      logger.error('记录请求日志失败:', error);
+      console.error('记录请求日志失败:', error);
     }
   }
 
@@ -555,7 +555,6 @@ export class Http {
 }
 
 export const http = new Http(config.api.baseURL);
-
 
 
 /**

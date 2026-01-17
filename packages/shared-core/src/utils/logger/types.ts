@@ -33,8 +33,8 @@ export interface LogContext {
 export interface LogTransport {
   /**
    * 发送日志
-   * @param level 日志级别
-   * @param logObject 日志对象（Pino 格式）
+   * @param level 日志级别（数字格式）
+   * @param logObject 日志对象
    */
   send(level: number, logObject: any): void | Promise<void>;
 }
@@ -49,4 +49,19 @@ export interface LoggerOptions {
   enableTransport?: boolean;
   /** 自定义上下文 */
   context?: LogContext;
+}
+
+/**
+ * Logger 接口
+ * 兼容性类型定义（之前来自 winston）
+ */
+export interface Logger {
+  debug: (message: string, ...args: any[]) => void;
+  info: (message: string, ...args: any[]) => void;
+  warn: (message: string, ...args: any[]) => void;
+  error: (message: string, error?: Error | any, ...args: any[]) => void;
+  fatal: (message: string, error?: Error | any, ...args: any[]) => void;
+  child: (context: LogContext) => Logger;
+  setLevel: (level: LogLevel) => void;
+  getLevel: () => LogLevel;
 }

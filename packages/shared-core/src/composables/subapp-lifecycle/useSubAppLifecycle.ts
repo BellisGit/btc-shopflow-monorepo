@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger';
+;
 import { createApp } from 'vue';
 import type { App as VueApp } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
@@ -48,7 +48,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
       // DOM 操作错误，可能是容器在更新时被移除
       // 静默处理，避免影响用户体验
       if (import.meta.env.DEV) {
-        logger.warn(`[${appId}-app] DOM 操作错误已捕获（应用可能正在卸载）:`, err.message);
+        console.warn(`[${appId}-app] DOM 操作错误已捕获（应用可能正在卸载）:`, err.message);
       }
       return;
     }
@@ -66,7 +66,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
       err.message.includes('BtcCrud')
     )) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      logger.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
+      console.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
       // 继续执行，不阻止错误传播
     }
 
@@ -76,7 +76,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
     } catch (e) {
       // 静默失败
     }
-    logger.error(`[${appId}-app] Vue errorHandler 捕获到错误:`, err, { info, instance });
+    console.error(`[${appId}-app] Vue errorHandler 捕获到错误:`, err, { info, instance });
   };
 
   // 同理：warn 也至少在控制台可见（生产环境默认可能被忽略）
@@ -86,7 +86,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
     } catch (e) {
       // 静默失败
     }
-    logger.warn(`[${appId}-app] Vue warn:`, msg, { trace, instance });
+    console.warn(`[${appId}-app] Vue warn:`, msg, { trace, instance });
   };
 }
 
@@ -113,11 +113,31 @@ export async function createSubApp(
   const { AppComponent, createRouter, setupRouter, setupStore, setupI18n, setupUI, setupPlugins } = options;
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 
-  // 创建 Vue 应用实例
-  const app = createApp(AppComponent);
+  // 初始化监控系统（必须在最前面）
+  const { initMonitor, trackBootstrapStart, trackBootstrapEnd } = await import('../../utils/monitor');
+  
+  // 先初始化监控配置，再开始跟踪
+  initMonitor({
+    appName: options.appId,
+    enableAPM: true,
+    enableErrorTracking: true,
+    enableUserBehavior: true,
+    enablePerformance: true,
+    enableResourceMonitoring: true,
+    enableBusinessTracking: true,
+    enableSystemMonitoring: false,
+    sampleRate: 1.0,
+  });
+  
+  trackBootstrapStart();
+  
+  try {
 
-  // 设置全局错误处理器
-  setupErrorHandlers(app, options.appId);
+    // 创建 Vue 应用实例
+    const app = createApp(AppComponent);
+
+    // 设置全局错误处理器
+    setupErrorHandlers(app, options.appId);
 
   // 先初始化 i18n，确保国际化文件已加载
   const i18n = setupI18n(app, props.locale || 'zh-CN');
@@ -143,14 +163,23 @@ export async function createSubApp(
     theme,
     cleanup: {
       listeners: [],
+      pendingPromises: [],
     },
     props,
     translate: () => '',
+    appId: options.appId, // 保存 appId 用于清理
   };
 
   context.translate = createTranslate(context);
 
-  return context;
+    // 监控系统：标记启动完成
+    trackBootstrapEnd();
+    
+    return context;
+  } catch (error) {
+    trackBootstrapEnd();
+    throw error;
+  }
 }
 
 /**
@@ -178,7 +207,7 @@ async function waitForContainer(
   // 如果是字符串选择器，尝试查找
   if (typeof container === 'string') {
     // 如果指定了父元素，在父元素内查找
-    const element = parentElement 
+    const element = parentElement
       ? (parentElement.querySelector(container) as HTMLElement)
       : (document.querySelector(container) as HTMLElement);
     if (element && element.isConnected) {
@@ -196,11 +225,20 @@ async function waitForContainer(
 
   // 如果容器不存在或未连接，尝试等待
   const selector = typeof container === 'string' ? container : '#subapp-viewport';
-  
-  return new Promise((resolve) => {
+
+  let cancelTimer: ReturnType<typeof setTimeout> | null = null;
+  let isCancelled = false;
+
+  const promise = new Promise<HTMLElement | null>((resolve) => {
     let retryCount = 0;
-    
+
     const checkContainer = async () => {
+      // 如果已取消，直接返回 null
+      if (isCancelled) {
+        resolve(null);
+        return;
+      }
+
       // 如果指定了父元素，在父元素内查找
       const element = parentElement
         ? (parentElement.querySelector(selector) as HTMLElement)
@@ -215,7 +253,7 @@ async function waitForContainer(
           element.style.setProperty('visibility', 'visible', 'important');
           element.style.setProperty('opacity', '1', 'important');
         }
-        
+
         // 关键：如果是 #subapp-viewport，确保 layout-app 的 Vue 应用已经渲染完成
         // 通过等待多个 requestAnimationFrame 来确保 Vue 的响应式更新完成
         if (selector === '#subapp-viewport' || (typeof container === 'string' && container === '#subapp-viewport')) {
@@ -229,7 +267,7 @@ async function waitForContainer(
               });
             });
           });
-          
+
           // 再次检查容器是否可见（Vue 渲染后可能会改变样式）
           const finalComputedStyle = window.getComputedStyle(element);
           if (finalComputedStyle.display === 'none' || finalComputedStyle.visibility === 'hidden' || finalComputedStyle.opacity === '0') {
@@ -239,12 +277,12 @@ async function waitForContainer(
             element.style.setProperty('visibility', 'visible', 'important');
             element.style.setProperty('opacity', '1', 'important');
           }
-          
+
           // 生产环境下输出诊断信息
           if (import.meta.env.PROD && typeof window !== 'undefined') {
             const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
             const isLayoutApp = !!(window as any).__IS_LAYOUT_APP__;
-            logger.warn('[waitForContainer] 容器准备就绪', {
+            console.warn('[waitForContainer] 容器准备就绪', {
               selector,
               isUsingLayoutApp,
               isLayoutApp,
@@ -255,15 +293,20 @@ async function waitForContainer(
             });
           }
         }
-        
+
         resolve(element);
       } else if (retryCount < maxRetries) {
         retryCount++;
-        setTimeout(checkContainer, retryDelay);
+        // 检查是否已取消
+        if (isCancelled) {
+          resolve(null);
+          return;
+        }
+        cancelTimer = setTimeout(checkContainer, retryDelay);
       } else {
         // 超时后输出诊断信息
         if (import.meta.env.PROD && typeof window !== 'undefined') {
-          logger.warn('[waitForContainer] 容器查找超时', {
+          console.warn('[waitForContainer] 容器查找超时', {
             selector,
             retryCount,
             maxRetries,
@@ -275,9 +318,20 @@ async function waitForContainer(
         resolve(null);
       }
     };
-    
+
     checkContainer();
   });
+
+  // 添加取消方法到 Promise（用于清理）
+  (promise as any).cancel = () => {
+    isCancelled = true;
+    if (cancelTimer) {
+      clearTimeout(cancelTimer);
+      cancelTimer = null;
+    }
+  };
+
+  return promise;
 }
 
 /**
@@ -288,9 +342,14 @@ export async function mountSubApp(
   options: SubAppOptions,
   props: QiankunProps = {}
 ): Promise<void> {
-  context.props = props;
+  // 监控系统：标记挂载开始
+  const { trackMountStart, trackMountEnd } = await import('../../utils/monitor');
+  trackMountStart();
 
-  // 查找挂载点：
+  try {
+    context.props = props;
+
+    // 查找挂载点：
   // - 优先使用 props.container（无论是否 qiankun，只要提供了 container 就使用）
   // - 否则：如果 __USE_LAYOUT_APP__ 为 true，尝试查找 #subapp-viewport
   // - 否则：使用 #app（独立运行模式）
@@ -304,7 +363,7 @@ export async function mountSubApp(
       // 关键：验证容器是否是 #subapp-viewport 元素
       // 如果 qiankun 传递的不是 #subapp-viewport，需要查找正确的容器
       const isSubappViewport = props.container.id === 'subapp-viewport';
-      
+
       if (isSubappViewport) {
         // 容器就是 #subapp-viewport，检查是否已连接到 DOM 且可见
         if (props.container.isConnected) {
@@ -394,13 +453,13 @@ export async function mountSubApp(
     // 关键：只有当 __USE_LAYOUT_APP__ 为 true 时，才查找 #subapp-viewport
     // 如果 __USE_LAYOUT_APP__ 为 false，说明 layout-app 加载失败，应该使用独立渲染模式（#app）
     const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
-    
+
     if (isUsingLayoutApp) {
       // 使用 layout-app：尝试查找 #subapp-viewport
       mountPoint = await waitForContainer('#subapp-viewport', 80, 50); // 增加重试次数和延迟
       if (!mountPoint) {
         const errorMsg = `[${options.appId}-app] 使用 layout-app 但未找到 #subapp-viewport 元素`;
-        logger.error(errorMsg, {
+        console.error(errorMsg, {
           __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
           hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
           documentBody: typeof document !== 'undefined' ? document.body : null,
@@ -427,18 +486,23 @@ export async function mountSubApp(
   if (!mountPoint) {
     throw new Error(`[${options.appId}-app] 无法找到挂载节点`);
   }
-  
+
   // 关键：判断是否使用 layout-app（提前定义，避免重复）
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
-  
+
   // 关键：再次确认容器已连接到 DOM 且已准备好
   if (!mountPoint.isConnected) {
-    mountPoint = await waitForContainer(mountPoint, 80, 50);
+    const containerPromise = waitForContainer(mountPoint, 80, 50);
+    // 将 Promise 添加到 cleanup，以便在卸载时取消
+    if (context.cleanup.pendingPromises && (containerPromise as any).cancel) {
+      context.cleanup.pendingPromises.push({ cancel: (containerPromise as any).cancel });
+    }
+    mountPoint = await containerPromise;
     if (!mountPoint || !mountPoint.isConnected) {
       throw new Error(`[${options.appId}-app] 挂载容器未连接到 DOM`);
     }
   }
-  
+
   // 关键：确保容器已准备好（使用 requestAnimationFrame 确保 Vue 渲染完成）
   await new Promise(resolve => {
     requestAnimationFrame(() => {
@@ -458,7 +522,7 @@ export async function mountSubApp(
     if (existingApp && existingApp.children.length > 0) {
       // qiankun 已经挂载了子应用，不应该再次挂载
       if (import.meta.env.DEV) {
-        logger.warn(`[${options.appId}-app] 检测到 qiankun 已挂载，跳过重复挂载`);
+        console.warn(`[${options.appId}-app] 检测到 qiankun 已挂载，跳过重复挂载`);
       }
       return; // 直接返回，不执行挂载
     }
@@ -468,7 +532,7 @@ export async function mountSubApp(
   // 在 qiankun 模式下，qiankun 会注入子应用的 HTML（包括 #app 元素）
   // 但在 layout-app 模式下，子应用直接挂载到 #subapp-viewport，需要清理旧内容
   // 关键：在所有模式下都进行清理，确保 DOM 结构干净
-  
+
   // 1. 特别清理可能存在的 iframe 容器（docs-iframe）
   // 先清理 iframe，避免它们占据高度
   const iframeWrappers = mountPoint.querySelectorAll('.docs-iframe-wrapper, iframe');
@@ -479,7 +543,7 @@ export async function mountSubApp(
       // 静默失败
     }
   });
-  
+
   // 2. 清理可能存在的多个 body 元素（qiankun 可能注入的）
   // 注意：body 元素不应该出现在挂载点内，如果出现，需要清理
   const bodyElements = mountPoint.querySelectorAll('body');
@@ -494,7 +558,7 @@ export async function mountSubApp(
       // 静默失败
     }
   });
-  
+
   // 3. 清理可能存在的多个 #app 元素
   // 注意：在 layout-app 模式下，子应用会直接挂载到 #subapp-viewport
   // 如果容器中已经有 #app 元素，可能是之前挂载留下的，需要清理
@@ -522,7 +586,7 @@ export async function mountSubApp(
       }
     }
   }
-  
+
   // 4. 清理 qiankun 包装器内的多余内容（如果存在）
   // qiankun 可能会注入多个包装器，需要清理旧的
   const qiankunWrappers = mountPoint.querySelectorAll('[data-qiankun], [id^="__qiankun_microapp_wrapper"]');
@@ -536,7 +600,7 @@ export async function mountSubApp(
       }
     }
   }
-  
+
   // 5. 最后清理容器中的所有其他子元素（包括 qiankun 包装器等）
   // 注意：在 layout-app 模式下，需要清空容器，让 Vue 重新挂载
   // 在独立运行模式下，如果容器是 #app，不应该清空（因为 Vue 需要挂载到它）
@@ -563,9 +627,9 @@ export async function mountSubApp(
 
   // 关键优化：立即挂载应用，不等待任何异步操作
   // 这样应用可以立即显示，提升用户体验
-  
+
   context.app.mount(mountPoint);
-  
+
   // 关键：在 layout-app 模式下，应用挂载后立即调用 finishLoading 隐藏 loading
   // 不需要等到路由准备好，因为应用已经挂载，loading 应该立即隐藏
   if (isUsingLayoutApp) {
@@ -578,7 +642,7 @@ export async function mountSubApp(
         // 静默失败
       }
     }
-    
+
     // 同时隐藏应用级 loading（如果存在）
     import('../../btc/utils/loading').then(({ appLoadingService }) => {
       if (appLoadingService) {
@@ -611,7 +675,7 @@ export async function mountSubApp(
   // 注意：独立运行模式下，Vue Router 会自动根据当前 URL 匹配路由，无需手动触发
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
-    
+
     // 关键修复：在应用挂载前就设置初始路由，避免路由初始化时先匹配到根路径
     // 这样可以避免刷新浏览器时 URL 短暂变成 /system 再恢复的问题
     if (initialRoute !== '/') {
@@ -629,13 +693,13 @@ export async function mountSubApp(
           try {
             await context.router.replace(initialRoute);
           } catch (navError: unknown) {
-            logger.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+            console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
               initialRoute,
               currentPath: window.location.pathname,
             });
           }
         }).catch((readyError: unknown) => {
-          logger.warn(`[${options.appId}-app] 路由就绪检查失败:`, readyError);
+          console.warn(`[${options.appId}-app] 路由就绪检查失败:`, readyError);
         });
       }
     } else {
@@ -647,7 +711,7 @@ export async function mountSubApp(
         // 路由已准备好，进行导航
         try {
           await context.router.replace(initialRoute);
-          
+
           // 关键修复：等待路由导航完成，并确保组件已加载
           // 使用 nextTick 确保 Vue 已经完成组件渲染
           await import('vue').then(({ nextTick }) => {
@@ -671,7 +735,7 @@ export async function mountSubApp(
           });
         } catch (error: unknown) {
           // 路由导航失败时输出错误信息
-          logger.error(`[${options.appId}-app] 路由导航失败:`, error, {
+          console.error(`[${options.appId}-app] 路由导航失败:`, error, {
             initialRoute,
             currentPath: window.location.pathname,
             routerReady: 'ready',
@@ -679,10 +743,10 @@ export async function mountSubApp(
         }
       }).catch(async (error: unknown) => {
         // 路由就绪超时或失败，仍然尝试导航（兼容性处理）
-        logger.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
+        console.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
         try {
           await context.router.replace(initialRoute);
-          
+
           // 即使路由就绪检查失败，也等待导航完成
           await import('vue').then(({ nextTick }) => {
             return new Promise<void>((resolve) => {
@@ -694,7 +758,7 @@ export async function mountSubApp(
             });
           });
         } catch (navError: unknown) {
-          logger.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+          console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
             initialRoute,
             currentPath: window.location.pathname,
             routerReady: 'timeout',
@@ -736,6 +800,13 @@ export async function mountSubApp(
       // 静默失败，不影响应用运行
     }
   })();
+
+    // 监控系统：标记挂载完成
+    trackMountEnd();
+  } catch (error) {
+    trackMountEnd();
+    throw error;
+  }
 }
 
 /**
@@ -745,6 +816,13 @@ export function updateSubApp(
   context: SubAppContext,
   props: QiankunProps
 ): void {
+  // 监控系统：标记应用更新
+  import('../../utils/monitor').then(({ trackUpdate }) => {
+    trackUpdate();
+  }).catch(() => {
+    // 静默失败
+  });
+
   context.props = {
     ...context.props,
     ...props,
@@ -765,8 +843,13 @@ export async function unmountSubApp(
   context: SubAppContext,
   props: QiankunProps = {}
 ): Promise<void> {
-  // 标记应用已卸载，阻止路由同步和响应式更新
-  context.isUnmounted = true;
+  // 监控系统：标记卸载开始
+  const { trackUnmountStart, trackUnmountEnd } = await import('../../utils/monitor');
+  trackUnmountStart();
+
+  try {
+    // 标记应用已卸载，阻止路由同步和响应式更新
+    context.isUnmounted = true;
 
   // 先清理事件监听器和路由钩子，阻止后续的响应式更新
   if (context.cleanup.routerAfterEach) {
@@ -785,14 +868,307 @@ export async function unmountSubApp(
     delete context.cleanup.historyPatches;
   }
 
+  // 取消所有 pending 的 Promise（避免内存泄漏）
+  if (context.cleanup.pendingPromises) {
+    context.cleanup.pendingPromises.forEach((promise) => {
+      try {
+        if (promise.cancel && typeof promise.cancel === 'function') {
+          promise.cancel();
+        }
+      } catch (error) {
+        // 忽略取消错误
+      }
+    });
+    context.cleanup.pendingPromises = [];
+  }
+
   const clearTabs = props.clearTabs ?? context.props?.clearTabs;
   if (clearTabs) {
     clearTabs();
   }
 
+  // 清理菜单注册表（避免菜单配置对象累积）
+  try {
+    if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+      const menuRegistry = (window as any).__BTC_MENU_REGISTRY__;
+      if (menuRegistry && menuRegistry.value && context.appId) {
+        // 清理当前应用的菜单配置
+        const appId = context.appId;
+        if (menuRegistry.value[appId]) {
+          menuRegistry.value[appId] = [];
+        }
+      }
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理路由配置对象（避免路由元数据中的配置对象和字符串累积）
+  try {
+    if (context.router) {
+      const routes = context.router.getRoutes();
+      routes.forEach(route => {
+        // 清理路由元数据中的所有配置对象和字符串
+        if (route.meta) {
+          // 清理可能包含 enabled 和 labelKey 的配置对象
+          if (route.meta.config) {
+            delete route.meta.config;
+          }
+          // 清理菜单相关配置
+          if (route.meta.menuConfig) {
+            delete route.meta.menuConfig;
+          }
+          // 清理所有字符串属性（路径、名称等会在路由对象本身中，这里清理元数据中的字符串）
+          Object.keys(route.meta).forEach(key => {
+            if (typeof route.meta![key] === 'string') {
+              delete route.meta![key];
+            } else if (typeof route.meta![key] === 'object' && route.meta![key] !== null) {
+              // 递归清理对象中的字符串
+              const clearStrings = (obj: any) => {
+                if (typeof obj === 'object' && obj !== null) {
+                  Object.keys(obj).forEach(k => {
+                    if (typeof obj[k] === 'string') {
+                      delete obj[k];
+                    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+                      clearStrings(obj[k]);
+                    }
+                  });
+                }
+              };
+              clearStrings(route.meta![key]);
+            }
+          });
+        }
+      });
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理动态导入的模块缓存（避免编译后的代码块累积）
+  try {
+    // 清理 Vite 的模块映射（ModuleMap）
+    if (typeof window !== 'undefined') {
+      // 清理全局模块缓存（如果存在）
+      const viteCache = (window as any).__VITE_MODULE_CACHE__;
+      if (viteCache) {
+        if (typeof viteCache.clear === 'function') {
+          viteCache.clear();
+        } else if (typeof viteCache === 'object') {
+          // 清理应用相关的模块
+          Object.keys(viteCache).forEach(key => {
+            if (key.includes(context.appId || '')) {
+              delete viteCache[key];
+            }
+          });
+        }
+      }
+
+      // 清理动态导入的模块引用
+      const dynamicImports = (window as any).__DYNAMIC_IMPORTS__;
+      if (dynamicImports && Array.isArray(dynamicImports)) {
+        // 清理当前应用的模块引用
+        const filtered = dynamicImports.filter((imp: any) => {
+          return imp.appId !== context.appId;
+        });
+        dynamicImports.length = 0;
+        dynamicImports.push(...filtered);
+      }
+    }
+
+    // 清理 HMR 相关的模块映射（如果可访问）
+    if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
+      const hot = (import.meta as any).hot;
+      if (hot && typeof hot.dispose === 'function') {
+        // HMR dispose 会在模块更新时调用，这里只是确保清理
+        try {
+          hot.dispose(() => {
+            // 清理模块相关的资源
+          });
+        } catch (error) {
+          // 忽略错误
+        }
+      }
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
   // 关键：使用 nextTick 确保所有待处理的响应式更新完成，避免在卸载过程中触发更新
   const { nextTick } = await import('vue');
   await nextTick();
+
+  // 清理 app-loading 服务实例（避免内存泄漏）
+  try {
+    const { appLoadingService } = await import('../../btc/utils/loading');
+    if (appLoadingService && typeof (appLoadingService as any).cleanupAll === 'function') {
+      (appLoadingService as any).cleanupAll();
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理主题插件资源（避免内存泄漏）
+  try {
+    const { cleanupThemePlugin } = await import('../../btc/plugins/theme');
+    if (cleanupThemePlugin) {
+      cleanupThemePlugin();
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理错误监控定时器（避免内存泄漏）
+  if (typeof window !== 'undefined' && window.__BTC_ERROR_MONITOR_CLEANUP_TIMER__) {
+    clearTimeout(window.__BTC_ERROR_MONITOR_CLEANUP_TIMER__);
+    window.__BTC_ERROR_MONITOR_CLEANUP_TIMER__ = undefined;
+  }
+
+  // 清理样式表（避免内存泄漏）
+  // 使用全局 Element Plus 清理函数，统一处理样式资源清理
+  try {
+    const { cleanupElementPlus } = await import('../../btc/utils/element-plus/cleanup');
+    if (cleanupElementPlus && typeof cleanupElementPlus === 'function') {
+      // 只清理当前应用的样式，保留全局共享的 Element Plus 样式
+      cleanupElementPlus(context.appId);
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 额外清理应用特定的样式标签（补充清理）
+  try {
+    if (typeof document !== 'undefined' && context.appId) {
+      const appId = context.appId;
+
+      // 清理应用特定的 <style> 标签（通过 data-app 属性标识）
+      const appStyles = document.querySelectorAll(`style[data-app="${appId}"]`);
+      appStyles.forEach((style) => {
+        try {
+          if (style.parentNode) {
+            style.parentNode.removeChild(style);
+          }
+        } catch (error) {
+          // 忽略清理错误
+        }
+      });
+
+      // 清理 qiankun 注入的样式隔离 <style> 标签
+      // qiankun 的 experimentalStyleIsolation 会为每个应用创建独立的样式作用域
+      const qiankunStyles = document.querySelectorAll(
+        `style[data-qiankun="${appId}"], style[data-qiankun-style]`
+      );
+      qiankunStyles.forEach((style) => {
+        try {
+          // 检查样式内容是否包含应用相关的标识
+          const styleText = style.textContent || '';
+          if (styleText.includes(appId) || styleText.includes(`[data-qiankun="${appId}"]`)) {
+            if (style.parentNode) {
+              style.parentNode.removeChild(style);
+            }
+          }
+        } catch (error) {
+          // 忽略清理错误
+        }
+      });
+
+      // 清理应用容器内的 <style> 标签
+      if (props.container) {
+        const container = typeof props.container === 'string'
+          ? document.querySelector(props.container)
+          : props.container;
+        if (container) {
+          const containerStyles = container.querySelectorAll('style');
+          containerStyles.forEach((style) => {
+            try {
+              if (style.parentNode) {
+                style.parentNode.removeChild(style);
+              }
+            } catch (error) {
+              // 忽略清理错误
+            }
+          });
+        }
+      }
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理 i18n 实例（避免内存泄漏）
+  // vue-i18n 实例可能持有大量国际化消息和 Intl 对象
+  try {
+    if (context.i18n && context.i18n.i18n && context.i18n.i18n.global) {
+      // 清理 vue-i18n 实例的消息缓存
+      const i18nGlobal = context.i18n.i18n.global as any;
+
+      // 深度清理所有语言的消息（包括字符串引用）
+      if (i18nGlobal.messages) {
+        // 递归清理消息对象，释放字符串引用
+        const clearMessages = (obj: any) => {
+          if (typeof obj === 'object' && obj !== null) {
+            if (Array.isArray(obj)) {
+              obj.length = 0;
+            } else {
+              Object.keys(obj).forEach(key => {
+                const value = obj[key];
+                if (typeof value === 'object' && value !== null) {
+                  clearMessages(value);
+                }
+                delete obj[key];
+              });
+            }
+          }
+        };
+
+        Object.keys(i18nGlobal.messages).forEach(locale => {
+          if (i18nGlobal.messages[locale]) {
+            clearMessages(i18nGlobal.messages[locale]);
+            delete i18nGlobal.messages[locale];
+          }
+        });
+        i18nGlobal.messages = {};
+      }
+
+      // 清理日期格式化器缓存（可能包含字符串）
+      if (i18nGlobal.__datetimeFormatters) {
+        if (typeof i18nGlobal.__datetimeFormatters.clear === 'function') {
+          i18nGlobal.__datetimeFormatters.clear();
+        } else {
+          i18nGlobal.__datetimeFormatters = {};
+        }
+      }
+      if (i18nGlobal.__numberFormatters) {
+        if (typeof i18nGlobal.__numberFormatters.clear === 'function') {
+          i18nGlobal.__numberFormatters.clear();
+        } else {
+          i18nGlobal.__numberFormatters = {};
+        }
+      }
+
+      // 清理 locale 相关的响应式引用
+      if (i18nGlobal.locale && typeof i18nGlobal.locale === 'object' && 'value' in i18nGlobal.locale) {
+        i18nGlobal.locale.value = 'zh-CN';
+      }
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理全局的 tSync 创建的 i18n 实例缓存（通过清理 __SUBAPP_I18N_GETTERS__）
+  // 注意：createTSync 中创建的 i18nInstance 是闭包变量，无法直接清理
+  // 但可以通过清理全局注册表来减少引用
+  try {
+    if (typeof window !== 'undefined' && (window as any).__SUBAPP_I18N_GETTERS__) {
+      const getters = (window as any).__SUBAPP_I18N_GETTERS__;
+      if (getters instanceof Map) {
+        // 只清理当前应用的 getter，保留其他应用的
+        // 注意：这里无法清理闭包中的 i18nInstance，但可以减少全局引用
+      }
+    }
+  } catch (error) {
+    // 静默失败
+  }
 
   // 安全卸载：不直接操作 DOM，只卸载 Vue 应用
   // qiankun 会自己管理容器的清理，我们不需要检查 DOM 状态
@@ -803,7 +1179,18 @@ export async function unmountSubApp(
     // 这通常发生在容器已经被移除的情况下，属于正常情况
   }
 
-  context.props = {};
+    // 清理 context 中的所有引用
+    context.i18n = null as any;
+    context.router = null as any;
+    context.pinia = null as any;
+    context.theme = null as any;
+
+    // 监控系统：标记卸载完成
+    trackUnmountEnd();
+  } catch (error) {
+    trackUnmountEnd();
+    throw error;
+  }
 }
 
 // 导出 setupStandalonePlugins 供外部使用

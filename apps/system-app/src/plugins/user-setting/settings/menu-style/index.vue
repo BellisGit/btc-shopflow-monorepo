@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
-import { useI18n, logger } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 import { useSettingsConfig } from '../../composables/useSettingsConfig';
 import { useSettingsHandlers } from '../../composables/useSettingsHandlers';
 import { useSettingsState } from '../../composables/useSettingsState';
@@ -85,7 +85,7 @@ function handleMenuStyleClick(theme: MenuThemeEnum) {
 // 处理图片加载错误
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  logger.warn('Image failed to load:', img.src);
+  console.warn('Image failed to load:', img.src);
   // 可以在这里添加占位符或错误处理逻辑
 };
 </script>

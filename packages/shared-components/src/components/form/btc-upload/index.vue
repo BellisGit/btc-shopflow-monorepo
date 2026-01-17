@@ -126,7 +126,7 @@ import { useUpload } from './composables/useUpload';
 import BtcUploadItem from './components/upload-item.vue';
 import type { UploadItem } from './types';
 import { BtcMessage } from '@btc/shared-components';
-import { detectFileType, detectFileTypeFromFileName, logger } from '@btc/shared-core/utils';
+import { detectFileType, detectFileTypeFromFileName } from '@btc/shared-core/utils';
 
 defineOptions({
   name: 'BtcUpload'
@@ -539,7 +539,7 @@ watch(
 
     // 如果 val 是对象类型（可能是错误对象），忽略它
     if (val && typeof val === 'object' && !isArray(val)) {
-      logger.warn('[Upload Warn] modelValue 是对象类型，可能是错误对象，已忽略', val);
+      console.warn('[Upload Warn] modelValue 是对象类型，可能是错误对象，已忽略', val);
       return;
     }
 

@@ -7,7 +7,7 @@ import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
 import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
-import { assignIconsToMenuTree, logger } from '@btc/shared-core';
+import { assignIconsToMenuTree } from '@btc/shared-core';
 
 // 应用名称映射（用于显示友好的中文名称）
 const appNameMap: Record<string, string> = {
@@ -205,7 +205,7 @@ function filterQiankunLogs() {
     }
     // 使用 logger 统一输出，支持日志上报和格式统一
     const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.info(message, ...args);
+    console.info(message, ...args);
   };
 
   console.warn = (...args: any[]) => {
@@ -214,7 +214,7 @@ function filterQiankunLogs() {
     }
     // 使用 logger 统一输出，支持日志上报和格式统一
     const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.warn(message, ...args);
+    console.warn(message, ...args);
   };
 }
 
@@ -242,7 +242,7 @@ export function setupQiankun() {
       registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
       clearTabs: () => clearTabs(app.name),
       setActiveTab: (tabKey: string) => {
-        logger.info('[Main] Sub-app set active tab:', app.name, tabKey);
+        console.info('[Main] Sub-app set active tab:', app.name, tabKey);
       },
     },
     // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
@@ -320,7 +320,7 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      logger.error(`[qiankun] 容器 #subapp-viewport 不在 DOM 中`);
+                      console.error(`[qiankun] 容器 #subapp-viewport 不在 DOM 中`);
                       reject(new Error(`容器 #subapp-viewport 不在 DOM 中，无法加载应用 ${app.name}`));
                       return;
                     }
@@ -346,7 +346,7 @@ export function setupQiankun() {
                                     computedStyle.opacity !== '0';
 
                     if (!isVisible) {
-                      logger.warn(`[qiankun] 容器 #subapp-viewport 仍然不可见，强制显示`);
+                      console.warn(`[qiankun] 容器 #subapp-viewport 仍然不可见，强制显示`);
                       container.style.setProperty('display', 'flex', 'important');
                       container.style.setProperty('visibility', 'visible', 'important');
                       container.style.setProperty('opacity', '1', 'important');
@@ -368,7 +368,7 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    logger.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
+                    console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
                     reject(new Error(`容器 #subapp-viewport 不存在，无法加载应用 ${app.name}`));
                   }
                 }
@@ -420,13 +420,13 @@ export function setupQiankun() {
   );
 
   // 启动qiankun
+  // 使用统一的沙箱配置，避免样式隔离不一致导致的样式引擎累积
+  const { getQiankunSandboxConfig } = await import('@btc/shared-core');
+  const sandboxConfig = getQiankunSandboxConfig();
+
   start({
     prefetch: false,
-    sandbox: {
-      strictStyleIsolation: false,
-      experimentalStyleIsolation: false, // 关闭样式隔离：主应用和子应用样式共享
-      loose: false,
-    },
+    sandbox: sandboxConfig,
     singular: true, // 单例模式：同时只能运行一个子应用（子应用之间不会同时存在，因此不需要额外隔离）
     // 关键：允许加载跨域模块脚本，强制以 module 类型加载
     // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用

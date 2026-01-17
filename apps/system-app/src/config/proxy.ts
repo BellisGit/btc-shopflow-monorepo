@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import type { IncomingMessage, ServerResponse } from 'http';
 
 // Vite 代理配置类型
@@ -14,27 +14,25 @@ interface ProxyOptions {
 // 开发环境代理目标：从统一环境配置获取
 // 开发环境：Vite 代理 /api 到配置的后端地址
 // 生产环境：由 Nginx 代理，不需要 Vite 代理
-// 关键：延迟导入，避免在 vite.config.ts 加载时解析失败
-let backendTarget = 'http://10.80.9.76:8115'; // 默认值
-
-// 异步获取环境配置（延迟导入，避免在 vite.config.ts 加载时解析失败）
-async function getBackendTarget() {
+// 注意：延迟导入 envConfig，避免在 vite.config 中导入时模块未构建的问题
+function getBackendTarget(): string {
   try {
-    const { envConfig } = await import('@btc/shared-core/configs/unified-env-config');
-    return envConfig.api.backendTarget || 'http://10.80.9.76:8115';
+    // 使用 require 而不是 import，避免在 Node.js 环境中的 ESM 导入问题
+    const { envConfig } = require('@btc/shared-core/configs/unified-env-config');
+    return envConfig?.api?.backendTarget || 'http://10.80.9.76:8115';
   } catch (error) {
-    logger.warn('[Proxy] 无法加载环境配置，使用默认值:', error);
+    // 如果导入失败，使用默认值
     return 'http://10.80.9.76:8115';
   }
 }
 
-// 注意：不再在模块加载时调用 getBackendTarget()，只在 configure 中调用
-// 这样可以避免在 vite.config.ts 加载时解析 @btc/shared-core
+// 获取后端目标地址（在模块加载时调用，使用 require 避免 ESM 导入问题）
+const backendTarget = getBackendTarget();
 
-// 创建代理配置（使用函数，在 configure 中动态获取 backendTarget）
+// 创建代理配置
 const proxy: Record<string, string | ProxyOptions> = {
   '/api': {
-    target: backendTarget, // 初始值，会在 configure 中更新
+    target: backendTarget,
     changeOrigin: true,
     secure: false,
     // 不再替换路径，直接转发 /api 到后端（后端已改为使用 /api）
@@ -43,15 +41,6 @@ const proxy: Record<string, string | ProxyOptions> = {
     selfHandleResponse: true,
     // 处理响应头，添加 CORS 头
     configure: (proxy: any) => {
-      // 在 configure 中更新 target（异步获取，但不等待）
-      // 注意：Vite 的 configure 不支持 async，所以使用 Promise
-      getBackendTarget().then(target => {
-        if (proxy.options) {
-          proxy.options.target = target;
-        }
-      }).catch(() => {
-        // 静默失败，使用默认值
-      });
       proxy.on('proxyRes', (proxyRes: IncomingMessage, req: IncomingMessage, res: ServerResponse) => {
         const origin = req.headers.origin || '*';
         const isLoginRequest = req.url?.includes('/login');
@@ -197,7 +186,7 @@ const proxy: Record<string, string | ProxyOptions> = {
                 res.end(newBody);
               } catch (error) {
                 // eslint-disable-next-line i18n/no-chinese-character
-                logger.error('[Proxy] ✗ 处理登录响应时出错:', error);
+                console.error('[Proxy] ✗ 处理登录响应时出错:', error);
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
                 res.end(Buffer.concat(chunks));
               }
@@ -210,7 +199,7 @@ const proxy: Record<string, string | ProxyOptions> = {
 
           proxyRes.on('error', (err: Error) => {
             // eslint-disable-next-line i18n/no-chinese-character
-            logger.error('[Proxy] ✗ 读取响应流时出错:', err);
+            console.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
@@ -225,9 +214,9 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 处理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        logger.error('[Proxy] Error:', err.message);
-        logger.error('[Proxy] Request URL:', req.url);
-        logger.error('[Proxy] Target:', backendTarget);
+        console.error('[Proxy] Error:', err.message);
+        console.error('[Proxy] Request URL:', req.url);
+        console.error('[Proxy] Target:', backendTarget);
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',

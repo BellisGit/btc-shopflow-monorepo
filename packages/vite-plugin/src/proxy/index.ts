@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 ﻿// 浠ｇ悊閰嶇疆澶勭悊
 
 export function getProxyTarget(proxy: any) {
@@ -10,14 +10,14 @@ export function getProxyTarget(proxy: any) {
         if (config && typeof config === 'object' && 'target' in config) {
           const target = (config as any).target;
           if (target && typeof target === 'string') {
-            logger.info(`[btc:proxy] 使用代理目标: ${target}`);
+            console.info(`[btc:proxy] 使用代理目标: ${target}`);
             return target;
           }
         }
       }
     }
   } catch (err) {
-    logger.error('[btc:proxy] 获取代理目标失败:', err);
+    console.error('[btc:proxy] 获取代理目标失败:', err);
   }
 
   return '';

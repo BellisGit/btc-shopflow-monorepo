@@ -19,6 +19,7 @@
     "jsx": "preserve",
     "jsxImportSource": "vue",
     "composite": false,
+    "types": ["vue-router", "node"],
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist",

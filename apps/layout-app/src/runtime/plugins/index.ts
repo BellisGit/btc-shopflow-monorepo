@@ -11,7 +11,7 @@
  * 
  * 注意：layout-app 不包含具体的业务插件
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { App } from 'vue';
 import { usePluginManager } from '@btc/shared-core';
@@ -40,7 +40,7 @@ export async function registerLayoutPlugins(app: App) {
         await pluginManager.install(plugin.name);
       }
     } catch (error) {
-      logger.error(`[layout-app] ${tSync('common.error.plugin_register_failed')}: ${plugin.name}`, error);
+      console.error(`[layout-app] ${tSync('common.error.plugin_register_failed')}: ${plugin.name}`, error);
     }
   }
   

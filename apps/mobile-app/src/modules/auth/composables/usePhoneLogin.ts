@@ -1,5 +1,3 @@
-import { ref, nextTick } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/services/auth';

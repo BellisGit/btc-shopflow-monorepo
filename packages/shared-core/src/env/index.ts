@@ -2,7 +2,7 @@
  * 环境变量验证和类型定义
  * 使用 Zod 进行运行时验证，确保环境变量类型安全
  */
-import { logger } from '../utils/logger';
+;
 
 import { z } from 'zod';
 
@@ -38,12 +38,12 @@ try {
   // 在 Node 环境中，使用 process.env
   const rawEnv = typeof window !== 'undefined' 
     ? (import.meta as any).env 
-    : process.env;
+    : (typeof process !== 'undefined' ? process.env : {});
 
   env = envSchema.parse(rawEnv);
 } catch (error) {
   if (error instanceof z.ZodError) {
-    logger.error('环境变量验证失败:', error.errors);
+    console.error('环境变量验证失败:', error.errors);
     throw new Error(`环境变量配置错误: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
   }
   throw error;

@@ -1,19 +1,26 @@
 import type { App } from 'vue';
-import ElementPlus from 'element-plus';
-import { createThemePlugin } from '@btc/shared-core';
-
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
+import { createThemePlugin, initGlobalElementPlus } from '@btc/shared-core';
+import { storage } from '@btc/shared-utils';
 
 // ECharts 插件
 import EChartsPlugin from '../../plugins/echarts';
 
 export type MonitorThemePlugin = ReturnType<typeof createThemePlugin>;
 
+/**
+ * 获取当前语言设置
+ */
+const getCurrentLocale = (): string => {
+  return storage.get<string>('locale') || 'zh-CN';
+};
+
 export const setupUI = (app: App) => {
   const themePlugin = createThemePlugin();
 
-  app.use(ElementPlus);
+  // 使用全局 Element Plus 初始化，避免重复安装
+  const currentLocale = getCurrentLocale();
+  initGlobalElementPlus(app, currentLocale);
+
   app.use(themePlugin);
 
   // 配置ECharts

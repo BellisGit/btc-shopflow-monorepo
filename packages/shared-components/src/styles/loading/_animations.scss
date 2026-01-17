@@ -1,5 +1,5 @@
 // ==================== Loading 动画样式 ====================
-// 包含 Circle、Dots、Gradient、Progress 四种动画样式
+// 包含 Circle、Dots、Gradient、Progress、Flower 五种动画样式
 // 同时支持根级别（#Loading）和应用级（body .btc-app-loading-mask--show）loading
 
 // ==================== Circle 样式：圆圈旋转动画 ====================
@@ -72,15 +72,16 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-dots svg {
 
 #Loading .preload__loading.loading-style-dots .spinner,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .spinner {
-	transform-origin: 25px 25px !important; // 从 20px 20px 增加到 25px 25px（对应 50px 尺寸）
+	// SVG viewBox 是 0 0 40 40，中心点是 (20, 20)，transform-origin 使用 SVG 坐标系统
+	transform-origin: 20px 20px !important; // 使用 viewBox 的中心点坐标
 	animation: btc-loading-dots-rotate 1.6s linear infinite !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot {
 	animation:
-		btc-loading-dots-fade 1.6s infinite,
-		btc-loading-dots-color-change 3.2s infinite ease-in-out !important;
+		btc-loading-dots-fade 1.6s linear infinite,
+		btc-loading-dots-color-change 3.2s linear infinite !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot-1,
@@ -326,5 +327,136 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progr
 	}
 	100% {
 		transform: translateX(200%);
+	}
+}
+
+// ==================== Flower 样式：八瓣花旋转动画 ====================
+#Loading .preload__loading.loading-style-flower,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower {
+	// 确保清除其他样式的属性
+	border: none !important;
+	border-radius: 0 !important;
+	background: none !important;
+	animation: none !important;
+	transform: none !important;
+	color: transparent !important;
+	// 清除其他样式的伪元素
+	&::before,
+	&::after {
+		content: none !important;
+		display: none !important;
+	}
+	width: 50px !important;
+	height: 50px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	position: relative !important;
+	// 关键：允许内容溢出显示，避免花瓣被裁剪
+	overflow: visible !important;
+}
+
+// SVG容器
+#Loading .preload__loading.loading-style-flower svg,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower svg {
+	width: 50px !important;
+	height: 50px !important;
+	display: block !important;
+	// 关键：允许SVG内容溢出显示，确保花瓣不被裁剪
+	overflow: visible !important;
+}
+
+// 花朵组旋转动画
+// 注意：viewBox 已调整为 -110 -110 220 220，主圆圆心在 (0, 0)
+// 使用 transform-origin: 0 0 确保围绕主圆圆心定点旋转，不会出现偏移
+#Loading .preload__loading.loading-style-flower .flower-group,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .flower-group {
+	transform-origin: 0 0 !important;
+	animation: btc-loading-flower-rotate 3s linear infinite !important;
+}
+
+// 花瓣圆圈颜色动画（每个花瓣单独设置延迟）
+#Loading .preload__loading.loading-style-flower .petal-circle,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-circle {
+	stroke-width: 2.5 !important;
+	stroke-dasharray: none !important;
+	animation: btc-loading-flower-petal-pulse 2s ease-in-out infinite !important;
+}
+
+// 每个花瓣的颜色和动画延迟（使用更亮的颜色）
+#Loading .preload__loading.loading-style-flower .petal-1,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-1 {
+	stroke: #ff8a80 !important;
+	fill: #ff8a80 !important;
+	animation-delay: 0s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-2,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-2 {
+	stroke: #ff9800 !important;
+	fill: #ff9800 !important;
+	animation-delay: 0.25s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-3,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-3 {
+	stroke: #ffeb3b !important;
+	fill: #ffeb3b !important;
+	animation-delay: 0.5s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-4,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-4 {
+	stroke: #4caf50 !important;
+	fill: #4caf50 !important;
+	animation-delay: 0.75s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-5,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-5 {
+	stroke: #00bcd4 !important;
+	fill: #00bcd4 !important;
+	animation-delay: 1s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-6,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-6 {
+	stroke: #2196f3 !important;
+	fill: #2196f3 !important;
+	animation-delay: 1.25s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-7,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-7 {
+	stroke: #9c27b0 !important;
+	fill: #9c27b0 !important;
+	animation-delay: 1.5s !important;
+}
+
+#Loading .preload__loading.loading-style-flower .petal-8,
+body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-8 {
+	stroke: #e91e63 !important;
+	fill: #e91e63 !important;
+	animation-delay: 1.75s !important;
+}
+
+// 花朵整体旋转动画
+@keyframes btc-loading-flower-rotate {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+// 花瓣呼吸效果（透明度变化）
+@keyframes btc-loading-flower-petal-pulse {
+	0%,
+	100% {
+		opacity: 0.6;
+	}
+	50% {
+		opacity: 1;
 	}
 }

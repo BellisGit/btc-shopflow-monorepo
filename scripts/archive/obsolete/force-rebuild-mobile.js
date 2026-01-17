@@ -1,4 +1,4 @@
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 #!/usr/bin/env node
 
 /**
@@ -87,31 +87,31 @@ if (fs.existsSync(assetsPath)) {
   const jsFiles = fs.readdirSync(assetsPath).filter(f => f.endsWith('.js') && f.includes('Login'));
   if (jsFiles.length > 0) {
     logger.info(`  ✓ 找到 ${jsFiles.length} 个 Login 相关文件`);
-    
+
     // 检查是否包含号码认证相关代码
     let foundAuthCode = false;
     jsFiles.forEach(file => {
       const filePath = path.join(assetsPath, file);
       const content = fs.readFileSync(filePath, 'utf-8');
-      if (content.includes('getNumberAuthConfig') || 
+      if (content.includes('getNumberAuthConfig') ||
           content.includes('loginByNumberAuth') ||
           content.includes('NumberAuth')) {
         foundAuthCode = true;
       }
     });
-    
+
     // 也在其他 JS 文件中查找
     const allJsFiles = fs.readdirSync(assetsPath).filter(f => f.endsWith('.js'));
     for (const file of allJsFiles) {
       const filePath = path.join(assetsPath, file);
       const content = fs.readFileSync(filePath, 'utf-8');
-      if (content.includes('getNumberAuthConfig') || 
+      if (content.includes('getNumberAuthConfig') ||
           content.includes('loginByNumberAuth')) {
         foundAuthCode = true;
         break;
       }
     }
-    
+
     if (foundAuthCode) {
       logger.info('  ✓ 构建产物包含号码认证相关代码');
     } else {

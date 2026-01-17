@@ -1,31 +1,12 @@
 import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
-import ElementPlus from 'element-plus';
-import { createThemePlugin } from '@btc/shared-core';
-
-// 样式文件在模块加载时同步导入，但 Vite 会优化处理
-// 开发环境：Vite 会按需加载样式
-// 生产环境：样式会被打包到单独的 CSS 文件
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
+import { createThemePlugin, initGlobalElementPlus } from '@btc/shared-core';
 import '../../styles/theme.scss';
 
 // ECharts 插件
 import EChartsPlugin from '../../plugins/echarts';
 
-// Element Plus 国际化
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import en from 'element-plus/es/locale/lang/en';
-
 export type AdminThemePlugin = ReturnType<typeof createThemePlugin>;
-
-/**
- * Element Plus 语言配置
- */
-export const elementLocale = {
-  'zh-CN': zhCn,
-  'en-US': en
-};
 
 /**
  * 获取当前语言设置
@@ -35,14 +16,12 @@ export const getCurrentLocale = (): string => {
 };
 
 /**
- * 配置Element Plus
+ * 配置Element Plus（使用全局实例，避免重复安装）
  */
 export const setupElementPlus = (app: App) => {
   const currentLocale = getCurrentLocale();
-
-  app.use(ElementPlus, {
-    locale: elementLocale[currentLocale as keyof typeof elementLocale] || zhCn
-  });
+  // 使用全局 Element Plus 初始化，仅首次调用会执行 app.use，后续仅更新语言
+  initGlobalElementPlus(app, currentLocale);
 };
 
 // 缓存 themePlugin 实例，避免重复创建

@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n, storage } from '@btc/shared-core';
 import type { BtcFilterListSize, BtcFilterListProps, BtcFilterListEmits } from '../types';
@@ -32,7 +32,7 @@ export function useSizeManagement(
         return stored;
       }
     } catch (error) {
-      logger.warn('[BtcFilterList] 读取存储的尺寸失败:', error);
+      console.warn('[BtcFilterList] 读取存储的尺寸失败:', error);
     }
     return null;
   };
@@ -46,7 +46,7 @@ export function useSizeManagement(
     try {
       storage.set(key, size);
     } catch (error) {
-      logger.warn('[BtcFilterList] 保存尺寸到存储失败:', error);
+      console.warn('[BtcFilterList] 保存尺寸到存储失败:', error);
     }
   };
 

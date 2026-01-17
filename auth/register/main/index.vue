@@ -57,7 +57,7 @@ import TenantSelector from '../tenant-selector/index.vue';
 import SupplierRegistration from '../components/supplier-registration/index.vue';
 import UkHeadRegistration from '../components/uk-head-registration/index.vue';
 import InertRegistration from '../components/inert-registration/index.vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -101,7 +101,7 @@ const handlePrevStep = () => {
 
 const handleFinish = () => {
   // 完成注册逻辑
-  logger.info('注册完成', formData.value);
+  console.info('注册完成', formData.value);
 };
 </script>
 

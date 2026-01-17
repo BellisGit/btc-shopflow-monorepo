@@ -96,7 +96,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import BtcSvg from '../../basic/btc-svg/index.vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -335,7 +335,7 @@ function expandBoth(value?: boolean) {
 
 function toggleMiddle(value?: boolean) {
   if (props.columns >= 3) {
-    logger.warn('[BtcViews] toggleMiddle 在三栏模式下不支持独立控制第二栏');
+    console.warn('[BtcViews] toggleMiddle 在三栏模式下不支持独立控制第二栏');
   }
 }
 

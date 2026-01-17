@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="sidebar" :class="{ 'is-dark-menu': isDarkMenuStyle }">
     <!-- 搜索框 -->
     <div 
@@ -17,8 +17,8 @@
       </el-input>
     </div>
 
-    <!-- 动态菜单 -->
-    <DynamicMenu :is-collapse="isCollapse" :search-keyword="searchKeyword" />
+    <!-- 动态菜单：使用共享组件的菜单，确保行为一致 -->
+    <DynamicMenu :is-collapse="isCollapse ?? undefined" :search-keyword="searchKeyword" />
   </div>
 </template>
 
@@ -27,8 +27,7 @@ defineOptions({
   name: 'LayoutSidebar'
 });
 
-import DynamicMenu from '../dynamic-menu/index.vue';
-import { ref, computed } from 'vue';
+import DynamicMenu from '@btc/shared-components/src/components/layout/app-layout/dynamic-menu/index.vue';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';

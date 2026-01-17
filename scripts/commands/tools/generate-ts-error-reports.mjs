@@ -3,7 +3,7 @@
  * 为每个应用单独运行类型检查并生成错误报告
  * 用法: node scripts/generate-ts-error-reports.mjs
  */
-import { logger } from '@build-utils/logger';
+import { logger } from '../../utils/logger.mjs';
 
 import { spawn } from 'child_process';
 import { writeFileSync, mkdirSync, readdirSync, unlinkSync, statSync, rmdirSync } from 'fs';

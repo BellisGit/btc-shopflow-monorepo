@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     class="strategy-node"
     :class="[
@@ -127,7 +127,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import {
   VideoPlay,
   VideoPause,
@@ -347,6 +346,13 @@ const handleInputConnect = (event: MouseEvent) => {
   // 输入连接点暂时不处理拖拽开始
   event.stopPropagation();
 };
+
+// 组件卸载时清理事件监听器
+onBeforeUnmount(() => {
+  // 确保所有事件监听器都被移除
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+});
 
 const handleInputDrop = (event: MouseEvent) => {
   event.stopPropagation();

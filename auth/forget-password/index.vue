@@ -73,7 +73,7 @@ import { BtcMessage } from '@btc/shared-components';
 import { useForgetPassword } from './composables/useForgetPassword';
 import { useAuthTabs } from '../shared/composables/useAuthTabs';
 import { useQrLogin } from '../login/composables/useQrLogin';
-import { logger } from '@btc/shared-core';
+;
 
 import '../shared/styles/index.scss';
 
@@ -159,7 +159,7 @@ const handleSubmit = async () => {
     }
   await resetPassword(formRef.value.formRef);
   } catch (error) {
-    logger.error('重置密码错误:', error);
+    console.error('重置密码错误:', error);
     // 错误已在 useForgetPassword 中处理，这里只是防止未捕获的错误
   }
 };

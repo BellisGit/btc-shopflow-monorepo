@@ -19,7 +19,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import { NavBar } from 'vant';
 import RegisterLogo from '../components/register-logo/index.vue';
 import RegisterForm from '../components/register-form/index.vue';

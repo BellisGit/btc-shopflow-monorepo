@@ -13,7 +13,7 @@
   
   // 关键：确保子元素正确继承高度
   > * {
-    flex-shrink: 0; // 防止内容被压缩
+    flex-shrink: 0; // 默认不收缩，防止内容被压缩
   }
   
   // BEM 子元素命名规范
@@ -92,6 +92,7 @@
     z-index: 1;
     flex: 1;
     min-height: 0;
+    width: 100%;
   }
   
   // 响应式适配
@@ -113,6 +114,11 @@
   @extend .page;
   justify-content: center;
   align-items: center;
+  
+  // 确保错误页面的内容能够垂直居中
+  > * {
+    flex-shrink: 1; // 允许收缩，确保能够居中
+  }
 }
 
 // 无滚动条页面

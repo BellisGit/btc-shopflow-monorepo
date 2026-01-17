@@ -2,7 +2,7 @@
  * 统一 HTTP 请求函数
  * 基于 axios，参考 cool-admin 的实现
  */
-import { logger } from '../../utils/logger';
+;
 
 import { storage } from '../../utils';
 import axios from 'axios';
@@ -71,7 +71,7 @@ function getDynamicBaseURL(): string {
     // HTTPS 页面：强制清理 storage 并返回 /api
     const stored = storage.get<string>('dev_api_base_url');
     if (stored && stored !== '/api') {
-      logger.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+      console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
       storage.remove('dev_api_base_url');
     }
     return '/api';
@@ -82,7 +82,7 @@ function getDynamicBaseURL(): string {
     const stored = storage.get<string>('dev_api_base_url');
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
     if (stored && stored !== '/api') {
-      logger.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+      console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
       storage.remove('dev_api_base_url');
     }
   }
@@ -95,7 +95,7 @@ export function processURL(baseURL: string, url: string): { url: string; baseURL
   // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (baseURL.startsWith('http://')) {
-      logger.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
+      console.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
       baseURL = '/api';
       // 清理 storage 中的 HTTP URL
       storage.remove('dev_api_base_url');
@@ -112,7 +112,7 @@ export function processURL(baseURL: string, url: string): { url: string; baseURL
   // 再次验证：确保清理后的 baseURL 不是 HTTP（在 HTTPS 页面下）
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (cleanedBaseURL.startsWith('http://')) {
-      logger.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', cleanedBaseURL);
+      console.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', cleanedBaseURL);
       cleanedBaseURL = '/api';
     }
   }
@@ -153,13 +153,13 @@ export function createRequest(baseURL: string = ''): Request {
   // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (finalBaseURL.startsWith('http://')) {
-      logger.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', finalBaseURL);
+      console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', finalBaseURL);
       finalBaseURL = '/api';
       // 清理 storage 中的 HTTP URL
       storage.remove('dev_api_base_url');
     } else if (finalBaseURL && finalBaseURL !== '/api') {
       // HTTPS 页面下，如果不是 /api，也强制使用 /api
-      logger.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', finalBaseURL);
+      console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', finalBaseURL);
       finalBaseURL = '/api';
     }
   }
@@ -173,13 +173,26 @@ export function createRequest(baseURL: string = ''): Request {
 
   // 请求拦截器
   axiosInstance.interceptors.request.use(
-    (config: any) => {
+    async (config: any) => {
+      // 监控系统：API 请求开始
+      try {
+        const { trackAPIRequest } = await import('../../utils/monitor');
+        const requestId = trackAPIRequest(
+          config.url || '',
+          config.method || 'GET'
+        );
+        // 将 requestId 保存到 config 中，供响应拦截器使用
+        config.__monitorRequestId = requestId;
+      } catch (error) {
+        // 静默失败，不影响请求
+      }
+
       // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
         // HTTPS 页面：强制清理 storage 并返回 /api
         const stored = storage.get<string>('dev_api_base_url');
         if (stored && stored !== '/api') {
-          logger.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+          console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
           storage.remove('dev_api_base_url');
         }
         // 强制使用 /api，忽略任何其他值
@@ -196,7 +209,7 @@ export function createRequest(baseURL: string = ''): Request {
 
         // 最终验证：确保 baseURL 不是 HTTP
         if (config.baseURL && config.baseURL.startsWith('http://')) {
-          logger.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+          console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
           config.baseURL = '/api';
           axiosInstance.defaults.baseURL = '/api';
         }
@@ -269,7 +282,34 @@ export function createRequest(baseURL: string = ''): Request {
 
   // 响应拦截器 - 提取业务数据
   axiosInstance.interceptors.response.use(
-    (response: AxiosResponse) => {
+    async (response: AxiosResponse) => {
+      // 监控系统：API 响应
+      try {
+        const { trackAPIResponse } = await import('../../utils/monitor');
+        const config = response.config || {};
+        const requestId = (config as any).__monitorRequestId;
+        const url = config.url || '';
+        const method = config.method || 'GET';
+        const statusCode = response.status || 200;
+        const responseTime = response.headers?.['x-response-time'] 
+          ? parseInt(response.headers['x-response-time'], 10)
+          : undefined;
+        const responseSize = JSON.stringify(response.data).length;
+        const requestSize = config.data ? JSON.stringify(config.data).length : undefined;
+
+        trackAPIResponse(
+          url,
+          method,
+          statusCode,
+          responseTime,
+          responseSize,
+          requestSize,
+          requestId
+        );
+      } catch (error) {
+        // 静默失败，不影响响应处理
+      }
+
       const responseData = response.data;
 
       // 如果没有 data，返回原始响应
@@ -302,7 +342,7 @@ export function createRequest(baseURL: string = ''): Request {
                 BtcMessage.error(errorMessage);
               } else {
                 // 最后的兜底：使用 console.error
-                logger.error(errorMessage);
+                console.error(errorMessage);
               }
             }
           }
@@ -372,7 +412,7 @@ export function createRequest(baseURL: string = ''): Request {
               if (BtcMessage && BtcMessage.error) {
                 BtcMessage.error(errorMessage);
               } else {
-                logger.error('[EPS Request]', errorMessage);
+                console.error('[EPS Request]', errorMessage);
               }
             }
           }

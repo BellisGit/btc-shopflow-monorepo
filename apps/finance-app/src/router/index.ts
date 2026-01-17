@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import {
   createRouter,
   createWebHistory,
@@ -36,7 +36,7 @@ function normalizePath(path: string): string {
   // 检测是否是 finance 子域名
   if (hostname === 'finance.bellis.com.cn' && path.startsWith('/finance/')) {
     const normalized = path.substring('/finance'.length) || '/';
-    logger.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+    console.info(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
     return normalized;
   }
 
@@ -89,8 +89,8 @@ export const createFinanceRouter = (): Router => {
           return false;
         }
         const style = window.getComputedStyle(appLoadingEl);
-        return style.display !== 'none' && 
-               style.visibility !== 'hidden' && 
+        return style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
                style.opacity !== '0' &&
                parseFloat(style.opacity) > 0;
       } catch (e) {
@@ -122,12 +122,22 @@ export const createFinanceRouter = (): Router => {
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading
     try {
       const sharedCore = await importSharedCore();
       if (sharedCore?.routeLoadingService) {
         sharedCore.routeLoadingService.hide();
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
+    // 关键：清理 ECharts 实例，防止内存泄漏
+    try {
+      const { cleanupAllECharts } = await import('@btc/shared-components');
+      if (cleanupAllECharts) {
+        cleanupAllECharts();
       }
     } catch (error) {
       // 静默失败
@@ -144,7 +154,7 @@ export const createFinanceRouter = (): Router => {
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading（如果正在显示）
     try {
       const sharedCore = await importSharedCore();
@@ -165,7 +175,7 @@ export const createFinanceRouter = (): Router => {
         loadingEl.style.setProperty('opacity', '0', 'important');
         loadingEl.style.setProperty('pointer-events', 'none', 'important');
         loadingEl.classList.add('is-hide');
-        
+
         // 延迟移除 DOM 元素（不影响显示，只是清理）
         setTimeout(() => {
           try {
@@ -174,14 +184,14 @@ export const createFinanceRouter = (): Router => {
             // 忽略移除错误
           }
         }, 350);
-        
+
         loadingClosed = true;
       }
     }
   });
 
   router.onError((error: any) => {
-    logger.warn('[finance-app] Router error:', error);
+    console.warn('[finance-app] Router error:', error);
   });
 
   return router;

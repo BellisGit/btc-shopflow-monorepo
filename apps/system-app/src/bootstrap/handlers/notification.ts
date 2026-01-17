@@ -1,8 +1,9 @@
 /**
  * 通知处理器模块
- * 负责管理 ElNotification 的显示、徽章创建和生命周期管理
+ * 负责管理 BtcNotification 的显示、徽章创建和生命周期管理
  */
 
+import { BtcNotification } from '@btc/shared-components';
 import { ElNotification } from 'element-plus';
 import { notificationManager } from '../../utils/notification-manager';
 
@@ -201,14 +202,13 @@ export const handleNotification = (
   // 生成通知ID
   const notificationId = `notification-${Date.now()}-${++notificationInstanceCounter}`;
 
-  // 使用原生 ElNotification 弹出通知
-  const notificationInstance = ElNotification[type]({
-    title: title as any,
-    message: message as any,
+  // 使用 BtcNotification 弹出通知（基于 ElNotification，DOM 结构相同）
+  const notificationInstance = BtcNotification[type](message, {
+    title: title,
     duration: 4500, // 4.5秒，由生命周期管理器控制
     showClose: true, // 显示关闭按钮
     dangerouslyUseHTMLString: false // 确保不会因为HTML内容导致问题
-  } as any);
+  });
   (notificationInstance as ExtendedNotificationInstance).notificationId = notificationId;
 
   // 将通知添加到待处理列表

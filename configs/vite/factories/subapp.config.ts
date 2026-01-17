@@ -303,6 +303,23 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   // 注意：customServer 会在最后展开，如果包含 proxy 会覆盖这里的设置
   const finalProxy = customServer?.proxy !== undefined ? customServer.proxy : proxy;
   const { proxy: _customProxy, ...restCustomServer } = customServer || {};
+  // 添加监控服务代理，避免私有网络请求警告
+  // 将 /__monitor__ 代理到监控服务（http://localhost:3001）
+  const monitorProxy = {
+    '/__monitor__': {
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/__monitor__/, ''),
+      ws: true, // 支持 WebSocket（SSE 使用）
+    },
+  };
+  
+  // 合并代理配置：监控服务代理优先，然后是业务代理
+  const mergedProxy = {
+    ...monitorProxy,
+    ...finalProxy,
+  };
+  
   const serverConfig: UserConfig['server'] = {
     port: appConfig.devPort,
     host: '0.0.0.0',
@@ -319,7 +336,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       port: appConfig.devPort,
       overlay: false,
     },
-    proxy: finalProxy,
+    proxy: mergedProxy,
     fs: {
       strict: false,
       allow: [
@@ -363,6 +380,8 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       'vue-router',
       'pinia',
       'element-plus',
+      // Winston 需要的 Node.js 模块 polyfill
+      'util',
       'element-plus/es',
       'element-plus/es/locale/lang/zh-cn',
       'element-plus/es/locale/lang/en',
@@ -465,6 +484,12 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     // 虽然这会增加一些存储空间，但可以确保每个应用的缓存状态一致，避免频繁重新构建
     cacheDir: appCacheDir,
+    define: {
+      // 为浏览器环境提供 process 对象，Winston 需要它
+      'process.env': '{}',
+      'process.platform': JSON.stringify('browser'),
+      'process.version': JSON.stringify(''),
+    },
     plugins,
     esbuild: {
       charset: 'utf8',

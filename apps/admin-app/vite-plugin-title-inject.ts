@@ -4,7 +4,7 @@
  * 目的：在 Vite dev server 返回 HTML 时，根据请求路径和语言替换 __PAGE_TITLE__ 占位符
  * 效果：刷新时浏览器标签从第一帧就显示正确标题，无闪烁
  */
-import { logger } from '@btc/shared-core';
+;
 import type { Plugin } from 'vite';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'path';
@@ -36,14 +36,14 @@ function loadAppsConfig(root: string): AppsConfig | null {
     const configPath = resolve(root, '../../apps.config.json');
     
     if (!existsSync(configPath)) {
-      logger.warn('[title-inject] apps.config.json 不存在:', configPath);
+      console.warn('[title-inject] apps.config.json 不存在:', configPath);
       return null;
     }
 
     const configContent = readFileSync(configPath, 'utf-8');
     return JSON.parse(configContent) as AppsConfig;
   } catch (error) {
-    logger.error('[title-inject] 加载 apps.config.json 失败:', error);
+    console.error('[title-inject] 加载 apps.config.json 失败:', error);
     return null;
   }
 }
@@ -168,7 +168,7 @@ export function titleInjectPlugin(): Plugin {
               updatedHtml = updatedHtml.replace('</head>', `${configScript}</head>`);
             }
           } catch (error) {
-            logger.error('[title-inject] 注入配置失败:', error);
+            console.error('[title-inject] 注入配置失败:', error);
           }
         }
 

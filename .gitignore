@@ -48,3 +48,8 @@ scripts/deploy-config.sh
 
 # Claude/Cursor 相关文件
 .claude/
+
+# 堆快照文件（OOM 诊断）
+.heap-snapshots/
+**/.heap-snapshots/
+*.heapsnapshot

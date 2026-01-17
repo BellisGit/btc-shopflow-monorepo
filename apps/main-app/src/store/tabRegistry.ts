@@ -150,7 +150,7 @@ function extractKey(pathname: string, app: string): string {
  */
 export function resolveTabMeta(pathname: string): TabMeta | null {
   // 个人信息页面和认证页面不在菜单中，不需要 TabMeta
-  if (pathname === '/profile' ||
+  if (pathname === '/workbench/profile' ||
       pathname === '/login' ||
       pathname === '/register' ||
       pathname === '/forget-password') {

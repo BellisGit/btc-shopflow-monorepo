@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
@@ -20,13 +20,13 @@ export class Http {
     // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (baseURL.startsWith('http://')) {
-        logger.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
+        console.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
         baseURL = '/api';
         // 清理 storage 中的 HTTP URL
         storage.remove('dev_api_base_url');
       } else if (baseURL && baseURL !== '/api') {
         // HTTPS 页面下，如果不是 /api，也强制使用 /api
-        logger.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
+        console.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
         baseURL = '/api';
       }
     }
@@ -52,13 +52,13 @@ export class Http {
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
         // 检查 config.baseURL
         if (config.baseURL && config.baseURL.startsWith('http://')) {
-          logger.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP baseURL:', config.baseURL);
+          console.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP baseURL:', config.baseURL);
           config.baseURL = '/api';
           this.axiosInstance.defaults.baseURL = '/api';
         }
         // 检查 config.url（完整 URL）
         if (config.url && config.url.startsWith('http://')) {
-          logger.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP url:', config.url);
+          console.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP url:', config.url);
           // 提取路径部分
           try {
             const urlObj = new URL(config.url);
@@ -75,7 +75,7 @@ export class Http {
         // 检查最终的完整 URL（baseURL + url）
         const finalURL = (config.baseURL || '') + (config.url || '');
         if (finalURL.startsWith('http://')) {
-          logger.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复最终 URL:', finalURL);
+          console.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复最终 URL:', finalURL);
           config.baseURL = '/api';
           this.axiosInstance.defaults.baseURL = '/api';
           // 移除 url 中的 http:// 前缀
@@ -94,13 +94,25 @@ export class Http {
 
     // 请求拦截器
     this.axiosInstance.interceptors.request.use(
-      (config: any) => {
+      async (config: any) => {
+        // 监控系统：API 请求开始
+        try {
+          const { trackAPIRequest } = await import('@btc/shared-core/utils/monitor');
+          const requestId = trackAPIRequest(
+            config.url || '',
+            config.method || 'GET'
+          );
+          config.__monitorRequestId = requestId;
+        } catch (error) {
+          // 静默失败，不影响请求
+        }
+
         // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
         if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
           // HTTPS 页面：强制清理 storage 并返回 /api
           const stored = storage.get<string>('dev_api_base_url');
           if (stored && stored !== '/api') {
-            logger.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+            console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
             storage.remove('dev_api_base_url');
           }
           // 强制使用 /api，忽略任何其他值
@@ -117,7 +129,7 @@ export class Http {
 
           // 最终验证：确保 baseURL 不是 HTTP
           if (config.baseURL && config.baseURL.startsWith('http://')) {
-            logger.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+            console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
             config.baseURL = '/api';
             this.axiosInstance.defaults.baseURL = '/api';
           }
@@ -193,7 +205,31 @@ export class Http {
     // 这是因为模块加载顺序问题。确保 @btc/shared-utils 在使用前已完全加载。
     const interceptor = responseInterceptor.createResponseInterceptor();
 
-    const onFulfilled = (response: any) => {
+    const onFulfilled = async (response: any) => {
+      // 监控系统：API 响应
+      try {
+        const { trackAPIResponse } = await import('@btc/shared-core/utils/monitor');
+        const config = response.config || {};
+        const requestId = config.__monitorRequestId;
+        const url = config.url || '';
+        const method = config.method || 'GET';
+        const statusCode = response.status || 200;
+        const responseSize = JSON.stringify(response.data).length;
+        const requestSize = config.data ? JSON.stringify(config.data).length : undefined;
+
+        trackAPIResponse(
+          url,
+          method,
+          statusCode,
+          undefined, // responseTime 需要从响应头获取或计算
+          responseSize,
+          requestSize,
+          requestId
+        );
+      } catch (error) {
+        // 静默失败，不影响响应处理
+      }
+
       // 检查是否是登录接口的响应
       const isLoginResponse = response.config?.url?.includes('/login');
 
@@ -243,7 +279,7 @@ export class Http {
             }).catch((error) => {
               // 如果导入失败，静默处理
               if (import.meta.env.DEV) {
-                logger.warn('[http] Failed to start user check polling after login:', error);
+                console.warn('[http] Failed to start user check polling after login:', error);
               }
             });
           } catch (error) {
@@ -258,7 +294,7 @@ export class Http {
             }).catch((error) => {
               // 如果导入失败，静默处理
               if (import.meta.env.DEV) {
-                logger.warn('[http] Failed to broadcast login message:', error);
+                console.warn('[http] Failed to broadcast login message:', error);
               }
             });
           } catch (error) {
@@ -310,6 +346,27 @@ export class Http {
     };
 
     const onRejected = async (error: any) => {
+      // 监控系统：API 错误
+      try {
+        const { trackAPIError } = await import('@btc/shared-core/utils/monitor');
+        const config = error.config || {};
+        const requestId = config.__monitorRequestId;
+        const url = config.url || '';
+        const method = config.method || 'GET';
+        const statusCode = error.response?.status;
+        const errorMessage = error.message || 'Network Error';
+
+        trackAPIError(
+          url,
+          method,
+          errorMessage,
+          statusCode,
+          requestId
+        );
+      } catch (monitorError) {
+        // 静默失败，不影响错误处理
+      }
+
       return interceptor.onRejected(error);
     };
 
@@ -360,13 +417,13 @@ export class Http {
     // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (baseURL.startsWith('http://')) {
-        logger.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
+        console.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
         baseURL = '/api';
         // 清理 storage 中的 HTTP URL
         storage.remove('dev_api_base_url');
       } else if (baseURL !== '/api') {
         // HTTPS 页面下，如果不是 /api，也强制使用 /api
-        logger.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
+        console.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
         baseURL = '/api';
       }
     }
@@ -409,7 +466,7 @@ function getDynamicBaseURL(): string {
     // HTTPS 页面：强制清理 storage 并返回 /api
     const stored = storage.get<string>('dev_api_base_url');
     if (stored && stored !== '/api') {
-      logger.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+      console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
       storage.remove('dev_api_base_url');
     }
     return '/api';
@@ -420,7 +477,7 @@ function getDynamicBaseURL(): string {
     const stored = storage.get<string>('dev_api_base_url');
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
     if (stored && stored !== '/api') {
-      logger.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+      console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
       storage.remove('dev_api_base_url');
     }
   }
@@ -436,11 +493,11 @@ function getInitialBaseURL(): string {
   // 最终验证：在 HTTPS 页面下，绝对不允许 HTTP URL
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (baseURL.startsWith('http://')) {
-      logger.error('[HTTP] 初始化：检测到 HTTPS 页面，强制修复 HTTP baseURL:', baseURL);
+      console.error('[HTTP] 初始化：检测到 HTTPS 页面，强制修复 HTTP baseURL:', baseURL);
       return '/api';
     }
     if (baseURL && baseURL !== '/api') {
-      logger.warn('[HTTP] 初始化：检测到 HTTPS 页面，强制使用 /api，忽略 baseURL:', baseURL);
+      console.warn('[HTTP] 初始化：检测到 HTTPS 页面，强制使用 /api，忽略 baseURL:', baseURL);
       return '/api';
     }
   }

@@ -70,8 +70,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
@@ -81,7 +79,7 @@ import { useUser } from '@/composables/useUser';
 import { useLogout } from '@/composables/useLogout';
 import { User } from '@element-plus/icons-vue';
 import { useUserInfo } from './index';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -139,15 +137,15 @@ const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement;
   const failedUrl = img.src;
   
-  logger.warn('[UserInfo] 头像加载失败:', failedUrl);
+  console.warn('[UserInfo] 头像加载失败:', failedUrl);
   
   // 标记已处理
   errorHandled.value = true;
   
   // 如果失败的是 logo.png，不再重试
   if (failedUrl.includes('logo.png')) {
-    logger.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
-    logger.error('[UserInfo] URL:', failedUrl);
+    console.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
+    console.error('[UserInfo] URL:', failedUrl);
     return;
   }
   

@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import type { IncomingMessage, ServerResponse } from 'http';
 // 使用相对路径，因为 Vite 配置文件在 Node.js 环境中执行，无法解析路径别名
 // 从 apps/system-app/src/config/ 到 configs/ 需要向上 4 级
@@ -174,7 +174,7 @@ const proxy: Record<string, string | ProxyOptions> = {
                 res.writeHead(proxyRes.statusCode || 200, originalHeaders);
                 res.end(newBody);
               } catch (error) {
-                logger.error('[Proxy] ✗ 处理登录响应时出错:', error);
+                console.error('[Proxy] ✗ 处理登录响应时出错:', error);
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
                 res.end(Buffer.concat(chunks));
               }
@@ -186,7 +186,7 @@ const proxy: Record<string, string | ProxyOptions> = {
           });
 
           proxyRes.on('error', (err: Error) => {
-            logger.error('[Proxy] ✗ 读取响应流时出错:', err);
+            console.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
@@ -200,9 +200,9 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 处理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        logger.error('[Proxy] Error:', err.message);
-        logger.error('[Proxy] Request URL:', req.url);
-        logger.error('[Proxy] Target:', backendTarget);
+        console.error('[Proxy] Error:', err.message);
+        console.error('[Proxy] Request URL:', req.url);
+        console.error('[Proxy] Target:', backendTarget);
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',

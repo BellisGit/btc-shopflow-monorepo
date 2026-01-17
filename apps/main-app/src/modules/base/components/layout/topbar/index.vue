@@ -86,9 +86,7 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { ref, onMounted, onUnmounted, markRaw, computed, watch, nextTick } from 'vue';
-import { useI18n, logger } from '@btc/shared-core';
-import { useRoute } from 'vue-router';
+import { useI18n } from '@btc/shared-core';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { resolveAppLogoUrl } from '@btc/shared-core/configs/layout-bridge';
@@ -139,7 +137,7 @@ const logoUrl = computed(() => {
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  logger.warn('[Topbar] Logo image failed to load:', img.src);
+  console.warn('[Topbar] Logo image failed to load:', img.src);
   // 如果加载失败，隐藏图片或使用占位符
   img.style.display = 'none';
 };
@@ -324,13 +322,13 @@ onMounted(async () => {
         });
       } catch (error) {
         if (import.meta.env.DEV) {
-          logger.warn('[Topbar] 加载工具栏组件失败:', error);
+          console.warn('[Topbar] 加载工具栏组件失败:', error);
         }
       }
     }
   } catch (error) {
     if (import.meta.env.DEV) {
-      logger.warn('[Topbar] 获取工具栏组件配置失败:', error);
+      console.warn('[Topbar] 获取工具栏组件配置失败:', error);
     }
   }
 

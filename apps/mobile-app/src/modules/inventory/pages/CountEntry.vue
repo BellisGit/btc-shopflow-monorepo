@@ -45,8 +45,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import {
   Form,
   CellGroup,
@@ -57,7 +55,7 @@ import {
 import { db } from '@/db';
 import { useInventoryStore } from '@/stores/inventory';
 import { inventoryApi } from '@/services/inventory';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -93,7 +91,7 @@ onMounted(() => {
       });
     } catch (e) {
       showToast('二维码格式错误');
-      logger.error('Failed to parse QR code:', e);
+      console.error('Failed to parse QR code:', e);
     }
   }
 });
@@ -161,7 +159,7 @@ async function handleSubmit() {
       router.replace({ name: 'Scanner' });
     }, 500);
   } catch (error: any) {
-    logger.error('[CountEntry] Failed to submit:', error);
+    console.error('[CountEntry] Failed to submit:', error);
     const message = error?.message || '提交失败';
     showToast({
       type: 'fail',

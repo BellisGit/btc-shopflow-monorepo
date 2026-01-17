@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { provide, ref, watch, type Ref } from 'vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -44,7 +44,7 @@ const initActiveNames = () => {
   
   // 确保 activeNames.value 始终是数组
   if (!Array.isArray(activeNames.value)) {
-    logger.warn('[BtcCollapse] activeNames.value is not an array after init, resetting to []');
+    console.warn('[BtcCollapse] activeNames.value is not an array after init, resetting to []');
     activeNames.value = [];
   }
 };
@@ -66,7 +66,7 @@ watch(
     
     // 确保 activeNames.value 始终是数组
     if (!Array.isArray(activeNames.value)) {
-      logger.warn('[BtcCollapse] activeNames.value is not an array after watch, resetting to []');
+      console.warn('[BtcCollapse] activeNames.value is not an array after watch, resetting to []');
       activeNames.value = [];
     }
   },

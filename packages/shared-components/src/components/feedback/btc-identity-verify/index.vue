@@ -107,7 +107,7 @@ import PhoneVerifyForm from './components/PhoneVerifyForm.vue';
 import EmailVerifyForm from './components/EmailVerifyForm.vue';
 import VerifyFormFooter from './components/VerifyFormFooter.vue';
 import { BtcMessage } from '@btc/shared-components';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -229,7 +229,7 @@ const {
     emit('success');
   },
   onError: (error) => {
-    logger.error('验证失败:', error);
+    console.error('验证失败:', error);
   }
 });
 
@@ -269,7 +269,7 @@ const handleSendSmsCode = async () => {
       }
     }, 1000);
   } catch (error: any) {
-    logger.error('发送手机验证码失败:', error);
+    console.error('发送手机验证码失败:', error);
     BtcMessage.error(error?.message || '发送验证码失败');
   } finally {
     smsSending.value = false;
@@ -284,7 +284,7 @@ const handleSendEmailCode = async () => {
     // 验证流程会调用 sendEmailCodeForVerify()，不需要传递邮箱，后端会使用当前用户的邮箱
     await sendEmailCode();
   } catch (error: any) {
-    logger.error('发送邮箱验证码失败:', error);
+    console.error('发送邮箱验证码失败:', error);
     BtcMessage.error(error?.message || '发送验证码失败');
   }
 };
@@ -380,7 +380,7 @@ const checkBindingStatus = async (initialPhoneBound: boolean = false, initialEma
         phoneForm.phone = '';
       }
     } catch (error: any) {
-      logger.warn('检查手机号绑定状态失败:', error);
+      console.warn('检查手机号绑定状态失败:', error);
       // 如果检查失败，保留初始状态（如果之前从 props.userInfo 中设置了）
       if (!initialPhoneBound) {
         phoneBound.value = false;
@@ -441,7 +441,7 @@ const checkBindingStatus = async (initialPhoneBound: boolean = false, initialEma
         emailForm.email = '';
       }
     } catch (error: any) {
-      logger.warn('检查邮箱绑定状态失败:', error);
+      console.warn('检查邮箱绑定状态失败:', error);
       // 如果检查失败，保留初始状态（如果之前从 props.userInfo 中设置了）
       if (!initialEmailBound) {
         emailBound.value = false;
@@ -449,7 +449,7 @@ const checkBindingStatus = async (initialPhoneBound: boolean = false, initialEma
       }
     }
   } catch (error: any) {
-    logger.error('检查绑定状态失败:', error);
+    console.error('检查绑定状态失败:', error);
   } finally {
     checkingStatus.value = false;
   }
@@ -489,7 +489,7 @@ const fetchSecurePhone = async () => {
       phoneForm.phone = maskedPhone.trim();
     }
   } catch (error: any) {
-    logger.error('获取安全手机号失败:', error);
+    console.error('获取安全手机号失败:', error);
     BtcMessage.error(error?.message || '获取安全手机号失败');
     // 确保 phoneForm.phone 是字符串类型
     phoneForm.phone = '';
@@ -532,7 +532,7 @@ const fetchSecureEmail = async () => {
       emailForm.email = maskedEmail.trim();
     }
   } catch (error: any) {
-    logger.error('获取安全邮箱失败:', error);
+    console.error('获取安全邮箱失败:', error);
     BtcMessage.error(error?.message || '获取安全邮箱失败');
     // 确保 emailForm.email 是字符串类型
     emailForm.email = '';

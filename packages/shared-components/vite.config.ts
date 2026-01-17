@@ -7,6 +7,31 @@ import { resolve } from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import type { Plugin } from 'vite';
 
+// 构建日志插件
+function buildLogPlugin(): Plugin {
+  return {
+    name: 'build-log',
+    buildStart() {
+      console.log('\n📦 开始构建 @btc/shared-components...');
+      console.log('   - 输入文件: src/index.ts');
+      console.log('   - 输出格式: ESM + CJS');
+      console.log('   - 类型声明: dist/*.d.ts\n');
+    },
+    buildEnd(error) {
+      if (error) {
+        console.error('\n❌ @btc/shared-components 构建失败！');
+        console.error('   错误:', error.message);
+      } else {
+        console.log('\n✅ @btc/shared-components 构建成功！');
+        console.log('   - 输出文件: dist/index.mjs (ESM)');
+        console.log('   - 输出文件: dist/index.js (CJS)');
+        console.log('   - 样式文件: dist/style.css');
+        console.log('   - 类型声明: dist/*.d.ts\n');
+      }
+    },
+  };
+}
+
 // 复制 dark-theme.css 到 dist 目录的插件
 function copyDarkThemePlugin(): Plugin {
   return {
@@ -63,6 +88,7 @@ export default defineConfig({
     dedupe: ['vue', '@vitejs/plugin-vue'],
   },
   plugins: [
+    buildLogPlugin(), // 添加构建日志插件
     vue(),
     vueJsx(),
     copyDarkThemePlugin(),
@@ -103,6 +129,18 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
+      onwarn(warning, warn) {
+        // 抑制空 chunk 警告
+        if (warning.message?.includes('Generated an empty chunk')) {
+          return;
+        }
+        // 抑制 named 和 default exports 一起使用的警告
+        if (warning.message?.includes('named and default exports together')) {
+          return;
+        }
+        // 其他警告正常显示
+        warn(warning);
+      },
       external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@btc/shared-core/configs/unified-env-config', '@btc/shared-core/configs/app-scanner', '@btc/shared-core/configs/layout-bridge', 'zod'],
       output: {
         globals: {

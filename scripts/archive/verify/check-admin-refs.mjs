@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { logger } from '@build-utils/logger';
+import { logger } from '../../../utils/logger.mjs';
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join, dirname, resolve } from 'path';

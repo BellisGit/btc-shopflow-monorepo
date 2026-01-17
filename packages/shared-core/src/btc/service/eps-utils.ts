@@ -4,7 +4,7 @@
  */
 
 import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
-import { logger } from '../../utils/logger';
+;
 import type { CrudService } from '../crud/types';
 
 type AnyRecord = Record<string, any>;
@@ -204,7 +204,7 @@ export function createCrudServiceFromEps(
   if (missingKey || !serviceNode || typeof serviceNode !== 'object') {
     const servicePathStr = Array.isArray(servicePath) ? servicePath.join('.') : servicePath;
     if (import.meta.env.DEV) {
-      logger.warn(
+      console.warn(
         `[createCrudServiceFromEps] EPS 服务路径 ${servicePathStr} 不存在${missingKey ? `，无法找到 ${missingKey}` : ''}，返回空服务对象`
       );
     }
@@ -236,7 +236,7 @@ export function createCrudServiceFromEps(
     if (typeof fn !== 'function') {
       const servicePathStr = Array.isArray(servicePath) ? servicePath.join('.') : servicePath;
       if (import.meta.env.DEV) {
-        logger.warn(
+        console.warn(
           `[createCrudServiceFromEps] EPS 服务 ${servicePathStr}.${method} 未定义，返回空函数`
         );
       }

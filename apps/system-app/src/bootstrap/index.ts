@@ -35,12 +35,32 @@ import { initSettingsConfig } from '../plugins/user-setting/composables/useSetti
  * 负责初始化所有核心功能模块
  */
 export async function bootstrap(app: App) {
-  // 0. 初始化资源加载器和动态导入拦截器（必须在最前面）
-  initResourceLoader();
-  initDynamicImportInterceptor();
+  // 0. 初始化监控系统（必须在最前面，确保所有操作都被监控）
+  const { initMonitor, trackBootstrapStart, trackBootstrapEnd } = await import('@btc/shared-core/utils/monitor');
   
-  // 0.1. 初始化存储管理器
-  appStorage.init();
+  // 先初始化监控配置，再开始跟踪
+  initMonitor({
+    appName: 'system',
+    enableAPM: true,
+    enableErrorTracking: true,
+    enableUserBehavior: true,
+    enablePerformance: true,
+    enableResourceMonitoring: true,
+    enableBusinessTracking: true,
+    enableSystemMonitoring: false,
+    sampleRate: 1.0,
+  });
+  
+  trackBootstrapStart();
+  
+  try {
+
+    // 0. 初始化资源加载器和动态导入拦截器（必须在最前面）
+    initResourceLoader();
+    initDynamicImportInterceptor();
+    
+    // 0.1. 初始化存储管理器
+    appStorage.init();
 
   // 1. 核心模块初始化
   setupEps(app);        // EPS 服务（必须在最前面）

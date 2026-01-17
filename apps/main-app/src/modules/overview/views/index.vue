@@ -104,8 +104,6 @@ defineOptions({
   name: 'OverviewPage',
 });
 
-import { computed, ref, onBeforeMount, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import {
   Grid,

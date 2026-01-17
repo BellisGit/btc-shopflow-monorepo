@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import type { App } from 'vue';
 import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
@@ -23,13 +23,12 @@ function getProductionRoutes() {
 
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
 
-    if (import.meta.env.DEV) {
-      logger.info(
-        `[ProductionRouter] Route discovery: ${autoRoutes.views.length} views, ${autoRoutes.pages.length} pages, ${autoRoutes.conflicts.length} conflicts`
-      );
+    // 仅在存在冲突时输出警告
+    if (autoRoutes.conflicts.length > 0) {
+      console.warn(`[ProductionRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
-    logger.error('[ProductionRouter] Failed to scan routes from modules:', error);
+    console.error('[ProductionRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 
@@ -77,7 +76,7 @@ export const createProductionRouter = (): Router => {
 
       if (isProductionSubdomain && hostname === 'production.bellis.com.cn' && to.path.startsWith('/production/')) {
         const normalized = to.path.substring('/production'.length) || '/';
-        logger.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        console.info(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
         next({
           path: normalized,
           query: to.query,

@@ -3,7 +3,14 @@
  * 在构建时转换代码中的 import() 调用，将相对路径转换为 CDN URL
  * 与 cdnAssetsPlugin 配合，实现完整的 CDN 加速
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[cdn-import]', ...args),
+  error: (...args: any[]) => console.error('[cdn-import]', ...args),
+  info: (...args: any[]) => console.info('[cdn-import]', ...args),
+  debug: (...args: any[]) => console.debug('[cdn-import]', ...args),
+};
 
 import type { Plugin } from 'vite';
 
@@ -43,9 +50,9 @@ export function cdnImportPlugin(options: CdnImportPluginOptions): Plugin {
     apply: 'build',
     buildStart() {
       if (enabled) {
-        logger.info(`[cdn-import] CDN 动态导入转换已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
+        console.info(`[cdn-import] CDN 动态导入转换已启用，应用: ${appName}, CDN 域名: ${cdnDomain}`);
       } else {
-        logger.info(`[cdn-import] CDN 动态导入转换已禁用`);
+        console.info(`[cdn-import] CDN 动态导入转换已禁用`);
       }
     },
     renderChunk(code: string, chunk: any) {
@@ -118,7 +125,7 @@ export function cdnImportPlugin(options: CdnImportPluginOptions): Plugin {
       });
 
       if (modified) {
-        logger.info(`[cdn-import] 已转换 chunk ${chunk.fileName} 中的动态导入为 CDN URL`);
+        console.info(`[cdn-import] 已转换 chunk ${chunk.fileName} 中的动态导入为 CDN URL`);
       }
 
       return modified ? { code: newCode, map: null } : null;

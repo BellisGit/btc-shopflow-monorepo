@@ -26,8 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { BtcMasterTableGroup } from '@btc/shared-components';

@@ -1,5 +1,5 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
-import { logger } from '@btc/shared-core';
+;
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
 import '@btc/shared-components/styles/index.scss';
@@ -58,7 +58,7 @@ export const createPersonnelApp = async (props: QiankunProps = {}): Promise<Pers
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      logger.warn('[personnel-app] Failed to import domain-cache module:', error);
+      console.warn('[personnel-app] Failed to import domain-cache module:', error);
     }
 
     await setupSubAppGlobals({
@@ -101,5 +101,23 @@ export const updatePersonnelApp = (context: PersonnelAppContext, props: QiankunP
 };
 
 export const unmountPersonnelApp = async (context: PersonnelAppContext, props: QiankunProps = {}) => {
+  // 清理全局资源（避免内存泄漏）
+  if (typeof window !== 'undefined') {
+    // 清理退出登录函数
+    if ((window as any).__APP_LOGOUT__) {
+      delete (window as any).__APP_LOGOUT__;
+    }
+  }
+
+  // 清理 ECharts 实例
+  try {
+    const { cleanupAllECharts } = await import('@btc/shared-components');
+    if (cleanupAllECharts) {
+      cleanupAllECharts();
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
   await unmountSubApp(context, props);
 };

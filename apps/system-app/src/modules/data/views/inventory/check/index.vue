@@ -66,15 +66,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { formatDateTimeFriendly } from '@btc/shared-utils';
 import type { TableColumn, FormItem, UseCrudReturn } from '@btc/shared-components';
 import { BtcMasterTableGroup } from '@btc/shared-components';
 import { service } from '@/services/eps';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import { BtcSvg } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcDataInventoryCheck'
@@ -108,7 +107,7 @@ const loadPositionOptions = async () => {
     // 调用物流子应用的仓位配置表的 page 服务
     const pageService = service.logistics?.base?.position?.page;
     if (!pageService) {
-      logger.warn('[InventoryCheck] 仓位配置 page 服务不存在');
+      console.warn('[InventoryCheck] 仓位配置 page 服务不存在');
       positionOptions.value = [];
       return;
     }
@@ -161,7 +160,7 @@ const loadPositionOptions = async () => {
       return a.label.localeCompare(b.label, 'zh-CN', { numeric: true, sensitivity: 'base' });
     });
   } catch (error) {
-    logger.error('[InventoryCheck] 获取仓位选项失败:', error);
+    console.error('[InventoryCheck] 获取仓位选项失败:', error);
     positionOptions.value = [];
   } finally {
     positionLoading.value = false;
@@ -184,7 +183,7 @@ const checkService = {
   list: async (params?: any) => {
     const checkListService = service.logistics?.warehouse?.check?.list;
     if (!checkListService) {
-      logger.warn('[InventoryCheck] 盘点列表接口不存在');
+      console.warn('[InventoryCheck] 盘点列表接口不存在');
       return {
         list: [],
         pagination: {
@@ -216,7 +215,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      logger.error('[InventoryCheck] 获取盘点列表失败:', error);
+      console.error('[InventoryCheck] 获取盘点列表失败:', error);
       return {
         list: [],
         pagination: {
@@ -393,7 +392,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    logger.error('[InventoryCheck] Export failed:', error);
+    console.error('[InventoryCheck] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

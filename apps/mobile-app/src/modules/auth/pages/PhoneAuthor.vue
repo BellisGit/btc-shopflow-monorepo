@@ -5,12 +5,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { showToast, showLoadingToast, closeToast } from 'vant';
 import { getPhoneNumberServer, getAuthTokens, getPhoneWithToken } from '@/utils/phone-auth';
 import logoUrl from '@/assets/images/logo.png';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -43,7 +41,7 @@ const getLogoUrl = (): string => {
 };
 
 onMounted(async () => {
-  logger.info('PhoneAuthor 页面加载，开始调用 checkLoginAvailable');
+  console.info('PhoneAuthor 页面加载，开始调用 checkLoginAvailable');
 
   try {
     // 显示加载提示
@@ -54,31 +52,31 @@ onMounted(async () => {
     });
 
     // 1. 获取 accessToken 和 jwtToken
-    logger.info('步骤1: 获取 accessToken 和 jwtToken');
+    console.info('步骤1: 获取 accessToken 和 jwtToken');
     const { accessToken, jwtToken } = await getAuthTokens();
-    logger.info('获取Token成功:', {
+    console.info('获取Token成功:', {
       accessToken: accessToken?.substring(0, 20) + '...',
       jwtToken: jwtToken?.substring(0, 20) + '...',
     });
 
     // 2. 获取 phoneNumberServer 实例
-    logger.info('步骤2: 获取 phoneNumberServer 实例');
+    console.info('步骤2: 获取 phoneNumberServer 实例');
     const phoneNumberServer = await getPhoneNumberServer();
 
     // 3. 调用 checkLoginAvailable 方法进行身份鉴权
-    logger.info('步骤3: 调用 checkLoginAvailable 进行身份鉴权');
+    console.info('步骤3: 调用 checkLoginAvailable 进行身份鉴权');
     phoneNumberServer.checkLoginAvailable({
       accessToken,
       jwtToken,
       success: async (res: any) => {
-        logger.info('鉴权结果:', res);
-        logger.info('鉴权结果详细数据:', JSON.stringify(res, null, 2));
+        console.info('鉴权结果:', res);
+        console.info('鉴权结果详细数据:', JSON.stringify(res, null, 2));
 
         // 判断鉴权是否成功：code === 600000 或 code === 'OK' 或 success === true
         const isSuccess = res.code === 600000 || res.code === 'OK' || res.success === true;
 
         if (isSuccess) {
-          logger.info('鉴权成功，开始调用 getLoginToken 显示授权页');
+          console.info('鉴权成功，开始调用 getLoginToken 显示授权页');
           // 关闭加载提示，让授权页显示
           closeToast();
 
@@ -125,13 +123,13 @@ onMounted(async () => {
              * 需要将 spToken/pToken 传给后端，后端调用 GetPhoneWithToken 接口获取完整手机号
              */
             success: async (tokenRes: any) => {
-              logger.info('获取Token成功:', tokenRes);
+              console.info('获取Token成功:', tokenRes);
 
               // 根据阿里云文档，H5场景通常返回 spToken
               const spToken = tokenRes.spToken;
 
               if (!spToken) {
-                logger.error('未获取到spToken');
+                console.error('未获取到spToken');
                 showToast({
                   message: '未获取到登录Token',
                   type: 'fail',
@@ -144,7 +142,7 @@ onMounted(async () => {
                 return;
               }
 
-              logger.info('获取到spToken:', spToken.substring(0, 20) + '...');
+              console.info('获取到spToken:', spToken.substring(0, 20) + '...');
 
               try {
                 // 显示加载提示
@@ -163,7 +161,7 @@ onMounted(async () => {
 
                 // 判断是否登录成功（返回 200）
                 if (response.code === 200) {
-                  logger.info('登录成功:', response.data);
+                  console.info('登录成功:', response.data);
 
                   showToast({
                     message: '登录成功',
@@ -184,7 +182,7 @@ onMounted(async () => {
                   }
                 } else {
                   // 登录失败
-                  logger.error('登录失败:', response.msg);
+                  console.error('登录失败:', response.msg);
                   showToast({
                     message: response.msg || '登录失败',
                     type: 'fail',
@@ -199,7 +197,7 @@ onMounted(async () => {
                 // 关闭加载提示
                 closeToast();
 
-                logger.error('调用登录接口失败:', error);
+                console.error('调用登录接口失败:', error);
 
                 // 根据错误类型显示不同的提示信息
                 let errorMessage = '登录失败，请稍后重试';
@@ -233,7 +231,7 @@ onMounted(async () => {
              * 入参 res 包含错误信息：message 或 msg
              */
             error: (tokenRes: any) => {
-              logger.error('获取Token失败:', tokenRes);
+              console.error('获取Token失败:', tokenRes);
               closeToast();
               const errorMsg = tokenRes.message || tokenRes.msg || '获取登录Token失败';
               showToast({
@@ -273,7 +271,7 @@ onMounted(async () => {
              * 入参格式与 watch 相同：status 和 data
              */
             // protocolPageWatch: (status: string, data: any) => {
-            //   logger.info('预授权页状态:', status, data)
+            //   console.info('预授权页状态:', status, data)
             // },
 
             /**
@@ -284,7 +282,7 @@ onMounted(async () => {
              * 入参格式与 watch 相同：status 和 data
              */
             // previewPrivacyWatch: (status: string, data: any) => {
-            //   logger.info('协议预览弹窗状态:', status, data)
+            //   console.info('协议预览弹窗状态:', status, data)
             // },
 
             /**
@@ -294,12 +292,12 @@ onMounted(async () => {
              * 入参格式与 watch 相同：status 和 data
              */
             // privacyAlertWatch: (status: string, data: any) => {
-            //   logger.info('二次弹窗状态:', status, data)
+            //   console.info('二次弹窗状态:', status, data)
             // },
           });
         } else {
           closeToast();
-          logger.error('鉴权失败，code:', res.code, 'message:', res.message || res.msg);
+          console.error('鉴权失败，code:', res.code, 'message:', res.message || res.msg);
           showToast({
             message: res.message || res.msg || '鉴权失败',
             type: 'fail',
@@ -313,7 +311,7 @@ onMounted(async () => {
       },
       error: (res: any) => {
         closeToast();
-        logger.error('鉴权失败:', res);
+        console.error('鉴权失败:', res);
 
         // 鉴权失败，可能是网络环境问题（需要移动数据网络）
         const errorMsg =
@@ -331,7 +329,7 @@ onMounted(async () => {
     });
   } catch (error: any) {
     closeToast();
-    logger.error('调用 checkLoginAvailable 失败:', error);
+    console.error('调用 checkLoginAvailable 失败:', error);
 
     // 根据错误类型显示不同的提示信息
     let errorMessage = '一键登录失败，请使用其他方式登录';

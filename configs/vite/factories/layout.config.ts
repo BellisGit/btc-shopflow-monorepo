@@ -2,7 +2,7 @@
  * 布局应用 Vite 配置工厂
  * 生成布局应用的完整 Vite 配置（layout-app）
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
@@ -213,9 +213,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         if (existsSync(viteDir)) {
           try {
             rmSync(viteDir, { recursive: true, force: true });
-            logger.info('[clean-vite-dir-plugin] ✅ 已删除 dist/.vite 目录');
+            console.info('[clean-vite-dir-plugin] ✅ 已删除 dist/.vite 目录');
           } catch (error: any) {
-            logger.warn('[clean-vite-dir-plugin] ⚠️  无法删除 dist/.vite 目录:', error.message);
+            console.warn('[clean-vite-dir-plugin] ⚠️  无法删除 dist/.vite 目录:', error.message);
           }
         }
       },
@@ -280,7 +280,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
             }
             // 调试：输出 imports 信息
             if (imports.length > 0) {
-              logger.info(`[ensure-manifest-plugin] ${fileName} 的 imports:`, imports);
+              console.info(`[ensure-manifest-plugin] ${fileName} 的 imports:`, imports);
             }
 
             fileNameToKeyMap.set(fileName, relativeSource);
@@ -372,24 +372,24 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
 
                     if (actualBaseName && actualBaseName === baseName) {
                       importKey = actualKey;
-                      logger.info(`[ensure-manifest-plugin] 通过基础名称匹配找到 imports: ${importFileName} -> ${actualFileName} (key: ${actualKey})`);
+                      console.info(`[ensure-manifest-plugin] 通过基础名称匹配找到 imports: ${importFileName} -> ${actualFileName} (key: ${actualKey})`);
                       break;
                     }
                   }
 
                   // 如果仍然没有找到，输出调试信息
                   if (!importKey) {
-                    logger.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName} (基础名称: ${baseName})`);
+                    console.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName} (基础名称: ${baseName})`);
                   }
                 } else {
-                  logger.warn(`[ensure-manifest-plugin] ⚠️  无法解析文件名格式: ${importFileName}`);
+                  console.warn(`[ensure-manifest-plugin] ⚠️  无法解析文件名格式: ${importFileName}`);
                 }
               }
 
               if (importKey) {
                 importKeys.push(importKey);
               } else {
-                logger.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName}`);
+                console.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName}`);
               }
             }
           }
@@ -418,9 +418,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         const manifestPath = resolve(appDir, 'dist', 'manifest.json');
         try {
           writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-          logger.info(`[ensure-manifest-plugin] ✅ 已生成 manifest.json，包含 ${Object.keys(manifest).length} 个 chunk`);
+          console.info(`[ensure-manifest-plugin] ✅ 已生成 manifest.json，包含 ${Object.keys(manifest).length} 个 chunk`);
         } catch (error: any) {
-          logger.warn('[ensure-manifest-plugin] ⚠️  无法写入 manifest.json:', error.message);
+          console.warn('[ensure-manifest-plugin] ⚠️  无法写入 manifest.json:', error.message);
         }
       },
     } as Plugin,
@@ -604,6 +604,8 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       'vue-router',
       'pinia',
       'element-plus',
+      // Winston 需要的 Node.js 模块 polyfill
+      'util',
       'element-plus/es',
       'element-plus/es/locale/lang/zh-cn',
       'element-plus/es/locale/lang/en',
@@ -663,6 +665,12 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     publicDir,
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     cacheDir: appCacheDir,
+    define: {
+      // 为浏览器环境提供 process 对象，Winston 需要它
+      'process.env': '{}',
+      'process.platform': JSON.stringify('browser'),
+      'process.version': JSON.stringify(''),
+    },
     resolve: {
       ...baseResolve,
       // 合并别名：baseResolve.alias 是数组形式，layoutAliases 是对象形式

@@ -3,8 +3,6 @@
  * 用于检查认证相关的存储（cookie、localStorage）是否有效
  * 当检测到存储被清除时，自动触发退出逻辑
  */
-import { logger } from './logger';
-
 import { storage } from './storage/local';
 import { sessionStorage } from './storage/session';
 
@@ -134,7 +132,7 @@ export async function triggerAutoLogout(): Promise<void> {
       }
     }
   } catch (error) {
-    logger.error('[storageValidityCheck] 自动退出失败:', error);
+    console.error('[storageValidityCheck] 自动退出失败:', error);
     // 即使退出失败，也尝试跳转到登录页（但需要检查是否已在登录页）
     if (typeof window !== 'undefined' && !isLoginPage()) {
       try {

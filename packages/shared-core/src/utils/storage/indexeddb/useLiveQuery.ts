@@ -3,7 +3,7 @@
  * 手动实现 dexie-vue-addon 的 useLiveQuery 功能
  * 让 Dexie 查询结果自动成为响应式数据
  */
-import { logger } from '../../logger';
+;
 
 import { ref, watch, onMounted, type Ref } from 'vue';
 import type { PromiseExtended } from 'dexie';
@@ -43,7 +43,7 @@ export function useLiveQuery<T = any>(
       result.value = data as T;
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err));
-      logger.error('[useLiveQuery] 查询失败:', err);
+      console.error('[useLiveQuery] 查询失败:', err);
     } finally {
       isLoading.value = false;
     }
@@ -51,7 +51,14 @@ export function useLiveQuery<T = any>(
 
   // 监听依赖变化
   if (deps && deps.length > 0) {
-    watch(deps, executeQuery, { immediate: true, deep: true });
+    // 优化：只在依赖项包含对象或数组时才使用深度 watch，避免不必要的性能开销
+    const hasComplexTypes = deps.some(dep => 
+      dep !== null && typeof dep === 'object' && (Array.isArray(dep) || Object.keys(dep).length > 0)
+    );
+    watch(deps, executeQuery, { 
+      immediate: true, 
+      deep: hasComplexTypes // 只在需要时使用深度 watch
+    });
   } else {
     // 没有依赖时，立即执行一次
     onMounted(() => {
@@ -96,7 +103,7 @@ export function useLiveQueryWithState<T = any>(
       result.value = data as T;
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err));
-      logger.error('[useLiveQuery] 查询失败:', err);
+      console.error('[useLiveQuery] 查询失败:', err);
     } finally {
       isLoading.value = false;
     }
@@ -104,7 +111,14 @@ export function useLiveQueryWithState<T = any>(
 
   // 监听依赖变化
   if (deps && deps.length > 0) {
-    watch(deps, executeQuery, { immediate: true, deep: true });
+    // 优化：只在依赖项包含对象或数组时才使用深度 watch，避免不必要的性能开销
+    const hasComplexTypes = deps.some(dep => 
+      dep !== null && typeof dep === 'object' && (Array.isArray(dep) || Object.keys(dep).length > 0)
+    );
+    watch(deps, executeQuery, { 
+      immediate: true, 
+      deep: hasComplexTypes // 只在需要时使用深度 watch
+    });
   } else {
     onMounted(() => {
       executeQuery();

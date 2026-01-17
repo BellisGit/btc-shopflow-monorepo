@@ -7,7 +7,7 @@ import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
 import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
-import { assignIconsToMenuTree, logger } from '@btc/shared-core';
+import { assignIconsToMenuTree } from '@btc/shared-core';
 import { tSync } from '../i18n/getters';
 
 // 应用名称映射（用于显示友好的中文名称）
@@ -200,7 +200,7 @@ function filterQiankunLogs() {
     }
     // 使用 logger 统一输出，支持日志上报和格式统一
     const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.info(message, ...args);
+    console.info(message, ...args);
   };
 
   console.warn = (...args: any[]) => {
@@ -209,7 +209,7 @@ function filterQiankunLogs() {
     }
     // 使用 logger 统一输出，支持日志上报和格式统一
     const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-    logger.warn(message, ...args);
+    console.warn(message, ...args);
   };
 }
 
@@ -244,7 +244,7 @@ export function setupQiankun() {
         registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
         clearTabs: () => clearTabs(app.name),
         setActiveTab: (tabKey: string) => {
-          logger.info('[Main] Sub-app set active tab:', app.name, tabKey);
+          console.info('[Main] Sub-app set active tab:', app.name, tabKey);
         },
       },
       // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
@@ -315,7 +315,7 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      logger.error(`[qiankun] Container #subapp-viewport is not in DOM`);
+                      console.error(`[qiankun] Container #subapp-viewport is not in DOM`);
                       reject(new Error(`Container #subapp-viewport is not in DOM, cannot load application ${app.name}`));
                       return;
                     }
@@ -350,7 +350,7 @@ export function setupQiankun() {
                                     computedStyle.opacity !== '0';
 
                     if (!isVisible) {
-                      logger.warn(`[qiankun] Container #subapp-viewport is still invisible, forcing display`);
+                      console.warn(`[qiankun] Container #subapp-viewport is still invisible, forcing display`);
                       container.style.setProperty('display', 'flex', 'important');
                       container.style.setProperty('visibility', 'visible', 'important');
                       container.style.setProperty('opacity', '1', 'important');
@@ -372,7 +372,7 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    logger.error(`[qiankun] Container #subapp-viewport not found within ${maxRetries * retryDelay}ms`);
+                    console.error(`[qiankun] Container #subapp-viewport not found within ${maxRetries * retryDelay}ms`);
                     reject(new Error(`Container #subapp-viewport does not exist, cannot load application ${app.name}`));
                   }
                 }
@@ -430,13 +430,13 @@ export function setupQiankun() {
   );
 
   // 启动qiankun
+  // 使用统一的沙箱配置，避免样式隔离不一致导致的样式引擎累积
+  const { getQiankunSandboxConfig } = await import('@btc/shared-core');
+  const sandboxConfig = getQiankunSandboxConfig();
+
   start({
     prefetch: false,
-    sandbox: {
-      strictStyleIsolation: false,
-      experimentalStyleIsolation: false, // 关闭样式隔离：主应用和子应用样式共享
-      loose: false,
-    },
+    sandbox: sandboxConfig,
     singular: true, // 单例模式：同时只能运行一个子应用（子应用之间不会同时存在，因此不需要额外隔离）
     // 关键：允许加载跨域模块脚本，强制以 module 类型加载
     // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
@@ -485,25 +485,35 @@ export function setupQiankun() {
   }
 
   // 监听全局错误（延迟导入以避免循环依赖）
-  window.addEventListener('error', async (event) => {
-    if (event.message?.includes('application')) {
-      const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? getAppName(appMatch[1]) : tSync('common.apps.app');
-      const { loadingError } = await import('../utils/loadingManager');
-      loadingError(appName, event.error);
-    }
-  });
+  // 注意：使用单例模式，避免重复添加监听器导致内存泄漏
+  if (!(window as any).__ADMIN_APP_ERROR_HANDLER__) {
+    const errorHandler = async (event: ErrorEvent) => {
+      if (event.message?.includes('application')) {
+        const appMatch = event.message.match(/'(\w+)'/);
+        const appName = appMatch ? getAppName(appMatch[1]) : tSync('common.apps.app');
+        const { loadingError } = await import('../utils/loadingManager');
+        loadingError(appName, event.error);
+      }
+    };
+    (window as any).__ADMIN_APP_ERROR_HANDLER__ = errorHandler;
+    window.addEventListener('error', errorHandler);
+  }
 }
 
 /**
  * 监听子应用就绪事件
+ * 注意：使用单例模式，避免重复添加监听器导致内存泄漏
  */
 export function listenSubAppReady() {
-  window.addEventListener('subapp:ready', async () => {
-    // 延迟导入以避免循环依赖
-    const { finishLoading } = await import('../utils/loadingManager');
-    finishLoading();
-  });
+  if (!(window as any).__ADMIN_APP_READY_HANDLER__) {
+    const readyHandler = async () => {
+      // 延迟导入以避免循环依赖
+      const { finishLoading } = await import('../utils/loadingManager');
+      finishLoading();
+    };
+    (window as any).__ADMIN_APP_READY_HANDLER__ = readyHandler;
+    window.addEventListener('subapp:ready', readyHandler);
+  }
 }
 
 /**
@@ -514,49 +524,54 @@ export function listenSubAppRouteChange() {
   // 因为路由变化已经在 router.afterEach 中处理了，避免重复处理导致冲突
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   const isQiankun = typeof window !== 'undefined' && (window as any).__POWERED_BY_QIANKUN__;
-  
+
   if (!isQiankun && !isUsingLayoutApp) {
     // 独立运行模式，路由变化已在 router.afterEach 中处理，不需要监听事件
     return;
   }
 
-  window.addEventListener('subapp:route-change', (event: Event) => {
-    const customEvent = event as CustomEvent;
-    const { path, fullPath, name, meta } = customEvent.detail;
+  // 注意：使用单例模式，避免重复添加监听器导致内存泄漏
+  if (!(window as any).__ADMIN_APP_ROUTE_CHANGE_HANDLER__) {
+    const routeChangeHandler = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { path, fullPath, name, meta } = customEvent.detail;
 
-    // ? 如果是子应用首页，将该应用的所有标签设为未激活
-    if (meta?.isHome === true) {
+      // ? 如果是子应用首页，将该应用的所有标签设为未激活
+      if (meta?.isHome === true) {
+        const process = useProcessStore();
+        const app = getCurrentAppFromPath(path);
+        process.list.forEach(tab => {
+          if (tab.app === app) {
+            tab.active = false;
+          }
+        });
+        return;
+      }
+
+      // 使用统一的 getCurrentAppFromPath 来判断应用类型，更通用
       const process = useProcessStore();
       const app = getCurrentAppFromPath(path);
-      process.list.forEach(tab => {
-        if (tab.app === app) {
-          tab.active = false;
-        }
+
+      // 排除管理域（admin）和无效应用（main）
+      // 所有其他应用（system, logistics, engineering, quality, production, finance 等）都应该处理
+      if (app === 'admin' || app === 'main') {
+        return;
+      }
+
+      // 排除文档域（docs）
+      if (app === 'docs') {
+        return;
+      }
+
+      process.add({
+        path,
+        fullPath,
+        name,
+        meta,
       });
-      return;
-    }
-
-    // 使用统一的 getCurrentAppFromPath 来判断应用类型，更通用
-    const process = useProcessStore();
-    const app = getCurrentAppFromPath(path);
-
-    // 排除管理域（admin）和无效应用（main）
-    // 所有其他应用（system, logistics, engineering, quality, production, finance 等）都应该处理
-    if (app === 'admin' || app === 'main') {
-      return;
-    }
-
-    // 排除文档域（docs）
-    if (app === 'docs') {
-      return;
-    }
-
-    process.add({
-      path,
-      fullPath,
-      name,
-      meta,
-    });
-  });
+    };
+    (window as any).__ADMIN_APP_ROUTE_CHANGE_HANDLER__ = routeChangeHandler;
+    window.addEventListener('subapp:route-change', routeChangeHandler);
+  }
 }
 

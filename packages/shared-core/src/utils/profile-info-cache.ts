@@ -2,7 +2,7 @@
  * 个人信息缓存工具
  * 用于避免多个组件同时请求个人信息接口
  */
-import { logger } from './logger';
+;
 
 import { storage } from './storage/local';
 import { sessionStorage } from './storage/session';
@@ -28,7 +28,7 @@ function getProfileInfoFromStorage(): any | null {
   } catch (error) {
     // 静默失败，不影响功能
     if (import.meta.env.DEV) {
-      logger.warn('[getProfileInfo] Failed to read from storage:', error);
+      console.warn('[getProfileInfo] Failed to read from storage:', error);
     }
   }
   return null;

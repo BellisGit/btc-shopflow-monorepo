@@ -1,7 +1,7 @@
 <template>
-  <div class="btc-chart-demo">
+  <div class="btc-chart-demo" :style="containerStyle">
     <div class="btc-chart-gallery__container">
-      <ElRow :gutter="10">
+      <ElRow :gutter="typeof gap === 'number' ? gap : Number(gap) || 10">
       <!-- 1. 柱状图（单数据） -->
       <ElCol :xs="24" :md="12" :lg="8">
         <div class="card">
@@ -261,7 +261,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { ElRow, ElCol } from 'element-plus';
 import {
   BtcLineChart,
@@ -284,6 +284,28 @@ import type {
 
 defineOptions({
   name: 'BtcChartGallery'
+});
+
+// Props
+interface Props {
+  /** 子组件之间的间距（同时包括水平和垂直间距），默认 10px */
+  gap?: number | string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  gap: 10
+});
+
+// 计算间距值（用于 CSS 变量）
+const gapValue = computed(() => {
+  return typeof props.gap === 'number' ? `${props.gap}px` : props.gap;
+});
+
+// 容器样式（用于设置 CSS 变量）
+const containerStyle = computed(() => {
+  return {
+    '--btc-chart-gallery-gap': gapValue.value
+  };
 });
 
 // 1. 柱状图（单数据）- 需要转换为对象数组格式
@@ -505,14 +527,14 @@ const dualBarXAxis = ref<string[]>([
 </script>
 
 <style lang="scss" scoped>
-.btc-chart-gallery {
+.btc-chart-demo {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   overflow: hidden;
 
-  &__container {
+  .btc-chart-gallery__container {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
@@ -557,25 +579,12 @@ const dualBarXAxis = ref<string[]>([
         color: var(--el-text-color-primary);
       }
     }
-
-    // 图表组件使用 props 中的高度，不需要 flex 布局
-    // 参考 art-design-pro 的实现，直接使用 height 属性
-    :deep(.btc-line-chart),
-    :deep(.btc-bar-chart),
-    :deep(.btc-pie-chart),
-    :deep(.btc-h-bar-chart),
-    :deep(.btc-dual-bar-compare-chart),
-    :deep(.btc-ring-chart),
-    :deep(.btc-radar-chart),
-    :deep(.btc-scatter-chart),
-    :deep(.btc-kline-chart) {
-      // 移除 flex: 1，让图表使用 props 中的高度
-      // 图表组件会通过 :style="chartStyle" 设置高度
-    }
   }
 
+  // 设置图表卡片之间的垂直间距
+  // ElRow 的 gutter 属性只设置水平间距，需要手动设置垂直间距
   :deep(.el-col) {
-    margin-bottom: 10px;
+    margin-bottom: var(--btc-chart-gallery-gap, 10px);
   }
 }
 </style>

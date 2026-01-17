@@ -1,6 +1,6 @@
 /**
  * 日志传输器
- * 集成现有的 request-logger，将 Pino 日志上报到后端
+ * 集成现有的 request-logger，将日志上报到后端
  */
 
 import type { LogContext } from './types';
@@ -83,23 +83,34 @@ function filterSensitiveParams(params: any): any {
 }
 
 /**
- * 将 Pino 日志对象转换为 request-logger 格式
+ * 将日志对象转换为 request-logger 格式
  */
-function convertPinoLogToRequestLog(
+function convertLogToRequestLog(
   logObject: any,
   context?: LogContext
 ): any {
   // 提取日志信息
-  const level = logObject.level || 30; // 默认 info
-  const message = logObject.msg || logObject.message || '';
-  const time = logObject.time || Date.now();
+  const level = logObject.level || 'info';
+  const message = logObject.message || logObject.msg || '';
+  const time = logObject.timestamp ? new Date(logObject.timestamp).getTime() : Date.now();
   const metadata = { ...logObject };
   delete metadata.level;
-  delete metadata.msg;
   delete metadata.message;
-  delete metadata.time;
+  delete metadata.msg;
+  delete metadata.timestamp;
   delete metadata.pid;
   delete metadata.hostname;
+  
+  // 日志级别转换为数字
+  const levelMap: Record<string, number> = {
+    error: 50,
+    warn: 40,
+    info: 30,
+    debug: 20,
+    verbose: 10,
+    silly: 0,
+  };
+  const levelNumber = levelMap[level.toLowerCase()] || 30;
 
   // 从上下文或 metadata 中提取用户信息
   const userId = context?.userId || metadata.userId || metadata.user_id;
@@ -107,7 +118,7 @@ function convertPinoLogToRequestLog(
   const requestUrl = metadata.requestUrl || metadata.url || metadata.path || '';
   const ip = context?.ip || metadata.ip;
   const duration = metadata.duration || 0;
-  const status = metadata.status || (level >= 50 ? 'failed' : 'success');
+  const status = metadata.status || (levelNumber >= 50 ? 'failed' : 'success');
 
   // 过滤敏感参数
   const params = filterSensitiveParams(metadata.params || metadata);
@@ -132,30 +143,39 @@ function convertPinoLogToRequestLog(
 class LogTransportQueue {
   private queue: any[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private readonly BATCH_SIZE = 100; // 批量发送大小
-  private readonly BATCH_INTERVAL = 180000; // 批量发送间隔（180秒）
-  private readonly MAX_QUEUE_SIZE = 1000; // 最大队列长度
+  private readonly BATCH_SIZE = 50; // 批量发送大小（减少到 50）
+  private readonly BATCH_INTERVAL = 30000; // 批量发送间隔（30秒，从 180 秒减少）
+  private readonly MAX_QUEUE_SIZE = 200; // 最大队列长度（减少到 200，防止内存泄漏）
+  private readonly FETCH_TIMEOUT = 10000; // fetch 超时时间（10秒）
+  private readonly MAX_CONCURRENT_REQUESTS = 1; // 最大并发请求数（限制为 1）
+  private pendingRequests = new Set<Promise<any>>(); // 跟踪 pending 的请求
   private isServiceAvailable = true;
   private isPaused = false;
-  private readonly QPS_LIMIT = 2; // 每秒最多发送2次请求
+  private isDestroyed = false; // 标记是否已销毁
+  private readonly QPS_LIMIT = 1; // 每秒最多发送1次请求（减少频率）
   private lastSendTime = 0;
 
   /**
    * 添加日志到队列
    */
   add(logItem: any) {
-    // 检查队列长度，防止内存溢出
+    // 如果已销毁，直接返回
+    if (this.isDestroyed) {
+      return;
+    }
+
+    // 检查队列长度，防止内存溢出（更激进的清理策略）
     if (this.queue.length >= this.MAX_QUEUE_SIZE) {
-      // 移除最旧的日志
+      // 移除最旧的日志（FIFO）
       this.queue.shift();
     }
 
     this.queue.push(logItem);
 
-    // 如果服务可用且未暂停，尝试发送
-    if (this.isServiceAvailable && !this.isPaused) {
+    // 如果服务可用且未暂停，且没有太多 pending 请求，尝试发送
+    if (this.isServiceAvailable && !this.isPaused && this.pendingRequests.size < this.MAX_CONCURRENT_REQUESTS) {
       this.tryFlush();
-    } else if (this.queue.length === 1 && !this.timer) {
+    } else if (this.queue.length === 1 && !this.timer && !this.isDestroyed) {
       // 如果服务不可用且没有定时器在运行，启动定时器等待服务恢复
       this.startTimer();
     }
@@ -189,17 +209,19 @@ class LogTransportQueue {
   }
 
   /**
-   * 批量发送日志
+   * 批量发送日志（带超时和并发控制）
    */
   private async flush() {
-    if (this.queue.length === 0) {
+    if (this.queue.length === 0 || this.isDestroyed) {
       return;
     }
 
-    // 如果服务不可用，暂停发送
-    if (!this.isServiceAvailable) {
+    // 如果服务不可用或已达到最大并发数，暂停发送
+    if (!this.isServiceAvailable || this.pendingRequests.size >= this.MAX_CONCURRENT_REQUESTS) {
       this.isPaused = true;
-      this.startTimer(); // 继续等待服务恢复
+      if (!this.isDestroyed) {
+        this.startTimer(); // 继续等待服务恢复
+      }
       return;
     }
 
@@ -224,34 +246,63 @@ class LogTransportQueue {
         throw new Error('Request log service unavailable');
       }
 
-      // 批量发送：将所有日志作为数组一次性发送
-      await service.admin.log.sys.request.update(logsToSend);
+      // 关键：创建带超时的请求，防止 pending 请求累积
+      // 注意：service.admin.log.sys.request.update 可能不支持 AbortController
+      // 使用 Promise.race 实现超时控制
+      const updatePromise = service.admin.log.sys.request.update(logsToSend);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Request timeout'));
+        }, this.FETCH_TIMEOUT);
+      });
 
-      // 发送成功，重置状态
-      this.isServiceAvailable = true;
-      this.isPaused = false;
-      this.lastSendTime = Date.now();
+      // 跟踪 pending 请求
+      const requestPromise = Promise.race([updatePromise, timeoutPromise]);
+      this.pendingRequests.add(requestPromise);
 
-      // 清空队列（只清空已发送的部分）
-      this.queue = this.queue.slice(logsToSend.length);
+      try {
+        await requestPromise;
 
-      // 如果还有剩余日志，继续尝试发送
-      if (this.queue.length > 0) {
-        this.tryFlush();
+        // 发送成功，重置状态
+        this.isServiceAvailable = true;
+        this.isPaused = false;
+        this.lastSendTime = Date.now();
+
+        // 清空队列（只清空已发送的部分）
+        this.queue = this.queue.slice(logsToSend.length);
+
+        // 如果还有剩余日志，且没有达到并发限制，继续尝试发送
+        if (this.queue.length > 0 && this.pendingRequests.size < this.MAX_CONCURRENT_REQUESTS && !this.isDestroyed) {
+          this.tryFlush();
+        }
+      } finally {
+        // 关键：无论成功或失败，都要从 pending 集合中移除
+        this.pendingRequests.delete(requestPromise);
       }
-    } catch (error) {
+    } catch (error: any) {
       // 发送失败，暂停发送
       this.isPaused = true;
       this.isServiceAvailable = false;
 
-      // 5分钟后重新尝试
-      setTimeout(() => {
-        this.isServiceAvailable = true;
-        this.isPaused = false;
-        if (this.queue.length > 0) {
-          this.tryFlush();
-        }
-      }, 5 * 60 * 1000); // 5分钟
+      // 关键：清空队列中已尝试发送的日志，防止内存泄漏
+      // 如果服务不可用，继续保留这些日志会导致内存泄漏
+      // 只保留队列中的一部分（最新的日志），丢弃旧的
+      if (this.queue.length > this.MAX_QUEUE_SIZE / 2) {
+        this.queue = this.queue.slice(-Math.floor(this.MAX_QUEUE_SIZE / 2));
+      }
+
+      // 30秒后重新尝试（减少重试间隔，但增加失败后的等待时间）
+      if (!this.isDestroyed) {
+        setTimeout(() => {
+          if (!this.isDestroyed) {
+            this.isServiceAvailable = true;
+            this.isPaused = false;
+            if (this.queue.length > 0 && this.pendingRequests.size < this.MAX_CONCURRENT_REQUESTS) {
+              this.tryFlush();
+            }
+          }
+        }, 30000); // 30秒
+      }
     }
   }
 
@@ -278,13 +329,29 @@ class LogTransportQueue {
    * 销毁实例（页面卸载时调用）
    */
   destroy() {
+    this.isDestroyed = true;
+
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    // 发送剩余的日志
-    if (this.queue.length > 0) {
-      this.flush();
+
+    // 关键：清空队列，防止内存泄漏
+    // 不再发送剩余日志，因为页面正在卸载，发送请求可能导致问题
+    this.queue = [];
+
+    // 清理所有 pending 请求（无法取消，但至少清空跟踪）
+    this.pendingRequests.clear();
+  }
+
+  /**
+   * 清空队列（紧急情况下调用）
+   */
+  clear() {
+    this.queue = [];
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
     }
   }
 }
@@ -292,23 +359,41 @@ class LogTransportQueue {
 // 创建单例
 const logTransportQueue = new LogTransportQueue();
 
-// 页面卸载时发送剩余日志
+// 页面卸载时清理队列
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     logTransportQueue.destroy();
   });
+  
+  // 页面隐藏时也清理队列（防止内存泄漏）
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      // 页面隐藏时，清理部分队列，减少内存占用
+      // 但不完全清空，因为页面可能只是切换标签页
+      if (logTransportQueue && typeof (logTransportQueue as any).clear === 'function') {
+        // 保留最新的 20 条日志，清空旧的
+        const queue = (logTransportQueue as any).queue;
+        if (queue && queue.length > 20) {
+          (logTransportQueue as any).queue = queue.slice(-20);
+        }
+      }
+    }
+  });
 }
 
+// 导出队列实例（用于清理）
+export { logTransportQueue };
+
 /**
- * Pino 日志传输器
- * 将 Pino 日志发送到后端
+ * 日志传输器
+ * 将日志发送到后端
  */
 export function createLogTransport(context?: LogContext) {
   return {
     level: 30, // info 级别及以上才传输
     send: (level: number, logEvent: any) => {
       try {
-        // 解析 Pino 日志对象
+        // 解析日志对象
         const logObject = logEvent;
 
         // 检查是否需要记录（如果有 requestUrl）
@@ -318,7 +403,7 @@ export function createLogTransport(context?: LogContext) {
         }
 
         // 转换为 request-logger 格式
-        const requestLog = convertPinoLogToRequestLog(logObject, context);
+        const requestLog = convertLogToRequestLog(logObject, context);
 
         // 添加到队列
         logTransportQueue.add(requestLog);
@@ -326,9 +411,13 @@ export function createLogTransport(context?: LogContext) {
         // 传输失败不影响主流程，静默处理
         // 在开发环境可以输出错误（使用 console.error 避免循环依赖）
         // 注意：此文件是 logger 模块的一部分，不能使用 logger 本身，否则会造成循环依赖
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error('Log transport error:', error);
+        try {
+          if (import.meta?.env?.DEV) {
+            // eslint-disable-next-line no-console
+            console.error('Log transport error:', error);
+          }
+        } catch (e) {
+          // import.meta.env 可能不存在（在构建时），忽略
         }
       }
     },
@@ -336,7 +425,7 @@ export function createLogTransport(context?: LogContext) {
 }
 
 /**
- * 手动发送日志（用于非 Pino 日志）
+ * 手动发送日志到后端
  */
 export function sendLogToBackend(logItem: any) {
   logTransportQueue.add(logItem);

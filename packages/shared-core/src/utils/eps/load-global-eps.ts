@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+;
 /**
  * 全局 EPS 服务加载器
  * 用于在生产环境下从 system-app 加载全局共享的 EPS 服务
@@ -41,7 +41,7 @@ export async function loadGlobalEpsService(): Promise<any> {
     
     return null;
   } catch (error) {
-    logger.warn('[loadGlobalEpsService] 加载全局 EPS 服务失败:', error);
+    console.warn('[loadGlobalEpsService] 加载全局 EPS 服务失败:', error);
     return null;
   }
 }

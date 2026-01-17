@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+;
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcMessage } from '@btc/shared-components';
@@ -91,7 +91,7 @@ export function useInertRegistration() {
     },
     (error: any) => {
       // 注册失败后的回调
-      logger.error('注册失败:', error);
+      console.error('注册失败:', error);
       registrationError.value = error.msg || error.message || '注册过程中发生错误';
       setRegistrationStatus('failed');
     }
@@ -198,7 +198,7 @@ export function useInertRegistration() {
 
   const handleFinish = () => {
     // 完成注册后的处理
-    logger.info('注册完成');
+    console.info('注册完成');
   };
 
   return {

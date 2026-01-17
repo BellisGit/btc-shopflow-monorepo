@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -55,7 +55,7 @@ const collapseContext = inject<{
 }>('collapse');
 
 if (!collapseContext) {
-  logger.warn('[BtcCollapseItem] must be used inside BtcCollapse');
+  console.warn('[BtcCollapseItem] must be used inside BtcCollapse');
 }
 
 // 判断当前项是否展开
@@ -68,7 +68,7 @@ const isActive = computed(() => {
   
   // 确保 activeNamesValue 是数组
   if (!Array.isArray(activeNamesValue)) {
-    logger.warn('[BtcCollapseItem] activeNames.value is not an array:', activeNamesValue);
+    console.warn('[BtcCollapseItem] activeNames.value is not an array:', activeNamesValue);
     return false;
   }
   

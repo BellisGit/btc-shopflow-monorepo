@@ -2,7 +2,14 @@
  * 将 index.html 中的图标路径替换为 CDN URL 的 Vite 插件
  * 生产环境使用 CDN，开发/预览环境保持本地路径
  */
-import { logger } from '@btc/shared-core';
+// 注意：在 VitePress 配置加载时，不能直接导入 @btc/shared-core
+// 使用 console 替代 logger
+const logger = {
+  warn: (...args: any[]) => console.warn('[replace-icons-with-cdn]', ...args),
+  error: (...args: any[]) => console.error('[replace-icons-with-cdn]', ...args),
+  info: (...args: any[]) => console.info('[replace-icons-with-cdn]', ...args),
+  debug: (...args: any[]) => console.debug('[replace-icons-with-cdn]', ...args),
+};
 
 import type { Plugin, ResolvedConfig } from 'vite';
 
@@ -77,7 +84,7 @@ export function replaceIconsWithCdnPlugin(): Plugin {
         return newHtml;
       } catch (error) {
         // 如果获取配置失败，保持原样
-        logger.warn('[replace-icons-with-cdn] 获取配置失败，保持原图标路径:', error);
+        console.warn('[replace-icons-with-cdn] 获取配置失败，保持原图标路径:', error);
         return html;
       }
     },

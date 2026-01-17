@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { BtcAppLayout as Layout } from '@btc/shared-components';
-import { getMainAppHomeRoute } from '@btc/shared-core';
+import { getMainAppHomeRoute, getMainAppRoutes } from '@btc/shared-core';
 import { isAuthenticated } from './utils/auth';
 
 /**
@@ -49,9 +49,14 @@ export const routes: RouteRecordRaw[] = [
     path: '/',
     redirect: getMainAppHomeRoute(),
   },
-  // 概览页面
+  // 兼容旧路径：/overview 重定向到 /workbench/overview
   {
     path: '/overview',
+    redirect: '/workbench/overview',
+  },
+  // 概览页面（首页，不显示面包屑和 tabbar 标签）
+  {
+    path: '/workbench/overview',
     component: Layout,
     children: [
       {
@@ -60,20 +65,17 @@ export const routes: RouteRecordRaw[] = [
         meta: {
           titleKey: 'menu.overview',
           labelKey: 'menu.overview',
-          isHome: false,
+          isHome: true,
           isSubApp: false,
           isPage: true,
-          breadcrumbs: [
-            { path: '/overview', i18nKey: 'menu.dashboard', label: '工作台', icon: 'svg:Lock' },
-            { path: '/overview', i18nKey: 'menu.overview', label: '概览', icon: 'svg:Location' },
-          ],
+          process: false, // 不添加到 tabbar
         },
       },
     ],
   },
   // 个人中心页面
   {
-    path: '/profile',
+    path: '/workbench/profile',
     component: Layout,
     children: [
       {
@@ -86,8 +88,8 @@ export const routes: RouteRecordRaw[] = [
           isSubApp: false,
           isPage: true,
           breadcrumbs: [
-            { path: '/overview', i18nKey: 'menu.dashboard', label: '工作台', icon: 'svg:Lock' },
-            { path: '/profile', i18nKey: 'menu.profile', label: '个人中心', icon: 'svg:user' },
+            { path: '/workbench/overview', i18nKey: 'menu.dashboard', label: '工作台', icon: 'svg:Lock' },
+            { path: '/workbench/profile', i18nKey: 'menu.profile', label: '个人中心', icon: 'svg:user' },
           ],
         },
       },
@@ -95,7 +97,7 @@ export const routes: RouteRecordRaw[] = [
   },
   // 我的待办页面
   {
-    path: '/todo',
+    path: '/workbench/todo',
     component: Layout,
     children: [
       {
@@ -108,8 +110,8 @@ export const routes: RouteRecordRaw[] = [
           isSubApp: false,
           isPage: true,
           breadcrumbs: [
-            { path: '/overview', i18nKey: 'menu.dashboard', label: '工作台' },
-            { path: '/todo', i18nKey: 'menu.todo', label: '我的待办' },
+            { path: '/workbench/overview', i18nKey: 'menu.dashboard', label: '工作台' },
+            { path: '/workbench/todo', i18nKey: 'menu.todo', label: '我的待办' },
           ],
         },
       },
@@ -253,7 +255,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'NotFound404Page',
-        component: () => import('@/modules/base/pages/error/404.vue'),
+        component: () => import('@btc/shared-components').then(m => m.BtcError404),
         meta: {
           titleKey: 'common.page_not_found',
           isPage: true,
@@ -283,6 +285,20 @@ export const routes: RouteRecordRaw[] = [
       if (to.path.startsWith('/home')) {
         // 使用 next(false) 取消 Vue Router 的导航，让代理处理请求
         next(false);
+        return;
+      }
+
+      // 关键：检查是否是主应用路由（需要排除，因为主应用路由不应该被 catch-all 路由拦截）
+      const mainAppRoutes = getMainAppRoutes();
+      const isMainAppRoute = mainAppRoutes.mainAppRoutes?.some(route => {
+        const normalizedRoute = route.replace(/\/+$/, '') || '/';
+        const normalizedPath = to.path.replace(/\/+$/, '') || '/';
+        return normalizedPath === normalizedRoute || normalizedPath.startsWith(normalizedRoute + '/');
+      }) || false;
+
+      if (isMainAppRoute) {
+        // 主应用路由，允许继续（不应该被 catch-all 路由拦截）
+        next();
         return;
       }
 

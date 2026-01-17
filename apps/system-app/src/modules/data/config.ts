@@ -2,11 +2,26 @@
  * 数据管理模块配置
  * 包含 inventory、files、dictionary 等页面的配置
  */
-import { logger } from '@btc/shared-core';
+;
 
 import type { ModuleConfig } from '@btc/shared-core/types/module';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+
+// 延迟获取 service，避免在 EPS 服务初始化前访问导致循环依赖
+function getService() {
+  // 使用动态导入或从全局获取，避免循环依赖
+  if (typeof window !== 'undefined') {
+    return (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+  }
+  // 如果没有全局对象，尝试动态导入
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const epsModule = require('@services/eps');
+    return epsModule.service || epsModule.default || {};
+  } catch {
+    return {};
+  }
+}
 
 export default {
   // ModuleConfig 字段
@@ -149,8 +164,8 @@ export default {
       'menu.inventory.result': '实盘数据',
       'menu.inventory.confirm': '流程确认',
       // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title 和 right-title）
-      'title.inventory.dataSource.domains': '域列表',
-      'title.inventory.dataSource.domains.select_required': '请先选择左侧域',
+      'title.inventory.domains': '域列表',
+      'title.inventory.domainsSelectRequired': '请先选择左侧域',
       'title.inventory.check.list': '盘点列表',
       'title.data.files.template.categories': '模板分类',
       'title.data.files.template.templateList': '模板列表',
@@ -241,8 +256,8 @@ export default {
       'menu.inventory.result': 'Live Inventory Data',
       'menu.inventory.confirm': 'Process Confirmation',
       // 标题配置（用于 BtcViewGroup/BtcMasterTableGroup 的 left-title  and right-title）
-      'title.inventory.dataSource.domains': 'Domain List',
-      'title.inventory.dataSource.domains.select_required': 'Please select a domain on the left first',
+      'title.inventory.domains': 'Domain List',
+      'title.inventory.domainsSelectRequired': 'Please select a domain on the left first',
       'title.inventory.check.list': 'Check List',
       'title.data.files.template.categories': 'Template Categories',
       'title.data.files.template.templateList': 'Template List',
@@ -475,16 +490,29 @@ export default {
   },
 
   service: {
-    inventoryList: service.system?.base?.data,
-    inventoryConfirm: service.system?.base?.approval,
-    inventoryTicket: service.logistics?.warehouse?.ticket,
-    inventoryBom: service.system?.base?.bom,
-    inventoryCheck: service.system?.base?.data,
-    checkList: service.logistics?.warehouse?.check,
+    get inventoryList() {
+      return getService()?.system?.base?.data;
+    },
+    get inventoryConfirm() {
+      return getService()?.system?.base?.approval;
+    },
+    get inventoryTicket() {
+      return getService()?.logistics?.warehouse?.ticket;
+    },
+    get inventoryBom() {
+      return getService()?.system?.base?.bom;
+    },
+    get inventoryCheck() {
+      return getService()?.system?.base?.data;
+    },
+    get checkList() {
+      return getService()?.logistics?.warehouse?.check;
+    },
     domainService: {
       list: async () => {
         try {
-          const response = await service.logistics?.base?.position?.me?.();
+          const service = getService();
+          const response = await service?.logistics?.base?.position?.me?.();
           let list: any[] = [];
           if (Array.isArray(response)) {
             list = response;
@@ -514,7 +542,7 @@ export default {
           });
           return Array.from(domainMap.values());
         } catch (error) {
-          logger.warn('[DataInventoryList] Failed to load domain list:', error);
+          console.warn('[DataInventoryList] Failed to load domain list:', error);
           return [];
         }
       },

@@ -31,7 +31,6 @@
     </template>
 
 
-
     <!-- 下方：左侧边栏 + 右侧内容 -->
     <div class="app-layout__body">
       <!-- 关键：在 layout-app 环境下，隐藏子应用自己的侧边栏 -->
@@ -91,16 +90,14 @@
               class="content-mount content-mount--main-app"
               data-router-view
             >
-              <el-scrollbar class="container">
-                <router-view v-slot="{ Component, route }">
-                  <transition :name="pageTransitionName" mode="out-in">
-                    <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
-                    <keep-alive v-else-if="Component">
-                      <component :is="Component" :key="route.fullPath" />
-                    </keep-alive>
-                  </transition>
-                </router-view>
-              </el-scrollbar>
+              <router-view v-slot="{ Component, route }">
+                <transition :name="pageTransitionName" mode="out-in">
+                  <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
+                  <keep-alive v-else-if="Component">
+                    <component :is="Component" :key="route.fullPath" />
+                  </keep-alive>
+                </transition>
+              </router-view>
             </div>
 
             <!-- 子应用挂载点 -->
@@ -153,7 +150,7 @@ import { mitt } from '@btc/shared-components';
 import { useBrowser } from '../../../composables/useBrowser';
 import { useSettingsState } from '../../others/btc-user-setting/composables';
 import { MenuThemeEnum, MenuTypeEnum } from '../../others/btc-user-setting/config/enums';
-import { useContentMount, logger } from '@btc/shared-core';
+import { useContentMount } from '@btc/shared-core';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -244,7 +241,7 @@ try {
   isDark = settingsState.isDark;
 } catch (error) {
   // 使用默认值
-  logger.warn('[AppLayout] useSettingsState 初始化失败，使用默认值', error);
+  console.warn('[AppLayout] useSettingsState 初始化失败，使用默认值', error);
   showCrumbs = ref(true);
   pageTransition = ref('fade');
   // menuType 已经在上面初始化为 ref('left')，不需要重新赋值
@@ -266,7 +263,7 @@ if (!menuType) {
 
 // 最终验证：确保 menuType 是一个有效的 ref
 if (typeof menuType.value === 'undefined') {
-  logger.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
+  console.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
   menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
 }
 
@@ -665,7 +662,7 @@ onMounted(() => {
   if (!(window as any).__APP_EMITTER__) {
     (window as any).__APP_EMITTER__ = emitter;
     if (import.meta.env.DEV) {
-      logger.info('[AppLayout] onMounted: 重新设置事件总线到 window.__APP_EMITTER__');
+      console.info('[AppLayout] onMounted: 重新设置事件总线到 window.__APP_EMITTER__');
     }
   }
 
@@ -674,7 +671,7 @@ onMounted(() => {
   emitter.on('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
     if (import.meta.env.DEV) {
-      logger.info('[AppLayout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
+      console.info('[AppLayout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
     }
   });
   // eslint-disable-next-line no-undef
@@ -722,7 +719,7 @@ onMounted(() => {
   window.addEventListener('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
     if (import.meta.env.DEV) {
-      logger.info('[AppLayout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
+      console.info('[AppLayout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
     }
   });
 
@@ -740,12 +737,12 @@ onMounted(() => {
   setupMutationObserver();
 
   // 监听 sidebar 渲染状态，输出调试信息（构建产物中也输出）
-  watch(
+  stopSidebarWatch = watch(
     [() => isUsingLayoutApp.value, () => shouldShowSidebar.value, () => menuType?.value],
     ([isUsing, shouldShow, menuTypeValue]) => {
       const shouldRender = !isUsing && shouldShow;
       if (!shouldRender && typeof window !== 'undefined' && !(window as any).__SIDEBAR_NOT_RENDERED_LOGGED__) {
-        logger.warn('[AppLayout] Sidebar 未渲染', {
+        console.warn('[AppLayout] Sidebar 未渲染', {
           isUsingLayoutApp: isUsing,
           shouldShowSidebar: shouldShow,
           menuType: menuTypeValue,
@@ -768,7 +765,11 @@ onMounted(() => {
   scheduleContentResize();
 });
 
-watch(
+// 保存 watch 停止函数，用于清理
+let stopRouteWatch: (() => void) | null = null;
+let stopSidebarWatch: (() => void) | null = null;
+
+stopRouteWatch = watch(
   () => route.fullPath,
   async () => {
     // 关键：移除路由变化时的 scheduleContentResize() 调用
@@ -783,6 +784,16 @@ watch(
 );
 
 onUnmounted(() => {
+  // 停止所有 watch 监听器
+  if (stopRouteWatch) {
+    stopRouteWatch();
+    stopRouteWatch = null;
+  }
+  if (stopSidebarWatch) {
+    stopSidebarWatch();
+    stopSidebarWatch = null;
+  }
+
   emitter.off('view.refresh', refreshView);
   emitter.off('open-preferences-drawer');
   // eslint-disable-next-line no-undef
@@ -843,6 +854,7 @@ onUnmounted(() => {
     display: flex;
     flex: 1;
     height: calc(100vh - 47px); // 减去顶栏高度
+    width: 100%;
     overflow: hidden;
   }
 
@@ -946,6 +958,19 @@ onUnmounted(() => {
         min-height: 0;
         flex: 1; // 页面组件根元素需要占据完整高度
       }
+    }
+    
+    // 错误页面（404、403等）特殊处理：直接渲染，不经过 container
+    // 错误页面应该占据完整高度并垂直居中
+    :deep(.content-mount--main-app > router-view > .page-error),
+    :deep(.content-mount--main-app > router-view > .page-404),
+    :deep(.content-mount--main-app > router-view > [class*="page-error"]),
+    :deep(.content-mount--main-app > router-view > [class*="page-404"]) {
+      height: 100% !important;
+      min-height: 100% !important;
+      flex: 1 !important;
+      justify-content: center !important;
+      align-items: center !important;
     }
 
     // 文档应用 iframe（占据内容区域完整尺寸）
@@ -1410,6 +1435,7 @@ qiankun-head {
   flex-direction: row !important; // 明确指定左右布局
   flex: 1 !important;
   height: calc(100vh - 47px) !important;
+  width: 100% !important;
   overflow: hidden !important;
 }
 
@@ -1424,6 +1450,7 @@ qiankun-head {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important; // 关键：必须设置高度为 100%，与系统域一致
+  width: 100% !important; // 关键：确保占据剩余宽度
   overflow: hidden !important;
   min-width: 0 !important; // 确保 flex 子元素可以收缩
 }

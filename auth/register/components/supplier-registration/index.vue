@@ -178,7 +178,7 @@ import { Search, Check, Message, OfficeBuilding, User, Phone, Lock } from '@elem
 import { BtcMessage } from '@btc/shared-components';
 import BtcStepsForm from '/@/modules/base/components/btc/btc-steps-form/index.vue';
 import { useInertRegistration } from '../../composables/useInertRegistration';
-import { logger } from '@btc/shared-core';
+;
 
 
 defineOptions({
@@ -267,7 +267,7 @@ const handleSupplierSearch = () => {
 
 // 处理步骤变化
 const handleStepChange = (step: number) => {
-  logger.info('步骤变化:', step);
+  console.info('步骤变化:', step);
 };
 
 // 处理下一步

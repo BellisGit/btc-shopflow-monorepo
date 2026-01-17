@@ -1,5 +1,3 @@
-import { ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 
 /**

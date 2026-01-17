@@ -1,4 +1,3 @@
-import { logger } from '@build-utils/logger';
 import typescript from "@rollup/plugin-typescript";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import { defineConfig } from "rollup";
@@ -8,17 +7,17 @@ const buildLogPlugin = () => {
 	return {
 		name: "build-log",
 		buildStart() {
-			logger.info("\n📦 开始构建 @btc/vite-plugin...");
-			logger.info("   - 输入文件: src/index.ts");
-			logger.info("   - 输出格式: CJS + ESM");
+			console.log("\n📦 开始构建 @btc/vite-plugin...");
+			console.log("   - 输入文件: src/index.ts");
+			console.log("   - 输出格式: CJS + ESM");
 		},
 		buildEnd(error) {
 			if (error) {
-				logger.error("\n❌ @btc/vite-plugin 构建失败:", error);
+				console.error("\n❌ @btc/vite-plugin 构建失败:", error);
 			} else {
-				logger.success("\n✅ @btc/vite-plugin 构建成功！");
-				logger.info("   - 输出文件: dist/index.js (CJS)");
-				logger.info("   - 输出文件: dist/index.mjs (ESM)");
+				console.log("\n✅ @btc/vite-plugin 构建成功！");
+				console.log("   - 输出文件: dist/index.js (CJS)");
+				console.log("   - 输出文件: dist/index.mjs (ESM)");
 			}
 		},
 	};

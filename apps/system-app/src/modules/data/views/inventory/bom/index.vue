@@ -6,7 +6,7 @@
       :right-service="wrappedBomService"
       :table-columns="bomColumns"
       :form-items="bomFormItems"
-      left-title="title.inventory.dataSource.domains"
+      left-title="title.inventory.domains"
       :right-title="t('menu.inventory.data_source.bom')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -34,13 +34,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import { BtcSvg } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcDataInventoryBom'
@@ -114,7 +113,7 @@ const domainService = {
         return Array.from(domainMap.values());
       }
     } catch (error) {
-      logger.error('[InventoryBom] Failed to load domains from position service:', error);
+      console.error('[InventoryBom] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -208,7 +207,7 @@ const handleImport = async (
 
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域');
+      message.warning(t('title.inventory.domainsSelectRequired') || '请先选择左侧域');
       done();
       return;
     }
@@ -256,7 +255,7 @@ const handleImport = async (
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
-    logger.error('[InventoryBom] import failed:', error);
+    console.error('[InventoryBom] import failed:', error);
     const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.data_source.bom.import.failed');
     message.error(errorMsg);
     done();
@@ -356,7 +355,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    logger.error('[InventoryBom] Export failed:', error);
+    console.error('[InventoryBom] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

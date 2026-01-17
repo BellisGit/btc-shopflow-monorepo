@@ -2,7 +2,7 @@
  * 域列表缓存工具
  * 用于避免多个组件同时请求域列表接口
  */
-import { logger } from '@btc/shared-core';
+;
 
 import { storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
@@ -30,7 +30,7 @@ function getDomainListFromStorage(): any | null {
   } catch (error) {
     // 静默失败，不影响功能
     if (import.meta.env.DEV) {
-      logger.warn('[getDomainList] Failed to read from storage:', error);
+      console.warn('[getDomainList] Failed to read from storage:', error);
     }
   }
   return null;

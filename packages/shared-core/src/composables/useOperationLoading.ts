@@ -2,7 +2,7 @@
  * 操作级 Loading Composable
  * 管理针对单个业务操作（按钮点击、表单提交、接口请求）的 loading
  */
-import { logger } from '../utils/logger';
+;
 
 import { ref, onUnmounted } from 'vue';
 import { LOADING_Z_INDEX, LOADING_TIMEOUT } from '../btc/utils/loading.config';
@@ -146,13 +146,13 @@ export function useOperationLoading() {
     // 如果没有目标元素且不锁定屏幕，使用 Element Plus 的 loading（通过指令实现）
     // 这里我们提供一个简单的实现，实际使用时可以结合 Element Plus 的 v-loading 指令
     if (!targetEl && !lock) {
-      logger.warn('[useOperationLoading] 未指定目标元素且未锁定屏幕，请使用 v-loading 指令');
+      console.warn('[useOperationLoading] 未指定目标元素且未锁定屏幕，请使用 v-loading 指令');
       return;
     }
 
     // 如果没有目标元素但锁定屏幕，创建全屏loading（不推荐，应该使用全局根级loading）
     if (!targetEl && lock) {
-      logger.warn('[useOperationLoading] 全屏loading建议使用 RootLoadingService');
+      console.warn('[useOperationLoading] 全屏loading建议使用 RootLoadingService');
       return;
     }
 
@@ -172,7 +172,7 @@ export function useOperationLoading() {
 
     // 设置超时关闭（5秒）
     instance.timeoutId = setTimeout(() => {
-      logger.warn('[useOperationLoading] 操作 loading 超时自动关闭（5秒）');
+      console.warn('[useOperationLoading] 操作 loading 超时自动关闭（5秒）');
       hide();
     }, LOADING_TIMEOUT.OPERATION);
   };
