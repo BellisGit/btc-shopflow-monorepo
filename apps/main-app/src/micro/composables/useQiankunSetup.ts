@@ -7,7 +7,7 @@
 import { registerMicroApps, start, initGlobalState } from 'qiankun';
 import { microApps } from '../apps';
 import { getLocaleFromStorage } from '@btc/shared-components/i18n';
-import { getMainAppId, initGlobalStateManager, getGlobalState, onGlobalStateChange } from '@btc/shared-core';
+import { getMainAppId, initGlobalStateManager, getGlobalState, onGlobalStateChange, logger } from '@btc/shared-core';
 import type { MicroAppStateActions } from '@btc/shared-core/composables/useGlobalState';
 import { initErrorMonitor, setupGlobalErrorCapture } from '../../utils/errorMonitor';
 import { setupQiankunLogFilter } from './useQiankunLogFilter';
@@ -126,8 +126,8 @@ export function setupQiankun() {
                 // 这样菜单、Tabbar、面包屑都能正确显示翻译后的文本
                 // 使用 nextTick 确保在下一个事件循环中注册，避免与 beforeMount 阶段的注册冲突
                 await new Promise(resolve => setTimeout(resolve, 0));
-                await registerManifestMenusForApp(appId).catch(console.error);
-                await registerManifestTabsForApp(appId).catch(console.error);
+                await registerManifestMenusForApp(appId).catch((err) => logger.error(`注册应用${appId}菜单失败`, err));
+                await registerManifestTabsForApp(appId).catch((err) => logger.error(`注册应用${appId}标签页失败`, err));
               } catch (error) {
                 console.warn(`[QiankunSetup] 合并 ${appId} 的国际化消息失败:`, error);
               }

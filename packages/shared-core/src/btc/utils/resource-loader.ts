@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger/index';
 ;
 /**
  * 资源加载器
@@ -723,7 +724,7 @@ function setupScriptInterceptor() {
                     script.dispatchEvent(new Event('load'));
                   })
                   .catch(error => {
-                    console.error(`[resource-loader] 加载脚本失败: ${value}`, error);
+                    logger.error(`[resource-loader] 加载脚本失败: ${value}`, error);
                     if (script.onerror) {
                       script.onerror(new ErrorEvent('error', { error }) as any);
                     }

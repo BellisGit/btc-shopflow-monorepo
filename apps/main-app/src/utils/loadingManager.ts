@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ;
 /**
  * Loading 管理器
@@ -60,7 +61,7 @@ export function loadingError(appName: string, error?: Error): void {
   finishLoading(appName);
 
   // 记录错误
-  console.error(`[loadingManager] Loading error for ${appName}:`, error);
+  logger.error(`[loadingManager] Loading error for ${appName}:`, error);
 
   // 可以在这里添加错误通知逻辑
   // 例如：显示错误提示、上报错误等

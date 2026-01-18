@@ -3,6 +3,7 @@
  * 负责清理凭证、调用API、设置标记等，但不处理路由重定向
  */
 import { sessionStorage } from '../utils/storage/session';
+import { logger } from '../utils/logger/index';
 
 export interface LogoutCoreOptions {
   /**
@@ -136,7 +137,7 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
 
     return true;
   } catch (error: any) {
-    console.error('[logoutCore] Logout cleanup error:', error);
+    logger.error('[logoutCore] Logout cleanup error:', error);
     return false;
   }
 }

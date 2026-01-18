@@ -7,6 +7,7 @@ import { setupI18n } from './i18n';
 import { registerSW } from 'virtual:pwa-register';
 import { useAuthStore } from './stores/auth';
 import { getDeviceInfo } from './utils/device';
+import { logger } from '@btc/shared-core';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // Vant 样式 - 全量导入
@@ -17,7 +18,7 @@ const app = createApp(App);
 
 // 全局错误处理 - 防止白屏
 app.config.errorHandler = (err, instance, info) => {
-  console.error('[Vue Error Handler]', err, info);
+  logger.error('[Vue Error Handler]', err, info);
   // 在移动端显示错误信息，避免白屏
   if (typeof document !== 'undefined') {
     const appEl = document.getElementById('app');
@@ -60,7 +61,7 @@ app.config.errorHandler = (err, instance, info) => {
 
 // 全局未处理的 Promise 拒绝处理
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('[Unhandled Promise Rejection]', event.reason);
+  logger.error('[Unhandled Promise Rejection]', event.reason);
   // 阻止默认的错误处理（避免在控制台显示）
   event.preventDefault();
 
@@ -107,7 +108,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 // 全局 JavaScript 错误处理
 window.addEventListener('error', (event) => {
-  console.error('[Global Error]', event.error || event.message);
+  logger.error('[Global Error]', event.error || event.message);
 
   // 在移动端显示错误信息
   if (typeof document !== 'undefined') {
@@ -159,21 +160,21 @@ try {
   const authStore = useAuthStore();
   authStore.init();
 } catch (error) {
-  console.error('[Auth Store Init Error]', error);
+  logger.error('[Auth Store Init Error]', error);
 }
 
 // Router
 try {
   app.use(router);
 } catch (error) {
-  console.error('[Router Error]', error);
+  logger.error('[Router Error]', error);
 }
 
 // i18n
 try {
   setupI18n(app);
 } catch (error) {
-  console.error('[i18n Setup Error]', error);
+  logger.error('[i18n Setup Error]', error);
 }
 
 // PWA Service Worker - 兼容性优化版本
@@ -208,7 +209,7 @@ try {
 try {
   app.mount('#app');
 } catch (error) {
-  console.error('[App Mount Error]', error);
+  logger.error('[App Mount Error]', error);
   // 如果挂载失败，显示错误信息
   if (typeof document !== 'undefined') {
     const appEl = document.getElementById('app');

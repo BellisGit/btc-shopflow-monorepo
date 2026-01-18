@@ -3,7 +3,7 @@
  */
 ;
 import { Octokit } from '@octokit/rest';
-import { storage } from '@btc/shared-core/utils';
+import { storage, logger } from '@btc/shared-core/utils';
 import type { QiankunActions } from '../types';
 import { setGlobalState } from '@btc/shared-core';
 
@@ -41,7 +41,7 @@ export function initGitHubPluginHost(options: GitHubPluginHostOptions = {}) {
 
       return true;
     } catch (error) {
-      console.error('[GitHub] Login failed:', error);
+      logger.error('[GitHub] Login failed:', error);
       return false;
     }
   };

@@ -12,7 +12,7 @@ import type { App } from 'vue';
 import 'virtual:svg-register';
 
 // 资源加载器初始化（必须在应用启动前初始化）
-import { initResourceLoader, initDynamicImportInterceptor } from '@btc/shared-core';
+import { initResourceLoader, initDynamicImportInterceptor, logger } from '@btc/shared-core';
 
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
@@ -205,7 +205,7 @@ export async function bootstrap(app: App) {
       });
       
       if (!success) {
-        console.error('[bootstrap] Logout core failed');
+        logger.error('[bootstrap] Logout core failed');
         // 即使失败，也执行兜底逻辑
         appStorage.auth?.clear();
         appStorage.user?.clear();
@@ -227,7 +227,7 @@ export async function bootstrap(app: App) {
         window.location.href = `/login?oauth_callback=${encodeURIComponent(currentPath)}`;
       }
     } catch (error) {
-      console.error('[bootstrap] Failed to execute logout:', error);
+      logger.error('[bootstrap] Failed to execute logout:', error);
       // 简单的兜底逻辑
       try {
         const authApi = (window as any).__APP_AUTH_API__;

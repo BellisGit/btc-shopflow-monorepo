@@ -1,11 +1,12 @@
 ;
 import { epsState, type EpsState } from './state';
 import { checkName, firstUpperCase, formatName, toCamel } from './utils';
+import { logger } from '@btc/shared-core';
 // config 未使用，已移除导入
 
 export function createService(_epsUrl: string, state: EpsState = epsState) {
   if (state.epsList.length === 0) {
-    console.error('[eps] 未找到实体! eps 数据获取失败');
+    logger.error('[eps] 未找到实体! eps 数据获取失败');
     throw new Error('EPS data fetch failed - no entities available');
   }
 

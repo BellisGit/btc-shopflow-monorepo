@@ -55,6 +55,7 @@ import {
 import { db } from '@/db';
 import { useInventoryStore } from '@/stores/inventory';
 import { inventoryApi } from '@/services/inventory';
+import { logger } from '@btc/shared-core';
 ;
 
 
@@ -91,7 +92,7 @@ onMounted(() => {
       });
     } catch (e) {
       showToast('二维码格式错误');
-      console.error('Failed to parse QR code:', e);
+      logger.error('Failed to parse QR code:', e);
     }
   }
 });
@@ -159,7 +160,7 @@ async function handleSubmit() {
       router.replace({ name: 'Scanner' });
     }, 500);
   } catch (error: any) {
-    console.error('[CountEntry] Failed to submit:', error);
+    logger.error('[CountEntry] Failed to submit:', error);
     const message = error?.message || '提交失败';
     showToast({
       type: 'fail',

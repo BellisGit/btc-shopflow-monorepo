@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { BtcFilterTableGroup } from '@btc/shared-components';
 import type { FilterCategory, TableColumn, FormItem } from '@btc/shared-components';
-import { type CrudService } from '@btc/shared-core';
+import { type CrudService, logger } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -211,7 +211,7 @@ const filterService = {
       // 确保返回的是 FilterCategory[] 格式
       return Array.isArray(res) ? res : (res?.list || res?.data || []);
     } catch (error) {
-      console.error('[FilterListTest] Failed to load filter categories:', error);
+      logger.error('[FilterListTest] Failed to load filter categories:', error);
       return [];
     }
   },

@@ -1,3 +1,4 @@
+import { logger } from '../logger/index';
 ;
 /**
  * 跨子域名共享存储工具
@@ -206,7 +207,7 @@ export function syncSettingsToCookie(settings: Record<string, any>): void {
     
     document.cookie = cookieString;
   } catch (error) {
-    console.error('[CrossDomain] 同步用户偏好设置到 Cookie 失败:', error);
+    logger.error('[CrossDomain] 同步用户偏好设置到 Cookie 失败:', error);
   }
 }
 
@@ -245,7 +246,7 @@ export function syncUserToCookie(user: Record<string, any>): void {
     
     document.cookie = cookieString;
   } catch (error) {
-    console.error('[CrossDomain] 同步用户信息到 Cookie 失败:', error);
+    logger.error('[CrossDomain] 同步用户信息到 Cookie 失败:', error);
   }
 }
 
@@ -278,7 +279,7 @@ export function clearCrossDomainCookies(): void {
     }
     deleteCookie(USER_COOKIE_KEY, userCookieOptions);
   } catch (error) {
-    console.error('[CrossDomain] 清除跨子域名共享的 Cookie 失败:', error);
+    logger.error('[CrossDomain] 清除跨子域名共享的 Cookie 失败:', error);
   }
 }
 

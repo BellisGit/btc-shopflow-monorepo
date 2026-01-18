@@ -2,6 +2,7 @@
 import { storage } from '@btc/shared-utils';
 import { db } from '@/db';
 import { getDeviceInfo } from '@/utils/device';
+import { logger } from '@btc/shared-core';
 
 // 获取 API baseURL（使用 try-catch 避免生产环境 import.meta 问题）
 function getApiBaseURL(): string {
@@ -132,7 +133,7 @@ export async function processQueue() {
       await syncOp(op);
       await db.pending_ops.delete(op.id!);
     } catch (error) {
-      console.error(`[BackgroundSync] Failed to sync op ${op.id}:`, error);
+      logger.error(`[BackgroundSync] Failed to sync op ${op.id}:`, error);
       await db.pending_ops.update(op.id!, {
         retries: (op.retries || 0) + 1,
       });

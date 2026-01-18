@@ -5,7 +5,7 @@ import { microApps } from './apps';
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
-import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
+import { getManifestTabs, getManifestMenus, logger } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import { tSync } from '../i18n/getters';
@@ -315,7 +315,7 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      console.error(`[qiankun] Container #subapp-viewport is not in DOM`);
+                      logger.error(`[qiankun] Container #subapp-viewport is not in DOM`);
                       reject(new Error(`Container #subapp-viewport is not in DOM, cannot load application ${app.name}`));
                       return;
                     }
@@ -372,7 +372,7 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    console.error(`[qiankun] Container #subapp-viewport not found within ${maxRetries * retryDelay}ms`);
+                    logger.error(`[qiankun] Container #subapp-viewport not found within ${maxRetries * retryDelay}ms`);
                     reject(new Error(`Container #subapp-viewport does not exist, cannot load application ${app.name}`));
                   }
                 }

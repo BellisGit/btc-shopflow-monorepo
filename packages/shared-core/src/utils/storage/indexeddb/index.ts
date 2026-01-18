@@ -7,6 +7,7 @@
 import type { Dexie, Table } from 'dexie';
 import { createDashboardDB, createIndexedDB, getDefaultDashboardDB, isIndexedDBSupported } from './database';
 import type { DashboardDataItem, QueryFilters, QueryOptions } from './types';
+import { logger } from '../../logger/index';
 
 // 导出数据库创建函数
 export { createDashboardDB, createIndexedDB, getDefaultDashboardDB, isIndexedDBSupported };
@@ -55,7 +56,7 @@ export async function queryByTimeRange<T = any>(
 
     return results;
   } catch (error) {
-    console.error('[IndexedDB] 时间范围查询失败:', error);
+    logger.error('[IndexedDB] 时间范围查询失败:', error);
     throw error;
   }
 }
@@ -98,7 +99,7 @@ export async function queryByOperator<T = any>(
 
     return results;
   } catch (error) {
-    console.error('[IndexedDB] 按操作人查询失败:', error);
+    logger.error('[IndexedDB] 按操作人查询失败:', error);
     throw error;
   }
 }
@@ -141,7 +142,7 @@ export async function queryByType<T = any>(
 
     return results;
   } catch (error) {
-    console.error('[IndexedDB] 按类型查询失败:', error);
+    logger.error('[IndexedDB] 按类型查询失败:', error);
     throw error;
   }
 }
@@ -184,7 +185,7 @@ export async function queryByCategory<T = any>(
 
     return results;
   } catch (error) {
-    console.error('[IndexedDB] 按分类查询失败:', error);
+    logger.error('[IndexedDB] 按分类查询失败:', error);
     throw error;
   }
 }
@@ -277,7 +278,7 @@ export async function queryWithFilters<T = any>(
 
     return results;
   } catch (error) {
-    console.error('[IndexedDB] 多条件查询失败:', error);
+    logger.error('[IndexedDB] 多条件查询失败:', error);
     throw error;
   }
 }
@@ -293,7 +294,7 @@ export async function batchAdd<T = any>(table: Table<T, any>, items: T[]): Promi
     await table.bulkAdd(items);
     return items.length;
   } catch (error) {
-    console.error('[IndexedDB] 批量添加失败:', error);
+    logger.error('[IndexedDB] 批量添加失败:', error);
     throw error;
   }
 }
@@ -309,7 +310,7 @@ export async function batchUpdate<T = any>(table: Table<T, any>, items: T[]): Pr
     await table.bulkPut(items);
     return items.length;
   } catch (error) {
-    console.error('[IndexedDB] 批量更新失败:', error);
+    logger.error('[IndexedDB] 批量更新失败:', error);
     throw error;
   }
 }
@@ -325,7 +326,7 @@ export async function batchDelete(table: Table<any, any>, keys: any[]): Promise<
     await table.bulkDelete(keys);
     return keys.length;
   } catch (error) {
-    console.error('[IndexedDB] 批量删除失败:', error);
+    logger.error('[IndexedDB] 批量删除失败:', error);
     throw error;
   }
 }
@@ -338,7 +339,7 @@ export async function clearTable(table: Table<any, any>): Promise<void> {
   try {
     await table.clear();
   } catch (error) {
-    console.error('[IndexedDB] 清空表失败:', error);
+    logger.error('[IndexedDB] 清空表失败:', error);
     throw error;
   }
 }
@@ -352,7 +353,7 @@ export async function getCount(table: Table<any, any>): Promise<number> {
   try {
     return await table.count();
   } catch (error) {
-    console.error('[IndexedDB] 获取记录数失败:', error);
+    logger.error('[IndexedDB] 获取记录数失败:', error);
     throw error;
   }
 }

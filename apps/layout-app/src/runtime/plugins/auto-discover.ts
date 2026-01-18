@@ -32,7 +32,7 @@ export async function discoverSystemPlugins(): Promise<Plugin[]> {
         }
       }
     } catch (error) {
-      console.error(`[layout-app] ${tSync('common.error.plugin_parse_failed')}:`, filePath, error);
+      logger.error(`[layout-app] ${tSync('common.error.plugin_parse_failed')}:`, filePath, error);
     }
   }
 

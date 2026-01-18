@@ -3,6 +3,7 @@
  */
 import { checkUser } from './useUserCheck';
 import { storeUserCheckData, getUserCheckDataFromStorage, isValidRemainingTime } from './useUserCheckStorage';
+import { logger } from '../../utils/logger/index';
 
 type PollingCallback = (data: { remainingTime: number; status: string }) => void;
 
@@ -27,7 +28,7 @@ async function performLogout(): Promise<void> {
         await globalLogout();
         return;
       } catch (error) {
-        console.error('[useUserCheckPolling] Logout function failed:', error);
+        logger.error('[useUserCheckPolling] Logout function failed:', error);
       }
     }
   }
@@ -63,16 +64,16 @@ function startExitProcess(): void {
         });
       }
     }).catch((error) => {
-      console.error('[useUserCheckPolling] Failed to import BtcMessage:', error);
+      logger.error('[useUserCheckPolling] Failed to import BtcMessage:', error);
     });
   } catch (error) {
-    console.error('[useUserCheckPolling] Failed to show exit warning:', error);
+    logger.error('[useUserCheckPolling] Failed to show exit warning:', error);
   }
 
   // 5秒后执行退出
   exitTimer = setTimeout(() => {
     performLogout().catch((error) => {
-      console.error('[useUserCheckPolling] Failed to perform logout:', error);
+      logger.error('[useUserCheckPolling] Failed to perform logout:', error);
     });
   }, 5000);
 }
@@ -101,7 +102,7 @@ function calculateActualRemainingTime(
     const actualRemainingTime = Math.max(0, Math.floor((expireTime - currentTime) / 1000));
     return actualRemainingTime;
   } catch (error) {
-    console.error('[useUserCheckPolling] Failed to calculate actual remaining time:', error);
+    logger.error('[useUserCheckPolling] Failed to calculate actual remaining time:', error);
     return -1;
   }
 }
@@ -237,7 +238,7 @@ async function performCheck(): Promise<void> {
       }, interval);
     }
   } catch (error) {
-    console.error('[useUserCheckPolling] Check failed:', error);
+    logger.error('[useUserCheckPolling] Check failed:', error);
     // 即使出错也继续轮询（使用默认间隔）
     if (isPolling) {
       pollingTimer = setTimeout(() => {

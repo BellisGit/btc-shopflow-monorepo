@@ -10,6 +10,7 @@
 ;
 
 import { ref, onUnmounted, type Ref } from 'vue';
+import { logger } from '../utils/logger/index';
 
 /**
  * 通信桥消息类型
@@ -205,7 +206,7 @@ export function useCrossDomainBridge(
                 try {
                   handler(message.payload, message.origin);
                 } catch (error) {
-                  console.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
+                  logger.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
                 }
               });
             }
@@ -440,7 +441,7 @@ export function useCrossDomainBridge(
               try {
                 handler(message.payload, message.origin);
               } catch (error) {
-                console.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
+                logger.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
               }
             });
           }
@@ -551,7 +552,7 @@ export function useCrossDomainBridge(
               // 检查重试次数，避免无限重试
               if (instance.retryCount >= instance.maxRetries) {
                 if (import.meta.env.DEV) {
-                  console.error('[useCrossDomainBridge] Max retries reached, giving up on iframe bridge. Will use BroadcastChannel only.');
+                  logger.error('[useCrossDomainBridge] Max retries reached, giving up on iframe bridge. Will use BroadcastChannel only.');
                 }
                 // 标记为就绪（即使失败），避免阻塞应用
                 isReady.value = true;
@@ -633,13 +634,13 @@ export function useCrossDomainBridge(
     instance.iframe.onerror = () => {
       const errorMsg = `[useCrossDomainBridge] Iframe failed to load: ${finalBridgeUrl}`;
       if (import.meta.env.DEV) {
-        console.error(errorMsg);
-        console.error('[useCrossDomainBridge] This usually means bridge.html does not exist or is not accessible.');
-        console.error('[useCrossDomainBridge] Please check:');
-        console.error('  1. Is bridge.html deployed to the server?');
-        console.error('  2. Is Nginx configured correctly?');
-        console.error('  3. Are file permissions correct?');
-        console.error('  4. Try accessing the URL directly in browser:', finalBridgeUrl);
+        logger.error(errorMsg);
+        logger.error('[useCrossDomainBridge] This usually means bridge.html does not exist or is not accessible.');
+        logger.error('[useCrossDomainBridge] Please check:');
+        logger.error('  1. Is bridge.html deployed to the server?');
+        logger.error('  2. Is Nginx configured correctly?');
+        logger.error('  3. Are file permissions correct?');
+        logger.error('  4. Try accessing the URL directly in browser:', finalBridgeUrl);
       } else {
         // 生产环境也记录错误，但使用 console.warn 避免过于显眼
         console.warn(errorMsg);
@@ -741,7 +742,7 @@ export function useCrossDomainBridge(
           // 检查重试次数，避免无限重试
           if (instance.retryCount >= instance.maxRetries) {
             if (import.meta.env.DEV) {
-              console.error('[useCrossDomainBridge] Max retries reached in sendMessage, giving up on iframe bridge.');
+              logger.error('[useCrossDomainBridge] Max retries reached in sendMessage, giving up on iframe bridge.');
             }
             // 标记为就绪（即使失败），避免阻塞应用
             isReady.value = true;

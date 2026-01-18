@@ -27,6 +27,13 @@ function getDbPath() {
 export function initDatabase() {
   const dbPath = getDbPath();
   const fs = require('fs');
+  const path = require('path');
+  
+  // 确保数据库目录存在
+  const dbDir = path.dirname(dbPath);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
   
   // 检查数据库文件是否存在
   const dbExists = fs.existsSync(dbPath);
@@ -349,6 +356,15 @@ export function initDatabase() {
  */
 export function getDatabase() {
   const dbPath = getDbPath();
+  const fs = require('fs');
+  const path = require('path');
+  
+  // 确保数据库目录存在
+  const dbDir = path.dirname(dbPath);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+  
   const db = new Database(dbPath);
   db.pragma('foreign_keys = ON');
   return db;

@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { computed, inject, useSlots } from 'vue';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
@@ -49,7 +49,7 @@ const crud = inject<UseCrudReturn<any>>('btc-crud');
 if (!crud) {
   // 关键：在生产环境下，这个错误必须可见，不能被静默处理
   const error = new Error('[BtcMultiDeleteBtn] Must be used inside <BtcCrud>. This usually means BtcCrud component is not properly rendered or provide/inject context is broken.');
-  console.error('[BtcMultiDeleteBtn] CRITICAL ERROR:', error.message, {
+  logger.error('[BtcMultiDeleteBtn] CRITICAL ERROR:', error.message, {
     componentName: 'BtcMultiDeleteBtn',
     injectKey: 'btc-crud',
     stack: error.stack,
@@ -76,7 +76,7 @@ const handleMultiDeleteClick = () => {
   // 关键：在生产环境下，这些错误必须可见
   if (!crud) {
     const errorMsg = '[BtcMultiDeleteBtn] crud is not available - inject failed or BtcCrud not rendered';
-    console.error(errorMsg, {
+    logger.error(errorMsg, {
       componentName: 'BtcMultiDeleteBtn',
       injectKey: 'btc-crud',
       timestamp: new Date().toISOString(),
@@ -86,7 +86,7 @@ const handleMultiDeleteClick = () => {
 
   if (typeof crud.handleMultiDelete !== 'function') {
     const errorMsg = '[BtcMultiDeleteBtn] crud.handleMultiDelete is not a function';
-    console.error(errorMsg, {
+    logger.error(errorMsg, {
       crud,
       handleMultiDelete: crud.handleMultiDelete,
       type: typeof crud.handleMultiDelete,
@@ -99,7 +99,7 @@ const handleMultiDeleteClick = () => {
   try {
     crud.handleMultiDelete(crud.selection.value as any[]);
   } catch (error) {
-    console.error('[BtcMultiDeleteBtn] Error calling crud.handleMultiDelete:', error, {
+    logger.error('[BtcMultiDeleteBtn] Error calling crud.handleMultiDelete:', error, {
       errorMessage: error instanceof Error ? error.message : String(error),
       errorStack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString(),

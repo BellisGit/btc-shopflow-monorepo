@@ -5,7 +5,7 @@ import { microApps } from './apps';
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
-import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
+import { getManifestTabs, getManifestMenus, logger } from '@btc/shared-core/manifest';
 import { useProcessStore, type ProcessItem } from '../store';
 import { getCurrentAppFromPath } from '@btc/shared-components';
 import { assignIconsToMenuTree } from '@btc/shared-core';
@@ -347,7 +347,7 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      console.error(`[qiankun]`, 'common.system.container_not_in_dom');
+                      logger.error(`[qiankun]`, 'common.system.container_not_in_dom');
                       reject(new Error(`common.system.container_not_in_dom_cannot_load ${app.name}`));
                       return;
                     }
@@ -395,7 +395,7 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    console.error(`[qiankun]`, 'common.system.container_not_found', `${maxRetries * retryDelay}ms`);
+                    logger.error(`[qiankun]`, 'common.system.container_not_found', `${maxRetries * retryDelay}ms`);
                     reject(new Error(`common.system.container_not_exists ${app.name}`));
                   }
                 }

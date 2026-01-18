@@ -3,6 +3,7 @@ import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import { useMessage } from './use-message';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { logger } from '@btc/shared-core';
 
 // 配置 NProgress
 NProgress.configure({
@@ -152,6 +153,6 @@ export function loadingError(appName: string, error?: Error) {
   const message = useMessage();
   message.error(`Failed to load "${appName}", please refresh and retry`);
 
-  console.error(`[Application load failed] ${appName}:`, error);
+  logger.error(`[Application load failed] ${appName}:`, error);
 }
 

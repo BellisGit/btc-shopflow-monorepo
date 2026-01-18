@@ -1,5 +1,6 @@
 ;
 import { showToast } from 'vant';
+import { logger } from '@btc/shared-core';
 
 export function useNumberAuthLogin() {
   const loading = ref(false);
@@ -43,7 +44,7 @@ export function useNumberAuthLogin() {
         query: route.query,
       });
     } catch (error: any) {
-      console.error('跳转到授权页面失败:', error);
+      logger.error('跳转到授权页面失败:', error);
       showToast({
         message: '跳转失败，请重试',
         type: 'fail',

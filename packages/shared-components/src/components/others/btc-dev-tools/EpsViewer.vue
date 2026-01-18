@@ -86,6 +86,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { Refresh, Search } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { logger } from '@btc/shared-core';
 ;
 
 
@@ -323,7 +324,7 @@ function refresh() {
   try {
     treeData.value = buildTree();
   } catch (error) {
-    console.error('构建 EPS 树失败:', error);
+    logger.error('构建 EPS 树失败:', error);
     treeData.value = [];
   }
 }

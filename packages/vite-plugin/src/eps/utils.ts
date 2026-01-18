@@ -5,6 +5,7 @@
 ;
 
 import type { EpsColumn, EpsEntity, TypeMapping } from './types';
+import { logger } from '@btc/shared-core';
 
 /**
  * 默认类型映射配置
@@ -108,7 +109,7 @@ export async function formatCode(text: string): Promise<string | null> {
       trailingComma: 'none',
     });
   } catch (err) {
-    console.error('[btc:eps] 代码格式化失败:', err);
+    logger.error('[btc:eps] 代码格式化失败:', err);
     return text;
   }
 }
@@ -195,7 +196,7 @@ export async function createDir(dirPath: string, recursive = false): Promise<voi
       fs.mkdirSync(dirPath, { recursive });
     }
   } catch (_error) {
-    console.error(`[btc:eps] 创建目录失败: ${dirPath}`, _error);
+    logger.error(`[btc:eps] 创建目录失败: ${dirPath}`, _error);
   }
 }
 
@@ -214,7 +215,7 @@ export async function readFile(filePath: string, parseJson = false): Promise<str
     const content = fs.readFileSync(filePath, 'utf-8');
     return parseJson ? JSON.parse(content) : content;
   } catch (_error) {
-    console.error(`[btc:eps] 读取文件失败: ${filePath}`, _error);
+    logger.error(`[btc:eps] 读取文件失败: ${filePath}`, _error);
     return parseJson ? null : '';
   }
 }
@@ -231,7 +232,7 @@ export async function writeFile(filePath: string, content: string): Promise<bool
     fs.writeFileSync(filePath, content, 'utf-8');
     return true;
   } catch (_error) {
-    console.error(`[btc:eps] 写入文件失败: ${filePath}`, _error);
+    logger.error(`[btc:eps] 写入文件失败: ${filePath}`, _error);
     return false;
   }
 }
@@ -241,7 +242,7 @@ export async function writeFile(filePath: string, content: string): Promise<bool
  * @param message 错误消息
  */
 export function error(message: string): void {
-  console.error(`[btc:eps] ${message}`);
+  logger.error(`[btc:eps] ${message}`);
 }
 
 /**

@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { BtcMessage } from '@btc/shared-components';
 import { Promotion, DocumentCopy, Refresh } from '@element-plus/icons-vue';
-import { reportLog, getLogReporter, getQueueLength, type LogEntry, type LogLevel } from '@btc/shared-core/utils/log-reporter';
+import { reportLog, getLogReporter, getQueueLength, type LogEntry, type LogLevel, logger } from '@btc/shared-core/utils/log-reporter';
 import { getFullAppId, convertToServerLogEntry, toISOString } from '@btc/shared-core/utils/log-reporter';
 import { getCurrentAppId } from '@btc/shared-core/utils/env-info';
 import { getAllApps } from '@btc/shared-core';
@@ -416,7 +416,7 @@ const sendQpsTestLogs = async () => {
 
     updateQueueLength();
   } catch (error: any) {
-    console.error('QPS测试失败:', error);
+    logger.error('QPS测试失败:', error);
     const errorMessage = error?.message || String(error);
     BtcMessage.error('QPS测试失败：' + errorMessage);
   } finally {

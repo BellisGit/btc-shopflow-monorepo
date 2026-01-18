@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
@@ -145,7 +145,7 @@ const domainService = {
       // 返回域列表
       return Array.from(domainMap.values());
     } catch (error) {
-      console.error('[InventoryTicket] Failed to load domains from position service:', error);
+      logger.error('[InventoryTicket] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -388,7 +388,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryTicket] Export failed:', error);
+    logger.error('[InventoryTicket] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

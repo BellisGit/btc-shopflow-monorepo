@@ -8,6 +8,7 @@
 import { showToast, showLoadingToast, closeToast } from 'vant';
 import { getPhoneNumberServer, getAuthTokens, getPhoneWithToken } from '@/utils/phone-auth';
 import logoUrl from '@/assets/images/logo.png';
+import { logger } from '@btc/shared-core';
 ;
 
 
@@ -129,7 +130,7 @@ onMounted(async () => {
               const spToken = tokenRes.spToken;
 
               if (!spToken) {
-                console.error('未获取到spToken');
+                logger.error('未获取到spToken');
                 showToast({
                   message: '未获取到登录Token',
                   type: 'fail',
@@ -182,7 +183,7 @@ onMounted(async () => {
                   }
                 } else {
                   // 登录失败
-                  console.error('登录失败:', response.msg);
+                  logger.error('登录失败:', response.msg);
                   showToast({
                     message: response.msg || '登录失败',
                     type: 'fail',
@@ -197,7 +198,7 @@ onMounted(async () => {
                 // 关闭加载提示
                 closeToast();
 
-                console.error('调用登录接口失败:', error);
+                logger.error('调用登录接口失败:', error);
 
                 // 根据错误类型显示不同的提示信息
                 let errorMessage = '登录失败，请稍后重试';
@@ -231,7 +232,7 @@ onMounted(async () => {
              * 入参 res 包含错误信息：message 或 msg
              */
             error: (tokenRes: any) => {
-              console.error('获取Token失败:', tokenRes);
+              logger.error('获取Token失败:', tokenRes);
               closeToast();
               const errorMsg = tokenRes.message || tokenRes.msg || '获取登录Token失败';
               showToast({
@@ -297,7 +298,7 @@ onMounted(async () => {
           });
         } else {
           closeToast();
-          console.error('鉴权失败，code:', res.code, 'message:', res.message || res.msg);
+          logger.error('鉴权失败，code:', res.code, 'message:', res.message || res.msg);
           showToast({
             message: res.message || res.msg || '鉴权失败',
             type: 'fail',
@@ -311,7 +312,7 @@ onMounted(async () => {
       },
       error: (res: any) => {
         closeToast();
-        console.error('鉴权失败:', res);
+        logger.error('鉴权失败:', res);
 
         // 鉴权失败，可能是网络环境问题（需要移动数据网络）
         const errorMsg =
@@ -329,7 +330,7 @@ onMounted(async () => {
     });
   } catch (error: any) {
     closeToast();
-    console.error('调用 checkLoginAvailable 失败:', error);
+    logger.error('调用 checkLoginAvailable 失败:', error);
 
     // 根据错误类型显示不同的提示信息
     let errorMessage = '一键登录失败，请使用其他方式登录';

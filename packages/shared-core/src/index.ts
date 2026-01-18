@@ -141,11 +141,9 @@ export * from './eps';
 // ========== 从 shared-utils 迁移的工具模块 ==========
 export * from './utils';
 export { getCookieDomain } from './utils/storage/cookie';
-// 日志模块已移除，请直接使用 console
-// 但保留错误上报功能（reportError）
-export { reportError } from './utils/logger';
-// export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
-// export type { LogContext, LogLevel, LoggerOptions, Logger } from './utils/logger';
+// 日志模块导出
+export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
+export type { LogContext, LogLevel } from './utils/logger/types';
 // 显式导出存储工具（确保 Pinia 插件正确导出）
 export { persistedStatePlugin, persistedStatePluginSession, createPersistedStatePlugin } from './utils/storage/pinia-persist';
 export type { PersistedStatePluginOptions } from './utils/storage/pinia-persist';
@@ -212,6 +210,7 @@ export type { RequestAdapter } from './utils/api-center/client';
 // ========== 日志上报中心导出 ==========
 export * from './utils/log-reporter';
 export { getLogReporter, initLogReporter, reportLog, getQueueLength, getLogFilterOptions } from './utils/log-reporter';
-export type { LogEntry, LogLevel, ErrorInfo, LogReporterOptions, LogReportResponse } from './utils/log-reporter/types';
+// LogLevel 已在上面从 logger/types 导出，这里不再重复导出
+export type { LogEntry, ErrorInfo, LogReporterOptions, LogReportResponse } from './utils/log-reporter/types';
 export type { LogFilterOptions } from './utils/log-reporter/utils';
 

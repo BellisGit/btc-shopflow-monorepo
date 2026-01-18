@@ -5,6 +5,7 @@
  */
 import { storage } from './storage/local';
 import { sessionStorage } from './storage/session';
+import { logger } from './logger/index';
 
 // 防止重复触发退出的标志
 let isLoggingOut = false;
@@ -132,7 +133,7 @@ export async function triggerAutoLogout(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('[storageValidityCheck] 自动退出失败:', error);
+    logger.error('[storageValidityCheck] 自动退出失败:', error);
     // 即使退出失败，也尝试跳转到登录页（但需要检查是否已在登录页）
     if (typeof window !== 'undefined' && !isLoginPage()) {
       try {

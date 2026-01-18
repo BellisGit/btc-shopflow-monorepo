@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcConfirm } from '@btc/shared-components';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -139,8 +139,8 @@ const handleAvatarError = (event: Event) => {
 
   // 如果失败的是 logo.png，不再重试
   if (failedUrl.includes('logo.png')) {
-    console.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
-    console.error('[UserInfo] URL:', failedUrl);
+    logger.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
+    logger.error('[UserInfo] URL:', failedUrl);
     return;
   }
 
@@ -192,7 +192,7 @@ const handleCommand = (command: string) => {
         .then(() => {
           // 用户确认退出
           logout().catch((error) => {
-            console.error('[UserInfo] logout 执行失败:', error);
+            logger.error('[UserInfo] logout 执行失败:', error);
           });
         })
         .catch(() => {

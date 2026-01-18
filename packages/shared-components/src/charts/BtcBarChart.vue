@@ -16,6 +16,7 @@ import { useDark } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
 import { useChart } from './composables/useChart';
 import type { BaseChartProps } from './types/base';
+import { logger } from '@btc/shared-core';
 ;
 
 
@@ -183,7 +184,7 @@ watch(
               });
                   }
                 } catch (error) {
-            console.error('[BtcBarChart] 更新图表失败:', error);
+            logger.error('[BtcBarChart] 更新图表失败:', error);
           }
         }
       });

@@ -7,6 +7,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { onUnmounted } from 'vue';
 import { useCrossDomainBridge } from './useCrossDomainBridge';
 import { logoutCore, type LogoutCoreOptions } from '../auth/logoutCore';
+import { logger } from '../utils/logger/index';
 
 export interface UseLogoutOptions {
   /**
@@ -88,7 +89,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
       const success = await logoutCore(logoutCoreOptions);
 
       if (!success) {
-        console.error('[useLogout] Logout core failed');
+        logger.error('[useLogout] Logout core failed');
         isLoggingOut = false;
         return;
       }
@@ -104,7 +105,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
         window.location.href = `/login?logout=1${oauthCallbackParam}`;
       }
     } catch (error: any) {
-      console.error('Logout cleanup error:', error);
+      logger.error('Logout cleanup error:', error);
       isLoggingOut = false;
     } finally {
       // 如果页面不跳转（远程退出），立即重置标志
@@ -163,7 +164,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
 
     // 执行统一登出逻辑（异步处理）
     performLogoutCleanup(true).catch((error) => {
-      console.error('[useLogout] Error in logout cleanup:', error);
+      logger.error('[useLogout] Error in logout cleanup:', error);
     }); // true 表示是远程触发的登出
   });
 

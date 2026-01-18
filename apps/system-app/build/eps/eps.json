@@ -2,6 +2,7 @@
 	{
 		"prefix": "/api/system/test/",
 		"name": "test",
+		"resource": "System",
 		"api": [
 			{
 				"name": "510",
@@ -13,6 +14,66 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "方法参数校验异常",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "514",
+				"method": "GET",
+				"path": "/514",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取客户端id失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "516",
+				"method": "GET",
+				"path": "/516",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "连接keycloak失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "511",
+				"method": "GET",
+				"path": "/511",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "登录失败，未获取到令牌",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "513",
+				"method": "GET",
+				"path": "/513",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取领域失败",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -49,66 +110,6 @@
 				}
 			},
 			{
-				"name": "514",
-				"method": "GET",
-				"path": "/514",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端id失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "511",
-				"method": "GET",
-				"path": "/511",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "登录失败，未获取到令牌",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "515",
-				"method": "GET",
-				"path": "/515",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端密钥失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "518",
-				"method": "GET",
-				"path": "/518",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取到的身份令牌为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "512",
 				"method": "GET",
 				"path": "/512",
@@ -118,66 +119,6 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "keycloak客户端地址错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "520",
-				"method": "GET",
-				"path": "/520",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "没有该工号",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "516",
-				"method": "GET",
-				"path": "/516",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "连接keycloak失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "513",
-				"method": "GET",
-				"path": "/513",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取领域失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "521",
-				"method": "GET",
-				"path": "/521",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "初始密码错误",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -199,15 +140,15 @@
 				}
 			},
 			{
-				"name": "526",
+				"name": "515",
 				"method": "GET",
-				"path": "/526",
+				"path": "/515",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "表单id过期",
+				"summary": "获取客户端密钥失败",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -229,45 +170,30 @@
 				}
 			},
 			{
-				"name": "528",
+				"name": "526",
 				"method": "GET",
-				"path": "/528",
+				"path": "/526",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "验证码已过期",
+				"summary": "表单id过期",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
 				}
 			},
 			{
-				"name": "529",
+				"name": "520",
 				"method": "GET",
-				"path": "/529",
+				"path": "/520",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "邮箱不存在",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "523",
-				"method": "GET",
-				"path": "/523",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "数据错误",
+				"summary": "没有该工号",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -289,6 +215,21 @@
 				}
 			},
 			{
+				"name": "528",
+				"method": "GET",
+				"path": "/528",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "验证码已过期",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "522",
 				"method": "GET",
 				"path": "/522",
@@ -298,6 +239,66 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "参数不能为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "521",
+				"method": "GET",
+				"path": "/521",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "初始密码错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "518",
+				"method": "GET",
+				"path": "/518",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取到的身份令牌为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "523",
+				"method": "GET",
+				"path": "/523",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "数据错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "529",
+				"method": "GET",
+				"path": "/529",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "邮箱不存在",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -320,19 +321,621 @@
 		"namespace": "/api/system/test/"
 	},
 	{
-		"prefix": "/api/system/base/approval",
-		"name": "approval",
+		"prefix": "/api/logistics/warehouse/position",
+		"name": "position",
+		"resource": "sys_domain_position",
 		"api": [
 			{
-				"name": "confirm",
+				"name": "me",
+				"method": "GET",
+				"path": "/me",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "logistics.base:sys_domain_position:read",
+				"summary": "根据用户名查询域与仓位信息",
+				"tag": "SysDomainPositionController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "page",
 				"method": "POST",
-				"path": "/confirm",
+				"path": "/page",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.base:sys_domain_position:create",
+				"summary": "分页查询",
+				"tag": "SysDomainPositionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.base:sys_domain_position:create",
+				"summary": "新增",
+				"tag": "SysDomainPositionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "PUT",
+				"path": "/update",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "logistics.base:sys_domain_position:update",
+				"summary": "根据ID更新",
+				"tag": "SysDomainPositionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "list",
+				"method": "POST",
+				"path": "/list",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.base:sys_domain_position:create",
+				"summary": "查询列表",
+				"tag": "SysDomainPositionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "delete",
+				"method": "DELETE",
+				"path": "/delete/{id}",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "DELETE",
+				"auth": "permission",
+				"permission": "logistics.base:sys_domain_position:delete",
+				"summary": "根据ID删除",
+				"tag": "SysDomainPositionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "id",
+							"name": "path:id",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "int",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "域ID",
+				"nullable": true,
+				"propertyName": "domainId",
+				"source": "domain_id",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "部门ID",
+				"nullable": true,
+				"propertyName": "deptId",
+				"source": "dept_id",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "仓位",
+				"nullable": true,
+				"propertyName": "position",
+				"source": "position",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "描述",
+				"nullable": true,
+				"propertyName": "description",
+				"source": "description",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "更新时间",
+				"nullable": true,
+				"propertyName": "updatedAt",
+				"source": "updated_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "域名称",
+				"nullable": true,
+				"propertyName": "name",
+				"source": "name",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "页码",
+				"nullable": false,
+				"propertyName": "page",
+				"source": "page",
+				"type": "number",
+				"dict": null,
+				"defaultValue": 1,
+				"extensions": null
+			},
+			{
+				"comment": "每页数量",
+				"nullable": false,
+				"propertyName": "size",
+				"source": "size",
+				"type": "number",
+				"dict": null,
+				"defaultValue": 20,
+				"extensions": null
+			},
+			{
+				"comment": "关键词",
+				"nullable": true,
+				"propertyName": "keyword",
+				"source": "keyword",
+				"type": "string",
+				"dict": null,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"search": {
+			"fieldEq": [],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.base",
+		"namespace": "/api/logistics/warehouse/position"
+	},
+	{
+		"prefix": "/api/logistics/base/inventory/check",
+		"name": "check",
+		"resource": "sys_inventory_check",
+		"api": [
+			{
+				"name": "result",
+				"method": "POST",
+				"path": "/result",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.base:sys_inventory_check:create",
+				"summary": "物流域结果",
+				"tag": "InventoryCheckController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.base:sys_inventory_check:create",
+				"summary": "盘点结果表",
+				"tag": "InventoryCheckController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "top",
+				"method": "POST",
+				"path": "/top",
+				"module": "logistics.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.base:sys_inventory_check:create",
+				"summary": "物流差异TOP",
+				"tag": "InventoryCheckController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "关联盘点任务",
+				"nullable": true,
+				"propertyName": "baseId",
+				"source": "base_id",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料编码",
+				"nullable": true,
+				"propertyName": "materialCode",
+				"source": "material_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料名称",
+				"nullable": true,
+				"propertyName": "materialName",
+				"source": "material_name",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料规格",
+				"nullable": true,
+				"propertyName": "specification",
+				"source": "specification",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "计量单位",
+				"nullable": true,
+				"propertyName": "unit",
+				"source": "unit",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "批次号",
+				"nullable": true,
+				"propertyName": "batchNo",
+				"source": "batch_no",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "账面数量",
+				"nullable": true,
+				"propertyName": "bookQty",
+				"source": "book_qty",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "实际数量",
+				"nullable": true,
+				"propertyName": "actualQty",
+				"source": "actual_qty",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "仓位",
+				"nullable": true,
+				"propertyName": "storageLocation",
+				"source": "storage_location",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "差异数量",
+				"nullable": true,
+				"propertyName": "diffQty",
+				"source": "diff_qty",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "差异率",
+				"nullable": true,
+				"propertyName": "diffRate",
+				"source": "diff_rate",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点人",
+				"nullable": true,
+				"propertyName": "checkerId",
+				"source": "checker_id",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "是否有差异",
+				"nullable": true,
+				"propertyName": "isDiff",
+				"source": "is_diff",
+				"type": "int",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "明细备注",
+				"nullable": true,
+				"propertyName": "remark",
+				"source": "remark",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "删除时间",
+				"nullable": true,
+				"propertyName": "deletedAt",
+				"source": "deleted_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "materialCode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "position",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "materialCode",
+					"value": ""
+				},
+				{
+					"field": "position",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "物料编码",
+					"nullable": true,
+					"propertyName": "materialCode",
+					"source": "material_code",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "position",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.base",
+		"namespace": "/api/logistics/base/inventory/check"
+	},
+	{
+		"prefix": "/api/system/base/approval",
+		"name": "approval",
+		"resource": "logistics_approval",
+		"api": [
+			{
+				"name": "revoke",
+				"method": "POST",
+				"path": "/revoke",
 				"module": "system.base",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "system.base:logistics_approval:create",
-				"summary": "确认",
+				"summary": "撤销确认",
 				"tag": "ApprovalController",
 				"dts": {
 					"parameters": [
@@ -350,15 +953,15 @@
 				}
 			},
 			{
-				"name": "revoke",
+				"name": "confirm",
 				"method": "POST",
-				"path": "/revoke",
+				"path": "/confirm",
 				"module": "system.base",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "system.base:logistics_approval:create",
-				"summary": "撤销确认",
+				"summary": "确认",
 				"tag": "ApprovalController",
 				"dts": {
 					"parameters": [
@@ -409,7 +1012,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "bigint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -419,7 +1022,7 @@
 				"propertyName": "domainId",
 				"source": "domain_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -429,7 +1032,7 @@
 				"propertyName": "checkNo",
 				"source": "check_no",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -439,7 +1042,7 @@
 				"propertyName": "status",
 				"source": "status",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -449,7 +1052,7 @@
 				"propertyName": "confirmer",
 				"source": "confirmer",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -459,7 +1062,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -469,7 +1072,7 @@
 				"propertyName": "name",
 				"source": "name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -506,7 +1109,7 @@
 					"propertyName": "checkNo",
 					"source": "check_no",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -520,6 +1123,7 @@
 	{
 		"prefix": "/api/system/base/bom",
 		"name": "bom",
+		"resource": "sys_btc_bom",
 		"api": [
 			{
 				"name": "add",
@@ -600,32 +1204,6 @@
 				}
 			},
 			{
-				"name": "import",
-				"method": "POST",
-				"path": "/import",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "IMPORT",
-				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:import",
-				"summary": "导入bom表",
-				"tag": "SysBtcBomController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "export",
 				"method": "POST",
 				"path": "/export",
@@ -650,6 +1228,32 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "import",
+				"method": "POST",
+				"path": "/import",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "IMPORT",
+				"auth": "permission",
+				"permission": "system.base:sys_btc_bom:import",
+				"summary": "导入bom表",
+				"tag": "SysBtcBomController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
 			}
 		],
 		"columns": [
@@ -659,7 +1263,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -669,7 +1273,7 @@
 				"propertyName": "processId",
 				"source": "process_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -679,7 +1283,7 @@
 				"propertyName": "checkNo",
 				"source": "check_no",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -689,7 +1293,7 @@
 				"propertyName": "domainId",
 				"source": "domain_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -699,7 +1303,7 @@
 				"propertyName": "parentNode",
 				"source": "parent_node",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -709,7 +1313,7 @@
 				"propertyName": "childNode",
 				"source": "child_node",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -719,7 +1323,7 @@
 				"propertyName": "childQty",
 				"source": "child_qty",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -729,7 +1333,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -739,7 +1343,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -749,7 +1353,7 @@
 				"propertyName": "checkType",
 				"source": "check_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -828,7 +1432,7 @@
 					"propertyName": "domainId",
 					"source": "domain_id",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -838,7 +1442,7 @@
 					"propertyName": "parentNode",
 					"source": "parent_node",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -848,7 +1452,7 @@
 					"propertyName": "childNode",
 					"source": "child_node",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -858,7 +1462,7 @@
 					"propertyName": "checkType",
 					"source": "check_type",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -872,6 +1476,7 @@
 	{
 		"prefix": "/api/system/base/data",
 		"name": "data",
+		"resource": "sys_btc_data",
 		"api": [
 			{
 				"name": "add",
@@ -952,32 +1557,6 @@
 				}
 			},
 			{
-				"name": "import",
-				"method": "POST",
-				"path": "/import",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "IMPORT",
-				"auth": "permission",
-				"permission": "system.base:sys_btc_data:import",
-				"summary": "导入数据表",
-				"tag": "SysBtcDataController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "export",
 				"method": "POST",
 				"path": "/export",
@@ -1002,6 +1581,32 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "import",
+				"method": "POST",
+				"path": "/import",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "IMPORT",
+				"auth": "permission",
+				"permission": "system.base:sys_btc_data:import",
+				"summary": "导入数据表",
+				"tag": "SysBtcDataController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
 			}
 		],
 		"columns": [
@@ -1011,7 +1616,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1021,7 +1626,7 @@
 				"propertyName": "partName",
 				"source": "part_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1031,7 +1636,7 @@
 				"propertyName": "partQty",
 				"source": "part_qty",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1041,17 +1646,17 @@
 				"propertyName": "position",
 				"source": "position",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "域ID",
+				"comment": "域code",
 				"nullable": true,
-				"propertyName": "domainId",
-				"source": "domain_id",
+				"propertyName": "domainCode",
+				"source": "domain_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1061,7 +1666,7 @@
 				"propertyName": "processId",
 				"source": "process_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1071,7 +1676,7 @@
 				"propertyName": "checkNo",
 				"source": "check_no",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1081,7 +1686,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1091,7 +1696,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1101,7 +1706,7 @@
 				"propertyName": "checkType",
 				"source": "check_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -1180,7 +1785,7 @@
 					"propertyName": "partName",
 					"source": "part_name",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -1190,18 +1795,18 @@
 					"propertyName": "position",
 					"source": "position",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
 				{
-					"comment": "域ID",
-					"nullable": true,
+					"comment": "",
+					"nullable": false,
 					"propertyName": "domainId",
-					"source": "domain_id",
-					"type": "varchar",
-					"dict": [],
-					"defaultValue": null,
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
 					"extensions": null
 				},
 				{
@@ -1210,7 +1815,7 @@
 					"propertyName": "checkType",
 					"source": "check_type",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -1224,6 +1829,7 @@
 	{
 		"prefix": "/api/system/base/data-source",
 		"name": "data-source",
+		"resource": "system_data_source",
 		"api": [
 			{
 				"name": "update",
@@ -1233,7 +1839,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "system.base:sys_data_source:update",
+				"permission": "system.base:system_data_source:update",
 				"summary": "根据ID更新",
 				"tag": "SysDataSourceController",
 				"dts": {
@@ -1259,7 +1865,7 @@
 				"ignoreToken": false,
 				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_data_source:export",
+				"permission": "system.base:system_data_source:export",
 				"summary": "导出数据源",
 				"tag": "SysDataSourceController",
 				"dts": {
@@ -1285,7 +1891,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "system.base:sys_data_source:create",
+				"permission": "system.base:system_data_source:create",
 				"summary": "分页查询",
 				"tag": "SysDataSourceController",
 				"dts": {
@@ -1311,7 +1917,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1321,7 +1927,7 @@
 				"propertyName": "checkNo",
 				"source": "check_no",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1331,7 +1937,7 @@
 				"propertyName": "processId",
 				"source": "process_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1341,7 +1947,7 @@
 				"propertyName": "partName",
 				"source": "part_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1351,7 +1957,7 @@
 				"propertyName": "partQty",
 				"source": "part_qty",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1361,7 +1967,7 @@
 				"propertyName": "checker",
 				"source": "checker",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1371,7 +1977,7 @@
 				"propertyName": "position",
 				"source": "position",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1381,7 +1987,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1391,7 +1997,7 @@
 				"propertyName": "deleted_at",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -1470,7 +2076,7 @@
 					"propertyName": "checkNo",
 					"source": "check_no",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -1480,7 +2086,7 @@
 					"propertyName": "position",
 					"source": "position",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -1490,7 +2096,7 @@
 					"propertyName": "checker",
 					"source": "checker",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -1500,7 +2106,7 @@
 					"propertyName": "partName",
 					"source": "part_name",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -1512,20 +2118,21 @@
 		"namespace": "/api/system/base/data-source"
 	},
 	{
-		"prefix": "/api/system/base/checkTicket",
-		"name": "checkTicket",
+		"prefix": "/api/logistics/warehouse/check",
+		"name": "check",
+		"resource": "logistics_check_base",
 		"api": [
 			{
-				"name": "print",
+				"name": "list",
 				"method": "POST",
-				"path": "/print",
-				"module": "admin.base",
+				"path": "/list",
+				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.base:sys_check_ticket:create",
-				"summary": "savePrint",
-				"tag": "BaseSysCheckTicketController",
+				"auth": "login",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "查询盘点基础表列表",
+				"tag": "CheckBaseController",
 				"dts": {
 					"parameters": [
 						{
@@ -1533,7 +2140,7 @@
 							"name": "body:arg0",
 							"required": true,
 							"schema": {
-								"type": "array",
+								"type": "object",
 								"format": null,
 								"items": null
 							}
@@ -1541,6 +2148,1999 @@
 					]
 				}
 			},
+			{
+				"name": "info",
+				"method": "GET",
+				"path": "/info",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "logistics.warehouse:logistics_check_base:read",
+				"summary": "查询盘点流程表",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "status",
+				"method": "POST",
+				"path": "/status",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "查询盘点状态",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "finish",
+				"method": "POST",
+				"path": "/finish",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "结束盘点",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "分页查询盘点基础表",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pull",
+				"method": "GET",
+				"path": "/pull",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "logistics.warehouse:logistics_check_base:read",
+				"summary": "拉取syspro数据",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "编辑盘点基础表",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "新增盘点基础表",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "delete",
+				"method": "POST",
+				"path": "/delete",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "删除盘点基础表",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "start",
+				"method": "POST",
+				"path": "/start",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "START",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:start",
+				"summary": "开始盘点",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "recover",
+				"method": "POST",
+				"path": "/recover",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "继续盘点",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pause",
+				"method": "POST",
+				"path": "/pause",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:logistics_check_base:create",
+				"summary": "暂停盘点",
+				"tag": "CheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点编号",
+				"nullable": true,
+				"propertyName": "checkNo",
+				"source": "check_no",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "域Code",
+				"nullable": true,
+				"propertyName": "domainCode",
+				"source": "domain_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点类型",
+				"nullable": true,
+				"propertyName": "checkType",
+				"source": "check_type",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点状态",
+				"nullable": true,
+				"propertyName": "checkStatus",
+				"source": "check_status",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "开始时间",
+				"nullable": true,
+				"propertyName": "startTime",
+				"source": "start_time",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "结束时间",
+				"nullable": true,
+				"propertyName": "endTime",
+				"source": "end_time",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点人",
+				"nullable": true,
+				"propertyName": "checker",
+				"source": "checker",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "备注",
+				"nullable": true,
+				"propertyName": "remark",
+				"source": "remark",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "剩余时长(秒)",
+				"nullable": true,
+				"propertyName": "remainingSeconds",
+				"source": "remaining_seconds",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "更新时间",
+				"nullable": true,
+				"propertyName": "updatedAt",
+				"source": "updated_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "删除时间",
+				"nullable": true,
+				"propertyName": "deletedAt",
+				"source": "deleted_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkNo",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkType",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkStatus",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checker",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				},
+				{
+					"field": "checkType",
+					"value": ""
+				},
+				{
+					"field": "checkStatus",
+					"value": ""
+				},
+				{
+					"field": "checker",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "盘点编号",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "盘点类型",
+					"nullable": true,
+					"propertyName": "checkType",
+					"source": "check_type",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "盘点状态",
+					"nullable": true,
+					"propertyName": "checkStatus",
+					"source": "check_status",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "盘点人",
+					"nullable": true,
+					"propertyName": "checker",
+					"source": "checker",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/warehouse/check"
+	},
+	{
+		"prefix": "/api/logistics/warehouse/diff",
+		"name": "diff",
+		"resource": "sys_check_diff",
+		"api": [
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_diff:create",
+				"summary": "编辑盘点差异记录",
+				"tag": "CheckDiffController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_check_diff:create",
+				"summary": "分页接口",
+				"tag": "CheckDiffController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "export",
+				"method": "POST",
+				"path": "/export",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "EXPORT",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_diff:export",
+				"summary": "exportDiff",
+				"tag": "CheckDiffController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点流程ID",
+				"nullable": true,
+				"propertyName": "checkNo",
+				"source": "check_no",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料编码",
+				"nullable": true,
+				"propertyName": "materialCode",
+				"source": "material_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "仓位",
+				"nullable": true,
+				"propertyName": "position",
+				"source": "position",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "差异数量",
+				"nullable": true,
+				"propertyName": "diffQty",
+				"source": "diff_qty",
+				"type": "decimal",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "账面数量",
+				"nullable": true,
+				"propertyName": "bookQty",
+				"source": "book_qty",
+				"type": "decimal",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "实际数量",
+				"nullable": true,
+				"propertyName": "btcQty",
+				"source": "btc_qty",
+				"type": "decimal",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "处理人",
+				"nullable": true,
+				"propertyName": "processPerson",
+				"source": "process_person",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "处理时间",
+				"nullable": true,
+				"propertyName": "processTime",
+				"source": "process_time",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "处理备注",
+				"nullable": true,
+				"propertyName": "processRemark",
+				"source": "process_remark",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "删除时间",
+				"nullable": true,
+				"propertyName": "deletedAt",
+				"source": "deleted_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "actualQty",
+				"nullable": true,
+				"propertyName": "actualQty",
+				"source": "actual_qty",
+				"type": "decimal",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkNo",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "position",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "materialCode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				},
+				{
+					"field": "position",
+					"value": ""
+				},
+				{
+					"field": "materialCode",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "盘点流程ID",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "仓位",
+					"nullable": true,
+					"propertyName": "position",
+					"source": "position",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "物料编码",
+					"nullable": true,
+					"propertyName": "materialCode",
+					"source": "material_code",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/warehouse/diff"
+	},
+	{
+		"prefix": "/api/logistics/warehouse/sub-process",
+		"name": "subProcess",
+		"resource": "sys_check_sub_process",
+		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_check_sub_process:create",
+				"summary": "selectPage",
+				"tag": "CheckSubProcessController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_sub_process:create",
+				"summary": "insertSubProcess",
+				"tag": "CheckSubProcessController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_sub_process:create",
+				"summary": "editSubProcess",
+				"tag": "CheckSubProcessController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "子流程编码",
+				"nullable": true,
+				"propertyName": "subProcessNo",
+				"source": "sub_process_no",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "主流程编号",
+				"nullable": true,
+				"propertyName": "checkNo",
+				"source": "check_no",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "流程状态",
+				"nullable": true,
+				"propertyName": "checkStatus",
+				"source": "check_status",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "开始时间",
+				"nullable": true,
+				"propertyName": "startTime",
+				"source": "start_time",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "结束时间",
+				"nullable": true,
+				"propertyName": "endTime",
+				"source": "end_time",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "剩余时间",
+				"nullable": true,
+				"propertyName": "remainingSeconds",
+				"source": "remaining_seconds",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "父级流程",
+				"nullable": true,
+				"propertyName": "parentProcessNo",
+				"source": "parent_process_no",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "更新时间",
+				"nullable": true,
+				"propertyName": "updatedAt",
+				"source": "updated_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkNo",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "主流程编号",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/warehouse/sub-process"
+	},
+	{
+		"prefix": "/api/logistics/warehouse/ticket",
+		"name": "ticket",
+		"resource": "sys_ticket",
+		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_ticket:create",
+				"summary": "盘点票分页接口",
+				"tag": "CheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_ticket:create",
+				"summary": "盘点票编辑",
+				"tag": "CheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "export",
+				"method": "POST",
+				"path": "/export",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "EXPORT",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_ticket:export",
+				"summary": "盘点票导出",
+				"tag": "CheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "import",
+				"method": "POST",
+				"path": "/import",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "IMPORT",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_ticket:import",
+				"summary": "盘点票导入",
+				"tag": "CheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "domainId",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "position",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "partName",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "domainId",
+					"value": ""
+				},
+				{
+					"field": "position",
+					"value": ""
+				},
+				{
+					"field": "partName",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "domainId",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				},
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "position",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				},
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "partName",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/warehouse/ticket"
+	},
+	{
+		"prefix": "/api/logistics/warehouse/material",
+		"name": "material",
+		"resource": "sys_material_master",
+		"api": [
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_material_master:create",
+				"summary": "新增",
+				"tag": "MaterialMasterController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "PUT",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_material_master:update",
+				"summary": "根据ID更新",
+				"tag": "MaterialMasterController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "list",
+				"method": "POST",
+				"path": "/list",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_material_master:create",
+				"summary": "查询列表",
+				"tag": "MaterialMasterController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "delete",
+				"method": "DELETE",
+				"path": "/delete/{id}",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "DELETE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_material_master:delete",
+				"summary": "根据ID删除",
+				"tag": "MaterialMasterController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "id",
+							"name": "path:id",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_material_master:create",
+				"summary": "分页查询",
+				"tag": "MaterialMasterController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料编码",
+				"nullable": true,
+				"propertyName": "materialCode",
+				"source": "material_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料名称",
+				"nullable": true,
+				"propertyName": "materialName",
+				"source": "material_name",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "物料类型",
+				"nullable": true,
+				"propertyName": "materialType",
+				"source": "material_type",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "规格",
+				"nullable": true,
+				"propertyName": "specification",
+				"source": "specification",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "材质",
+				"nullable": true,
+				"propertyName": "materialTexture",
+				"source": "material_texture",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "单位",
+				"nullable": true,
+				"propertyName": "unit",
+				"source": "unit",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "供应商编码",
+				"nullable": true,
+				"propertyName": "supplierCode",
+				"source": "supplier_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "供应商名称",
+				"nullable": true,
+				"propertyName": "supplierName",
+				"source": "supplier_name",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "单价",
+				"nullable": true,
+				"propertyName": "unitPrice",
+				"source": "unit_price",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "税率",
+				"nullable": true,
+				"propertyName": "taxRate",
+				"source": "tax_rate",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "总价",
+				"nullable": true,
+				"propertyName": "totalPrice",
+				"source": "total_price",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "条形码",
+				"nullable": true,
+				"propertyName": "barCode",
+				"source": "bar_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "安全库存",
+				"nullable": true,
+				"propertyName": "safetyStock",
+				"source": "safety_stock",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "存储要求",
+				"nullable": true,
+				"propertyName": "storageRequirement",
+				"source": "storage_requirement",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "过期周期",
+				"nullable": true,
+				"propertyName": "expireCycle",
+				"source": "expire_cycle",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "更新时间",
+				"nullable": true,
+				"propertyName": "updatedAt",
+				"source": "updated_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "备注",
+				"nullable": true,
+				"propertyName": "remark",
+				"source": "remark",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "删除时间",
+				"nullable": true,
+				"propertyName": "deletedAt",
+				"source": "deleted_at",
+				"type": "datetime",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "页码",
+				"nullable": false,
+				"propertyName": "page",
+				"source": "page",
+				"type": "number",
+				"dict": null,
+				"defaultValue": 1,
+				"extensions": null
+			},
+			{
+				"comment": "每页数量",
+				"nullable": false,
+				"propertyName": "size",
+				"source": "size",
+				"type": "number",
+				"dict": null,
+				"defaultValue": 20,
+				"extensions": null
+			},
+			{
+				"comment": "关键词",
+				"nullable": true,
+				"propertyName": "keyword",
+				"source": "keyword",
+				"type": "string",
+				"dict": null,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"search": {
+			"fieldEq": [],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/warehouse/material"
+	},
+	{
+		"prefix": "/api/logistics/bom",
+		"name": "bom",
+		"resource": "sys_bom",
+		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_bom:create",
+				"summary": "分页查询BOM表",
+				"tag": "SysBomController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "父节点",
+				"nullable": true,
+				"propertyName": "parentNode",
+				"source": "parent_node",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "子节点",
+				"nullable": true,
+				"propertyName": "childNode",
+				"source": "child_node",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "子节点数量",
+				"nullable": true,
+				"propertyName": "childQty",
+				"source": "child_qty",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "parentNode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "childNode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "parentNode",
+					"value": ""
+				},
+				{
+					"field": "childNode",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "父节点",
+					"nullable": true,
+					"propertyName": "parentNode",
+					"source": "parent_node",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "子节点",
+					"nullable": true,
+					"propertyName": "childNode",
+					"source": "child_node",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/bom"
+	},
+	{
+		"prefix": "/api/logistics/data",
+		"name": "data",
+		"resource": "sys_data",
+		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_data:create",
+				"summary": "分页查询数据表",
+				"tag": "SysDataController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "库存代码",
+				"nullable": true,
+				"propertyName": "stockCode",
+				"source": "stock_code",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "仓库",
+				"nullable": true,
+				"propertyName": "warehouse",
+				"source": "warehouse",
+				"type": "varchar",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "总数量",
+				"nullable": true,
+				"propertyName": "totalQty",
+				"source": "total_qty",
+				"type": "decimal",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "单位成本",
+				"nullable": true,
+				"propertyName": "unitCost",
+				"source": "unit_cost",
+				"type": "decimal",
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "stockCode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "warehouse",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "stockCode",
+					"value": ""
+				},
+				{
+					"field": "warehouse",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "库存代码",
+					"nullable": true,
+					"propertyName": "stockCode",
+					"source": "stock_code",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "仓库",
+					"nullable": true,
+					"propertyName": "warehouse",
+					"source": "warehouse",
+					"type": "varchar",
+					"dict": false,
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/data"
+	},
+	{
+		"prefix": "/api/system/logs/",
+		"name": "receive",
+		"resource": "sys_operation_log",
+		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "operation.log",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "operation.log:sys_operation_log:create",
+				"summary": "分页查询系统操作日志",
+				"tag": "SystemOperationLogController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "receive",
+				"method": "POST",
+				"path": "/{appName}/receive",
+				"module": "operation.log",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "operation.log:sys_operation_log:create",
+				"summary": "receive",
+				"tag": "SystemOperationLogController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "appName",
+							"name": "path:appName",
+							"required": true,
+							"schema": {
+								"type": "string",
+								"format": null,
+								"items": null
+							}
+						},
+						{
+							"description": "arg1",
+							"name": "body:arg1",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [],
+		"pageColumns": [],
+		"pageQueryOp": {
+			"fieldEq": [],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"search": {
+			"fieldEq": [],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "operation.log",
+		"namespace": "/api/system/logs/"
+	},
+	{
+		"prefix": "/api/system/base/checkTicket",
+		"name": "checkTicket",
+		"resource": "sys_check_ticket",
+		"api": [
 			{
 				"name": "info",
 				"method": "POST",
@@ -1560,6 +4160,32 @@
 							"required": true,
 							"schema": {
 								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "print",
+				"method": "POST",
+				"path": "/print",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.base:sys_check_ticket:create",
+				"summary": "savePrint",
+				"tag": "BaseSysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -1586,33 +4212,8 @@
 	{
 		"prefix": "/api/system/base/profile",
 		"name": "profile",
+		"resource": "sys_user_profile",
 		"api": [
-			{
-				"name": "password",
-				"method": "PUT",
-				"path": "/update/password",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "admin.base:sys_user_profile:update",
-				"summary": "修改初始密码",
-				"tag": "BaseUserController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
 			{
 				"name": "update",
 				"method": "POST",
@@ -1690,6 +4291,32 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "password",
+				"method": "PUT",
+				"path": "/update/password",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "admin.base:sys_user_profile:update",
+				"summary": "修改初始密码",
+				"tag": "BaseUserController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
 			}
 		],
 		"columns": [
@@ -1699,7 +4326,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "bigint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1709,7 +4336,7 @@
 				"propertyName": "employeeId",
 				"source": "employee_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1719,7 +4346,7 @@
 				"propertyName": "name",
 				"source": "name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1729,7 +4356,7 @@
 				"propertyName": "realName",
 				"source": "real_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1739,7 +4366,7 @@
 				"propertyName": "position",
 				"source": "position",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1749,7 +4376,7 @@
 				"propertyName": "email",
 				"source": "email",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1759,17 +4386,17 @@
 				"propertyName": "initPass",
 				"source": "init_pass",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "部门id",
+				"comment": "部门Code",
 				"nullable": true,
-				"propertyName": "deptId",
-				"source": "dept_id",
+				"propertyName": "deptCode",
+				"source": "dept_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1779,7 +4406,7 @@
 				"propertyName": "avatar",
 				"source": "avatar",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -1789,9 +4416,16 @@
 				"propertyName": "phone",
 				"source": "phone",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
+			},
+			{
+				"comment": "部门id",
+				"nullable": true,
+				"propertyName": "deptId",
+				"source": "dept_id",
+				"type": "varchar"
 			}
 		],
 		"pageColumns": [
@@ -1835,6 +4469,7 @@
 	{
 		"prefix": "/api/system/base/email",
 		"name": "email",
+		"resource": "",
 		"api": [
 			{
 				"name": "update",
@@ -1983,6 +4618,7 @@
 	{
 		"prefix": "/api/system/base/phone",
 		"name": "phone",
+		"resource": "",
 		"api": [
 			{
 				"name": "update",
@@ -2131,6 +4767,7 @@
 	{
 		"prefix": "/api/system/log/deletelog",
 		"name": "deletelog",
+		"resource": "sys_operation_log",
 		"api": [
 			{
 				"name": "restore",
@@ -2229,6 +4866,7 @@
 	{
 		"prefix": "/api/system/log/config",
 		"name": "config",
+		"resource": "sys_log_config",
 		"api": [
 			{
 				"name": "add",
@@ -2342,6 +4980,7 @@
 	{
 		"prefix": "/api/system/log/operation",
 		"name": "operation",
+		"resource": "sys_operation_log",
 		"api": [
 			{
 				"name": "page",
@@ -2388,6 +5027,7 @@
 	{
 		"prefix": "/api/system/log/request",
 		"name": "request",
+		"resource": "request_log",
 		"api": [
 			{
 				"name": "update",
@@ -2501,6 +5141,7 @@
 	{
 		"prefix": "/api/system/iam/action",
 		"name": "action",
+		"resource": "admin_action",
 		"api": [
 			{
 				"name": "add",
@@ -2510,7 +5151,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:action:create",
+				"permission": "admin.iam:admin_action:create",
 				"summary": "新增",
 				"tag": "ActionController",
 				"dts": {
@@ -2536,7 +5177,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:action:update",
+				"permission": "admin.iam:admin_action:update",
 				"summary": "根据ID更新",
 				"tag": "ActionController",
 				"dts": {
@@ -2562,7 +5203,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:action:create",
+				"permission": "admin.iam:admin_action:create",
 				"summary": "查询列表",
 				"tag": "ActionController",
 				"dts": {
@@ -2588,7 +5229,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:action:delete",
+				"permission": "admin.iam:admin_action:delete",
 				"summary": "根据ID删除",
 				"tag": "ActionController",
 				"dts": {
@@ -2614,7 +5255,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:action:create",
+				"permission": "admin.iam:admin_action:create",
 				"summary": "分页查询",
 				"tag": "ActionController",
 				"dts": {
@@ -2640,7 +5281,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2650,7 +5291,7 @@
 				"propertyName": "actionCode",
 				"source": "action_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2660,7 +5301,7 @@
 				"propertyName": "actionNameCn",
 				"source": "action_name_cn",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2670,7 +5311,7 @@
 				"propertyName": "actionNameEn",
 				"source": "action_name_en",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2680,7 +5321,7 @@
 				"propertyName": "actionType",
 				"source": "action_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2690,7 +5331,7 @@
 				"propertyName": "httpMethod",
 				"source": "http_method",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2700,7 +5341,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2710,7 +5351,7 @@
 				"propertyName": "icon",
 				"source": "icon",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2720,7 +5361,7 @@
 				"propertyName": "color",
 				"source": "color",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2730,7 +5371,7 @@
 				"propertyName": "sortOrder",
 				"source": "sort_order",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2740,7 +5381,7 @@
 				"propertyName": "isDanger",
 				"source": "is_danger",
 				"type": "tinyint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2750,7 +5391,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2760,7 +5401,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2770,7 +5411,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -2790,8 +5431,9 @@
 		"namespace": "/api/system/iam/action"
 	},
 	{
-		"prefix": "/api/system/iam/department",
-		"name": "department",
+		"prefix": "/api/system/iam/dept",
+		"name": "dept",
+		"resource": "admin_department",
 		"api": [
 			{
 				"name": "page",
@@ -2801,7 +5443,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:department:create",
+				"permission": "admin.iam:admin_department:create",
 				"summary": "分页查询",
 				"tag": "DepartmentController",
 				"dts": {
@@ -2827,7 +5469,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:department:create",
+				"permission": "admin.iam:admin_department:create",
 				"summary": "批量删除",
 				"tag": "DepartmentController",
 				"dts": {
@@ -2853,7 +5495,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:department:create",
+				"permission": "admin.iam:admin_department:create",
 				"summary": "新增",
 				"tag": "DepartmentController",
 				"dts": {
@@ -2879,7 +5521,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:department:update",
+				"permission": "admin.iam:admin_department:update",
 				"summary": "根据ID更新",
 				"tag": "DepartmentController",
 				"dts": {
@@ -2905,7 +5547,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:department:create",
+				"permission": "admin.iam:admin_department:create",
 				"summary": "查询列表",
 				"tag": "DepartmentController",
 				"dts": {
@@ -2931,7 +5573,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:department:delete",
+				"permission": "admin.iam:admin_department:delete",
 				"summary": "根据ID删除",
 				"tag": "DepartmentController",
 				"dts": {
@@ -2957,17 +5599,17 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2977,7 +5619,7 @@
 				"propertyName": "deptCode",
 				"source": "dept_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2987,7 +5629,7 @@
 				"propertyName": "name",
 				"source": "name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -2997,7 +5639,7 @@
 				"propertyName": "parentId",
 				"source": "parent_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3007,7 +5649,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3017,7 +5659,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3027,7 +5669,7 @@
 				"propertyName": "sort",
 				"source": "sort",
 				"type": "bigint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3037,7 +5679,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3047,7 +5689,7 @@
 				"propertyName": "parentName",
 				"source": "parent_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -3064,11 +5706,12 @@
 			"keyWordLikeFields": []
 		},
 		"moduleKey": "admin.iam",
-		"namespace": "/api/system/iam/department"
+		"namespace": "/api/system/iam/dept"
 	},
 	{
 		"prefix": "/api/system/iam/domain",
 		"name": "domain",
+		"resource": "admin_domain",
 		"api": [
 			{
 				"name": "add",
@@ -3078,33 +5721,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:domain:create",
-				"summary": "异步新增域",
-				"tag": "DomainController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:domain:create",
+				"permission": "admin.iam:admin_domain:create",
 				"summary": "异步新增域",
 				"tag": "DomainController",
 				"dts": {
@@ -3130,33 +5747,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:domain:update",
-				"summary": "编辑域",
-				"tag": "DomainController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "update",
-				"method": "PUT",
-				"path": "/update",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "admin.iam:domain:update",
+				"permission": "admin.iam:admin_domain:update",
 				"summary": "编辑域",
 				"tag": "DomainController",
 				"dts": {
@@ -3182,7 +5773,7 @@
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
-				"permission": "admin.iam:domain:read",
+				"permission": "admin.iam:admin_domain:read",
 				"summary": "查询当前用户有哪些域",
 				"tag": "DomainController",
 				"dts": {
@@ -3197,7 +5788,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:domain:create",
+				"permission": "admin.iam:admin_domain:create",
 				"summary": "批量删除",
 				"tag": "DomainController",
 				"dts": {
@@ -3223,7 +5814,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:domain:create",
+				"permission": "admin.iam:admin_domain:create",
 				"summary": "查询列表",
 				"tag": "DomainController",
 				"dts": {
@@ -3249,7 +5840,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:domain:delete",
+				"permission": "admin.iam:admin_domain:delete",
 				"summary": "根据ID删除",
 				"tag": "DomainController",
 				"dts": {
@@ -3275,7 +5866,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:domain:create",
+				"permission": "admin.iam:admin_domain:create",
 				"summary": "分页查询",
 				"tag": "DomainController",
 				"dts": {
@@ -3301,17 +5892,17 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3321,7 +5912,7 @@
 				"propertyName": "domainCode",
 				"source": "domain_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3331,7 +5922,7 @@
 				"propertyName": "name",
 				"source": "name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3341,7 +5932,7 @@
 				"propertyName": "domainType",
 				"source": "domain_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3351,7 +5942,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3361,7 +5952,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3371,7 +5962,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3381,7 +5972,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -3403,6 +5994,7 @@
 	{
 		"prefix": "/api/system/iam/menu",
 		"name": "menu",
+		"resource": "admin_menu",
 		"api": [
 			{
 				"name": "batch",
@@ -3412,7 +6004,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:menu:create",
+				"permission": "admin.iam:admin_menu:create",
 				"summary": "批量删除",
 				"tag": "MenuController",
 				"dts": {
@@ -3438,7 +6030,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:menu:create",
+				"permission": "admin.iam:admin_menu:create",
 				"summary": "新增",
 				"tag": "MenuController",
 				"dts": {
@@ -3464,7 +6056,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:menu:update",
+				"permission": "admin.iam:admin_menu:update",
 				"summary": "根据ID更新",
 				"tag": "MenuController",
 				"dts": {
@@ -3490,7 +6082,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:menu:create",
+				"permission": "admin.iam:admin_menu:create",
 				"summary": "查询列表",
 				"tag": "MenuController",
 				"dts": {
@@ -3516,7 +6108,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:menu:delete",
+				"permission": "admin.iam:admin_menu:delete",
 				"summary": "根据ID删除",
 				"tag": "MenuController",
 				"dts": {
@@ -3542,7 +6134,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:menu:create",
+				"permission": "admin.iam:admin_menu:create",
 				"summary": "分页查询",
 				"tag": "MenuController",
 				"dts": {
@@ -3568,37 +6160,37 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "所属模块ID",
+				"comment": "所属模块Code",
 				"nullable": true,
-				"propertyName": "moduleId",
-				"source": "module_id",
+				"propertyName": "moduleCode",
+				"source": "module_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "域id",
+				"comment": "域Code",
 				"nullable": true,
-				"propertyName": "domainId",
-				"source": "domain_id",
+				"propertyName": "domainCode",
+				"source": "domain_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3608,7 +6200,7 @@
 				"propertyName": "menuCode",
 				"source": "menu_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3618,7 +6210,7 @@
 				"propertyName": "menuNameCn",
 				"source": "menu_name_cn",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3628,7 +6220,7 @@
 				"propertyName": "menuNameEn",
 				"source": "menu_name_en",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3638,7 +6230,7 @@
 				"propertyName": "menuType",
 				"source": "menu_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3648,7 +6240,7 @@
 				"propertyName": "menuPath",
 				"source": "menu_path",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3658,7 +6250,7 @@
 				"propertyName": "componentPath",
 				"source": "component_path",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3668,7 +6260,7 @@
 				"propertyName": "icon",
 				"source": "icon",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3678,7 +6270,7 @@
 				"propertyName": "parentMenuId",
 				"source": "parent_menu_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3688,7 +6280,7 @@
 				"propertyName": "sortOrder",
 				"source": "sort_order",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3698,7 +6290,7 @@
 				"propertyName": "visible",
 				"source": "visible",
 				"type": "tinyint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3708,7 +6300,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3718,7 +6310,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3728,7 +6320,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3738,7 +6330,7 @@
 				"propertyName": "routerCache",
 				"source": "router_cache",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3748,7 +6340,7 @@
 				"propertyName": "filePath",
 				"source": "file_path",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -3770,6 +6362,7 @@
 	{
 		"prefix": "/api/system/iam/module",
 		"name": "module",
+		"resource": "admin_module",
 		"api": [
 			{
 				"name": "add",
@@ -3779,33 +6372,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:module:create",
-				"summary": "异步新增",
-				"tag": "ModuleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:module:create",
+				"permission": "admin.iam:admin_module:create",
 				"summary": "异步新增",
 				"tag": "ModuleController",
 				"dts": {
@@ -3831,7 +6398,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:module:create",
+				"permission": "admin.iam:admin_module:create",
 				"summary": "批量删除",
 				"tag": "ModuleController",
 				"dts": {
@@ -3857,7 +6424,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:module:update",
+				"permission": "admin.iam:admin_module:update",
 				"summary": "根据ID更新",
 				"tag": "ModuleController",
 				"dts": {
@@ -3883,7 +6450,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:module:create",
+				"permission": "admin.iam:admin_module:create",
 				"summary": "查询列表",
 				"tag": "ModuleController",
 				"dts": {
@@ -3909,7 +6476,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:module:delete",
+				"permission": "admin.iam:admin_module:delete",
 				"summary": "根据ID删除",
 				"tag": "ModuleController",
 				"dts": {
@@ -3935,7 +6502,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:module:create",
+				"permission": "admin.iam:admin_module:create",
 				"summary": "分页查询",
 				"tag": "ModuleController",
 				"dts": {
@@ -3961,27 +6528,27 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "所属域ID",
+				"comment": "所属域Code",
 				"nullable": true,
-				"propertyName": "domainId",
-				"source": "domain_id",
+				"propertyName": "domainCode",
+				"source": "domain_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -3991,7 +6558,7 @@
 				"propertyName": "moduleCode",
 				"source": "module_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4001,7 +6568,7 @@
 				"propertyName": "moduleName",
 				"source": "module_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4011,7 +6578,7 @@
 				"propertyName": "moduleType",
 				"source": "module_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4021,17 +6588,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
-				"defaultValue": null,
-				"extensions": null
-			},
-			{
-				"comment": "排序",
-				"nullable": true,
-				"propertyName": "sortOrder",
-				"source": "sort_order",
-				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4041,7 +6598,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4051,7 +6608,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4061,7 +6618,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -4083,6 +6640,7 @@
 	{
 		"prefix": "/api/system/iam/permission",
 		"name": "permission",
+		"resource": "admin_permission",
 		"api": [
 			{
 				"name": "batch",
@@ -4092,7 +6650,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:permission:create",
+				"permission": "admin.iam:admin_permission:create",
 				"summary": "批量删除",
 				"tag": "PermissionController",
 				"dts": {
@@ -4118,7 +6676,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:permission:create",
+				"permission": "admin.iam:admin_permission:create",
 				"summary": "新增",
 				"tag": "PermissionController",
 				"dts": {
@@ -4144,7 +6702,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:permission:update",
+				"permission": "admin.iam:admin_permission:update",
 				"summary": "根据ID更新",
 				"tag": "PermissionController",
 				"dts": {
@@ -4170,7 +6728,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:permission:create",
+				"permission": "admin.iam:admin_permission:create",
 				"summary": "查询列表",
 				"tag": "PermissionController",
 				"dts": {
@@ -4196,7 +6754,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:permission:delete",
+				"permission": "admin.iam:admin_permission:delete",
 				"summary": "根据ID删除",
 				"tag": "PermissionController",
 				"dts": {
@@ -4222,7 +6780,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:permission:create",
+				"permission": "admin.iam:admin_permission:create",
 				"summary": "分页查询",
 				"tag": "PermissionController",
 				"dts": {
@@ -4248,37 +6806,47 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "所属模块ID",
+				"comment": "所属模块Code",
 				"nullable": true,
-				"propertyName": "moduleId",
-				"source": "module_id",
+				"propertyName": "moduleCode",
+				"source": "module_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "所属插件ID",
+				"comment": "所属插件Code",
 				"nullable": true,
-				"propertyName": "pluginId",
-				"source": "plugin_id",
+				"propertyName": "pluginCode",
+				"source": "plugin_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "权限 Code",
+				"nullable": true,
+				"propertyName": "permissionCode",
+				"source": "permission_code",
+				"type": "varchar",
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4288,7 +6856,7 @@
 				"propertyName": "permCode",
 				"source": "perm_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4298,7 +6866,7 @@
 				"propertyName": "permName",
 				"source": "perm_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4308,7 +6876,7 @@
 				"propertyName": "permType",
 				"source": "perm_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4318,7 +6886,7 @@
 				"propertyName": "permCategory",
 				"source": "perm_category",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4328,7 +6896,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4338,7 +6906,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4348,7 +6916,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4358,7 +6926,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -4380,6 +6948,7 @@
 	{
 		"prefix": "/api/system/iam/plugin",
 		"name": "plugin",
+		"resource": "admin_plugin",
 		"api": [
 			{
 				"name": "add",
@@ -4389,7 +6958,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:plugin:create",
+				"permission": "admin.iam:admin_plugin:create",
 				"summary": "新增",
 				"tag": "PluginController",
 				"dts": {
@@ -4415,7 +6984,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:plugin:update",
+				"permission": "admin.iam:admin_plugin:update",
 				"summary": "根据ID更新",
 				"tag": "PluginController",
 				"dts": {
@@ -4441,7 +7010,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:plugin:create",
+				"permission": "admin.iam:admin_plugin:create",
 				"summary": "查询列表",
 				"tag": "PluginController",
 				"dts": {
@@ -4467,7 +7036,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:plugin:delete",
+				"permission": "admin.iam:admin_plugin:delete",
 				"summary": "根据ID删除",
 				"tag": "PluginController",
 				"dts": {
@@ -4493,7 +7062,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:plugin:create",
+				"permission": "admin.iam:admin_plugin:create",
 				"summary": "分页查询",
 				"tag": "PluginController",
 				"dts": {
@@ -4519,17 +7088,17 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "域编码",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "domainCode",
+				"source": "domain_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4539,7 +7108,7 @@
 				"propertyName": "pluginCode",
 				"source": "plugin_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4549,7 +7118,7 @@
 				"propertyName": "pluginName",
 				"source": "plugin_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4559,7 +7128,7 @@
 				"propertyName": "pluginType",
 				"source": "plugin_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4569,7 +7138,7 @@
 				"propertyName": "pluginCategory",
 				"source": "plugin_category",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4579,7 +7148,7 @@
 				"propertyName": "version",
 				"source": "version",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4589,7 +7158,7 @@
 				"propertyName": "author",
 				"source": "author",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4599,7 +7168,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4609,7 +7178,7 @@
 				"propertyName": "configSchema",
 				"source": "config_schema",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4619,7 +7188,7 @@
 				"propertyName": "defaultConfig",
 				"source": "default_config",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4629,7 +7198,7 @@
 				"propertyName": "status",
 				"source": "status",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4639,7 +7208,7 @@
 				"propertyName": "installPath",
 				"source": "install_path",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4649,7 +7218,7 @@
 				"propertyName": "dependencies",
 				"source": "dependencies",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4659,7 +7228,7 @@
 				"propertyName": "createdBy",
 				"source": "created_by",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4669,7 +7238,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4679,7 +7248,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4689,7 +7258,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -4711,6 +7280,7 @@
 	{
 		"prefix": "/api/system/iam/resource",
 		"name": "resource",
+		"resource": "admin_resource",
 		"api": [
 			{
 				"name": "list",
@@ -4720,7 +7290,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:resource:create",
+				"permission": "admin.iam:admin_resource:create",
 				"summary": "查询资源列表",
 				"tag": "ResourceController",
 				"dts": {
@@ -4746,7 +7316,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:resource:create",
+				"permission": "admin.iam:admin_resource:create",
 				"summary": "分页查询资源",
 				"tag": "ResourceController",
 				"dts": {
@@ -4772,7 +7342,7 @@
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "permission",
-				"permission": "admin.iam:resource:read",
+				"permission": "admin.iam:admin_resource:read",
 				"summary": "拉取资源",
 				"tag": "ResourceController",
 				"dts": {
@@ -4786,8 +7356,8 @@
 				"nullable": true,
 				"propertyName": "id",
 				"source": "id",
-				"type": "varchar",
-				"dict": [],
+				"type": "bigint",
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4797,7 +7367,7 @@
 				"propertyName": "resourceCode",
 				"source": "resource_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4807,7 +7377,7 @@
 				"propertyName": "resourceNameCn",
 				"source": "resource_name_cn",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4817,7 +7387,7 @@
 				"propertyName": "resourceNameEn",
 				"source": "resource_name_en",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4827,7 +7397,7 @@
 				"propertyName": "resourceType",
 				"source": "resource_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4837,7 +7407,7 @@
 				"propertyName": "tableName",
 				"source": "table_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4847,7 +7417,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4857,7 +7427,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4867,7 +7437,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -4877,7 +7447,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -4970,7 +7540,7 @@
 					"propertyName": "resourceCode",
 					"source": "resource_code",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -4980,7 +7550,7 @@
 					"propertyName": "resourceNameCn",
 					"source": "resource_name_cn",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -4990,7 +7560,7 @@
 					"propertyName": "resourceNameEn",
 					"source": "resource_name_en",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -5000,7 +7570,7 @@
 					"propertyName": "resourceType",
 					"source": "resource_type",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
@@ -5010,7 +7580,7 @@
 					"propertyName": "tableName",
 					"source": "table_name",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -5024,6 +7594,7 @@
 	{
 		"prefix": "/api/system/iam/role",
 		"name": "role",
+		"resource": "admin_role",
 		"api": [
 			{
 				"name": "page",
@@ -5033,7 +7604,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:role:create",
+				"permission": "admin.iam:admin_role:create",
 				"summary": "分页查询",
 				"tag": "RoleController",
 				"dts": {
@@ -5059,7 +7630,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:role:create",
+				"permission": "admin.iam:admin_role:create",
 				"summary": "批量删除",
 				"tag": "RoleController",
 				"dts": {
@@ -5085,7 +7656,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:role:create",
+				"permission": "admin.iam:admin_role:create",
 				"summary": "新增",
 				"tag": "RoleController",
 				"dts": {
@@ -5111,7 +7682,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:role:update",
+				"permission": "admin.iam:admin_role:update",
 				"summary": "根据ID更新",
 				"tag": "RoleController",
 				"dts": {
@@ -5137,7 +7708,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:role:create",
+				"permission": "admin.iam:admin_role:create",
 				"summary": "查询列表",
 				"tag": "RoleController",
 				"dts": {
@@ -5163,7 +7734,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:role:delete",
+				"permission": "admin.iam:admin_role:delete",
 				"summary": "根据ID删除",
 				"tag": "RoleController",
 				"dts": {
@@ -5189,27 +7760,27 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "所属域ID",
+				"comment": "所属域Code",
 				"nullable": true,
-				"propertyName": "domainId",
-				"source": "domain_id",
+				"propertyName": "domainCode",
+				"source": "domain_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5219,7 +7790,7 @@
 				"propertyName": "roleCode",
 				"source": "role_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5229,7 +7800,7 @@
 				"propertyName": "roleName",
 				"source": "role_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5239,7 +7810,7 @@
 				"propertyName": "roleType",
 				"source": "role_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5249,7 +7820,7 @@
 				"propertyName": "description",
 				"source": "description",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5259,7 +7830,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5269,7 +7840,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5279,7 +7850,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5289,7 +7860,7 @@
 				"propertyName": "parentId",
 				"source": "parent_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -5318,7 +7889,7 @@
 			{
 				"comment": "",
 				"nullable": false,
-				"propertyName": "userId",
+				"propertyName": "userCode",
 				"source": "",
 				"type": "string",
 				"dict": null,
@@ -5328,7 +7899,7 @@
 			{
 				"comment": "",
 				"nullable": false,
-				"propertyName": "domainId",
+				"propertyName": "domainCode",
 				"source": "",
 				"type": "string",
 				"dict": null,
@@ -5347,11 +7918,11 @@
 					"value": ""
 				},
 				{
-					"field": "userId",
+					"field": "userCode",
 					"value": ""
 				},
 				{
-					"field": "domainId",
+					"field": "domainCode",
 					"value": ""
 				}
 			],
@@ -5378,14 +7949,14 @@
 					"propertyName": "roleName",
 					"source": "role_name",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
 				{
 					"comment": "",
 					"nullable": false,
-					"propertyName": "userId",
+					"propertyName": "userCode",
 					"source": "",
 					"type": "string",
 					"dict": null,
@@ -5393,12 +7964,12 @@
 					"extensions": null
 				},
 				{
-					"comment": "所属域ID",
+					"comment": "所属域Code",
 					"nullable": true,
-					"propertyName": "domainId",
-					"source": "domain_id",
+					"propertyName": "domainCode",
+					"source": "domain_code",
 					"type": "varchar",
-					"dict": [],
+					"dict": true,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -5412,6 +7983,7 @@
 	{
 		"prefix": "/api/system/iam/role-permission",
 		"name": "role-permission",
+		"resource": "admin_role_permission",
 		"api": [
 			{
 				"name": "add",
@@ -5421,7 +7993,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:unknown:create",
+				"permission": "admin.iam:admin_role_permission:create",
 				"summary": "新增",
 				"tag": "RolePermissionController",
 				"dts": {
@@ -5447,7 +8019,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:unknown:update",
+				"permission": "admin.iam:admin_role_permission:update",
 				"summary": "根据ID更新",
 				"tag": "RolePermissionController",
 				"dts": {
@@ -5473,7 +8045,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:unknown:create",
+				"permission": "admin.iam:admin_role_permission:create",
 				"summary": "查询列表",
 				"tag": "RolePermissionController",
 				"dts": {
@@ -5499,7 +8071,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:unknown:delete",
+				"permission": "admin.iam:admin_role_permission:delete",
 				"summary": "根据ID删除",
 				"tag": "RolePermissionController",
 				"dts": {
@@ -5525,7 +8097,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:unknown:create",
+				"permission": "admin.iam:admin_role_permission:create",
 				"summary": "分页查询",
 				"tag": "RolePermissionController",
 				"dts": {
@@ -5551,37 +8123,37 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "角色ID",
+				"comment": "角色Code",
 				"nullable": true,
-				"propertyName": "roleId",
-				"source": "role_id",
+				"propertyName": "roleCode",
+				"source": "role_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "权限ID",
+				"comment": "权限Code",
 				"nullable": true,
-				"propertyName": "permissionId",
-				"source": "permission_id",
+				"propertyName": "permissionCode",
+				"source": "permission_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5591,7 +8163,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5601,7 +8173,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -5623,6 +8195,7 @@
 	{
 		"prefix": "/api/system/iam/tenant",
 		"name": "tenant",
+		"resource": "admin_tenant",
 		"api": [
 			{
 				"name": "add",
@@ -5632,33 +8205,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
-				"summary": "异步新增租户",
-				"tag": "TenantController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
+				"permission": "admin.iam:admin_tenant:create",
 				"summary": "异步新增租户",
 				"tag": "TenantController",
 				"dts": {
@@ -5684,7 +8231,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
+				"permission": "admin.iam:admin_tenant:create",
 				"summary": "批量删除",
 				"tag": "TenantController",
 				"dts": {
@@ -5710,7 +8257,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
+				"permission": "admin.iam:admin_tenant:create",
 				"summary": "模糊搜索供应商租户",
 				"tag": "TenantController",
 				"dts": {
@@ -5736,7 +8283,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.iam:tenant:update",
+				"permission": "admin.iam:admin_tenant:update",
 				"summary": "根据ID更新",
 				"tag": "TenantController",
 				"dts": {
@@ -5762,7 +8309,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:tenant:create",
+				"permission": "admin.iam:admin_tenant:create",
 				"summary": "查询列表",
 				"tag": "TenantController",
 				"dts": {
@@ -5788,7 +8335,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.iam:tenant:delete",
+				"permission": "admin.iam:admin_tenant:delete",
 				"summary": "根据ID删除",
 				"tag": "TenantController",
 				"dts": {
@@ -5814,7 +8361,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:tenant:create",
+				"permission": "admin.iam:admin_tenant:create",
 				"summary": "分页查询",
 				"tag": "TenantController",
 				"dts": {
@@ -5840,7 +8387,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5850,7 +8397,7 @@
 				"propertyName": "tenantCode",
 				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5860,7 +8407,7 @@
 				"propertyName": "tenantName",
 				"source": "tenant_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5870,7 +8417,7 @@
 				"propertyName": "tenantNameZh",
 				"source": "tenant_name_zh",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5880,7 +8427,7 @@
 				"propertyName": "tenantType",
 				"source": "tenant_type",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5890,7 +8437,7 @@
 				"propertyName": "status",
 				"source": "status",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5900,7 +8447,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5910,7 +8457,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -5920,7 +8467,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -5942,6 +8489,7 @@
 	{
 		"prefix": "/api/system/iam/user",
 		"name": "user",
+		"resource": "admin_user",
 		"api": [
 			{
 				"name": "update",
@@ -5951,7 +8499,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:user:create",
+				"permission": "admin.iam:admin_user:create",
 				"summary": "用户分配",
 				"tag": "UserController",
 				"dts": {
@@ -5977,7 +8525,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.iam:user:create",
+				"permission": "admin.iam:admin_user:create",
 				"summary": "用户列表",
 				"tag": "UserController",
 				"dts": {
@@ -6003,7 +8551,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:user:create",
+				"permission": "admin.iam:admin_user:create",
 				"summary": "用户列表数据",
 				"tag": "UserController",
 				"dts": {
@@ -6029,7 +8577,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "login",
-				"permission": "admin.iam:user:delete",
+				"permission": "admin.iam:admin_user:delete",
 				"summary": "删除用户",
 				"tag": "UserController",
 				"dts": {
@@ -6048,6 +8596,21 @@
 				}
 			},
 			{
+				"name": "options",
+				"method": "GET",
+				"path": "/options",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.iam:admin_user:read",
+				"summary": "左侧分类筛选",
+				"tag": "UserController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "page",
 				"method": "POST",
 				"path": "/page",
@@ -6055,7 +8618,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:user:create",
+				"permission": "admin.iam:admin_user:create",
 				"summary": "分页查询",
 				"tag": "UserController",
 				"dts": {
@@ -6081,7 +8644,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:user:create",
+				"permission": "admin.iam:admin_user:create",
 				"summary": "批量删除",
 				"tag": "UserController",
 				"dts": {
@@ -6107,17 +8670,27 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户ID",
+				"comment": "用户编码",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "userCode",
+				"source": "user_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "租户Code",
+				"nullable": true,
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
+				"type": "varchar",
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6127,7 +8700,7 @@
 				"propertyName": "username",
 				"source": "username",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6137,7 +8710,7 @@
 				"propertyName": "passwordHash",
 				"source": "password_hash",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6147,7 +8720,7 @@
 				"propertyName": "status",
 				"source": "status",
 				"type": "varchar",
-				"dict": [],
+				"dict": true,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6157,7 +8730,7 @@
 				"propertyName": "lastLoginAt",
 				"source": "last_login_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6167,7 +8740,7 @@
 				"propertyName": "lastLoginIp",
 				"source": "last_login_ip",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6177,7 +8750,7 @@
 				"propertyName": "loginCount",
 				"source": "login_count",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6187,7 +8760,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6197,7 +8770,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6207,27 +8780,27 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "deptId",
+				"comment": "deptCode",
 				"nullable": true,
-				"propertyName": "deptId",
-				"source": "dept_id",
+				"propertyName": "deptCode",
+				"source": "dept_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "roleId",
+				"comment": "roleCode",
 				"nullable": true,
-				"propertyName": "roleId",
-				"source": "role_id",
+				"propertyName": "roleCode",
+				"source": "role_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -6288,7 +8861,7 @@
 					"propertyName": "username",
 					"source": "username",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -6302,7 +8875,34 @@
 	{
 		"prefix": "/api/system/iam/user-role",
 		"name": "user-role",
+		"resource": "admin_user_role",
 		"api": [
+			{
+				"name": "unbind",
+				"method": "POST",
+				"path": "/unbind",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:admin_user_role:create",
+				"summary": "用户解绑角色",
+				"tag": "UserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
 			{
 				"name": "data",
 				"method": "POST",
@@ -6311,7 +8911,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
+				"permission": "admin.iam:admin_user_role:create",
 				"summary": "用户名筛选角色",
 				"tag": "UserRoleController",
 				"dts": {
@@ -6337,34 +8937,8 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
+				"permission": "admin.iam:admin_user_role:create",
 				"summary": "批量新增授权",
-				"tag": "UserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "unbind",
-				"method": "POST",
-				"path": "/unbind",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
-				"summary": "用户解绑角色",
 				"tag": "UserRoleController",
 				"dts": {
 					"parameters": [
@@ -6389,8 +8963,34 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
+				"permission": "admin.iam:admin_user_role:create",
 				"summary": "查询用户角色信息",
+				"tag": "UserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "modifyBind",
+				"method": "PUT",
+				"path": "/modifyBind",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "admin.iam:admin_user_role:update",
+				"summary": "修改绑定角色",
 				"tag": "UserRoleController",
 				"dts": {
 					"parameters": [
@@ -6415,7 +9015,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
+				"permission": "admin.iam:admin_user_role:create",
 				"summary": "批量解绑角色",
 				"tag": "UserRoleController",
 				"dts": {
@@ -6432,32 +9032,6 @@
 						}
 					]
 				}
-			},
-			{
-				"name": "modifyBind",
-				"method": "PUT",
-				"path": "/modifyBind",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:update",
-				"summary": "修改绑定角色",
-				"tag": "UserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
 			}
 		],
 		"columns": [
@@ -6467,37 +9041,37 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "int",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "用户id",
+				"comment": "用户Code",
 				"nullable": true,
-				"propertyName": "userId",
-				"source": "user_id",
+				"propertyName": "userCode",
+				"source": "user_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "角色id",
+				"comment": "角色Code",
 				"nullable": true,
-				"propertyName": "roleId",
-				"source": "role_id",
+				"propertyName": "roleCode",
+				"source": "role_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
 			{
-				"comment": "租户id",
+				"comment": "租户Code",
 				"nullable": true,
-				"propertyName": "tenantId",
-				"source": "tenant_id",
+				"propertyName": "tenantCode",
+				"source": "tenant_code",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6507,7 +9081,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6517,7 +9091,7 @@
 				"propertyName": "name",
 				"source": "name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6527,7 +9101,7 @@
 				"propertyName": "realName",
 				"source": "real_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6537,7 +9111,7 @@
 				"propertyName": "roleName",
 				"source": "role_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -6546,7 +9120,7 @@
 			{
 				"comment": "",
 				"nullable": false,
-				"propertyName": "userId",
+				"propertyName": "userCode",
 				"source": "",
 				"type": "string",
 				"dict": null,
@@ -6556,7 +9130,7 @@
 			{
 				"comment": "",
 				"nullable": false,
-				"propertyName": "domainId",
+				"propertyName": "domainCode",
 				"source": "",
 				"type": "string",
 				"dict": null,
@@ -6577,11 +9151,11 @@
 		"pageQueryOp": {
 			"fieldEq": [
 				{
-					"field": "userId",
+					"field": "userCode",
 					"value": ""
 				},
 				{
-					"field": "domainId",
+					"field": "domainCode",
 					"value": ""
 				}
 			],
@@ -6598,19 +9172,19 @@
 		"search": {
 			"fieldEq": [
 				{
-					"comment": "用户id",
+					"comment": "用户Code",
 					"nullable": true,
-					"propertyName": "userId",
-					"source": "user_id",
+					"propertyName": "userCode",
+					"source": "user_code",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				},
 				{
 					"comment": "",
 					"nullable": false,
-					"propertyName": "domainId",
+					"propertyName": "domainCode",
 					"source": "",
 					"type": "string",
 					"dict": null,
@@ -6625,7 +9199,7 @@
 					"propertyName": "roleName",
 					"source": "role_name",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -6637,7 +9211,8 @@
 	},
 	{
 		"prefix": "/api/system/dict/data",
-		"name": "dict-data",
+		"name": "dictData",
+		"resource": "admin_dict_data",
 		"api": [
 			{
 				"name": "add",
@@ -6647,7 +9222,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.dict:dict-data:create",
+				"permission": "admin.dict:admin_dict_data:create",
 				"summary": "新增字典数据",
 				"tag": "DictDataController",
 				"dts": {
@@ -6673,7 +9248,7 @@
 				"ignoreToken": false,
 				"action": "UPDATE",
 				"auth": "permission",
-				"permission": "admin.dict:dict-data:update",
+				"permission": "admin.dict:admin_dict_data:update",
 				"summary": "更新字典数据",
 				"tag": "DictDataController",
 				"dts": {
@@ -6699,7 +9274,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.dict:dict-data:create",
+				"permission": "admin.dict:admin_dict_data:create",
 				"summary": "列表查询字典数据",
 				"tag": "DictDataController",
 				"dts": {
@@ -6725,7 +9300,7 @@
 				"ignoreToken": false,
 				"action": "DELETE",
 				"auth": "permission",
-				"permission": "admin.dict:dict-data:delete",
+				"permission": "admin.dict:admin_dict_data:delete",
 				"summary": "删除字典数据",
 				"tag": "DictDataController",
 				"dts": {
@@ -6751,7 +9326,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "login",
-				"permission": "admin.dict:dict-data:create",
+				"permission": "admin.dict:admin_dict_data:create",
 				"summary": "分页查询字典数据",
 				"tag": "DictDataController",
 				"dts": {
@@ -6768,6 +9343,32 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "import",
+				"method": "POST",
+				"path": "/import",
+				"module": "admin.dict",
+				"ignoreToken": false,
+				"action": "IMPORT",
+				"auth": "permission",
+				"permission": "admin.dict:admin_dict_data:import",
+				"summary": "导入字典数据",
+				"tag": "DictDataController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
 			}
 		],
 		"columns": [
@@ -6777,7 +9378,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "bigint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6787,7 +9388,7 @@
 				"propertyName": "fieldName",
 				"source": "field_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6797,7 +9398,7 @@
 				"propertyName": "dictValue",
 				"source": "dict_value",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6807,7 +9408,7 @@
 				"propertyName": "dictLabel",
 				"source": "dict_label",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6817,7 +9418,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6827,7 +9428,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6837,7 +9438,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -6858,7 +9459,8 @@
 	},
 	{
 		"prefix": "/api/system/dict/info",
-		"name": "info",
+		"name": "dictInfo",
+		"resource": "admin_dict_info",
 		"api": [
 			{
 				"name": "page",
@@ -6868,7 +9470,7 @@
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
-				"permission": "admin.dict:dict-info:create",
+				"permission": "admin.dict:admin_dict_info:create",
 				"summary": "分页查询字典信息",
 				"tag": "DictInfoController",
 				"dts": {
@@ -6894,7 +9496,7 @@
 				"propertyName": "id",
 				"source": "id",
 				"type": "bigint",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6904,7 +9506,7 @@
 				"propertyName": "entityClass",
 				"source": "entity_class",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6914,7 +9516,7 @@
 				"propertyName": "fieldName",
 				"source": "field_name",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6924,7 +9526,7 @@
 				"propertyName": "domainId",
 				"source": "domain_id",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6934,7 +9536,7 @@
 				"propertyName": "remark",
 				"source": "remark",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6944,7 +9546,7 @@
 				"propertyName": "createdBy",
 				"source": "created_by",
 				"type": "varchar",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6954,7 +9556,7 @@
 				"propertyName": "createdAt",
 				"source": "created_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6964,7 +9566,7 @@
 				"propertyName": "updatedAt",
 				"source": "updated_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			},
@@ -6974,7 +9576,7 @@
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
 				"type": "datetime",
-				"dict": [],
+				"dict": false,
 				"defaultValue": null,
 				"extensions": null
 			}
@@ -7011,7 +9613,7 @@
 					"propertyName": "entityClass",
 					"source": "entity_class",
 					"type": "varchar",
-					"dict": [],
+					"dict": false,
 					"defaultValue": null,
 					"extensions": null
 				}
@@ -7024,7 +9626,8 @@
 	},
 	{
 		"prefix": "/api/system/base/finance-result",
-		"name": "finance-result",
+		"name": "financeResult",
+		"resource": "",
 		"api": [
 			{
 				"name": "result",

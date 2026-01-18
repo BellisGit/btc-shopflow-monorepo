@@ -2,7 +2,7 @@
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
-import { responseInterceptor } from '@btc/shared-core/utils/http';
+import { responseInterceptor, logger } from '@btc/shared-core/utils/http';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 import { getCookie } from '@btc/shared-core/utils/cookie';
@@ -373,7 +373,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      console.error('common.other.request_log_service_unavailable', error);
+      logger.error('common.other.request_log_service_unavailable', error);
     }
   }
 

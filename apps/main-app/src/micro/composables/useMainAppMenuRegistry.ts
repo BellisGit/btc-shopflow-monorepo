@@ -4,7 +4,7 @@
  * 使用 manifest 文件而不是硬编码，与其他子应用保持一致
  */
 
-import { isMainAppRoute } from '@btc/shared-core';
+import { isMainAppRoute, logger } from '@btc/shared-core';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from './useQiankunMenuRegistry';
 import { getAppsUsingDynamicI18n } from '../apps';
 
@@ -57,8 +57,8 @@ export async function registerMainAppMenus(): Promise<void> {
 
   if (isMainAppRouteCheck) {
     // 如果是主应用路由，使用 manifest 注册菜单（与其他子应用保持一致）
-    registerManifestTabsForApp('main').catch(console.error);
-    registerManifestMenusForApp('main').catch(console.error);
+    registerManifestTabsForApp('main').catch((err) => logger.error('注册主应用标签页失败', err));
+    registerManifestMenusForApp('main').catch((err) => logger.error('注册主应用菜单失败', err));
   } else {
     // 对于子应用路由，先加载国际化消息，再注册菜单
     // 这样支持使用动态生成的国际化消息（从 config.ts）的子应用
@@ -66,15 +66,15 @@ export async function registerMainAppMenus(): Promise<void> {
 
     // 跳过 main 应用，它的国际化消息已经在初始化时加载了
     if (appId === 'main') {
-      registerManifestTabsForApp('main').catch(console.error);
-      registerManifestMenusForApp('main').catch(console.error);
+      registerManifestTabsForApp('main').catch((err) => logger.error('注册主应用标签页失败', err));
+      registerManifestMenusForApp('main').catch((err) => logger.error('注册主应用菜单失败', err));
       return;
     }
 
     // 跳过 docs-app，它的国际化方式和普通业务应用不一样（VitePress）
     if (appId === 'docs') {
-      registerManifestTabsForApp('docs').catch(console.error);
-      registerManifestMenusForApp('docs').catch(console.error);
+      registerManifestTabsForApp('docs').catch((err) => logger.error('注册docs应用标签页失败', err));
+      registerManifestMenusForApp('docs').catch((err) => logger.error('注册docs应用菜单失败', err));
       return;
     }
 
@@ -91,20 +91,20 @@ export async function registerMainAppMenus(): Promise<void> {
         const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
         if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(appId)) {
           // 已经注册，直接加载
-          await loadAndMergeSubAppI18n(i18n, appId).catch(console.error);
+          await loadAndMergeSubAppI18n(i18n, appId).catch((err) => logger.error(`加载子应用${appId}国际化消息失败`, err));
           break;
         }
       }
 
       // 尝试加载（可能从 JSON 文件加载，或者如果已经注册则从动态获取器加载）
-      await loadAndMergeSubAppI18n(i18n, appId).catch(console.error);
+      await loadAndMergeSubAppI18n(i18n, appId).catch((err) => logger.error(`加载子应用${appId}国际化消息失败`, err));
 
       // 再次检查是否已经注册（可能在加载过程中注册了）
       if (typeof window !== 'undefined') {
         const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
         if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(appId)) {
           // 已经注册，重新加载以使用动态生成的消息
-          await loadAndMergeSubAppI18n(i18n, appId).catch(console.error);
+          await loadAndMergeSubAppI18n(i18n, appId).catch((err) => logger.error(`加载子应用${appId}国际化消息失败`, err));
           break;
         }
       }
@@ -132,8 +132,8 @@ export async function registerMainAppMenus(): Promise<void> {
             // 确保消息不为空（至少有一个语言的消息）
             if (messages && (messages['zh-CN'] || messages['en-US'])) {
               // 消息已到达，可以注册菜单了
-              registerManifestTabsForApp(appId).catch(console.error);
-              registerManifestMenusForApp(appId).catch(console.error);
+              registerManifestTabsForApp(appId).catch((err) => logger.error(`注册应用${appId}标签页失败`, err));
+              registerManifestMenusForApp(appId).catch((err) => logger.error(`注册应用${appId}菜单失败`, err));
               return; // 消息已到达，注册菜单后返回
             }
           }
@@ -148,8 +148,8 @@ export async function registerMainAppMenus(): Promise<void> {
     }
 
     // 对于不使用动态国际化的应用，直接注册菜单
-    registerManifestTabsForApp(appId).catch(console.error);
-    registerManifestMenusForApp(appId).catch(console.error);
+    registerManifestTabsForApp(appId).catch((err) => logger.error(`注册应用${appId}标签页失败`, err));
+    registerManifestMenusForApp(appId).catch((err) => logger.error(`注册应用${appId}菜单失败`, err));
   }
 }
 

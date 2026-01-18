@@ -1,6 +1,7 @@
 ;
 import type { App } from 'vue';
 import { ServiceBuilder, type DynamicService, type EpsData } from './service/builder';
+import { logger } from '../utils/logger/index';
 
 export interface BtcOptions {
   // 后续添加配置
@@ -30,7 +31,7 @@ export function useCore() {
         serviceInstance = {};
       }
     } catch (error) {
-      console.error('[useCore] Failed to build service:', error);
+      logger.error('[useCore] Failed to build service:', error);
       serviceInstance = {};
     }
   }

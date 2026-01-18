@@ -135,7 +135,7 @@ import type { TableColumn } from '@btc/shared-components';
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import { service } from '@/services/eps';
-import { type CrudService } from '@btc/shared-core';
+import { type CrudService, logger } from '@btc/shared-core';
 import BtcFileThumbnailCell from '@/components/btc-file-thumbnail-cell/BtcFileThumbnailCell.vue';
 import { useThemePlugin, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { DEFAULT_OPERATION_WIDTH } from '@btc/shared-components';
@@ -484,7 +484,7 @@ async function handleShare(row: any) {
     }
     BtcMessage.success('文件链接已复制');
   } catch (error) {
-    console.error('copy link error', error);
+    logger.error('copy link error', error);
     BtcMessage.error('复制链接失败，请手动复制');
   }
 }

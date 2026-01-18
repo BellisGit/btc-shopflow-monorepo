@@ -1,5 +1,5 @@
 import type { Router, RouteLocationNormalized } from 'vue-router';
-import { isMainAppRoute, getMainAppHomeRoute, getMainAppId } from '@btc/shared-core';
+import { isMainAppRoute, getMainAppHomeRoute, getMainAppId, logger } from '@btc/shared-core';
 import { routes } from '../routes';
 import { APP_ROOTS, PUBLIC_PAGES } from '../constants';
 import { isAuthenticated } from '../utils/auth';
@@ -313,8 +313,8 @@ function handleMainAppRouteUpdate(to: RouteLocationNormalized) {
   if (isMainAppRouteCheck) {
     // 动态导入避免循环依赖
     import('../../micro/index').then(({ registerManifestTabsForApp, registerManifestMenusForApp }) => {
-      registerManifestTabsForApp('main').catch(console.error);
-      registerManifestMenusForApp('main').catch(console.error);
+      registerManifestTabsForApp('main').catch((err) => logger.error('注册主应用标签页失败', err));
+      registerManifestMenusForApp('main').catch((err) => logger.error('注册主应用菜单失败', err));
     }).catch(() => {
       // 忽略错误
     });
@@ -327,8 +327,8 @@ function handleMainAppRouteUpdate(to: RouteLocationNormalized) {
   if (isSystemPath) {
     // 动态导入避免循环依赖
     import('../../micro/index').then(({ registerManifestTabsForApp, registerManifestMenusForApp }) => {
-      registerManifestTabsForApp('system').catch(console.error);
-      registerManifestMenusForApp('system').catch(console.error);
+      registerManifestTabsForApp('system').catch((err) => logger.error('注册系统应用标签页失败', err));
+      registerManifestMenusForApp('system').catch((err) => logger.error('注册系统应用菜单失败', err));
     }).catch(() => {
       // 忽略错误
     });

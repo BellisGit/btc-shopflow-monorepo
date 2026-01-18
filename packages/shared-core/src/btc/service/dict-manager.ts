@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger/index';
 ;
 /**
  * 字典数据管理模块
@@ -190,7 +191,7 @@ export async function refreshDictData(
       throw new Error(`字典接口返回格式错误: ${JSON.stringify(result)}`);
     }
   } catch (err) {
-    console.error('[dict-manager] 刷新字典数据失败:', err);
+    logger.error('[dict-manager] 刷新字典数据失败:', err);
     throw err;
   }
 }
@@ -224,7 +225,7 @@ function notifyDictUpdate(event: DictUpdateEvent): void {
     try {
       callback(event);
     } catch (err) {
-      console.error('[dict-manager] 字典更新回调执行失败:', err);
+      logger.error('[dict-manager] 字典更新回调执行失败:', err);
     }
   });
 }
@@ -261,11 +262,11 @@ export function initSSEIntegration(): void {
           await refreshDictData();
         }
       } catch (err) {
-        console.error('[dict-manager] SSE 事件处理失败:', err);
+        logger.error('[dict-manager] SSE 事件处理失败:', err);
       }
     });
   }).catch((err) => {
-    console.error('[dict-manager] 初始化 SSE 集成失败:', err);
+    logger.error('[dict-manager] 初始化 SSE 集成失败:', err);
   });
 
   sseInitialized = true;
@@ -285,7 +286,7 @@ export function cleanupSSEIntegration(): void {
     // 注意：由于我们使用了动态导入，无法直接移除之前注册的回调
     // 这里只是标记为未初始化，实际清理需要在应用层面处理
   }).catch((err) => {
-    console.error('[dict-manager] 清理 SSE 集成失败:', err);
+    logger.error('[dict-manager] 清理 SSE 集成失败:', err);
   });
 
   sseInitialized = false;

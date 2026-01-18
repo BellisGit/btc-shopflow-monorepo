@@ -3,6 +3,7 @@ import type { Ref } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { appStorage } from '@/utils/app-storage';
+import { logger } from '@btc/shared-core';
 
 interface FormEditorOptions {
   Form: Ref<any>;
@@ -163,7 +164,7 @@ export function useFormEditor({
             resetEmailUpdateCountdown();
             await loadUserInfo(showFullInfo.value);
           } catch (error: any) {
-            console.error('保存用户信息失败:', error);
+            logger.error('保存用户信息失败:', error);
             BtcMessage.error(error?.message || '保存失败');
             done();
           }

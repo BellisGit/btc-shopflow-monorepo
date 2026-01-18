@@ -13,7 +13,7 @@
 import { ref, computed } from 'vue';
 import { Download } from '@element-plus/icons-vue';
 
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import type { BtcFormItem } from '../../components/form/btc-form/types';
 import { BtcMessage } from '@btc/shared-components';
 
@@ -121,7 +121,7 @@ const handleSubmit = async (_data: any, { done, close }: any) => {
       BtcMessage.error('导出服务未配置');
     }
   } catch (error) {
-    console.error('导出失败:', error);
+    logger.error('导出失败:', error);
     BtcMessage.error(t('导出失败'));
   } finally {
     loading.value = false;

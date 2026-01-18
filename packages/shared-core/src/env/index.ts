@@ -5,6 +5,7 @@
 ;
 
 import { z } from 'zod';
+import { logger } from '../utils/logger/index';
 
 // 环境变量 Schema
 const envSchema = z.object({
@@ -43,7 +44,7 @@ try {
   env = envSchema.parse(rawEnv);
 } catch (error) {
   if (error instanceof z.ZodError) {
-    console.error('环境变量验证失败:', error.errors);
+    logger.error('环境变量验证失败:', error.errors);
     throw new Error(`环境变量配置错误: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
   }
   throw error;

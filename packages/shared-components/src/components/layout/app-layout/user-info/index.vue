@@ -75,6 +75,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm } from '@btc/shared-components';
 import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
+import { logger } from '@btc/shared-core';
 ;
 // useMessage 不再需要，直接使用 BtcMessage
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
@@ -177,10 +178,10 @@ const handleAvatarError = (event: Event) => {
 
   // 如果失败的是 logo.png，说明默认图片也不存在
   if (failedUrl.includes('logo.png')) {
-    console.error('[UserInfo] ❌❌❌ CRITICAL: logo.png 文件加载失败！');
-    console.error('[UserInfo] 请检查文件是否存在于: public/logo.png');
-    console.error('[UserInfo] 当前完整 URL:', failedUrl);
-    console.error('[UserInfo] 当前域名:', window.location.origin);
+    logger.error('[UserInfo] ❌❌❌ CRITICAL: logo.png 文件加载失败！');
+    logger.error('[UserInfo] 请检查文件是否存在于: public/logo.png');
+    logger.error('[UserInfo] 当前完整 URL:', failedUrl);
+    logger.error('[UserInfo] 当前域名:', window.location.origin);
     // logo.png 失败就不再尝试了
     return;
   }
@@ -326,7 +327,7 @@ const handleCommand = (command: string) => {
             currentLogoutFn().catch((error: any) => {
               // 生产环境可能无法显示日志，但保留错误处理
               if (import.meta.env.DEV) {
-                console.error('[user-info] Logout failed:', error);
+                logger.error('[user-info] Logout failed:', error);
               }
             });
           }

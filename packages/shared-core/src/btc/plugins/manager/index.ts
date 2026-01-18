@@ -10,6 +10,7 @@ import type {
   LayoutConfig,
 } from './types';
 import { PluginStatus } from './types';
+import { logger } from '../../../utils/logger/index';
 
 /**
  * 插件管理器（增强版）
@@ -215,7 +216,7 @@ export class PluginManager {
           }
         }
       } catch (error) {
-        console.error(`[PluginManager] Failed to register component from plugin "${pluginName}":`, error);
+        logger.error(`[PluginManager] Failed to register component from plugin "${pluginName}":`, error);
       }
     }
   }
@@ -234,7 +235,7 @@ export class PluginManager {
           console.info(`[PluginManager] Registered directive: v-${directiveName} from plugin "${pluginName}"`);
         }
       } catch (error) {
-        console.error(`[PluginManager] Failed to register directive "${directiveName}" from plugin "${pluginName}":`, error);
+        logger.error(`[PluginManager] Failed to register directive "${directiveName}" from plugin "${pluginName}":`, error);
       }
     }
   }
@@ -257,7 +258,7 @@ export class PluginManager {
             console.info(`[PluginManager] Registered view route: ${route.path} from plugin "${pluginName}"`);
           }
         } catch (error) {
-          console.error(`[PluginManager] Failed to register view route from plugin "${pluginName}":`, error);
+          logger.error(`[PluginManager] Failed to register view route from plugin "${pluginName}":`, error);
         }
       }
     }
@@ -271,7 +272,7 @@ export class PluginManager {
             console.info(`[PluginManager] Registered page route: ${route.path} from plugin "${pluginName}"`);
           }
         } catch (error) {
-          console.error(`[PluginManager] Failed to register page route from plugin "${pluginName}":`, error);
+          logger.error(`[PluginManager] Failed to register page route from plugin "${pluginName}":`, error);
         }
       }
     }
@@ -655,7 +656,7 @@ export class PluginManager {
     if (failed.length > 0) {
       console.group('❌ 失败的插件');
       failed.forEach(plugin => {
-        console.error(`${plugin.name}: ${plugin.error?.message}`);
+        logger.error(`${plugin.name}: ${plugin.error?.message}`);
       });
       console.groupEnd();
     }

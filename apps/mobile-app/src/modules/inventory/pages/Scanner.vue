@@ -53,6 +53,7 @@
 /* eslint-env browser */
 import { showToast, showDialog, Loading } from 'vant';
 import flashlightIcon from '@/assets/flashlight.svg';
+import { logger } from '@btc/shared-core';
 ;
 
 
@@ -191,8 +192,8 @@ const startCamera = async () => {
   } catch (error: any) {
     loading.value = false;
     scanning.value = false;
-    console.error('启动摄像头失败:', error);
-    console.error('错误详情:', {
+    logger.error('启动摄像头失败:', error);
+    logger.error('错误详情:', {
       name: error.name,
       message: error.message,
       stack: error.stack
@@ -265,7 +266,7 @@ const stopScan = async () => {
       html5QrCode.clear();
       scanning.value = false;
     } catch (error) {
-      console.error('停止扫码失败:', error);
+      logger.error('停止扫码失败:', error);
     }
   }
 
@@ -316,7 +317,7 @@ const toggleFlashlight = async () => {
       showToast('当前设备不支持闪光灯');
     }
   } catch (error) {
-    console.error('切换闪光灯失败:', error);
+    logger.error('切换闪光灯失败:', error);
     showToast('切换闪光灯失败');
   }
 };

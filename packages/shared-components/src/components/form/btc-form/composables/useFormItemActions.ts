@@ -1,4 +1,4 @@
-import { formHook } from '@btc/shared-core/utils/form';
+import { formHook, logger } from '@btc/shared-core/utils/form';
 ;
 
 /**
@@ -58,7 +58,7 @@ export function useFormItemActions(formSetup: any) {
       const item = findItemByProp(prop);
 
       if (!item) {
-        console.error(`[set] ${prop} is not found`);
+        logger.error(`[set] ${prop} is not found`);
         return;
       }
 

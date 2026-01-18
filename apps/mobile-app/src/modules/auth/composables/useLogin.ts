@@ -1,6 +1,7 @@
 ;
 import { showToast } from 'vant';
 import { useAuthStore } from '@/stores/auth';
+import { logger } from '@btc/shared-core';
 
 export function useLogin() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export function useLogin() {
       const redirectPath = redirect.split('?')[0];
       router.push(redirectPath);
     } catch (error: any) {
-      console.error('[Login] Failed:', error);
+      logger.error('[Login] Failed:', error);
       errorMessage.value = error?.message || '登录失败，请检查用户名和密码';
       showToast({
         type: 'fail',

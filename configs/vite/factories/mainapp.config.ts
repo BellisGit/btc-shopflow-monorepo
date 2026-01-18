@@ -507,6 +507,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     optimizeDeps: optimizeDepsConfig,
     css: cssConfig,
     build: buildConfig,
+    // 开发环境日志配置：减少冗余输出
+    clearScreen: false, // 不清理屏幕，保留之前的输出
+    logLevel: process.env.VITE_LOG_LEVEL || 'warn', // 只显示警告和错误，隐藏 info 和 debug
   };
 
   // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）

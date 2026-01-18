@@ -1,7 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
-import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
+import { scanRoutesFromConfigFiles, logger } from '@btc/shared-core/utils/route-scanner';
 ;
 
 /**
@@ -37,7 +37,7 @@ export const getLogisticsRoutes = (): RouteRecordRaw[] => {
       console.warn(`[logisticsRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
-    console.error(`[logisticsRouter] Failed to scan routes from modules:`, error);
+    logger.error(`[logisticsRouter] Failed to scan routes from modules:`, error);
     pageRoutes = [];
   }
 
@@ -90,7 +90,7 @@ export const getLogisticsPageRoutes = (): RouteRecordRaw[] => {
       console.warn(`[logisticsRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
-    console.error(`[logisticsRouter] Failed to scan routes from modules:`, error);
+    logger.error(`[logisticsRouter] Failed to scan routes from modules:`, error);
     pageRoutes = [];
   }
 

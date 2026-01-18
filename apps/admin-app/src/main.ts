@@ -21,7 +21,7 @@ import {
 import type { AdminAppContext } from './bootstrap';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
-import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { removeLoadingElement, clearNavigationFlag, logger } from '@btc/shared-core';
 import { tSync } from './i18n/getters';
 // 注意：不再暴露 configImages 到全局，让共享组件直接使用默认配置
 // 共享组件的默认配置会从 @btc-assets 导入图片，这些图片在 layout-app 的构建产物中
@@ -58,7 +58,7 @@ if (typeof window !== 'undefined' && !globalErrorHandler) {
       errorStack.includes('BtcCrud')
     ) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      console.error('CRUD component error (must fix):', errorMessage, {
+      logger.error('CRUD component error (must fix):', errorMessage, {
         error: event.error,
         stack: errorStack,
       });
@@ -188,7 +188,7 @@ const render = async (props: QiankunProps = {}) => {
       // 静默失败
     }
   } catch (error) {
-    console.error('Render failed:', error);
+    logger.error('Render failed:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading

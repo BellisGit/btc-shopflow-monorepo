@@ -15,7 +15,7 @@ import {
 } from './bootstrap';
 import type { LogisticsAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
-import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { removeLoadingElement, clearNavigationFlag, logger } from '@btc/shared-core';
 
 let context: LogisticsAppContext | null = null;
 let isRendering = false; // 防止并发渲染
@@ -95,7 +95,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('common.error.render_failed', error);
+    logger.error('common.error.render_failed', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -142,7 +142,7 @@ async function mount(props: QiankunProps) {
   try {
     await render(props);
   } catch (error) {
-    console.error('common.error.mount_failed', error);
+    logger.error('common.error.mount_failed', error);
     throw error;
   }
 }

@@ -1,6 +1,6 @@
 ;
 import { ref, computed } from 'vue';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import { BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -75,7 +75,7 @@ export function useInventoryTicketPrint(
           const currentList = crudRef.value?.crud?.tableData?.value || ticketList.value;
           await checkTicketSaveService(currentList);
         } catch (error) {
-          console.error('[InventoryTicketPrint] Save print failed:', error);
+          logger.error('[InventoryTicketPrint] Save print failed:', error);
           // 保存失败不影响打印，继续执行
         }
       }
@@ -181,7 +181,7 @@ export function useInventoryTicketPrint(
             console.warn('[InventoryTicketPrint] Print service not available, skipping API call');
           }
         } catch (error) {
-          console.error('[InventoryTicketPrint] Call print API failed:', error);
+          logger.error('[InventoryTicketPrint] Call print API failed:', error);
           // 打印API调用失败不影响用户，只记录错误
         } finally {
           // 延迟清理，确保事件处理完成
@@ -211,7 +211,7 @@ export function useInventoryTicketPrint(
           // 获取 iframe 的 document
           const iframeDoc = printIframe.contentDocument || printIframe.contentWindow?.document;
           if (!iframeDoc) {
-            console.error('[InventoryTicketPrint] Cannot access iframe document');
+            logger.error('[InventoryTicketPrint] Cannot access iframe document');
             if (cleanup) {
               cleanup();
             }
@@ -274,7 +274,7 @@ export function useInventoryTicketPrint(
           }
           printWindow?.print(); // 执行打印
         } catch (error) {
-          console.error('[InventoryTicketPrint] Failed to generate QR codes:', error);
+          logger.error('[InventoryTicketPrint] Failed to generate QR codes:', error);
           BtcMessage.error('打印失败：二维码生成失败');
           // 清理事件监听器和 iframe
           if (cleanup) {
@@ -283,7 +283,7 @@ export function useInventoryTicketPrint(
         }
       }, 500); // 延迟 0.5 秒，确保二维码生成完成
     } catch (error) {
-      console.error('[InventoryTicketPrint] Print failed:', error);
+      logger.error('[InventoryTicketPrint] Print failed:', error);
       BtcMessage.error(t('inventory.ticket.print.load_failed'));
     }
   };

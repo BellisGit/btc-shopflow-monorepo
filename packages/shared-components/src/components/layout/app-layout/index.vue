@@ -150,7 +150,7 @@ import { mitt } from '@btc/shared-components';
 import { useBrowser } from '../../../composables/useBrowser';
 import { useSettingsState } from '../../others/btc-user-setting/composables';
 import { MenuThemeEnum, MenuTypeEnum } from '../../others/btc-user-setting/config/enums';
-import { useContentMount } from '@btc/shared-core';
+import { useContentMount, logger } from '@btc/shared-core';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -263,7 +263,7 @@ if (!menuType) {
 
 // 最终验证：确保 menuType 是一个有效的 ref
 if (typeof menuType.value === 'undefined') {
-  console.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
+  logger.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
   menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
 }
 

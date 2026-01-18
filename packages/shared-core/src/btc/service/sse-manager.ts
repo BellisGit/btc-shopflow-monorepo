@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger/index';
 ;
 /**
  * SSE 事件管理器
@@ -115,7 +116,7 @@ function doConnect(sseUrl: string): void {
           try {
             handler(data);
           } catch (err) {
-            console.error(`[sse-manager] 事件处理器执行失败 (${eventType}):`, err);
+            logger.error(`[sse-manager] 事件处理器执行失败 (${eventType}):`, err);
           }
         });
 
@@ -126,18 +127,18 @@ function doConnect(sseUrl: string): void {
             try {
               handler(data);
             } catch (err) {
-              console.error('[sse-manager] message 事件处理器执行失败:', err);
+              logger.error('[sse-manager] message 事件处理器执行失败:', err);
             }
           });
         }
       } catch (err) {
-        console.error('[sse-manager] 解析 SSE 消息失败:', err);
+        logger.error('[sse-manager] 解析 SSE 消息失败:', err);
       }
     };
 
     // 连接错误
     eventSource.onerror = (err) => {
-      console.error('[sse-manager] SSE 连接错误:', err);
+      logger.error('[sse-manager] SSE 连接错误:', err);
       sseState.status = 'disconnected';
       
       // 关闭连接
@@ -166,7 +167,7 @@ function doConnect(sseUrl: string): void {
       }
     };
   } catch (err) {
-    console.error('[sse-manager] 创建 SSE 连接失败:', err);
+    logger.error('[sse-manager] 创建 SSE 连接失败:', err);
     sseState.status = 'disconnected';
   }
 }

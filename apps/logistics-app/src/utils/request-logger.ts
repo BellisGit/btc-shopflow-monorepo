@@ -1,5 +1,6 @@
 ;
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
+import { logger } from '@btc/shared-core';
 
 /**
  * 请求日志项
@@ -184,7 +185,7 @@ class RequestLogQueue {
         this.tryFlush();
       }
     } catch (error) {
-      console.error('common.other.batch_send_failed', error);
+      logger.error('common.other.batch_send_failed', error);
 
       // 重试机制已经处理了重试，这里只需要暂停发送
       this.isPaused = true;

@@ -19,12 +19,8 @@ const logger = {
 };
 
 export default defineConfig({
-  title: '拜里斯文档库',
-  description: 'BTC 车间管理系统开发文档库',
-
+  // 共享属性和其他顶层内容
   base: '/',
-  lang: 'zh-CN',
-
   lastUpdated: true,
 
   // 路由配置
@@ -72,83 +68,145 @@ export default defineConfig({
     ]
   ],
 
-  themeConfig: {
-    logo: '/logo.png',
-    siteTitle: '拜里斯文档库', // 显示站点标题
+  // 多语言配置
+  locales: {
+    root: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      link: '/zh/',
+      title: '拜里斯文档库',
+      description: 'BTC 车间管理系统开发文档库',
+      themeConfig: {
+        logo: '/logo.png',
+        siteTitle: '拜里斯文档库',
+        // 自动生成导航栏（根据文件夹）
+        nav: generateNav('zh'),
+        // 自动生成侧边栏（根据 frontmatter）
+        sidebar: generateSidebar('zh'),
 
-    // 自动生成导航栏（根据文件夹）
-    nav: generateNav(),
-
-    // 自动生成侧边栏（根据 frontmatter）
-    sidebar: generateSidebar(),
-
-    // 本地搜索
-    search: {
-      provider: 'local',
-      options: {
-        locales: {
-          'zh-CN': {
-            translations: {
-              button: { buttonText: '搜索文档', buttonAriaLabel: '搜索文档' },
-              modal: {
-                noResultsText: '无法找到相关结果',
-                resetButtonTitle: '清除查询条件',
-                footer: {
-                  selectText: '选择',
-                  navigateText: '切换',
-                  closeText: '关闭'
+        // 本地搜索
+        search: {
+          provider: 'local',
+          options: {
+            locales: {
+              'zh-CN': {
+                translations: {
+                  button: { buttonText: '搜索文档', buttonAriaLabel: '搜索文档' },
+                  modal: {
+                    noResultsText: '无法找到相关结果',
+                    resetButtonTitle: '清除查询条件',
+                    footer: {
+                      selectText: '选择',
+                      navigateText: '切换',
+                      closeText: '关闭'
+                    }
+                  }
                 }
               }
             }
           }
-        }
-      }
-    },
-
-    // 编辑链接
-    editLink: {
-      pattern: 'https://github.com/your-org/btc-shopflow/edit/main/:path',
-      text: '在 GitHub 上编辑此页'
-    },
-
-    // 大纲配置
-    outline: {
-      level: [2, 3],
-      label: '页面导航'
-    },
-
-    // 最后更新文本
-    lastUpdated: {
-      text: '最后更新',
-      formatOptions: {
-        dateStyle: 'short',
-        timeStyle: 'short'
-      }
-    },
-
-    // 分页导航文本
-    docFooter: {
-      prev: '上一页',
-      next: '下一页'
-    },
-
-    // 社交媒体链接（可选）
-    socialLinks: [
-      // 返回系统应用的logo图标
-      {
-        icon: {
-          svg: '<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="btc-logo-icon"><title>返回系统应用</title></svg>'
         },
-        link: 'https://bellis.com.cn',
-        ariaLabel: '返回系统应用'
-      }
-    ],
 
-    // 返回顶部按钮配置
-    returnToTopLabel: '返回顶部'
+        // 编辑链接
+        editLink: {
+          pattern: 'https://github.com/BellisGit/btc-shopflow-monorepo/edit/develop/apps/docs-app/:path',
+          text: '在 GitHub 上编辑此页'
+        },
+
+        // 大纲配置
+        outline: {
+          level: [2, 3],
+          label: '页面导航'
+        },
+
+        // 最后更新文本
+        lastUpdated: {
+          text: '最后更新',
+          formatOptions: {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          }
+        },
+
+        // 分页导航文本
+        docFooter: {
+          prev: '上一页',
+          next: '下一页'
+        },
+
+        // 社交媒体链接（可选）
+        socialLinks: [
+          // 返回系统应用的logo图标
+          {
+            icon: {
+              svg: '<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="btc-logo-icon"><title>返回系统应用</title></svg>'
+            },
+            link: 'https://bellis.com.cn',
+            ariaLabel: '返回系统应用'
+          }
+        ],
+
+        // 返回顶部按钮配置
+        returnToTopLabel: '返回顶部'
+      },
+    },
+    en: {
+      label: 'English',
+      lang: 'en-US',
+      link: '/en/',
+      title: 'Bellis Documentation',
+      description: 'BTC Shopflow Management System Documentation',
+      themeConfig: {
+        logo: '/logo.png',
+        siteTitle: 'Bellis Documentation',
+        nav: generateNav('en'),
+        sidebar: generateSidebar('en'),
+        search: {
+          provider: 'local',
+          options: {
+            locales: {
+              'en-US': {
+                translations: {
+                  button: { buttonText: 'Search', buttonAriaLabel: 'Search' },
+                  modal: {
+                    noResultsText: 'No results found',
+                    resetButtonTitle: 'Reset search',
+                    footer: {
+                      selectText: 'to select',
+                      navigateText: 'to navigate',
+                      closeText: 'to close'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        editLink: {
+          pattern: 'https://github.com/BellisGit/btc-shopflow-monorepo/edit/develop/apps/docs-app/:path',
+          text: 'Edit this page on GitHub'
+        },
+        outline: {
+          level: [2, 3],
+          label: 'On this page'
+        },
+        lastUpdated: {
+          text: 'Last updated',
+          formatOptions: {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          }
+        },
+        docFooter: {
+          prev: 'Previous page',
+          next: 'Next page'
+        },
+        returnToTopLabel: 'Back to top'
+      },
+    },
   },
 
-  // Markdown 配置
+  // Markdown 配置（可以在 locales 中覆盖）
   markdown: {
     lineNumbers: true,
 

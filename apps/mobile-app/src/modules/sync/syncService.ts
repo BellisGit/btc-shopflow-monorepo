@@ -2,6 +2,7 @@
 import { storage } from '@btc/shared-utils';
 import { db } from '@/db';
 import { processQueue } from './backgroundSync';
+import { logger } from '@btc/shared-core';
 
 // 获取 API baseURL（使用 try-catch 避免生产环境 import.meta 问题）
 function getApiBaseURL(): string {
@@ -48,7 +49,7 @@ export async function pullUpdates(lastSyncTime?: number) {
 
     return data;
   } catch (error) {
-    console.error('[SyncService] Failed to pull updates:', error);
+    logger.error('[SyncService] Failed to pull updates:', error);
     throw error;
   }
 }

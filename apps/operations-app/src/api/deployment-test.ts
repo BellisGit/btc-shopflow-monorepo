@@ -4,6 +4,7 @@
 ;
 
 import { storage } from '@btc/shared-utils';
+import { logger } from '@btc/shared-core';
 
 export interface TestConfig {
   apps: string[];
@@ -180,7 +181,7 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
 
       console.info('[deployment-test API] 测试完成:', results);
     } catch (error: unknown) {
-      console.error('[deployment-test API] 测试执行失败:', error);
+      logger.error('[deployment-test API] 测试执行失败:', error);
       status.status = 'failed';
       status.error = error instanceof Error ? error.message : String(error);
       storage.set(testStatusKey, status);

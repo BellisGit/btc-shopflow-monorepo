@@ -84,7 +84,7 @@ defineOptions({
 import { ref, onMounted, onUnmounted, markRaw, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { usePluginManager } from '@btc/shared-core';
+import { usePluginManager, logger } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
@@ -283,7 +283,7 @@ try {
 } catch (error) {
   // 静默失败，使用默认值
   if (import.meta.env.DEV) {
-    console.error('[Topbar] useSettingsState 失败:', error);
+    logger.error('[Topbar] useSettingsState 失败:', error);
   }
   showGlobalSearch = ref(false);
   menuThemeType = ref(null);
@@ -294,7 +294,7 @@ try {
   const settingsConfig = useSettingsConfig();
   menuStyleList = settingsConfig.menuStyleList;
 } catch (error) {
-  console.error('[Topbar] useSettingsConfig 失败:', error);
+  logger.error('[Topbar] useSettingsConfig 失败:', error);
   menuStyleList = ref([]);
 }
 
@@ -437,7 +437,7 @@ const logoTitle = computed(() => {
     return t('app.title');
   } catch (error) {
     // 如果出现任何错误（如 getCurrentSubApp 或 getAppById 抛出错误），使用默认标题
-    console.error('[Topbar] 计算 logoTitle 时出错:', error);
+    logger.error('[Topbar] 计算 logoTitle 时出错:', error);
     try {
       return t('app.title');
     } catch {

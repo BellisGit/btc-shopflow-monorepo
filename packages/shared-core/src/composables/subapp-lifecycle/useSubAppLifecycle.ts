@@ -3,7 +3,8 @@ import { createApp } from 'vue';
 import type { App as VueApp } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { resetPluginManager, usePluginManager } from '../../btc/plugins/manager';
-import { createSharedUserSettingPlugin } from '@btc/shared-core/configs/layout-bridge';
+import { createSharedUserSettingPlugin } from '../../configs/layout-bridge';
+import { logger } from '../../utils/logger';
 import type { QiankunProps } from '../../types/qiankun';
 import type { SubAppContext, SubAppOptions } from './types';
 import { deriveInitialSubRoute } from './utils';
@@ -66,7 +67,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
       err.message.includes('BtcCrud')
     )) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      console.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
+      logger.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
       // 继续执行，不阻止错误传播
     }
 
@@ -76,7 +77,7 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
     } catch (e) {
       // 静默失败
     }
-    console.error(`[${appId}-app] Vue errorHandler 捕获到错误:`, err, { info, instance });
+    logger.error(`[${appId}-app] Vue errorHandler 捕获到错误:`, err, { info, instance });
   };
 
   // 同理：warn 也至少在控制台可见（生产环境默认可能被忽略）
@@ -459,7 +460,7 @@ export async function mountSubApp(
       mountPoint = await waitForContainer('#subapp-viewport', 80, 50); // 增加重试次数和延迟
       if (!mountPoint) {
         const errorMsg = `[${options.appId}-app] 使用 layout-app 但未找到 #subapp-viewport 元素`;
-        console.error(errorMsg, {
+        logger.error(errorMsg, {
           __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
           hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
           documentBody: typeof document !== 'undefined' ? document.body : null,
@@ -693,7 +694,7 @@ export async function mountSubApp(
           try {
             await context.router.replace(initialRoute);
           } catch (navError: unknown) {
-            console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+            logger.error(`[${options.appId}-app] 路由导航失败:`, navError, {
               initialRoute,
               currentPath: window.location.pathname,
             });
@@ -735,7 +736,7 @@ export async function mountSubApp(
           });
         } catch (error: unknown) {
           // 路由导航失败时输出错误信息
-          console.error(`[${options.appId}-app] 路由导航失败:`, error, {
+          logger.error(`[${options.appId}-app] 路由导航失败:`, error, {
             initialRoute,
             currentPath: window.location.pathname,
             routerReady: 'ready',
@@ -758,7 +759,7 @@ export async function mountSubApp(
             });
           });
         } catch (navError: unknown) {
-          console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+          logger.error(`[${options.appId}-app] 路由导航失败:`, navError, {
             initialRoute,
             currentPath: window.location.pathname,
             routerReady: 'timeout',

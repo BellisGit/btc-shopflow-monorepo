@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
-import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcDialog, BtcSvg } from '@btc/shared-components';
 import { formatDateTime, formatTableNumber } from '@btc/shared-utils';
@@ -121,7 +121,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      console.error('[InventoryDetail] 获取盘点列表失败:', error);
+      logger.error('[InventoryDetail] 获取盘点列表失败:', error);
       return {
         list: [],
         pagination: {
@@ -290,7 +290,7 @@ const loadPositionOptions = async () => {
       return a.label.localeCompare(b.label, 'zh-CN', { numeric: true, sensitivity: 'base' });
     });
   } catch (error) {
-    console.error('[InventoryDetail] 获取仓位选项失败:', error);
+    logger.error('[InventoryDetail] 获取仓位选项失败:', error);
     positionOptions.value = [];
   } finally {
     positionLoading.value = false;
@@ -495,7 +495,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryDetail] Export failed:', error);
+    logger.error('[InventoryDetail] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('common.ui.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

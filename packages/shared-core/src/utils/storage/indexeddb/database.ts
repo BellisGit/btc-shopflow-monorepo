@@ -6,6 +6,7 @@
 
 import Dexie, { type Table } from 'dexie';
 import type { DatabaseConfig, DashboardDataItem } from './types';
+import { logger } from '../../logger/index';
 
 /**
  * 默认数据库名称
@@ -51,7 +52,7 @@ export function createDashboardDB(): DashboardDatabase {
     const db = new DashboardDatabase();
     return db;
   } catch (error) {
-    console.error('[IndexedDB] 创建数据库失败:', error);
+    logger.error('[IndexedDB] 创建数据库失败:', error);
     throw error;
   }
 }
@@ -87,7 +88,7 @@ export function createIndexedDB(dbName: string, config: DatabaseConfig): Dexie {
     // @ts-expect-error - Dexie 类型系统导致的类型推断过深问题
     return new CustomDatabase() as Dexie;
   } catch (error) {
-    console.error(`[IndexedDB] 创建数据库 "${dbName}" 失败:`, error);
+    logger.error(`[IndexedDB] 创建数据库 "${dbName}" 失败:`, error);
     throw error;
   }
 }

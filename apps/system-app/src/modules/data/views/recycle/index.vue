@@ -45,7 +45,7 @@
 import { onActivated } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
-import { usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import { requestAdapter } from '@/utils/requestAdapter';
 
 defineOptions({
@@ -184,7 +184,7 @@ function restore(targetId?: string) {
 
         refresh();
       } catch (err: any) {
-        console.error('恢复数据失败:', err);
+        logger.error('恢复数据失败:', err);
         // HTTP拦截器已经处理了错误提示，这里不需要重复显示
       } finally {
         loading.value = false;

@@ -179,7 +179,7 @@
 
 <script setup lang="ts">
 import { BtcConfirm, BtcMessage, BtcInput } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcDoubleLayout } from '@btc/shared-components';
 import { Document, Picture, VideoPlay, Check, ZoomIn, Download, Delete, Search } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
@@ -385,7 +385,7 @@ const refreshTemplateList = async () => {
       loading.value = false;
     }, 500);
   } catch (error) {
-    console.error('加载模板列表失败:', error);
+    logger.error('加载模板列表失败:', error);
     loading.value = false;
   }
 };

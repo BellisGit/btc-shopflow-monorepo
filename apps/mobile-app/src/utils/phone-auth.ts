@@ -2,6 +2,7 @@
 import { requestAdapter } from './requestAdapter';
 import { showToast, showLoadingToast, closeToast } from 'vant';
 import axios from 'axios';
+import { logger } from '@btc/shared-core';
 
 /**
  * 获取动态 baseURL（与 http.ts 中的逻辑保持一致）
@@ -109,7 +110,7 @@ const loadSDK = async (): Promise<void> => {
     // 如果本地文件未加载，抛出错误（不使用npm包，因为使用本地SDK文件）
     throw new Error('本地SDK未找到，请确认已正确加载SDK文件');
   } catch (error) {
-    console.error('SDK加载失败:', error);
+    logger.error('SDK加载失败:', error);
     throw new Error('阿里云号码认证SDK加载失败，请检查SDK文件是否存在');
   }
 };
@@ -173,7 +174,7 @@ export const getAuthTokens = async (): Promise<AuthTokenResponse> => {
       throw new Error(response.msg || '获取认证Token失败');
     }
   } catch (error: any) {
-    console.error('获取AuthToken失败:', error);
+    logger.error('获取AuthToken失败:', error);
 
     // 处理编码相关错误
     if (error.message && error.message.includes('Malformed UTF-8')) {
@@ -206,7 +207,7 @@ export const getPhoneWithToken = async (spToken: string): Promise<any> => {
 
     return response;
   } catch (error: any) {
-    console.error('获取手机号失败:', error);
+    logger.error('获取手机号失败:', error);
     throw error;
   }
 };

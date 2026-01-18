@@ -2,7 +2,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
-import { storage } from '@btc/shared-core/utils';
+import { storage } from '../../utils';
+import { logger } from '../../utils/logger';
 import { THEME_PRESETS, type ThemeConfig, mixColor } from '../composables/useTheme';
 import { setBodyClassName } from '../utils/body-class';
 
@@ -304,7 +305,7 @@ export const useThemeStore = defineStore('theme', () => {
         detail: { theme: newTheme, isDark: newDarkValue }
       }));
     } catch (e) {
-      console.error('[ThemeStore] 触发 theme-toggle 事件失败', e);
+      logger.error('[ThemeStore] 触发 theme-toggle 事件失败', e);
     }
 
     // 获取菜单文本颜色信息

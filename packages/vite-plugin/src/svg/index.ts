@@ -157,7 +157,9 @@ function compilerSvg(): string {
     }
   }
 
-  return [...srcSvgs, ...assetsSvgs, ...sharedAssetsSvgs]
+  // 加载顺序：共享组件图标先加载，应用内图标后加载（可以覆盖共享组件的同名图标）
+  // 这样应用可以自定义覆盖共享组件的图标
+  return [...srcSvgs, ...sharedAssetsSvgs, ...assetsSvgs]
     .map((e) => {
       // 检查是否是 bg.svg（包含 icon-bg symbol）
       const isBgIcon = e.includes('id="icon-bg"');

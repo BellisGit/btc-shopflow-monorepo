@@ -19,7 +19,7 @@ import {
 import type { SystemAppContext } from './bootstrap-subapp';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
-import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { removeLoadingElement, clearNavigationFlag, logger } from '@btc/shared-core';
 import { tSync } from './i18n/getters';
 
 let context: SystemAppContext | null = null;
@@ -120,7 +120,7 @@ const render = async (props: QiankunProps = {}) => {
       // 静默失败
     }
   } catch (error) {
-    console.error('[system-app] 渲染失败:', error);
+    logger.error('[system-app] 渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -264,6 +264,6 @@ const shouldRunStandalone = () => {
 if (shouldRunStandalone()) {
   // 直接渲染，不需要加载 layout-app
   render().catch((error) => {
-    console.error('[system-app] 独立运行失败:', error);
+    logger.error('[system-app] 独立运行失败:', error);
   });
 }

@@ -8,6 +8,7 @@
 import { ref, onMounted, nextTick, type Ref } from 'vue';
 import { indexedDBManager } from '@/modules/strategy/utils/indexedDB';
 import type { StrategyNode, StrategyConnection } from '@/types/strategy';
+import { logger } from '@btc/shared-core';
 
 interface AutoSaveOptions {
   nodes: Ref<StrategyNode[]>;
@@ -62,7 +63,7 @@ export function useAutoSave(options: AutoSaveOptions) {
       await indexedDBManager.saveFile(fileId.value, name, data);
       lastSaved.value = new Date();
     } catch (error) {
-      console.error('[AutoSave] Failed to save to IndexedDB:', error);
+      logger.error('[AutoSave] Failed to save to IndexedDB:', error);
     } finally {
       isSaving.value = false;
     }
@@ -115,7 +116,7 @@ export function useAutoSave(options: AutoSaveOptions) {
       
       return false;
     } catch (error) {
-      console.error('[AutoSave] Failed to load from IndexedDB:', error);
+      logger.error('[AutoSave] Failed to load from IndexedDB:', error);
       return false;
     } finally {
       // 使用 nextTick 确保所有 watch 都执行完成后再重置 isLoading

@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { promisify } from 'util';
+import { execSync } from 'child_process';
 
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
@@ -122,6 +123,34 @@ const docMappings = [
 ];
 
 /**
+ * 同步 CHANGELOG.md
+ */
+async function syncChangelog() {
+  const changelogSourcePath = path.resolve(rootDir, 'CHANGELOG.md');
+  const changelogTargetPath = path.resolve(rootDir, 'apps/docs-app/zh/changelog/content.md');
+  const mergeScriptPath = path.resolve(rootDir, 'apps/docs-app/scripts/merge-changelog.mjs');
+  
+  try {
+    // 检查源文件是否存在
+    await access(changelogSourcePath);
+    
+    // 确保目标目录存在
+    await ensureDir(path.dirname(changelogTargetPath));
+    
+    // 复制 CHANGELOG.md
+    await copyFile(changelogSourcePath, changelogTargetPath);
+    
+    // 合并到 index.md
+    execSync(`node "${mergeScriptPath}"`, { cwd: rootDir, stdio: 'pipe' });
+  } catch (error) {
+    // CHANGELOG 是可选的，如果不存在或复制失败，只记录警告
+    if (error.code !== 'ENOENT') {
+      console.warn(`⚠️  同步 CHANGELOG.md 失败: ${error.message}`);
+    }
+  }
+}
+
+/**
  * 同步文档
  */
 async function syncDocs() {
@@ -130,6 +159,21 @@ async function syncDocs() {
   
   if (verbose) {
     console.log('开始同步文档到 VitePress...\n');
+  }
+  
+  // 首先同步 CHANGELOG
+  await syncChangelog();
+  
+  // 生成文档索引
+  try {
+    const generateDocsIndexPath = path.resolve(rootDir, 'scripts/commands/tools/generate-docs-index.mjs');
+    const { execSync } = await import('child_process');
+    execSync(`node "${generateDocsIndexPath}"`, { cwd: rootDir, stdio: 'pipe' });
+  } catch (error) {
+    // 文档索引生成是可选的，失败不影响主流程
+    if (verbose) {
+      console.warn(`⚠️  生成文档索引失败: ${error.message}`);
+    }
   }
   
   let successCount = 0;

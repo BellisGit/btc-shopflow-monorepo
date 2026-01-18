@@ -18,6 +18,7 @@ import { ref, onMounted } from 'vue';
 import { CellGroup, Cell, Button } from 'vant';
 import { db } from '@/db';
 import { processQueue } from '../backgroundSync';
+import { logger } from '@btc/shared-core';
 ;
 
 
@@ -46,7 +47,7 @@ async function handleSync() {
     await processQueue();
     await updateStatus();
   } catch (error) {
-    console.error('[SyncStatus] Failed to sync:', error);
+    logger.error('[SyncStatus] Failed to sync:', error);
   }
 }
 </script>

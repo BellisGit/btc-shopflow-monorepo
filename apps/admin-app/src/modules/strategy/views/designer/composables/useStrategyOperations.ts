@@ -1,6 +1,6 @@
 ;
 ﻿import { ref, computed, type Ref } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import type { StrategyOrchestration, StrategyNode, StrategyConnection } from '@/types/strategy';
 import { strategyService } from '@/services/strategy';
@@ -90,7 +90,7 @@ export function useStrategyOperations(
       BtcMessage.success(t('common.strategy.designer.operations.load_success'));
       return orchestration;
     } catch (error) {
-      console.error('Failed to load orchestration:', error);
+      logger.error('Failed to load orchestration:', error);
       BtcMessage.error(t('common.strategy.designer.operations.load_failed'));
       return null;
     }

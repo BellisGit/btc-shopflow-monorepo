@@ -5,7 +5,7 @@
 ;
 
 import type { App } from 'vue';
-import { usePluginManager, resetPluginManager } from '@btc/shared-core';
+import { usePluginManager, resetPluginManager, logger } from '@btc/shared-core';
 import { scanAndRegisterPlugins } from './module-scanner';
 import router from '../../router';
 
@@ -45,7 +45,7 @@ export async function autoDiscoverPlugins(app: App) {
       if (error instanceof Error && error.message.includes('already registered')) {
         console.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
       } else {
-        console.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
+        logger.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
       }
     }
   }
@@ -56,7 +56,7 @@ export async function autoDiscoverPlugins(app: App) {
       try {
         await pluginManager.install(plugin.name);
       } catch (error) {
-        console.error(`[PluginManager] 安装插件失败: ${plugin.name}`, error);
+        logger.error(`[PluginManager] 安装插件失败: ${plugin.name}`, error);
       }
     }
   }

@@ -1,3 +1,4 @@
+import { logger } from '../logger/index';
 ;
 /**
  * 从 layout-app 加载共享资源
@@ -322,7 +323,7 @@ export async function loadSharedResourcesFromLayoutApp(options?: {
         options.onProgress(loaded, total);
       }
     } catch (error) {
-      console.error(`[load-shared-resources] 加载资源失败: ${name}`, error);
+      logger.error(`[load-shared-resources] 加载资源失败: ${name}`, error);
       // 继续加载其他资源，不中断
       loaded++;
       if (options?.onProgress) {

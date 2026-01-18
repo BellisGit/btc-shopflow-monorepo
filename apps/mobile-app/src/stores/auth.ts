@@ -1,7 +1,7 @@
 ;
 import { storage } from '@btc/shared-utils';
 import { authApi } from '@/services/auth';
-import { getCookie, deleteCookie } from '@btc/shared-core/utils/cookie';
+import { getCookie, deleteCookie, logger } from '@btc/shared-core/utils/cookie';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null);
@@ -102,7 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
       setUser(profile);
       return profile;
     } catch (error) {
-      console.error('[Auth] Failed to refresh user info', error);
+      logger.error('[Auth] Failed to refresh user info', error);
       throw error;
     }
   }

@@ -6,6 +6,7 @@
 import { getCookie, setCookie, getCookieDomain } from '../../utils/storage/cookie';
 import { sessionStorage } from '../../utils/storage/session';
 import type { UserCheckData } from './useUserCheck';
+import { logger } from '../../utils/logger/index';
 
 const SESSION_STORAGE_KEYS = {
   STATUS: 'user_check_status',
@@ -69,7 +70,7 @@ export function storeUserCheckData(data: UserCheckData): void {
     sessionStorage.set(SESSION_STORAGE_KEYS.REMAINING_TIME, data.remainingTime);
     sessionStorage.set(SESSION_STORAGE_KEYS.DETAILS, data.details);
   } catch (error) {
-    console.error('[storeUserCheckData] Failed to store data:', error);
+    logger.error('[storeUserCheckData] Failed to store data:', error);
   }
 }
 
@@ -91,7 +92,7 @@ export function getCredentialExpireTime(): string | null {
     const btcUser = JSON.parse(btcUserCookie);
     return btcUser?.credentialExpireTime || null;
   } catch (error) {
-    console.error('[getCredentialExpireTime] Failed to get credentialExpireTime:', error);
+    logger.error('[getCredentialExpireTime] Failed to get credentialExpireTime:', error);
     return null;
   }
 }
@@ -133,7 +134,7 @@ export function getUserCheckDataFromStorage(): Partial<UserCheckData> | null {
     }
     return result;
   } catch (error) {
-    console.error('[getUserCheckDataFromStorage] Failed to get data:', error);
+    logger.error('[getUserCheckDataFromStorage] Failed to get data:', error);
     return null;
   }
 }
@@ -153,7 +154,7 @@ export function clearUserCheckData(): void {
     sessionStorage.remove(SESSION_STORAGE_KEYS.REMAINING_TIME);
     sessionStorage.remove(SESSION_STORAGE_KEYS.DETAILS);
   } catch (error) {
-    console.error('[clearUserCheckData] Failed to clear data:', error);
+    logger.error('[clearUserCheckData] Failed to clear data:', error);
   }
 }
 

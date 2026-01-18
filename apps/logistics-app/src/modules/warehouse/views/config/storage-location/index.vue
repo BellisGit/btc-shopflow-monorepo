@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService, logger } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcConfirm, BtcMessage } from '@btc/shared-components';
@@ -159,7 +159,7 @@ const loadDomainOptions = async () => {
       })
       .filter((item): item is { label: string; value: string } => item !== null);
   } catch (error) {
-    console.error('[StorageLocation] 获取域列表失败:', error);
+    logger.error('[StorageLocation] 获取域列表失败:', error);
     domainOptions.value = [];
   } finally {
     domainLoading.value = false;

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "sync": "node ../../scripts/sync-docs-to-vitepress.mjs",
+    "sync:changelog": "node scripts/sync-changelog.mjs && node scripts/merge-changelog.mjs",
+    "sync:docs-index": "node ../../scripts/commands/tools/generate-docs-index.mjs",
     "dev": "pnpm run sync && vitepress dev",
     "dev:clean": "node scripts/kill-port.mjs",
     "build": "pnpm run sync && vitepress build",

@@ -19,6 +19,7 @@ import type {
 import { StrategyEffect } from '@/types/strategy';
 // 使用动态导入避免循环依赖（strategy.ts 也导入 strategy-engine.ts）
 // import { strategyService } from './strategy';
+import { logger } from '@btc/shared-core';
 
 // 执行引擎配置
 interface EngineConfig {
@@ -649,7 +650,7 @@ export class StrategyExecutionEngine {
       try {
         listener(event);
       } catch (error) {
-        console.error('Event listener execution failed:', error);
+        logger.error('Event listener execution failed:', error);
       }
     });
   }

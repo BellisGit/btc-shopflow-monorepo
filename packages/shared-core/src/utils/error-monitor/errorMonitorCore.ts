@@ -1,5 +1,6 @@
 import { storage } from '../storage/local';
 import { formatError, type ErrorInfo, type FormattedError } from './formatError';
+import { logger } from '../logger/index';
 ;
 
 /**
@@ -380,7 +381,7 @@ export function updateErrorList(errorInfo: ErrorInfo) {
       );
     }
   } catch (error) {
-    console.error('[errorMonitor] 更新错误列表失败', error);
+    logger.error('[errorMonitor] 更新错误列表失败', error);
   }
 }
 
@@ -402,7 +403,7 @@ export function clearErrorList() {
       })
     );
   } catch (error) {
-    console.error('[errorMonitor] 清空错误列表失败', error);
+    logger.error('[errorMonitor] 清空错误列表失败', error);
   }
 }
 

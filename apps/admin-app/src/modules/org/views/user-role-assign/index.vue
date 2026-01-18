@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { useI18n, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, getPageConfigFull, logger } from '@btc/shared-core';
 // @ts-ignore - BtcMultiUnbindBtn 已从 @btc/shared-components 导出，但类型定义可能未更新
 import { BtcMessage, BtcTransferPanel, BtcConfirm, BtcMasterTableGroup, BtcSvg, BtcMultiUnbindBtn } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
@@ -407,7 +407,7 @@ const searchUsers = async (query: string) => {
     // data 方法可能直接返回数组，也可能返回包含 list 的对象
     userOptions.value = Array.isArray(response) ? response : (response?.list || []);
   } catch (error) {
-    console.error('[UserRoleAssign] search users error', error);
+    logger.error('[UserRoleAssign] search users error', error);
     userOptions.value = [];
   } finally {
     userSearchLoading.value = false;
@@ -630,7 +630,7 @@ async function handleSubmit() {
       }
     }
   } catch (error: any) {
-    console.error('[UserRoleAssign] submit error', error);
+    logger.error('[UserRoleAssign] submit error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   } finally {
@@ -701,7 +701,7 @@ async function handleUnbind(row: any) {
     if (error?.message === 'cancel' || error === 'cancel') {
       return;
     }
-    console.error('[UserRoleAssign] unbind error', error);
+    logger.error('[UserRoleAssign] unbind error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   }
@@ -781,7 +781,7 @@ async function handleMultiUnbind(rows: any[]) {
     if (error?.message === 'cancel' || error === 'cancel') {
       return;
     }
-    console.error('[UserRoleAssign] multi unbind error', error);
+    logger.error('[UserRoleAssign] multi unbind error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
     BtcMessage.error(errorMessage);
   }

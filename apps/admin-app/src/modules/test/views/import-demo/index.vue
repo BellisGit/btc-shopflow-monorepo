@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useI18n, usePluginManager } from '@btc/shared-core';
+import { useI18n, usePluginManager, logger } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcConfirm, BtcMessage, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn } from '@btc/shared-components';
 
@@ -403,7 +403,7 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
     BtcMessage.success(`成功导入 ${newUsers.length} 条用户数据`);
 
   } catch (error) {
-    console.error('导入失败:', error);
+    logger.error('导入失败:', error);
     BtcMessage.error('导入失败，请重试');
     done();
   }

@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, defineComponent, getCurrentInstance } from 'vue';
 
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { Check, Close, MoreFilled, Search } from '@element-plus/icons-vue';
 // Refresh 未使用
 import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
@@ -388,7 +388,7 @@ async function refresh() {
     emit('load', list.value);
 
   } catch (error) {
-    console.error('加载数据失败:', error);
+    logger.error('加载数据失败:', error);
     BtcMessage.error('加载数据失败');
   } finally {
     loading.value = false;

@@ -8,6 +8,7 @@
 // 导入 Zod 验证工具（可选）
 import { createApiResponseSchema, safeValidateResponse } from './schemas';
 import { z } from 'zod';
+import { logger } from '../logger/index';
 ;
 
 // 消息显示接口，由外部实现
@@ -389,7 +390,7 @@ export class ResponseInterceptor {
           globalMessageHandler.error('数据暂时无法获取，请联系管理员Jarvis');
         } else {
           // 最后的兜底：使用 logger.error
-          console.error('数据暂时无法获取，请联系管理员Jarvis');
+          logger.error('数据暂时无法获取，请联系管理员Jarvis');
         }
       }
       return Promise.reject(error);

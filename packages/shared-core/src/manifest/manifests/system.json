@@ -152,6 +152,18 @@
         { "labelKey": "menu.data", "icon": "Folder" },
         { "labelKey": "menu.data.recycle", "icon": "Delete" }
       ]
+    },
+    {
+      "path": "/test/test-one",
+      "labelKey": "menu.test.test_one",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.test.test_one"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.test", "icon": "Tools" },
+        { "labelKey": "menu.test.test_one", "icon": "Document" }
+      ]
     }
   ],
   "menus": [
@@ -195,6 +207,14 @@
         { "index": "/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },
         { "index": "/inventory/check", "labelKey": "menu.inventory.result", "icon": "List" },
         { "index": "/inventory/confirm", "labelKey": "menu.inventory.confirm", "icon": "Check" }
+      ]
+    },
+    {
+      "index": "test",
+      "labelKey": "menu.test",
+      "icon": "Tools",
+      "children": [
+        { "index": "/test/test-one", "labelKey": "menu.test.test_one", "icon": "Document" }
       ]
     }
   ]

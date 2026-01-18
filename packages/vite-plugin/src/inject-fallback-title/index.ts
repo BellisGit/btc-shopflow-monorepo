@@ -8,6 +8,7 @@ import type { Plugin, ResolvedConfig } from 'vite';
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from '@btc/shared-core';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -44,7 +45,7 @@ function loadAppsConfig(root: string): AppsConfig | null {
     const configContent = readFileSync(configPath, 'utf-8');
     return JSON.parse(configContent) as AppsConfig;
   } catch (error) {
-    console.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
+    logger.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
     return null;
   }
 }
@@ -179,7 +180,7 @@ export function injectFallbackTitle(options: {
 
           return updatedHtml;
         } catch (error) {
-          console.error('[inject-fallback-title] 注入标题失败:', error);
+          logger.error('[inject-fallback-title] 注入标题失败:', error);
           return html;
         }
       },

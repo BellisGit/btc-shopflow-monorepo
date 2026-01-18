@@ -23,5 +23,10 @@ export default defineConfig(
     ],
     customServer: { proxy },
     proxy,
+    btcOptions: {
+      svg: {
+        allowAppIcons: true, // 启用应用内图标（src/assets/icons）
+      },
+    },
   })
 );

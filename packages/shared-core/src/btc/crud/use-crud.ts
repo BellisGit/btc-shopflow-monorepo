@@ -5,7 +5,8 @@
 ;
 
 import { ref, reactive, computed, shallowRef } from 'vue';
-import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
+import { normalizeKeywordIds } from '../../utils/array';
+import { logger } from '../../utils/logger';
 import type { CrudOptions, PaginationConfig, UseCrudReturn } from './types';
 
 export function useCrud<T = Record<string, unknown>>(
@@ -387,7 +388,7 @@ export function useCrud<T = Record<string, unknown>>(
     // 检查 row 是否有有效的 id
     if (!row || row.id === undefined || row.id === null) {
       const errorMsg = '删除失败：行数据缺少有效的 id 字段';
-      console.error('[useCrud]', errorMsg, row);
+      logger.error('[useCrud]', errorMsg, row);
       onError?.(new Error(errorMsg));
       return;
     }
@@ -407,7 +408,7 @@ export function useCrud<T = Record<string, unknown>>(
       onAfterDelete?.();
       loadData();
     } catch (error) {
-      console.error('[useCrud] Delete operation failed:', error);
+      logger.error('[useCrud] Delete operation failed:', error);
       onError?.(error);
     }
   };
@@ -440,7 +441,7 @@ export function useCrud<T = Record<string, unknown>>(
       clearSelection();
       loadData();
     } catch (error) {
-      console.error('[useCrud] Multi-delete operation failed:', error);
+      logger.error('[useCrud] Multi-delete operation failed:', error);
       onError?.(error);
     }
   };
