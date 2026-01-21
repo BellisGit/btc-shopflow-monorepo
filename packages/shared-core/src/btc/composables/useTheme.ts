@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { storage } from '@btc/shared-core/utils';
 import { setBodyClassName } from '../utils/body-class';
+import { generateContrastVariants } from '../utils/color-contrast';
 
 /**
  * 颜色混合工具函数
@@ -88,6 +89,24 @@ export function useTheme() {
         el.style.setProperty(`${pre}-light-${i}`, mixColor(color, mixWhite, i * 0.1));
         el.style.setProperty(`${pre}-dark-${i}`, mixColor(color, mixBlack, i * 0.1));
       }
+    }
+
+    // 生成高对比度变体
+    try {
+      const hexColor = color.startsWith('#') && color.length === 7 ? color : `#${color.replace('#', '')}`;
+      if (hexColor.length === 7) {
+        const contrastVariants = generateContrastVariants(hexColor, dark);
+        el.style.setProperty(`${pre}-contrast-light`, contrastVariants.contrastLight);
+        el.style.setProperty(`${pre}-contrast-dark`, contrastVariants.contrastDark);
+        el.style.setProperty(`${pre}-contrast-aa`, contrastVariants.contrastAA);
+        el.style.setProperty(`${pre}-contrast-aaa`, contrastVariants.contrastAAA);
+      }
+    } catch (error) {
+      // 如果生成失败，设置默认值
+      el.style.setProperty(`${pre}-contrast-light`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-dark`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-aa`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-aaa`, dark ? '#ffffff' : '#000000');
     }
   }
 

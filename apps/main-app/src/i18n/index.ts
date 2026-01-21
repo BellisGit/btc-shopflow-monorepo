@@ -6,80 +6,28 @@
 import { createAppI18n, getLocaleFromStorage, setLocaleToStorage, type AppLocale } from '@btc/i18n';
 import { setGlobalState } from '@btc/shared-core';
 import { sharedLocalesZhCN, sharedLocalesEnUS } from '@btc/shared-components';
-// 导入 overview 模块的语言包
-import overviewZhCN from '../modules/overview/locales/zh-CN.json';
-import overviewEnUS from '../modules/overview/locales/en-US.json';
 // 导入 system 应用的翻译（包含 domain.type 等通用翻译）
 import { system } from '../../../../locales/apps/system';
-
-/**
- * 转换 unplugin-vue-i18n 的 AST 格式为字符串格式
- * 处理函数格式的消息（AST 格式）
- */
-function transformMessages(messages: any): Record<string, string> {
-  const result: Record<string, string> = {};
-  
-  for (const [key, value] of Object.entries(messages)) {
-    if (typeof value === 'function') {
-      // 如果是函数（AST 格式），尝试提取字符串
-      try {
-        // 调用函数获取结果（vue-i18n 的 AST 格式函数会返回字符串）
-        const resultValue = value({ normalize: (arr: any[]) => arr[0] });
-        if (typeof resultValue === 'string') {
-          result[key] = resultValue;
-        } else if (value.loc?.source) {
-          // 如果有 loc.source，使用它
-          result[key] = value.loc.source;
-        } else {
-          // 如果无法提取，保留原值（可能是其他格式）
-          result[key] = value as any;
-        }
-      } catch {
-        // 如果调用失败，尝试从 loc.source 获取
-        if ((value as any).loc?.source) {
-          result[key] = (value as any).loc.source;
-        } else {
-          result[key] = value as any;
-        }
-      }
-    } else if (typeof value === 'string') {
-      // 如果已经是字符串，直接使用
-      result[key] = value;
-    } else if (value && typeof value === 'object' && 'loc' in value) {
-      // 如果是 AST 对象格式，提取 loc.source
-      const message = (value as any).loc?.source;
-      if (typeof message === 'string') {
-        result[key] = message;
-      } else {
-        result[key] = value as any;
-      }
-    } else {
-      // 其他格式，直接使用
-      result[key] = value as any;
-    }
-  }
-  
-  return result;
-}
+// 从 getters 获取 overview 模块的翻译（现在通过 config.ts 自动加载）
+import { getLocaleMessages } from './getters';
 
 // 从 localStorage 读取默认语言
 const defaultLocale = getLocaleFromStorage();
 
-// 转换 overview 语言包（处理可能的 AST 格式）
-const transformedOverviewZhCN = transformMessages(overviewZhCN);
-const transformedOverviewEnUS = transformMessages(overviewEnUS);
+// 获取 overview 模块的翻译（从 config.ts 中提取）
+const overviewMessages = getLocaleMessages();
 
 // 初始化全局 i18n 实例（全局通用词条 + shared-components 语言包 + overview 模块词条 + system 应用词条）
 // 注意：子应用的国际化数据会在 beforeMount 阶段动态加载并合并
 export const i18n = createAppI18n(defaultLocale, {
   'zh-CN': { 
     ...(sharedLocalesZhCN as Record<string, any>),
-    ...transformedOverviewZhCN,
+    ...(overviewMessages['zh-CN'] || {}),
     ...(system['zh-CN'] || {})
   } as any,
   'en-US': { 
     ...(sharedLocalesEnUS as Record<string, any>),
-    ...transformedOverviewEnUS,
+    ...(overviewMessages['en-US'] || {}),
     ...(system['en-US'] || {})
   } as any,
 });

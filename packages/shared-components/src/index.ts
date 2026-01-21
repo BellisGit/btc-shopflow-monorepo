@@ -64,9 +64,14 @@ export { default as BtcRow } from './components/basic/btc-row/index.vue';
 export { default as BtcCol } from './components/basic/btc-col/index.vue';
 export { default as BtcSplitter } from './components/basic/btc-splitter/index.vue';
 export { default as BtcSplitterPanel } from './components/basic/btc-splitter/btc-splitter-panel.vue';
+export { default as BtcImageContainer } from './components/basic/btc-image-container/index.vue';
+export type { ImageItem, BtcImageContainerProps } from './components/basic/btc-image-container/types';
+export { default as BtcImageDetail } from './components/basic/btc-image-detail/index.vue';
+export type { ImageDetailProps, ImageDetailEmits } from './components/basic/btc-image-detail/types';
 
 // Layout 布局组件
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
+export { default as BtcTabsCategoryContainer } from './components/layout/btc-tabs-category-container/index.vue';
 export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
 export { default as BtcDoubleLayout } from './components/layout/btc-double-layout/index.vue';
 export { default as BtcViews } from './components/layout/btc-views/index.vue';
@@ -205,6 +210,7 @@ export type {
   TransferPanelRemovePayload,
 } from './components/data/btc-transfer-panel/types';
 export type { BtcContainerProps } from './components/layout/btc-container/types';
+export type { BtcCategory } from './components/layout/btc-tabs-category-container/index.vue';
 export type { BtcSplitterProps, BtcSplitterEmits, BtcSplitterExpose, BtcSplitterDirection, BtcSplitterPanelProps, BtcSplitterPanelEmits } from './components/basic/btc-splitter/types';
 export type {
   IconButtonConfig,

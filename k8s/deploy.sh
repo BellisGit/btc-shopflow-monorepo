@@ -117,7 +117,7 @@ show_status() {
 wait_for_deployment() {
     echo "⏳ 等待部署就绪..."
     
-    deployments=("btc-system-app" "btc-admin-app" "btc-finance-app" "btc-logistics-app" "btc-quality-app" "btc-production-app" "btc-engineering-app" "btc-mobile-app")
+    deployments=("btc-system-app" "btc-admin-app" "btc-finance-app" "btc-logistics-app" "btc-quality-app" "btc-production-app" "btc-engineering-app")
     
     for deployment in "${deployments[@]}"; do
         echo "等待 $deployment 就绪..."

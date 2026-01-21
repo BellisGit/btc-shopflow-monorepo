@@ -14,6 +14,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
   strict: true,
+  // 注意：Vue Router 会自动执行初始导航，但我们已经在路由守卫中处理了这种情况
+  // 在 loginRedirectGuard 中会检查是否是初始导航，如果是则直接允许访问
 });
 
 // 注册守卫

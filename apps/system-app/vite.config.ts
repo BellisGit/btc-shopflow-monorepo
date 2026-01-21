@@ -4,6 +4,7 @@ import { createSubAppViteConfig } from '../../configs/vite/factories/subapp.conf
 import { dutyStaticPlugin } from '../../configs/vite/plugins';
 import { injectFallbackTitle } from '@btc/vite-plugin';
 import { getProxyConfig } from './src/config/proxy';
+import { svgHmrPlugin } from './vite-plugins/svg-hmr';
 
 const appDir = fileURLToPath(new URL('.', import.meta.url));
 
@@ -20,6 +21,8 @@ export default defineConfig(
       dutyStaticPlugin(appDir),
       // 注入静态兜底标题
       injectFallbackTitle({ packageName: 'system-app' }),
+      // 应用级别的 SVG HMR 插件（支持热更新，无需重新构建共享包）
+      svgHmrPlugin(appDir),
     ],
     customServer: { proxy },
     proxy,

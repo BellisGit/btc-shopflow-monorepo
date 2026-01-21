@@ -18,6 +18,7 @@ export { BtcIconButton } from './components/basic/btc-icon-button';
 export { default as BtcTableButton } from './components/basic/btc-table-button/index.vue';
 export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
+export { default as BtcImageContainer } from './components/basic/btc-image-container/index.vue';
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
 export { default as BtcDoubleLayout } from './components/layout/btc-double-layout/index.vue';
 export { default as BtcAppLayout } from './components/layout/app-layout/index.vue';
@@ -87,6 +88,8 @@ export type {
   TransferPanelChangePayload,
   TransferPanelRemovePayload,
 } from './components/data/btc-transfer-panel/types';
+export type { ImageItem, BtcImageContainerProps } from './components/basic/btc-image-container/types';
+export type { ImageDetailProps, ImageDetailEmits } from './components/basic/btc-image-detail/types';
 export type { BtcContainerProps } from './components/layout/btc-container/types';
 export type { IconButtonConfig, IconButtonDropdown, IconButtonDropdownItem, IconButtonPopover } from './components/basic/btc-icon-button';
 export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';

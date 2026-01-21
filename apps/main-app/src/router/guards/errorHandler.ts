@@ -17,14 +17,24 @@ export function setupErrorHandler(router: Router) {
             try {
               const loginRoute = router.resolve('/login');
               if (loginRoute && loginRoute.matched.length > 0) {
-                router.replace('/login').catch(() => {
-                  window.location.href = '/login';
+                // 关键：使用 Vue Router 的 replace 方法，避免页面刷新
+                router.replace('/login').catch((err) => {
+                  if (import.meta.env.DEV) {
+                    console.error('[errorHandler] router.replace 失败，但不使用 window.location.href 避免页面刷新:', err);
+                  }
                 });
               } else {
-                window.location.href = '/login';
+                // 如果路由不存在，尝试使用 router.push
+                router.push('/login').catch((err) => {
+                  if (import.meta.env.DEV) {
+                    console.error('[errorHandler] router.push 失败，但不使用 window.location.href 避免页面刷新:', err);
+                  }
+                });
               }
             } catch (error) {
-              window.location.href = '/login';
+              if (import.meta.env.DEV) {
+                console.error('[errorHandler] 处理登录重定向失败，但不使用 window.location.href 避免页面刷新:', error);
+              }
             } finally {
               const loadingEl = document.getElementById('Loading');
               if (loadingEl) {
@@ -38,28 +48,128 @@ export function setupErrorHandler(router: Router) {
 
       // 如果组件加载失败且不是登录页，尝试重定向到登录页
       if (currentRoute && currentRoute.path !== '/login') {
-        setTimeout(() => {
-          try {
-            const loginRoute = router.resolve('/login');
-            if (loginRoute && loginRoute.matched.length > 0) {
-              router.replace({
-                path: '/login',
-                query: { oauth_callback: currentRoute.fullPath },
-              }).catch(() => {
-                window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
-              });
-            } else {
-              window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
+        // 将相对路径转换为完整 URL
+        import('@btc/shared-core/utils/redirect').then(({ convertPathToFullUrl }) => {
+          convertPathToFullUrl(currentRoute.fullPath).then((fullCallbackUrl) => {
+            setTimeout(() => {
+              try {
+                const loginRoute = router.resolve('/login');
+                if (loginRoute && loginRoute.matched.length > 0) {
+                  // 关键：使用 Vue Router 的 replace 方法，避免页面刷新
+                  router.replace({
+                    path: '/login',
+                    query: { oauth_callback: fullCallbackUrl },
+                  }).catch((err) => {
+                    if (import.meta.env.DEV) {
+                      console.error('[errorHandler] router.replace 失败，但不使用 window.location.href 避免页面刷新:', err);
+                    }
+                  });
+                } else {
+                  // 如果路由不存在，尝试使用 router.push
+                  router.push({
+                    path: '/login',
+                    query: { oauth_callback: fullCallbackUrl },
+                  }).catch((err) => {
+                    if (import.meta.env.DEV) {
+                      console.error('[errorHandler] router.push 失败，但不使用 window.location.href 避免页面刷新:', err);
+                    }
+                  });
+                }
+              } catch (error) {
+                if (import.meta.env.DEV) {
+                  console.error('[errorHandler] 处理登录重定向失败，但不使用 window.location.href 避免页面刷新:', error);
+                }
+              } finally {
+                const loadingEl = document.getElementById('Loading');
+                if (loadingEl) {
+                  loadingEl.style.setProperty('display', 'none', 'important');
+                }
+              }
+            }, 100);
+          }).catch(() => {
+            // 如果转换失败，使用原始路径
+            setTimeout(() => {
+              try {
+                const loginRoute = router.resolve('/login');
+                if (loginRoute && loginRoute.matched.length > 0) {
+                  // 关键：使用 Vue Router 的 replace 方法，避免页面刷新
+                  router.replace({
+                    path: '/login',
+                    query: { oauth_callback: currentRoute.fullPath },
+                  }).catch((err) => {
+                    // 如果 router.replace 失败，记录错误但不使用 window.location.href
+                    if (import.meta.env.DEV) {
+                      console.error('[errorHandler] router.replace 失败，但不使用 window.location.href 避免页面刷新:', err);
+                    }
+                  });
+                } else {
+                  // 如果路由不存在，尝试使用 router.push
+                  router.push({
+                    path: '/login',
+                    query: { oauth_callback: currentRoute.fullPath },
+                  }).catch((err) => {
+                    if (import.meta.env.DEV) {
+                      console.error('[errorHandler] router.push 失败，但不使用 window.location.href 避免页面刷新:', err);
+                    }
+                  });
+                }
+              } catch (error) {
+                // 如果所有方法都失败，记录错误但不使用 window.location.href
+                if (import.meta.env.DEV) {
+                  console.error('[errorHandler] 处理登录重定向失败，但不使用 window.location.href 避免页面刷新:', error);
+                }
+              } finally {
+                const loadingEl = document.getElementById('Loading');
+                if (loadingEl) {
+                  loadingEl.style.setProperty('display', 'none', 'important');
+                }
+              }
+            }, 100);
+          });
+        }).catch(() => {
+          // 如果导入失败，使用原始路径
+          setTimeout(() => {
+            try {
+              const loginRoute = router.resolve('/login');
+              if (loginRoute && loginRoute.matched.length > 0) {
+                // 关键：使用 Vue Router 的 replace 方法，避免页面刷新
+                router.replace({
+                  path: '/login',
+                  query: { oauth_callback: currentRoute.fullPath },
+                }).catch((err) => {
+                  // 如果 router.replace 失败，尝试使用 router.push
+                  router.push({
+                    path: '/login',
+                    query: { oauth_callback: currentRoute.fullPath },
+                  }).catch((pushErr) => {
+                    if (import.meta.env.DEV) {
+                      console.error('[errorHandler] router.push 也失败，但不使用 window.location.href 避免页面刷新:', pushErr);
+                    }
+                  });
+                });
+              } else {
+                // 如果路由不存在，尝试使用 router.push
+                router.push({
+                  path: '/login',
+                  query: { oauth_callback: currentRoute.fullPath },
+                }).catch((err) => {
+                  if (import.meta.env.DEV) {
+                    console.error('[errorHandler] router.push 失败，但不使用 window.location.href 避免页面刷新:', err);
+                  }
+                });
+              }
+            } catch (error) {
+              if (import.meta.env.DEV) {
+                console.error('[errorHandler] 处理登录重定向失败，但不使用 window.location.href 避免页面刷新:', error);
+              }
+            } finally {
+              const loadingEl = document.getElementById('Loading');
+              if (loadingEl) {
+                loadingEl.style.setProperty('display', 'none', 'important');
+              }
             }
-          } catch (error) {
-            window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
-          } finally {
-            const loadingEl = document.getElementById('Loading');
-            if (loadingEl) {
-              loadingEl.style.setProperty('display', 'none', 'important');
-            }
-          }
-        }, 100);
+          }, 100);
+        });
       }
       return;
     }
@@ -86,14 +196,24 @@ export function setupErrorHandler(router: Router) {
           try {
             const loginRoute = router.resolve('/login');
             if (loginRoute && loginRoute.matched.length > 0) {
-              router.replace('/login').catch(() => {
-                window.location.href = '/login';
+              // 关键：使用 Vue Router 的 replace 方法，避免页面刷新
+              router.replace('/login').catch((err) => {
+                if (import.meta.env.DEV) {
+                  console.error('[errorHandler] router.replace 失败，但不使用 window.location.href 避免页面刷新:', err);
+                }
               });
             } else {
-              window.location.href = '/login';
+              // 如果路由不存在，尝试使用 router.push
+              router.push('/login').catch((err) => {
+                if (import.meta.env.DEV) {
+                  console.error('[errorHandler] router.push 失败，但不使用 window.location.href 避免页面刷新:', err);
+                }
+              });
             }
           } catch (error) {
-            window.location.href = '/login';
+            if (import.meta.env.DEV) {
+              console.error('[errorHandler] 处理登录重定向失败，但不使用 window.location.href 避免页面刷新:', error);
+            }
           } finally {
             const loadingEl = document.getElementById('Loading');
             if (loadingEl) {
@@ -123,14 +243,41 @@ export function setupErrorHandler(router: Router) {
           router.replace(currentRoute.fullPath).catch(() => {
             // 如果重新加载失败，重定向到登录页
             if (currentRoute.path !== '/login') {
-              router.replace({
-                path: '/login',
-                query: { oauth_callback: currentRoute.fullPath },
+              // 将相对路径转换为完整 URL
+              import('@btc/shared-core/utils/redirect').then(({ convertPathToFullUrl }) => {
+                convertPathToFullUrl(currentRoute.fullPath).then((fullCallbackUrl) => {
+                  router.replace({
+                    path: '/login',
+                    query: { oauth_callback: fullCallbackUrl },
+                  }).catch(() => {
+                    const loadingEl = document.getElementById('Loading');
+                    if (loadingEl) {
+                      loadingEl.style.setProperty('display', 'none', 'important');
+                    }
+                  });
+                }).catch(() => {
+                  // 如果转换失败，使用原始路径
+                  router.replace({
+                    path: '/login',
+                    query: { oauth_callback: currentRoute.fullPath },
+                  }).catch(() => {
+                    const loadingEl = document.getElementById('Loading');
+                    if (loadingEl) {
+                      loadingEl.style.setProperty('display', 'none', 'important');
+                    }
+                  });
+                });
               }).catch(() => {
-                const loadingEl = document.getElementById('Loading');
-                if (loadingEl) {
-                  loadingEl.style.setProperty('display', 'none', 'important');
-                }
+                // 如果导入失败，使用原始路径
+                router.replace({
+                  path: '/login',
+                  query: { oauth_callback: currentRoute.fullPath },
+                }).catch(() => {
+                  const loadingEl = document.getElementById('Loading');
+                  if (loadingEl) {
+                    loadingEl.style.setProperty('display', 'none', 'important');
+                  }
+                });
               });
             }
           });

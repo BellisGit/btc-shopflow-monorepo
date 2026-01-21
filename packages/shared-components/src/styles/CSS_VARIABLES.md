@@ -20,9 +20,17 @@
 | `--el-color-error` | 错误色 | `#ff4d4f` | `#ff4d4f` | 错误状态（部分场景） |
 
 **颜色变体**：
-- `--el-color-primary-light-1` 到 `--el-color-primary-light-9`：主色浅色变体
-- `--el-color-primary-dark-1`、`--el-color-primary-dark-2`：主色深色变体
+- `--el-color-primary-light-1` 到 `--el-color-primary-light-9`：主色浅色变体（基于线性混合）
+- `--el-color-primary-dark-1` 到 `--el-color-primary-dark-9`：主色深色变体（基于线性混合）
 - 其他颜色也有类似的变体
+
+**高对比度变体**（基于 WCAG 2.1 标准）：
+- `--el-color-primary-contrast-light`：用于深色背景的高对比度浅色
+- `--el-color-primary-contrast-dark`：用于浅色背景的高对比度深色
+- `--el-color-primary-contrast-aa`：满足 WCAG AA 级对比度（4.5:1）
+- `--el-color-primary-contrast-aaa`：满足 WCAG AAA 级对比度（7:1）
+
+> **注意**：高对比度变体基于感知亮度（Relative Luminance）算法生成，确保满足可访问性标准。适用于需要高对比度的场景，如按钮文本、链接文本、表单标签等。
 
 #### 背景色系统
 
@@ -330,7 +338,73 @@ dark-theme.scss 覆盖（暗色主题）
 4. **语义化命名**：让变量名表达含义，而非具体值
 5. **文档同步**：新增变量后及时更新本文档
 
+## 高对比度变体使用指南
+
+### 何时使用高对比度变体？
+
+高对比度变体适用于需要满足**可访问性（WCAG）标准**的场景：
+
+1. **按钮文本**：确保按钮上的文字清晰可读
+2. **链接文本**：确保链接文字在背景上清晰可见
+3. **表单标签**：确保表单标签清晰可读
+4. **重要信息**：需要强调显示的重要文本
+5. **错误提示**：需要醒目显示的错误信息
+
+### 使用示例
+
+```scss
+// ✅ 高对比度按钮（满足 WCAG AA 级）
+.high-contrast-button {
+  background-color: var(--el-color-primary);
+  color: var(--el-color-primary-contrast-aa);
+}
+
+// ✅ 高对比度链接（满足 WCAG AAA 级）
+.high-contrast-link {
+  color: var(--el-color-primary-contrast-aaa);
+  text-decoration: underline;
+}
+
+// ✅ 深色背景上的高对比度文本
+.dark-bg-text {
+  background-color: #131313;
+  color: var(--el-color-primary-contrast-light);
+}
+
+// ✅ 浅色背景上的高对比度文本
+.light-bg-text {
+  background-color: #ffffff;
+  color: var(--el-color-primary-contrast-dark);
+}
+
+// ✅ 表单标签（满足 WCAG AA 级）
+.form-label {
+  color: var(--el-color-primary-contrast-aa);
+  font-weight: 500;
+}
+```
+
+### 对比度级别说明
+
+| 变量名 | 对比度要求 | 适用场景 | WCAG 级别 |
+|--------|-----------|----------|-----------|
+| `--el-color-primary-contrast-light` | ≥ 4.5:1（相对于深色背景） | 深色背景上的文本 | AA |
+| `--el-color-primary-contrast-dark` | ≥ 4.5:1（相对于浅色背景） | 浅色背景上的文本 | AA |
+| `--el-color-primary-contrast-aa` | ≥ 4.5:1 | 正常文本（推荐） | AA |
+| `--el-color-primary-contrast-aaa` | ≥ 7:1 | 重要文本、大文本 | AAA |
+
+### 与普通变体的区别
+
+| 特性 | 普通变体（light/dark） | 高对比度变体（contrast） |
+|------|----------------------|------------------------|
+| 生成方式 | 线性混合（固定比例） | 基于感知亮度算法 |
+| 对比度保证 | ❌ 不保证 | ✅ 保证满足 WCAG 标准 |
+| 使用场景 | 一般视觉设计 | 可访问性要求高的场景 |
+| 计算复杂度 | 低（简单混合） | 高（迭代计算） |
+
 ## 参考资源
 
 - [Element Plus 主题定制](https://element-plus.org/zh-CN/guide/theming.html)
 - [CSS 自定义属性（变量）](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Using_CSS_custom_properties)
+- [WCAG 2.1 对比度标准](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html)
+- [颜色对比度计算器](https://webaim.org/resources/contrastchecker/)

@@ -7,8 +7,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 26px;
-	width: 26px;
+	height: var(--btc-spacing-6);
+	width: var(--btc-spacing-6);
 	// 先设置基础边框颜色（使用 Element Plus 变量，确保初始渲染时有边框）
 	border: 1px solid var(--el-fill-color-dark);
 	// 如果支持 color-mix，则使用更精细的颜色混合（覆盖基础边框）
@@ -20,14 +20,14 @@
 	@supports not (background-color: color-mix(in srgb, red 50%, blue)) {
 		background-color: var(--el-bg-color);
 	}
-	border-radius: 6px;
+	border-radius: var(--btc-spacing-1-5);
 	transition: all 0.2s ease-in-out;
 	outline: none;
 	cursor: pointer;
 	flex-shrink: 0;
 
 	.btc-svg {
-		font-size: 16px;
+		font-size: var(--btc-spacing-4);
 		color: var(--btc-icon-color);
 	}
 
@@ -81,10 +81,10 @@
 	&::after {
 		content: '';
 		position: absolute;
-		top: 5px;
-		right: 5px;
-		width: 7px;
-		height: 7px;
+		top: var(--btc-spacing-1-5);
+		right: var(--btc-spacing-1-5);
+		width: var(--btc-spacing-2);
+		height: var(--btc-spacing-2);
 		border-radius: 50%;
 		background-color: var(--btc-breath-color);
 		box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 30%, transparent);
@@ -133,5 +133,5 @@
 .btc-user-setting-toolbar {
 	display: flex;
 	align-items: center;
-	gap: 10px; // 两个按钮之间的间距，与顶栏插件间距保持一致
+	gap: var(--btc-spacing-2-5); // 两个按钮之间的间距，与顶栏插件间距保持一致
 }

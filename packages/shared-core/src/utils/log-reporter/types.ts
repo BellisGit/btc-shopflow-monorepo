@@ -210,6 +210,7 @@ export interface LogExtensions {
       effectiveType?: string;
       downlink?: number;
       rtt?: number;
+      previousState?: boolean; // 网络状态变化前的状态
     };
     device?: {
       browser?: string;
@@ -221,6 +222,76 @@ export interface LogExtensions {
       deviceType?: string;
       userAgent?: string;
     };
+    visibility?: {
+      hidden?: boolean;
+      visibilityState?: 'visible' | 'hidden' | 'prerender';
+      hiddenTime?: number; // 页面隐藏时长（毫秒）
+    };
+  };
+  /**
+   * WebSocket 信息
+   */
+  websocket?: {
+    url?: string;
+    readyState?: number; // 0: CONNECTING, 1: OPEN, 2: CLOSING, 3: CLOSED
+    error?: string;
+    closeCode?: number;
+    closeReason?: string;
+  };
+  /**
+   * 控制台信息
+   */
+  console?: {
+    level?: 'error' | 'warn' | 'info' | 'debug' | 'log';
+    args?: any[]; // 控制台参数
+  };
+  /**
+   * 表单验证信息
+   */
+  validation?: {
+    formId?: string;
+    field?: string;
+    rule?: string;
+    message?: string;
+    value?: any;
+  };
+  /**
+   * 存储信息
+   */
+  storage?: {
+    type?: 'localStorage' | 'sessionStorage' | 'indexedDB';
+    key?: string;
+    operation?: 'getItem' | 'setItem' | 'removeItem' | 'clear';
+    size?: number; // 存储大小（字节）
+  };
+  /**
+   * 跨应用通信信息
+   */
+  communication?: {
+    type?: 'postMessage' | 'event' | 'storage';
+    from?: string; // 来源应用
+    to?: string; // 目标应用
+    message?: any;
+    success?: boolean;
+  };
+  /**
+   * 长任务信息
+   */
+  longTask?: {
+    name?: string;
+    attribution?: Array<{
+      name?: string;
+      entryType?: string;
+      startTime?: number;
+      duration?: number;
+    }>;
+  };
+  /**
+   * 卸载信息
+   */
+  unload?: {
+    type?: 'beforeunload' | 'unload' | 'pagehide';
+    reason?: 'navigation' | 'close' | 'reload';
   };
   /**
    * 其他扩展字段
@@ -271,14 +342,17 @@ export interface LogReportRequest {
    */
   appId: string;
   /**
+   * 应用名称（简化名称，如 "admin"）
+   */
+  appName: string;
+  /**
    * 请求发送时间（ISO 8601 格式）
    */
   timestamp: string;
   /**
-   * 批量日志数组的 JSON 字符串（最多10条，单条不超过2KB）
-   * 后端会反序列化此字符串
+   * 批量日志数组（最多10条，单条不超过2KB）
    */
-  logs: string;
+  logs: ServerLogEntry[];
 }
 
 /**

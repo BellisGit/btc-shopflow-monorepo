@@ -132,6 +132,14 @@ function compilerSvg(): string {
   if (localSvgFiles.length > 0) {
     if (config.svg?.allowAppIcons) {
       assetsSvgs = findSvg(localAssetsDir);
+      // 开发环境：输出调试信息
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug(`[btc:svg] 扫描应用内图标目录: ${localAssetsDir}`);
+        console.debug(`[btc:svg] 找到 ${localSvgFiles.length} 个应用内 SVG 文件`);
+        if (assetsSvgs.length > 0) {
+          console.debug(`[btc:svg] 应用内图标已扫描: ${svgIcons.slice(-localSvgFiles.length).join(', ')}`);
+        }
+      }
     } else {
       const sample = localSvgFiles
         .slice(0, 5)
@@ -147,7 +155,7 @@ function compilerSvg(): string {
   // 扫描共享组件的 icons 目录，确保跨应用的公共组件也能使用这些图标
   const sharedAssetsDir = rootDir('../../packages/shared-components/src/assets/icons/');
   const sharedAssetsSvgs = findSvg(sharedAssetsDir);
-  
+
   // 开发环境：输出调试信息
   if (process.env.NODE_ENV !== 'production') {
     const sharedSvgFiles = listSvgFiles(sharedAssetsDir);
@@ -159,7 +167,8 @@ function compilerSvg(): string {
 
   // 加载顺序：共享组件图标先加载，应用内图标后加载（可以覆盖共享组件的同名图标）
   // 这样应用可以自定义覆盖共享组件的图标
-  return [...srcSvgs, ...sharedAssetsSvgs, ...assetsSvgs]
+  const allSvgs = [...srcSvgs, ...sharedAssetsSvgs, ...assetsSvgs];
+  const finalHtml = allSvgs
     .map((e) => {
       // 检查是否是 bg.svg（包含 icon-bg symbol）
       const isBgIcon = e.includes('id="icon-bg"');
@@ -185,53 +194,104 @@ function compilerSvg(): string {
       return result.data || e;
     })
     .join('');
+
+  return finalHtml;
 }
 
 /**
  * 创建 SVG sprite
  */
-export async function createSvg(): Promise<{ code: string; svgIcons: string[] }> {
+export async function createSvg(): Promise<{ code: string; svgIcons: string[]; svgHtml?: string }> {
   const html = compilerSvg();
   // 使用 JSON.stringify 来安全地转义所有特殊字符
   const escapedHtml = JSON.stringify(html);
 
-  // 参考 cool-admin 的实现，简化代码，避免使用 import.meta.env（在字符串中不会被替换）
-  // 确保在 body 存在时才执行，避免报错
   const code = `
 if (typeof window !== 'undefined') {
+	var loadSvgAttempts = 0;
+	var maxLoadSvgAttempts = 100;
+
 	function loadSvg() {
-		if (!document.body) {
-			setTimeout(loadSvg, 10);
+		loadSvgAttempts++;
+		if (loadSvgAttempts > maxLoadSvgAttempts) {
+			console.warn('[btc:svg] 无法加载SVG sprite，已达到最大尝试次数');
 			return;
 		}
+
+		if (!document.body) {
+			setTimeout(loadSvg, 50);
+			return;
+		}
+
+		// 检查是否已存在
 		if (document.getElementById('btc-svg-sprite')) {
 			return;
 		}
-		const svgDom = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svgDom.id = 'btc-svg-sprite';
-		svgDom.style.position = 'absolute';
-		svgDom.style.width = '0';
-		svgDom.style.height = '0';
-		svgDom.style.overflow = 'hidden';
-		svgDom.style.visibility = 'hidden';
-		svgDom.setAttribute('xmlns','http://www.w3.org/2000/svg');
-		svgDom.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
-		svgDom.innerHTML = ${escapedHtml};
-		document.body.insertBefore(svgDom, document.body.firstChild);
+
+		try {
+			const svgDom = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svgDom.id = 'btc-svg-sprite';
+			svgDom.style.position = 'absolute';
+			svgDom.style.width = '0';
+			svgDom.style.height = '0';
+			svgDom.style.overflow = 'hidden';
+			svgDom.style.visibility = 'hidden';
+			svgDom.setAttribute('xmlns','http://www.w3.org/2000/svg');
+			svgDom.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+			svgDom.innerHTML = ${escapedHtml};
+			document.body.insertBefore(svgDom, document.body.firstChild);
+
+			// 验证是否成功加载
+			const loadedSprite = document.getElementById('btc-svg-sprite');
+			if (loadedSprite) {
+				const symbolCount = loadedSprite.querySelectorAll('symbol').length;
+				if (symbolCount === 0) {
+					console.warn('[btc:svg] ⚠️ SVG sprite 中没有找到任何 symbol 元素！');
+				}
+				// 注意：应用内图标（如 windmill、star）由应用级别的 svg-hmr 插件动态添加
+				// 因此不在这里检查这些图标
+			}
+		} catch (e) {
+			console.error('[btc:svg] 加载SVG sprite失败:', e);
+			setTimeout(loadSvg, 100);
+		}
 	}
 
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', loadSvg);
-		if (document.body) {
+	function updateSvg(newHtml) {
+		const svgDom = document.getElementById('btc-svg-sprite');
+		if (svgDom) {
+			svgDom.innerHTML = newHtml;
+		} else {
 			loadSvg();
 		}
-	} else {
+	}
+
+	// 多种方式确保加载
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', loadSvg);
+	}
+
+	// 立即尝试（如果body已存在）
+	if (document.body) {
 		loadSvg();
+	} else {
+		// 如果body不存在，使用MutationObserver或setTimeout
+		if (typeof MutationObserver !== 'undefined') {
+			var observer = new MutationObserver(function(mutations) {
+				if (document.body) {
+					loadSvg();
+					observer.disconnect();
+				}
+			});
+			observer.observe(document.documentElement, { childList: true, subtree: true });
+		}
+		// 备用：定时检查
+		setTimeout(loadSvg, 100);
 	}
 }
 	`;
 
-  return { code, svgIcons };
+  return { code, svgIcons, svgHtml: html };
 }
 
 /**
@@ -242,10 +302,30 @@ export function svgPlugin(): Plugin {
   let svgCode = '';
   let iconList: string[] = [];
   let isInitialized = false;
+  let viteDevServer: any = null;
+
+  // 重新生成 SVG sprite（用于HMR）
+  async function regenerateSvg() {
+    // 重置全局图标列表，强制重新扫描
+    svgIcons = [];
+
+    // 重新扫描并生成HTML和完整代码
+    const result = await createSvg();
+    svgCode = result.code;
+    iconList = result.svgIcons;
+    const html = result.svgHtml || '';
+
+    if (iconList.length > 0) {
+      console.info(`[btc:svg] 重新扫描完成，找到 ${iconList.length} 个 svg 图标`);
+    }
+
+    isInitialized = true;
+    return { svgCode, iconList, svgHtml: html };
+  }
 
   // 初始化 SVG sprite（确保在构建和开发时都能正确生成）
   async function initializeSvg(resolved?: any) {
-    if (isInitialized) return;
+    if (isInitialized && !viteDevServer) return;
 
     // 同步 Vite 根目录，确保多包场景下路径解析正确
     if (resolved) {
@@ -272,11 +352,45 @@ export function svgPlugin(): Plugin {
       await initializeSvg(resolved);
 		},
 
+    configureServer(server: any) {
+      // 保存 dev server 实例，用于HMR
+      viteDevServer = server;
+    },
+
     async buildStart() {
       // 构建时确保 SVG sprite 已生成
       if (!isInitialized) {
         await initializeSvg();
       }
+    },
+
+    handleHotUpdate(ctx: any) {
+      // 监听应用内的 SVG 文件变化（用于HMR）
+      const localAssetsDir = rootDir('./src/assets/icons/');
+      const filePath = ctx.file.replace(/\\/g, '/');
+      const assetsDirPath = localAssetsDir.replace(/\\/g, '/');
+
+      // 检查是否是应用内的 SVG 文件变化
+      if (filePath.includes(assetsDirPath) && filePath.endsWith('.svg')) {
+        // 重新生成 SVG sprite
+        regenerateSvg().then((result) => {
+          // 通知客户端更新 SVG sprite
+          if (viteDevServer && result.svgHtml) {
+            // 通过自定义事件通知客户端更新 SVG sprite
+            viteDevServer.ws.send({
+              type: 'custom',
+              event: 'btc-svg-update',
+              data: { svgHtml: result.svgHtml }
+            });
+          }
+        });
+
+        // 返回空数组表示不需要重新加载模块，我们自己处理更新
+        return [];
+      }
+
+      // 其他文件变化，正常处理
+      return undefined;
     },
 
     resolveId(id: string) {

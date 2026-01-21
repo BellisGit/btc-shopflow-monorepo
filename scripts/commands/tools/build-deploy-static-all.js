@@ -45,7 +45,6 @@ const appsToClean = [
   'production-app',
   'finance-app',
   'layout-app',
-  'mobile-app',
 ];
 
 logger.info('🧹 清理所有应用的构建产物和缓存...');
@@ -225,7 +224,7 @@ logger.info('🔨 步骤 3: 构建所有应用（强制重新构建，不使用�
 logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 // 使用 --force 标志强制 turbo 重新构建所有应用，避免使用缓存
 // 特别针对移动端应用，使用 --no-cache 确保完全重新构建
-const turboScriptPath = path.join(repoRoot, 'scripts', 'turbo.js');
+const turboScriptPath = path.join(repoRoot, 'scripts', 'commands', 'tools', 'turbo.js');
 runNode(turboScriptPath, ['run', 'build', '--force', '--no-cache'], { VITE_PREVIEW: 'false' });
 
 // 构建成功后继续执行原来的静态发布

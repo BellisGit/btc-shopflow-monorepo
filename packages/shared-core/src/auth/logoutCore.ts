@@ -107,6 +107,14 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
       // 静默失败
     }
 
+    // 关键：停止用户检查轮询（避免退出后继续检查）
+    try {
+      const { stopUserCheckPolling } = await import('../composables/user-check');
+      stopUserCheckPolling();
+    } catch (e) {
+      // 静默失败（可能模块未加载）
+    }
+
     // 清除标签页（Process Store）
     if (getProcessStore) {
       try {

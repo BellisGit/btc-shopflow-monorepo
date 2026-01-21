@@ -246,6 +246,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     cssMinify: true,
     // 关键：禁用代码压缩，避免 Terser 压缩导致的对象属性分隔符丢失问题
     minify: false,
+    // 关键：禁止资源内联，确保 CSS 被提取到独立文件中（qiankun 要求）
+    // 与 layout-app 和 subapp 保持一致，避免内联 CSS 导致样式丢失
+    assetsInlineLimit: 0,
     // terserOptions 已禁用，保留配置以备将来使用
     /* terserOptions: {
       compress: {
@@ -300,7 +303,6 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
         wrap_func_args: false, // 不包装函数参数
       },
     }, */
-    assetsInlineLimit: 10 * 1024,
     outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     emptyOutDir: false,

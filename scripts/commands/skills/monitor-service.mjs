@@ -652,7 +652,7 @@ async function startCommand(commandId, command, args) {
   let process;
   if (command === 'dev:all' || command === 'dev') {
     // 开发服务器 - 直接运行 turbo，不通过 dev-with-check.mjs（避免递归）
-    process = spawn('pnpm', ['turbo', 'run', 'dev', '--concurrency=30', '--filter=!@btc/mobile-app', ...args], {
+    process = spawn('pnpm', ['turbo', 'run', 'dev', '--concurrency=30', ...args], {
       cwd: rootDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,

@@ -226,6 +226,10 @@ export class ResponseInterceptor {
   private messageHandler?: MessageHandler;
   private confirmHandler?: ConfirmHandler;
   private routerHandler?: RouterHandler;
+  // 防重复显示：记录最近显示的错误消息和时间戳
+  private lastErrorMessage: string | null = null;
+  private lastErrorTime: number = 0;
+  private readonly ERROR_DEBOUNCE_TIME = 2000; // 2秒内相同错误只显示一次
 
   constructor() {
     // 延迟设置处理器，避免循环依赖
@@ -374,6 +378,17 @@ export class ResponseInterceptor {
   }
 
   /**
+   * 检查是否在登录页
+   */
+  private isLoginPage(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    const pathname = window.location.pathname;
+    return pathname === '/login' || pathname.startsWith('/login?');
+  }
+
+  /**
    * 处理错误响应
    */
   handleError(error: { code: number; message: string }): Promise<never> {
@@ -410,6 +425,27 @@ export class ResponseInterceptor {
     // 使用配置中的消息或原始消息
     const errorMessage = config.message || message;
 
+    // 特殊处理：如果在登录页，401错误不显示消息（用户已经在登录页，不需要再次提醒）
+    const isOnLoginPage = this.isLoginPage();
+    if (code === 401 && isOnLoginPage) {
+      // 在登录页，静默处理401错误，不显示消息
+      return Promise.reject(error);
+    }
+
+    // 防重复显示：检查是否是相同的错误消息且在防抖时间内
+    const now = Date.now();
+    const isDuplicateError = this.lastErrorMessage === errorMessage && 
+                            (now - this.lastErrorTime) < this.ERROR_DEBOUNCE_TIME;
+    
+    if (isDuplicateError) {
+      // 相同的错误在短时间内重复出现，不重复显示
+      return Promise.reject(error);
+    }
+
+    // 记录错误消息和时间戳
+    this.lastErrorMessage = errorMessage;
+    this.lastErrorTime = now;
+
     // 根据配置执行相应操作
     switch (config.action) {
       case 'show': {
@@ -434,7 +470,8 @@ export class ResponseInterceptor {
       }
 
       case 'redirect': {
-        // 使用消息处理器
+        // 已删除：禁用所有自动重定向逻辑，不再跳转到登录页
+        // 使用消息处理器显示错误信息
         const redirectShowType = config.showType || 'warning';
         if (this.messageHandler) {
           switch (redirectShowType) {
@@ -452,15 +489,7 @@ export class ResponseInterceptor {
           }
         }
 
-        // 延迟跳转，让用户看到消息
-        setTimeout(() => {
-          if (this.routerHandler) {
-            this.routerHandler.push(config.redirectPath || '/login');
-          } else {
-            // 如果没有 router 实例，使用 window.location
-            window.location.href = config.redirectPath || '/login';
-          }
-        }, 1500);
+        // 已删除：不再执行自动重定向
         break;
       }
 

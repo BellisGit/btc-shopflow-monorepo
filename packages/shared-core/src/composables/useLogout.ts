@@ -50,6 +50,34 @@ export function useLogout(options: UseLogoutOptions = {}) {
   let unsubscribeLogout: (() => void) | null = null;
   let isLoggingOut = false; // 防止重复执行登出逻辑
 
+  // 构建退出登录的URL，包含 oauth_callback 参数
+  const buildLogoutUrl = async (): Promise<string> => {
+    try {
+      // 动态导入构建URL的工具函数
+      const { buildLogoutUrl: buildUrl, buildLogoutUrlWithFullUrl } = await import('../utils/redirect');
+      const { getEnvironment } = await import('../configs/unified-env-config');
+      
+      const env = getEnvironment();
+      const baseLoginUrl = '/login';
+      
+      // 生产环境使用完整URL，开发环境使用相对路径
+      if (env === 'production' || env === 'test') {
+        return await buildLogoutUrlWithFullUrl(baseLoginUrl);
+      } else {
+        return await buildUrl(baseLoginUrl);
+      }
+    } catch (error) {
+      logger.warn('[useLogout] Failed to build logout URL, using fallback:', error);
+      // 回退方案：使用当前路径构建简单的 oauth_callback（开发环境不编码斜杠）
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      if (currentPath === '/login' || currentPath.startsWith('/login')) {
+        return '/login?logout=1';
+      }
+      // 开发环境：编码查询参数值
+      return `/login?logout=1&oauth_callback=${encodeURIComponent(currentPath)}&clearRedirectCookie=1`;
+    }
+  };
+
   // 统一的登出清理逻辑（重构为调用 logoutCore + 路由重定向）
   const performLogoutCleanup = async (isRemoteLogout = false) => {
     if (isLoggingOut) {
@@ -58,6 +86,14 @@ export function useLogout(options: UseLogoutOptions = {}) {
     isLoggingOut = true;
 
     try {
+      // 保存退出前的路径（本地退出和远程退出都需要保存，以便登录后返回）
+      try {
+        const { saveLogoutRedirectPath } = await import('../utils/redirect');
+        await saveLogoutRedirectPath();
+      } catch (error) {
+        logger.warn('[useLogout] Failed to save logout redirect path:', error);
+      }
+
       // 调用 logoutCore 纯函数处理核心逻辑
       const logoutCoreOptions: LogoutCoreOptions = {
         ...(options.authApi !== undefined && { authApi: options.authApi }),
@@ -80,7 +116,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
                 }
               }
             } catch (error) {
-              console.warn('[useLogout] Failed to show logout success message:', error);
+              // Failed to show logout success message
             }
           },
         }),
@@ -94,24 +130,29 @@ export function useLogout(options: UseLogoutOptions = {}) {
         return;
       }
 
-      // 路由重定向逻辑（仅在本地退出时执行）
+      // 构建退出登录URL（包含 oauth_callback 参数）
+      const logoutUrl = await buildLogoutUrl();
+      
+      // 路由重定向逻辑：本地退出和远程退出都要跳转到登录页
       // 立即跳转，不创建定时器，避免内存泄漏
-      if (!isRemoteLogout) {
-        // 直接跳转到登录页，不进行复杂的 URL 构建
-        const currentPath = window.location.pathname + window.location.search;
-        const oauthCallbackParam = currentPath && currentPath !== '/login' && !currentPath.startsWith('/login?')
-          ? `&oauth_callback=${encodeURIComponent(currentPath)}`
-          : '';
-        window.location.href = `/login?logout=1${oauthCallbackParam}`;
-      }
+      window.location.href = logoutUrl;
     } catch (error: any) {
       logger.error('Logout cleanup error:', error);
       isLoggingOut = false;
+      // 即使出错，也尝试跳转到登录页（包含 clearRedirectCookie=1）
+      try {
+        window.location.href = '/login?logout=1&clearRedirectCookie=1';
+      } catch (e) {
+        // 静默失败
+      }
     } finally {
-      // 如果页面不跳转（远程退出），立即重置标志
-      // 如果页面跳转，标志会在页面卸载时自动失效，不需要定时器
+      // 如果页面不跳转（理论上不应该发生，因为上面已经跳转了），立即重置标志
+      // 但为了安全起见，保留这个逻辑
       if (isRemoteLogout) {
-        isLoggingOut = false;
+        // 延迟重置，确保页面跳转完成
+        setTimeout(() => {
+          isLoggingOut = false;
+        }, 100);
       }
       // 本地退出时，页面会跳转，标志会在跳转时失效，不需要定时器
     }
@@ -140,28 +181,68 @@ export function useLogout(options: UseLogoutOptions = {}) {
     return true;
   };
 
-  // 处理登录消息：当其他应用登录时，刷新页面
-  const handleLoginMessage = (_payload?: any, origin?: string) => {
+  // 处理登录消息：当其他标签页登录时，跳转到之前保存的页面
+  const handleLoginMessage = async (_payload?: any, origin?: string) => {
     if (isSameApp(origin)) {
       return;
     }
-    // 简单刷新页面
-    window.location.reload();
+    
+    try {
+      // 检查当前是否在登录页
+      const currentPath = window.location.pathname;
+      const isOnLoginPage = currentPath === '/login' || currentPath.startsWith('/login?');
+      
+      // 如果在登录页，不刷新页面，让登录逻辑自己处理导航
+      if (isOnLoginPage) {
+        return;
+      }
+      
+      // 获取保存的退出前路径
+      const { getAndClearLogoutRedirectPath } = await import('../utils/redirect');
+      const savedPath = getAndClearLogoutRedirectPath();
+      
+      if (savedPath) {
+        // 如果有保存的路径，跳转到该路径
+        const { handleCrossAppRedirect } = await import('../utils/redirect');
+        const isCrossAppRedirect = await handleCrossAppRedirect(savedPath, router);
+        
+        if (!isCrossAppRedirect) {
+          // 如果不是跨应用跳转，使用 router.push
+          router.push(savedPath).catch((error) => {
+            logger.warn('[useLogout] Router push failed, using window.location as fallback:', error);
+            window.location.href = savedPath;
+          });
+        }
+      } else {
+        // 如果没有保存的路径，刷新页面（保持原有行为）
+        window.location.reload();
+      }
+    } catch (error) {
+      logger.warn('[useLogout] Failed to handle login message, reloading page:', error);
+      // 如果出错，回退到刷新页面
+      window.location.reload();
+    }
   };
 
   // 关键：立即设置订阅，不等待组件挂载（确保消息监听器尽早设置）
-  unsubscribeLogout = bridge.subscribe('logout', (_payload, origin) => {
+  unsubscribeLogout = bridge.subscribe('logout', (payload, origin) => {
+    logger.info('[useLogout] Received logout message from other tab:', {
+      payload,
+      origin,
+      currentOrigin: window.location.origin,
+      currentPathname: window.location.pathname,
+      isLoggingOut
+    });
+    
     // 避免重复执行
     if (isLoggingOut) {
+      logger.info('[useLogout] Already logging out, ignoring duplicate logout message');
       return;
     }
 
-    // 如果是同一个应用触发的登出，不需要再次执行
-    // 在开发环境中，即使 origin 相同，如果路径不同，也认为是不同应用，需要处理
-    if (isSameApp(origin)) {
-      return;
-    }
-
+    // 关键修复：移除 isSameApp 判断，确保所有标签页（包括同一应用的不同标签页）都执行退出
+    // 用户需求：所有标签页都应该退出，不管是不是同一个应用
+    logger.info('[useLogout] Executing logout cleanup triggered by remote tab');
     // 执行统一登出逻辑（异步处理）
     performLogoutCleanup(true).catch((error) => {
       logger.error('[useLogout] Error in logout cleanup:', error);
@@ -181,14 +262,41 @@ export function useLogout(options: UseLogoutOptions = {}) {
   });
 
   const logout = async () => {
-    // 执行本地登出清理
-    await performLogoutCleanup(false);
-    // 通知其他标签页（通过通信桥）
+    // 关键：先通知其他标签页（通过通信桥），再执行本地登出清理
+    // 这样可以确保消息在页面跳转前发送，避免消息丢失
+    logger.info('[useLogout] logout() function called');
     try {
-      bridge.sendMessage('logout', { timestamp: Date.now() });
+      const logoutPayload = { timestamp: Date.now() };
+      logger.info('[useLogout] Sending logout message to other tabs:', {
+        payload: logoutPayload,
+        origin: window.location.origin,
+        pathname: window.location.pathname
+      });
+      
+      // 确保 bridge 已初始化
+      if (!bridge) {
+        logger.error('[useLogout] Bridge is not initialized!');
+        throw new Error('Bridge is not initialized');
+      }
+      
+      logger.info('[useLogout] Calling bridge.sendMessage...');
+      bridge.sendMessage('logout', logoutPayload);
+      logger.info('[useLogout] bridge.sendMessage called successfully');
+      
+      // 给消息发送足够的时间，确保消息已经发送到所有标签页
+      // 使用 200ms 延迟，确保 BroadcastChannel 消息有足够时间传递
+      await new Promise(resolve => setTimeout(resolve, 200));
+      logger.info('[useLogout] Logout message sent, waiting completed');
     } catch (error) {
-      // 静默失败
+      // 记录错误，但继续执行退出流程
+      logger.error('[useLogout] Failed to send logout message:', error);
+      console.error('[useLogout] Failed to send logout message:', error);
     }
+    
+    // 执行本地登出清理（会跳转到登录页）
+    logger.info('[useLogout] Calling performLogoutCleanup...');
+    await performLogoutCleanup(false);
+    logger.info('[useLogout] performLogoutCleanup completed');
   };
 
   return {

@@ -547,23 +547,23 @@ const isOnHomePage = computed(() => {
   if (hasIsHome) {
     return true;
   }
-  
+
   // 检查当前路径是否是应用的首页路径
   const currentApp = getCurrentAppFromPath(route.path);
   const homePath = getAppHomePath(currentApp);
   const normalizedCurrentPath = route.path.replace(/\/+$/, '') || '/';
   const normalizedHomePath = homePath.replace(/\/+$/, '') || '/';
-  
+
   // 对于主应用，还需要检查 /overview 路径（兼容旧路径）
   if (currentApp === 'main') {
-    const isMainHome = normalizedCurrentPath === '/workbench/overview' || 
+    const isMainHome = normalizedCurrentPath === '/workbench/overview' ||
                        normalizedCurrentPath === '/overview' ||
                        normalizedCurrentPath === normalizedHomePath;
     if (isMainHome) {
       return true;
     }
   }
-  
+
   return normalizedCurrentPath === normalizedHomePath;
 });
 
@@ -813,12 +813,13 @@ watch(
   position: relative;
   padding: 5px 10px; // 统一左右 padding，确保最右侧按钮有间距
   user-select: none;
-  background-color: var(--el-bg-color);
+  background-color: var(--btc-surface-panel);
+  backdrop-filter: blur(var(--btc-effect-blur));
   overflow: hidden;
   height: 39px; // 与面包屑保持一致的高度
   width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
   box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保边框包含在宽度内
-  border-bottom: 1px solid var(--el-border-color-extra-light);
+  border-bottom: 1px solid var(--btc-border-muted);
 
   &__op {
     display: flex;
@@ -1073,8 +1074,8 @@ watch(
 <style lang="scss">
 html.dark .app-process {
   .app-process__item {
-    border-color: var(--el-border-color) !important;
-    background-color: var(--el-bg-color) !important;
+    border-color: var(--btc-border-muted) !important;
+    background-color: var(--btc-surface-card) !important;
 
     // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
     @media (hover: hover) {

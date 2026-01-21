@@ -110,7 +110,7 @@ jobs:
           APPS_LIST=$(echo "$APPS_INPUT" | tr '[:upper:]' '[:lower:]' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr '\n' ' ')
           
           # Validate apps
-          VALID_APPS="system-app admin-app dashboard-app engineering-app finance-app logistics-app operations-app personnel-app production-app quality-app mobile-app layout-app"
+          VALID_APPS="system-app admin-app dashboard-app engineering-app finance-app logistics-app operations-app personnel-app production-app quality-app layout-app"
           INVALID_APPS=""
           
           for app in $APPS_LIST; do
@@ -319,7 +319,6 @@ jobs:
               ["production-app"]="30084"
               ["engineering-app"]="30085"
               ["finance-app"]="30086"
-              ["mobile-app"]="30091"
             )
             
             # Generate docker-compose configuration for selected apps only
@@ -428,7 +427,6 @@ jobs:
             ["production-app"]="30084"
             ["engineering-app"]="30085"
             ["finance-app"]="30086"
-            ["mobile-app"]="30091"
           )
           
           for app in $APPS_LIST; do

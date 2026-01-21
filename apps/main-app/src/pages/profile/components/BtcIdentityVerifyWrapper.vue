@@ -41,7 +41,7 @@ import BtcBindingDialog from '@btc-components/feedback/btc-binding-dialog/index.
 import { useMessage } from '@/utils/use-message';
 import { service } from '@services/eps';
 import { appStorage } from '@/utils/app-storage';
-import BtcSmsCodeInput from '@auth/shared/components/sms-code-input/index.vue';
+import BtcSmsCodeInput from '@/pages/auth/shared/components/sms-code-input/index.vue';
 
 interface Props {
   modelValue: boolean;

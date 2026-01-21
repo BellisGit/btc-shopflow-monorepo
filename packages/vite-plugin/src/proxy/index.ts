@@ -1,4 +1,4 @@
-import { logger } from '@btc/shared-core';
+// logger 已移除，使用 console 替代
 ;
 ﻿// 浠ｇ悊閰嶇疆澶勭悊
 
@@ -18,7 +18,7 @@ export function getProxyTarget(proxy: any) {
       }
     }
   } catch (err) {
-    logger.error('[btc:proxy] 获取代理目标失败:', err);
+    console.error('[btc:proxy] 获取代理目标失败:', err);
   }
 
   return '';

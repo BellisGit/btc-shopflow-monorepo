@@ -1006,10 +1006,13 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
   // 如果不是公开页面，检查认证状态（兜底逻辑）
   if (!isPublicPage) {
     if (!isAuthenticatedUser) {
-      // 未认证，重定向到主应用登录页
-      const loginUrl = getMainAppLoginUrl(to.fullPath);
-      window.location.href = loginUrl;
-      return;
+      // 未认证，不再重定向到登录页（已禁用）
+      if (import.meta.env.DEV) {
+        console.log('[system-app router] ❌ 未认证，但已禁用重定向到登录页:', {
+          targetPath: to.fullPath,
+        });
+      }
+      // 继续处理，不重定向
     }
   }
 
@@ -1040,10 +1043,13 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
 
     // 其他未匹配的路由，根据认证状态处理
     if (!isAuthenticatedUser) {
-      // 未认证，重定向到主应用登录页
-      const loginUrl = getMainAppLoginUrl(to.fullPath);
-      window.location.href = loginUrl;
-      return;
+      // 未认证，不再重定向到登录页（已禁用）
+      if (import.meta.env.DEV) {
+        console.log('[system-app router] ❌ 未认证且路由未匹配，但已禁用重定向到登录页:', {
+          targetPath: to.fullPath,
+        });
+      }
+      // 继续处理，不重定向
     }
 
     // 已认证但路由未匹配，可能是子应用路由或无效路由

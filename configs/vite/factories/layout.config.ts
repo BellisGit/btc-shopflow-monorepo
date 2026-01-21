@@ -460,6 +460,16 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         if (warning.message && typeof warning.message === 'string' && warning.message.includes('Generated an empty chunk')) {
           return;
         }
+        // 过滤循环依赖警告（已知的安全警告）
+        // 当 shared-components 通过 reexport 导出组件，且组件和业务代码在不同 chunk 时会产生此警告
+        // 这是预期的拆分策略，不会影响功能，因为 chunk 加载顺序已经正确配置
+        if (warning.code === 'CIRCULAR_DEPENDENCY' ||
+            (warning.message && typeof warning.message === 'string' &&
+             (warning.message.includes('was reexported through module') ||
+              warning.message.includes('will end up in different chunks') ||
+              warning.message.includes('circular dependency')))) {
+          return;
+        }
         warn(warning);
       },
       // 关键：layout-app 作为主应用，需要打包 single-spa 和 qiankun

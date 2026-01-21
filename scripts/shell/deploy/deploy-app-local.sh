@@ -98,7 +98,6 @@ declare -A APP_PORTS=(
     ["production-app"]="30084"
     ["engineering-app"]="30085"
     ["finance-app"]="30086"
-    ["mobile-app"]="30091"
 )
 
 # 解析命令行参数

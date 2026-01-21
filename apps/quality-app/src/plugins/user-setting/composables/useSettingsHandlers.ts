@@ -5,7 +5,7 @@
 ;
 
 import { useSettingsState } from './useSettingsState';
-import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
+import { BoxStyleType, ContainerWidthEnum, StylePresetEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 
@@ -145,6 +145,13 @@ export function useSettingsHandlers() {
     },
   };
 
+  // 全局风格套件处理器
+  const stylePresetHandlers = {
+    setPreset: (preset: StylePresetEnum) => {
+      settingsState.setStylePreset(preset);
+    },
+  };
+
   // 主题风格处理器
   const themeStyleHandlers = {
     // 切换主题风格
@@ -178,6 +185,7 @@ export function useSettingsHandlers() {
     colorHandlers,
     containerHandlers,
     buttonStyleHandlers,
+    stylePresetHandlers,
     themeStyleHandlers,
     menuLayoutHandlers,
     menuStyleHandlers,

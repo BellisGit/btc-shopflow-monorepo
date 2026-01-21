@@ -5,7 +5,7 @@
 ;
 
 import { appStorage } from '@/utils/app-storage';
-import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType, StylePresetEnum } from '../config/enums';
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
@@ -20,6 +20,7 @@ let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
 function createSettingsState() {
   // 从系统配置获取默认值
   const defaultSetting = config.app.systemSetting;
+  const defaultStylePreset = (defaultSetting as any)?.defaultStylePreset ?? StylePresetEnum.MINIMAL;
 
   // 菜单相关设置
   const storedMenuType = appStorage.settings.getItem('menuType');
@@ -101,6 +102,17 @@ function createSettingsState() {
   const pageTransition = ref<string>(appStorage.settings.getItem('pageTransition') || defaultSetting.defaultPageTransition);
   const customRadius = ref<string>(appStorage.settings.getItem('customRadius') || defaultSetting.defaultCustomRadius);
 
+  // 全局风格套件
+  const storedStylePreset = appStorage.settings.getItem('stylePreset');
+  const resolvedStylePreset =
+    storedStylePreset && Object.values(StylePresetEnum).includes(storedStylePreset as StylePresetEnum)
+      ? (storedStylePreset as StylePresetEnum)
+      : defaultStylePreset;
+  const stylePreset = ref<StylePresetEnum>(resolvedStylePreset);
+  if (!storedStylePreset || !Object.values(StylePresetEnum).includes(storedStylePreset as StylePresetEnum)) {
+    appStorage.settings.setItem('stylePreset', resolvedStylePreset);
+  }
+
   // 按钮风格设置
   const initialSettings = appStorage.settings.get();
   // 只从统一的 settings 存储中读取，不再读取旧的独立键
@@ -143,11 +155,30 @@ function createSettingsState() {
 
   applyButtonStyle(buttonStyle.value);
 
+  const applyStylePreset = (preset: StylePresetEnum) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-style', preset);
+    }
+  };
+
+  applyStylePreset(stylePreset.value);
+
   function setButtonStyle(style: ButtonStyle) {
     if (buttonStyle.value === style) return;
     buttonStyle.value = style;
     appStorage.settings.set({ buttonStyle: style });
     applyButtonStyle(style);
+  }
+
+  /**
+   * 设置全局风格套件
+   */
+  function setStylePreset(preset: StylePresetEnum) {
+    if (stylePreset.value === preset) return;
+    stylePreset.value = preset;
+    appStorage.settings.setItem('stylePreset', preset);
+    applyStylePreset(preset);
+    window.dispatchEvent(new CustomEvent('style-preset-change', { detail: { preset } }));
   }
 
   /**
@@ -186,6 +217,8 @@ function createSettingsState() {
 
   // 立即应用系统主题
   applySystemTheme();
+  // 立即应用全局风格套件
+  applyStylePreset(stylePreset.value);
 
   // 监听系统主题变化（AUTO 模式）
   if (systemThemeType.value === SystemThemeEnum.AUTO) {
@@ -620,6 +653,7 @@ function createSettingsState() {
     customRadius,
     buttonStyle,
     loadingStyle,
+    stylePreset,
     isDark,
     // 方法
     switchMenuLayouts,
@@ -643,6 +677,7 @@ function createSettingsState() {
     setCustomRadius,
     setButtonStyle,
     setLoadingStyle,
+    setStylePreset,
     setMenuOpenWidth,
     toggleGlobalSearch,
     setWorkTab,

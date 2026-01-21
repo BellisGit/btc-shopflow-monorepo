@@ -13,6 +13,14 @@ let warningShown = false;
  * 执行退出逻辑
  */
 async function performLogout(): Promise<void> {
+  // 已删除：禁用所有自动退出和重定向逻辑
+  stopPolling();
+  stopCountdown();
+  if (import.meta.env.DEV) {
+    console.warn('[useUserCheckCountdown] ⚠️ 已禁用自动退出和重定向，不再跳转到登录页');
+  }
+  return;
+
   // 停止轮询
   stopPolling();
   // 停止倒计时

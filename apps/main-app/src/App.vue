@@ -15,6 +15,10 @@
 <script setup lang="ts">
 import { BtcDevTools } from '@btc/shared-components';
 import { isPageRoute, getPageClass as getPageClassName } from '@btc/shared-router';
+import { useLogout } from './composables/useLogout';
+
+// 关键：初始化 useLogout，确保 bridge 订阅尽早设置，以便接收其他标签页的退出消息
+useLogout();
 
 // 获取页面容器类名
 function getPageClass(currentRoute: any): string {

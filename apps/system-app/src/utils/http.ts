@@ -3,7 +3,8 @@ import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor, storage } from '@btc/shared-utils';
-import { sessionStorage, logger } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { logger } from '@btc/shared-core/utils/logger';
 import { processURL } from '@btc/shared-core';
 import { getCookie, setCookie, getCookieDomain } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';

@@ -111,7 +111,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
       }
 
       // 关键：修复错误的端口（主应用端口 -> 当前应用端口）
-      // 匹配 http://localhost:4180/assets/xxx 或 http://10.80.8.199:4180/assets/xxx
+      // 匹配 http://localhost:4180/assets/xxx 或 http://10.80.8.107:4180/assets/xxx
       const wrongPortHttpRegex = new RegExp(`http://(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
       if (wrongPortHttpRegex.test(newCode)) {
         newCode = newCode.replace(wrongPortHttpRegex, (_match, host, path, query = '') => {
@@ -125,7 +125,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
         modified = true;
       }
 
-      // 匹配 //localhost:4180/assets/xxx 或 //10.80.8.199:4180/assets/xxx
+          // 匹配 //localhost:4180/assets/xxx 或 //{devHost}:4180/assets/xxx
       const wrongPortProtocolRegex = new RegExp(`//(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
       if (wrongPortProtocolRegex.test(newCode)) {
         newCode = newCode.replace(wrongPortProtocolRegex, (_match, host, path, query = '') => {
@@ -211,7 +211,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
           }
 
           // 关键：修复错误的端口（主应用端口 -> 当前应用端口）
-          // 匹配 http://localhost:4180/assets/xxx 或 http://10.80.8.199:4180/assets/xxx
+          // 匹配 http://localhost:4180/assets/xxx 或 http://{devHost}:4180/assets/xxx
           const wrongPortHttpRegex = new RegExp(`http://(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
           if (wrongPortHttpRegex.test(newCode)) {
             newCode = newCode.replace(wrongPortHttpRegex, (_match: string, host: string, path: string, query: string = '') => {
@@ -225,7 +225,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
             modified = true;
           }
 
-          // 匹配 //localhost:4180/assets/xxx 或 //10.80.8.199:4180/assets/xxx
+          // 匹配 //localhost:4180/assets/xxx 或 //{devHost}:4180/assets/xxx
           const wrongPortProtocolRegex = new RegExp(`//(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
           if (wrongPortProtocolRegex.test(newCode)) {
             newCode = newCode.replace(wrongPortProtocolRegex, (_match: string, host: string, path: string, query: string = '') => {

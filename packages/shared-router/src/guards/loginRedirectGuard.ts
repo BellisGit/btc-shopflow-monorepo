@@ -3,7 +3,7 @@
  * 处理已认证用户访问登录页时的重定向逻辑
  */
 
-import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
+import type { NavigationGuardNext, RouteLocationNormalized, Router } from 'vue-router';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 
 export interface LoginRedirectGuardConfig {
@@ -23,6 +23,10 @@ export interface LoginRedirectGuardConfig {
    * 检查用户是否已认证的函数
    */
   isAuthenticated: () => boolean;
+  /**
+   * Vue Router 实例（可选，用于同应用内跳转）
+   */
+  router?: Router;
 }
 
 /**
@@ -32,7 +36,6 @@ function hasLogoutParam(to: RouteLocationNormalized): boolean {
   const logoutValue = Array.isArray(to.query.logout) ? to.query.logout[0] : to.query.logout;
   return (
     logoutValue === '1' ||
-    logoutValue === 1 ||
     logoutValue === 'true' ||
     String(logoutValue) === '1'
   );
@@ -82,14 +85,49 @@ export function createLoginRedirectGuard(config: LoginRedirectGuardConfig) {
       return;
     }
 
-    const isAuthenticatedUser = config.isAuthenticated();
-
-    // 如果未认证，允许访问登录页
-    if (!isAuthenticatedUser) {
+    // 关键：检查是否是 Vue Router 的初始导航
+    // Vue Router 在初始化时，_from 通常是 { name: undefined, path: '/', matched: [] }
+    // 或者 _from.path === '/' 且 matched.length === 0
+    const isInitialNavigation = (
+      _from.name === undefined && 
+      _from.matched.length === 0 && 
+      (_from.path === '/' || _from.path === '' || _from.path === to.path)
+    );
+    
+    if (isInitialNavigation) {
+      if (import.meta.env.DEV) {
+        console.log('[loginRedirectGuard] ✅ 检测到初始导航到登录页，允许访问（避免重定向）', {
+          toPath: to.path,
+          fromPath: _from.path,
+          fromName: _from.name,
+          fromMatched: _from.matched.length,
+        });
+      }
       next();
       return;
     }
 
+    // 防止循环重定向：允许从登录页跳转到登录页（例如页面刷新）
+    if (_from.path === '/login' && to.path === '/login') {
+      if (import.meta.env.DEV) {
+        console.log('[loginRedirectGuard] ✅ 检测到从登录页到登录页，允许访问');
+      }
+      next();
+      return;
+    }
+
+    // 检查认证状态
+    const isAuthenticatedUser = config.isAuthenticated();
+    
+    // 如果未认证，允许访问登录页
+    if (!isAuthenticatedUser) {
+      if (import.meta.env.DEV) {
+        console.log('[loginRedirectGuard] ❌ 未认证，允许访问登录页');
+      }
+      next();
+      return;
+    }
+    
     // 已认证用户访问登录页，需要检查是否有退出参数
     const hasLogout = hasLogoutParam(to) || hasLogoutTimestamp();
 
@@ -101,20 +139,38 @@ export function createLoginRedirectGuard(config: LoginRedirectGuardConfig) {
       } catch (e) {
         // 静默失败
       }
+      if (import.meta.env.DEV) {
+        console.log('[loginRedirectGuard] 检测到退出参数，允许访问登录页（退出流程）');
+      }
       next();
       return;
     }
 
     // 检查 from=duty 参数（特殊场景）
     if (to.query.from === 'duty') {
+      if (import.meta.env.DEV) {
+        console.log('[loginRedirectGuard] 检测到 from=duty 参数，允许访问登录页');
+      }
       next();
       return;
     }
 
-    // 已认证且没有退出参数，重定向到首页或 oauth_callback 参数指定的页面
-    const redirect = (to.query.oauth_callback as string) || config.getMainAppHomeRoute?.() || config.homeRoute;
-    const redirectPath = redirect.split('?')[0] || config.homeRoute;
-    next(redirectPath);
+    // 已认证用户访问登录页，重定向到首页
+    // 关键：使用 next() 配合重定向路径，而不是直接调用 router.replace
+    // 这样可以避免在路由守卫中触发额外的导航，导致页面刷新
+    if (import.meta.env.DEV) {
+      console.log('[loginRedirectGuard] ✅ 已认证用户访问登录页，重定向到首页');
+    }
+    
+    const homeRoute = config.homeRoute || '/workbench/overview';
+    
+    // 使用 next() 配合重定向路径，这是 Vue Router 推荐的方式
+    // 这样可以避免在守卫中直接调用 router.replace，导致可能的冲突
+    next({
+      path: homeRoute,
+      replace: true, // 使用 replace 避免在历史记录中留下登录页
+    });
+    return;
   };
 }
 

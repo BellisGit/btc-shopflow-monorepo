@@ -13,7 +13,7 @@ import { logger } from '../../utils/logger.mjs';
 import OSS from 'ali-oss';
 import { createHash } from 'crypto';
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
-import { join, relative } from 'path';
+import { join, relative, resolve } from 'path';
 import { execSync } from 'child_process';
 import { getRootDir } from '../../utils/path-helper.mjs';
 
@@ -226,6 +226,15 @@ async function uploadApp(client, appName) {
   
   // 获取所有文件
   const files = getAllFiles(distDir);
+  
+  // 检查是否有国际化 JSON 文件需要上传
+  const localesDir = resolve(projectRoot, 'dist', 'locales', appName);
+  if (existsSync(localesDir)) {
+    logger.info(`   发现国际化文件: dist/locales/${appName}/`);
+    const localeFiles = getAllFiles(localesDir);
+    files.push(...localeFiles);
+  }
+  
   const results = [];
   let uploadedCount = 0;
   let skippedCount = 0;
@@ -236,8 +245,23 @@ async function uploadApp(client, appName) {
     const batch = files.slice(i, i + CONCURRENT_LIMIT);
     const batchResults = await Promise.all(
       batch.map(async (filePath) => {
-        const relativePath = relative(distDir, filePath);
-        const ossPath = `${appName}/${relativePath.replace(/\\/g, '/')}`;
+        let relativePath;
+        let ossPath;
+        
+        // 处理国际化文件的特殊路径
+        if (filePath.includes('dist/locales/')) {
+          // 国际化文件路径：dist/locales/${appName}/zh-CN.json
+          // OSS 路径：locales/${appName}/latest/zh-CN.json 或 locales/${appName}/${version}/zh-CN.json
+          const version = process.env.VITE_APP_VERSION || 'latest';
+          const localeFileName = filePath.split(/[/\\]/).pop();
+          const appNameFromPath = filePath.match(/dist[/\\]locales[/\\]([^/\\]+)/)?.[1] || appName;
+          ossPath = `locales/${appNameFromPath}/${version}/${localeFileName}`;
+          relativePath = `locales/${appNameFromPath}/${localeFileName}`;
+        } else {
+          // 普通构建文件
+          relativePath = relative(distDir, filePath);
+          ossPath = `${appName}/${relativePath.replace(/\\/g, '/')}`;
+        }
         
         try {
           const result = await uploadFile(client, filePath, ossPath);

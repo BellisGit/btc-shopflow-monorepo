@@ -1,7 +1,7 @@
 <template>
   <BtcLoginFormLayout>
     <template #form>
-      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" name="sms-login-form" @submit.prevent.stop="handleSubmit">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" name="sms-login-form" action="javascript:void(0)" method="post" @submit.prevent.stop="handleSubmit">
         <el-form-item prop="phone">
           <el-input
             id="sms-phone"
@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick } from 'vue';
+import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { BtcMessage } from '@btc/shared-components';
@@ -130,7 +130,14 @@ const {
 let isSubmitting = false;
 
 // 提交函数
-const handleSubmit = async () => {
+const handleSubmit = async (event?: Event) => {
+  // 关键：确保阻止默认表单提交行为
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+  }
+  
   if (!formRef.value) return;
   
   // 防止重复提交
@@ -195,6 +202,58 @@ const handlePhoneEnter = async (event: KeyboardEvent) => {
 const handleCodeComplete = () => {
   emit('code-complete');
 };
+
+// 在组件挂载时，直接拦截原生表单的 submit 事件
+let nativeSubmitHandler: ((e: Event) => void) | null = null;
+onMounted(async () => {
+  await nextTick();
+  // 等待 DOM 更新
+  await nextTick();
+  const formElement = formRef.value?.$el as HTMLFormElement | undefined;
+  if (formElement) {
+    // 关键：确保表单没有 action 和 method 属性（防止默认提交）
+    // 如果 action 是当前页面 URL，会导致页面刷新
+    formElement.removeAttribute('action');
+    formElement.setAttribute('action', 'javascript:void(0)');
+    formElement.setAttribute('method', 'post');
+    formElement.setAttribute('onsubmit', 'return false;');
+    
+    // 直接拦截原生表单的 submit 事件（使用捕获阶段，确保最先执行）
+    nativeSubmitHandler = (e: Event) => {
+      // 关键：必须在这里调用 preventDefault，否则表单会提交
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      // 调用我们的处理函数
+      handleSubmit(e);
+      // 返回 false 作为额外保护
+      return false;
+    };
+    formElement.addEventListener('submit', nativeSubmitHandler, { capture: true, passive: false });
+    
+    // 额外保护：直接覆盖表单的 submit 方法（如果存在）
+    if (formElement.submit) {
+      const originalSubmit = formElement.submit;
+      formElement.submit = function() {
+        const event = new Event('submit', { bubbles: true, cancelable: true });
+        if (nativeSubmitHandler) {
+          nativeSubmitHandler(event);
+        }
+        return false;
+      };
+    }
+  }
+});
+
+onBeforeUnmount(() => {
+  if (nativeSubmitHandler) {
+    const formElement = formRef.value?.$el as HTMLFormElement | undefined;
+    if (formElement) {
+      formElement.removeEventListener('submit', nativeSubmitHandler, { capture: true });
+    }
+    nativeSubmitHandler = null;
+  }
+});
 
 // 暴露表单数据和方法供父组件使用
 defineExpose({

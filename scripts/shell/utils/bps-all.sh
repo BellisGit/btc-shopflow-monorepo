@@ -110,7 +110,6 @@ declare -A APP_PATHS=(
     ["production-app"]="/www/wwwroot/production.bellis.com.cn"
     ["engineering-app"]="/www/wwwroot/engineering.bellis.com.cn"
     ["finance-app"]="/www/wwwroot/finance.bellis.com.cn"
-    ["mobile-app"]="/www/wwwroot/mobile.bellis.com.cn"
     ["layout-app"]="/www/wwwroot/layout.bellis.com.cn"
 )
 
@@ -123,7 +122,6 @@ APPS=(
     "quality-app"
     "production-app"
     "engineering-app"
-    "mobile-app"
     "layout-app"
 )
 

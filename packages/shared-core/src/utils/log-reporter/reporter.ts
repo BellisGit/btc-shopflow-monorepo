@@ -10,7 +10,7 @@ import { LogClassifier } from './classifier';
 import { LogProcessor } from './processor';
 import { AdaptiveRateLimiter } from './rate-limiter';
 import { getCurrentAppId } from '../env-info';
-import { getFullAppId, convertToServerLogEntry, toISOString, estimateLogSize, generateBatchId } from './utils';
+import { getFullAppId, getSimpleAppName, convertToServerLogEntry, toISOString, estimateLogSize, generateBatchId } from './utils';
 import { isBusinessApp, isSpecialAppById } from '../../configs/app-env.config';
 
 /**
@@ -46,9 +46,9 @@ export class LogReporter {
     // 初始化处理器
     this.processor = new LogProcessor();
 
-    // 初始化自适应限流器（默认QPS为5）
+    // 初始化自适应限流器（默认QPS为10）
     this.rateLimiter = new AdaptiveRateLimiter({
-      defaultQPS: 5,
+      defaultQPS: 10,
       maxQueueSize: 200,
     });
 
@@ -290,14 +290,17 @@ export class LogReporter {
     const batchId = generateBatchId(fullAppId);
 
     // 构建请求体
-    // 注意：logs 字段需要是 JSON 字符串，后端会反序列化
     // 批次时间戳使用当前时间（而非日志内部时间戳），因为上报时间一定晚于日志生成时间
     const batchTimestamp = toISOString(Date.now());
     
+    // 从完整应用ID提取简化应用名称
+    const simpleAppName = getSimpleAppName(fullAppId);
+    
     const requestBody: LogReportRequest = {
       appId: fullAppId,
+      appName: simpleAppName,
       timestamp: batchTimestamp,
-      logs: JSON.stringify(serverLogs),
+      logs: serverLogs,
       // 如果后端支持批次号，可以添加到请求体中
       // batchId: batchId,
     };
@@ -381,7 +384,7 @@ export class LogReporter {
       timestamp: entry.timestamp || Date.now(),
     };
 
-    // 只上报主应用和业务应用的日志，过滤掉特殊应用（layout-app, docs-app, home-app, mobile-app）
+    // 只上报主应用和业务应用的日志，过滤掉特殊应用（layout-app, docs-app, home-app）
     // 判断方式：检查 appName 是否为主应用或业务应用
     const appNameForCheck = appName.endsWith('-app') ? appName : `${appName}-app`;
     // 允许 invalid-app 通过，用于测试错误情况

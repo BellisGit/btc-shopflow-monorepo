@@ -5,11 +5,11 @@
  */
 
 // 菜单高度和通用变量
-$menu-height: 46px; // 菜单高度
-$menu-icon-size: 20px; // 菜单图标大小
-$menu-font-size: 14px; // 菜单字体大小
-// 使用 Element Plus 的灰色变量，如果没有则使用默认值
-$hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标移入背景色（参考 art-design-pro）
+$menu-height: calc(var(--btc-spacing-12) - var(--btc-spacing-0-5)); // 46px
+$menu-icon-size: var(--btc-spacing-5); // 20px
+$menu-font-size: var(--btc-spacing-3-5); // 14px
+// 使用 Element Plus 的灰色变量
+$hover-bg-color: color-mix(in srgb, var(--el-fill-color) 80%, transparent); // 鼠标移入背景色
 
 // 侧边栏容器 - 限定菜单风格样式的作用范围
 .app-layout__sidebar {
@@ -53,13 +53,13 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
   .el-menu-design {
     .el-sub-menu__title,
     .el-menu-item {
-      width: calc(100% - 16px) !important;
-      margin-left: 8px !important;
-      margin-right: 8px !important;
-      border-radius: 6px !important;
+      width: calc(100% - var(--btc-spacing-4)) !important;
+      margin-left: var(--btc-spacing-2) !important;
+      margin-right: var(--btc-spacing-2) !important;
+      border-radius: var(--btc-spacing-1-5) !important;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--btc-spacing-3);
 
       .el-icon {
         margin-right: 0 !important;
@@ -90,19 +90,19 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
     // 用户选择深色菜单风格时，直接设置背景色
     // 浅色系统主题下：使用系统默认深色背景 #0a0a0a
     // 深色系统主题下：使用 var(--el-bg-color) 与内容区域一致
-    background-color: #0a0a0a !important;
+    background-color: var(--btc-surface-panel) !important;
 
     // 子菜单也需要使用相同的背景色
     .el-sub-menu .el-menu {
-      background-color: #0a0a0a !important;
+      background-color: var(--btc-surface-panel) !important;
     }
 
     // 深色系统主题下，使用 #0a0a0a 与内容区域一致
     html.dark & {
-      background-color: #0a0a0a !important;
+      background-color: var(--btc-surface-panel) !important;
 
       .el-sub-menu .el-menu {
-        background-color: #0a0a0a !important;
+        background-color: var(--btc-surface-panel) !important;
       }
     }
 
@@ -146,7 +146,7 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
     // 鼠标移入背景色
     .el-sub-menu__title:hover,
     .el-menu-item:not(.is-active):hover {
-      background: #0f1015 !important;
+      background: var(--btc-surface-panel) !important;
     }
 
     // 右侧箭头颜色使用 Element Plus 的 CSS 变量
@@ -204,7 +204,7 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
   // 在深色系统主题下，侧边栏容器背景必须和内容区域一致（使用 #0a0a0a）
   &.has-dark-menu {
     html.dark & {
-      background-color: #0a0a0a !important;
+      background-color: var(--btc-surface-panel) !important;
     }
     border-right-color: var(--el-border-color-extra-light) !important;
   }
@@ -214,13 +214,13 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
 .sidebar.is-dark-menu {
   // 在深色系统主题下，侧边栏背景必须和内容区域一致（使用 #0a0a0a）
   html.dark & {
-    background-color: #0a0a0a !important;
+    background-color: var(--btc-surface-panel) !important;
   }
 
   .sidebar__search {
     // 浅色系统主题下，深色菜单风格的搜索框样式
     // 搜索框容器背景色与菜单背景一致
-    background-color: #0a0a0a !important;
+    background-color: var(--btc-surface-panel) !important;
 
     // 搜索框下边框颜色（与侧边栏右侧边框保持一致）
     border-bottom-color: var(--el-border-color-extra-light) !important;
@@ -228,18 +228,18 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
     // 搜索框输入框样式（深色样式）
     // 使用更高优先级的选择器覆盖 scoped 样式
     .el-input__wrapper {
-      background-color: rgba(255, 255, 255, 0.1) !important;
+      background-color: color-mix(in srgb, var(--el-text-color-primary) 12%, transparent) !important;
       box-shadow: none !important;
-      height: 27px !important;
-      padding: 0 12px !important;
-      border-radius: 6px !important;
+      height: calc(var(--btc-spacing-6) - var(--btc-spacing-0-5)) !important;
+      padding: 0 var(--btc-spacing-3) !important;
+      border-radius: var(--btc-spacing-1-5) !important;
 
       .el-input__inner {
-        color: #BABBBD !important;
-        font-size: 13px !important;
+        color: var(--el-text-color-regular) !important;
+        font-size: var(--btc-spacing-3) !important;
 
         &::placeholder {
-          color: rgba(186, 187, 189, 0.6) !important;
+          color: color-mix(in srgb, var(--el-text-color-regular) 60%, transparent) !important;
         }
       }
     }
@@ -249,13 +249,13 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       align-items: center !important;
 
       .btc-svg {
-        color: #BABBBD !important;
+        color: var(--el-text-color-regular) !important;
       }
     }
 
     .el-input__suffix {
       .el-input__clear {
-        color: #BABBBD !important;
+        color: var(--el-text-color-regular) !important;
       }
     }
   }
@@ -263,18 +263,18 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
   // BtcInput 组件在深色菜单主题下的样式（与 .sidebar__search 保持一致）
   .btc-input {
     .el-input__wrapper {
-      background-color: rgba(255, 255, 255, 0.1) !important;
+      background-color: color-mix(in srgb, var(--el-text-color-primary) 12%, transparent) !important;
       box-shadow: none !important;
-      height: 27px !important;
-      padding: 0 12px !important;
-      border-radius: 6px !important;
+      height: calc(var(--btc-spacing-6) - var(--btc-spacing-0-5)) !important;
+      padding: 0 var(--btc-spacing-3) !important;
+      border-radius: var(--btc-spacing-1-5) !important;
 
       .el-input__inner {
-        color: #BABBBD !important;
-        font-size: 13px !important;
+        color: var(--el-text-color-regular) !important;
+        font-size: var(--btc-spacing-3) !important;
 
         &::placeholder {
-          color: rgba(186, 187, 189, 0.6) !important;
+          color: color-mix(in srgb, var(--el-text-color-regular) 60%, transparent) !important;
         }
       }
     }
@@ -284,13 +284,13 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       align-items: center !important;
 
       .btc-svg {
-        color: #BABBBD !important;
+        color: var(--el-text-color-regular) !important;
       }
     }
 
     .el-input__suffix {
       .el-input__clear {
-        color: #BABBBD !important;
+        color: var(--el-text-color-regular) !important;
       }
     }
   }
@@ -300,7 +300,7 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
 .app-layout__sidebar.has-dark-menu {
   // 在深色系统主题下，侧边栏容器背景必须和内容区域一致（使用 #0a0a0a）
   html.dark & {
-    background-color: #0a0a0a !important;
+    background-color: var(--btc-surface-panel) !important;
   }
   border-right-color: var(--el-border-color-extra-light) !important;
 }

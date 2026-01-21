@@ -5,7 +5,7 @@
 ;
 
 import { appStorage } from '@/utils/app-storage';
-import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType, StylePresetEnum } from '../config/enums';
 // 现在都在 app-src chunk 中，可以使用静态导入
 import { config } from '@/config/index';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
@@ -25,6 +25,7 @@ function createSettingsState() {
   // 从系统配置获取默认值（现在都在 app-src chunk 中，可以直接使用静态导入的 config）
   // 使用 rawConfig 确保不会被 Vue 响应式系统处理
   const defaultSetting = rawConfig.app.systemSetting;
+  const defaultStylePreset = (defaultSetting?.default as any)?.defaultStylePreset ?? StylePresetEnum.MINIMAL;
 
   // 菜单相关设置
   const storedMenuType = appStorage.settings.getItem('menuType');
@@ -106,6 +107,17 @@ function createSettingsState() {
   const pageTransition = ref<string>(appStorage.settings.getItem('pageTransition') || defaultSetting.default.defaultPageTransition);
   const customRadius = ref<string>(appStorage.settings.getItem('customRadius') || defaultSetting.default.defaultCustomRadius);
 
+  // 全局风格套件
+  const storedStylePreset = appStorage.settings.getItem('stylePreset');
+  const resolvedStylePreset =
+    storedStylePreset && Object.values(StylePresetEnum).includes(storedStylePreset as StylePresetEnum)
+      ? (storedStylePreset as StylePresetEnum)
+      : defaultStylePreset;
+  const stylePreset = ref<StylePresetEnum>(resolvedStylePreset);
+  if (!storedStylePreset || !Object.values(StylePresetEnum).includes(storedStylePreset as StylePresetEnum)) {
+    appStorage.settings.setItem('stylePreset', resolvedStylePreset);
+  }
+
   // 按钮风格设置
   const initialSettings = appStorage.settings.get();
   // 只从统一的 settings 存储中读取，不再读取旧的独立键
@@ -148,11 +160,30 @@ function createSettingsState() {
 
   applyButtonStyle(buttonStyle.value);
 
+  const applyStylePreset = (preset: StylePresetEnum) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-style', preset);
+    }
+  };
+
+  applyStylePreset(stylePreset.value);
+
   function setButtonStyle(style: ButtonStyle) {
     if (buttonStyle.value === style) return;
     buttonStyle.value = style;
     appStorage.settings.set({ buttonStyle: style });
     applyButtonStyle(style);
+  }
+
+  /**
+   * 设置全局风格套件
+   */
+  function setStylePreset(preset: StylePresetEnum) {
+    if (stylePreset.value === preset) return;
+    stylePreset.value = preset;
+    appStorage.settings.setItem('stylePreset', preset);
+    applyStylePreset(preset);
+    window.dispatchEvent(new CustomEvent('style-preset-change', { detail: { preset } }));
   }
 
   /**
@@ -196,6 +227,8 @@ function createSettingsState() {
   const applyInitialSettings = () => {
     // 1. 应用系统主题（应用到 DOM）- 确保在页面加载时立即应用
     applySystemTheme();
+    // 1.1 应用全局风格套件
+    applyStylePreset(stylePreset.value);
 
     // 监听系统主题变化（AUTO 模式）
     if (systemThemeType.value === SystemThemeEnum.AUTO) {
@@ -260,6 +293,7 @@ function createSettingsState() {
       settingsApplied = true;
       // 立即应用系统主题，确保在 Vue 组件渲染前就应用正确的主题类
       applySystemTheme();
+      applyStylePreset(stylePreset.value);
       // 其他设置可以在 nextTick 中应用
       nextTick(() => {
         applyInitialSettings();
@@ -680,6 +714,7 @@ function createSettingsState() {
     customRadius,
     buttonStyle,
     loadingStyle,
+    stylePreset,
     isDark,
     // 方法
     switchMenuLayouts,
@@ -703,6 +738,7 @@ function createSettingsState() {
     setCustomRadius,
     setButtonStyle,
     setLoadingStyle,
+    setStylePreset,
     setMenuOpenWidth,
     toggleGlobalSearch,
     setWorkTab,

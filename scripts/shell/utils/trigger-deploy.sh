@@ -142,7 +142,7 @@ fi
 
 # 如果没有指定应用，使用默认值（所有应用）
 if [ -z "$APPS" ]; then
-    APPS="system-app,admin-app,logistics-app,quality-app,production-app,engineering-app,finance-app,mobile-app"
+    APPS="system-app,admin-app,logistics-app,quality-app,production-app,engineering-app,finance-app"
     log_warning "未指定应用列表，将部署所有应用"
 fi
 

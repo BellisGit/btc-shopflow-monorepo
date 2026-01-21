@@ -22,9 +22,11 @@
   },
   "scripts": {
     "dev": "rollup --c --bundleConfigAsCjs --watch",
-    "build": "rollup --c --bundleConfigAsCjs",
+    "build": "rollup --c --bundleConfigAsCjs && npm run build:types && node scripts/verify-build.mjs",
+    "build:types": "tsc --project tsconfig.build.json && node scripts/fix-dts-path.mjs",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "verify-build": "node scripts/verify-build.mjs"
   },
   "peerDependencies": {
     "vite": "^5.0.0"

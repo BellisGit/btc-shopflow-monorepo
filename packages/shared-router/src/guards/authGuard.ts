@@ -76,38 +76,35 @@ export function createAuthGuard(config: AuthGuardConfig) {
     // 检查认证状态
     const isAuthenticatedUser = config.isAuthenticated();
 
-    if (!isAuthenticatedUser) {
-      // 未认证，重定向到登录页（带 oauth_callback 参数）
+    // 存储调试信息到 sessionStorage（即使页面刷新也能看到）
+    if (import.meta.env.DEV) {
       try {
-        // 如果提供了 getLoginUrl 函数，优先使用它（用于子应用独立运行时重定向到主应用登录页）
-        if (config.getLoginUrl) {
-          const loginUrl = config.getLoginUrl(to.fullPath);
-          window.location.href = loginUrl;
-          return;
-        }
-
-        // 否则使用 loginPath（同域重定向）
-        if (router) {
-          const loginRoute = router.resolve(config.loginPath);
-          if (loginRoute && loginRoute.matched.length > 0) {
-            next({
-              path: config.loginPath,
-              query: { oauth_callback: to.fullPath },
-            });
-          } else {
-            window.location.href = `${config.loginPath}?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-          }
-        } else {
-          window.location.href = `${config.loginPath}?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-        }
-      } catch (error) {
-        // 如果出错，尝试使用 getLoginUrl（如果提供），否则使用 loginPath
-        if (config.getLoginUrl) {
-          window.location.href = config.getLoginUrl(to.fullPath);
-        } else {
-          window.location.href = `${config.loginPath}?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-        }
+        const debugInfo = {
+          timestamp: new Date().toISOString(),
+          path: to.path,
+          isPublic,
+          isAuthenticated: isAuthenticatedUser,
+        };
+        sessionStorage.set('__auth_guard_debug__', JSON.stringify(debugInfo));
+      } catch (e) {
+        // 忽略存储错误
       }
+      console.log('[authGuard] 认证检查:', {
+        path: to.path,
+        isPublic,
+        isAuthenticated: isAuthenticatedUser,
+      });
+    }
+
+    if (!isAuthenticatedUser) {
+      // 未认证，不再重定向到登录页（已禁用）
+      if (import.meta.env.DEV) {
+        console.log('[authGuard] ❌ 未认证，但已禁用重定向到登录页:', {
+          targetPath: to.fullPath,
+        });
+      }
+      // 允许继续导航（不重定向）
+      next();
       return;
     }
 

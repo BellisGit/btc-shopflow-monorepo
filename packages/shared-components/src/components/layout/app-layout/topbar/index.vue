@@ -135,13 +135,13 @@ const shouldHandleDrawerEvent = (): boolean => {
     const env = getEnvironment();
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    
+
     const isLayoutAppDomain =
       (env === 'production' && hostname === 'layout.bellis.com.cn') ||
       (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
       (env === 'preview' && port === '4192') ||
       (env === 'development' && port === '4188');
-    
+
     if (isLayoutAppDomain) {
       return true; // layout-app 自己的域名，应该处理
     }
@@ -347,7 +347,7 @@ const logoTitle = computed(() => {
       if (mainAppI18n && mainAppI18n.global) {
         const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
         const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
-        
+
         // 优先尝试 subapp.name（子应用名称）
         // 注意：messages 中的 subapp 是嵌套对象，需要访问 messages.subapp.name
         if (messages?.subapp?.name) {
@@ -365,7 +365,7 @@ const logoTitle = computed(() => {
             }
           }
         }
-        
+
         // 如果直接访问失败，使用 t() 函数
         try {
           // 优先尝试 subapp.name
@@ -378,7 +378,7 @@ const logoTitle = computed(() => {
           // 如果翻译失败，继续尝试其他方法
         }
       }
-      
+
       // 如果主应用翻译失败，尝试使用共享组件的 t() 函数
       try {
         // 优先尝试 subapp.name
@@ -389,7 +389,7 @@ const logoTitle = computed(() => {
       } catch (error) {
         // 如果翻译失败，继续使用其他方法
       }
-      
+
       // 如果 subapp.name 不存在，尝试使用 domain.type.{appId} 作为后备
       const domainTypeKey = `domain.type.${currentSubAppId}`;
       // 优先使用主应用的 i18n 实例（复用上面已声明的 mainAppI18n）
@@ -403,7 +403,7 @@ const logoTitle = computed(() => {
           }
         }
       }
-      
+
       // 如果主应用翻译失败，使用共享组件的 t() 函数
       if (!domainTypeName) {
         domainTypeName = t(domainTypeKey);
@@ -413,7 +413,7 @@ const logoTitle = computed(() => {
       if (domainTypeName && domainTypeName !== domainTypeKey) {
         return domainTypeName;
       }
-      
+
       // 最后兜底：获取应用配置
       const appConfig = getAppById(currentSubAppId);
       if (appConfig && appConfig.name) {
@@ -500,25 +500,25 @@ const menuThemeConfig = computed(() => {
       // 深色系统主题下，使用 #0a0a0a 与内容区域一致
       if (isDark?.value === true) {
         return {
-          background: '#0a0a0a',
+          background: 'var(--btc-surface-panel)',
           systemNameColor: '#FFFFFF',
-          rightLineColor: '#EDEEF0',
+          rightLineColor: 'var(--btc-border-muted)',
         };
       }
       // 浅色系统主题下，使用深色菜单背景色
       return {
-        background: '#0a0a0a',
+        background: 'rgba(30, 30, 30, 0.6)', // 深色玻璃态
         systemNameColor: '#BABBBD',
-        rightLineColor: '#3F4257',
+        rightLineColor: 'rgba(255, 255, 255, 0.1)',
       };
     }
 
     // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
     if (isDark?.value === true) {
       return {
-        background: '#0a0a0a',
+        background: 'var(--btc-surface-panel)',
         systemNameColor: '#FFFFFF',
-        rightLineColor: '#EDEEF0',
+        rightLineColor: 'var(--btc-border-muted)',
       };
     }
 
@@ -538,17 +538,17 @@ const menuThemeConfig = computed(() => {
 
     // 默认配置
     return {
-      background: '#FFFFFF',
+      background: 'var(--btc-surface-panel)',
       systemNameColor: 'var(--el-text-color-primary)',
-      rightLineColor: '#EDEEF0',
+      rightLineColor: 'var(--btc-border-muted)',
     };
   } catch (error) {
     // 如果出现任何错误，返回默认配置
     console.warn('[Topbar] menuThemeConfig 计算错误:', error);
     return {
-      background: '#FFFFFF',
+      background: 'var(--btc-surface-panel)',
       systemNameColor: 'var(--el-text-color-primary)',
-      rightLineColor: '#EDEEF0',
+      rightLineColor: 'var(--btc-border-muted)',
     };
   }
 });
@@ -703,7 +703,7 @@ onMounted(async () => {
   // 关键：检查是否已经被其他组件重写，避免覆盖
   const existingPushState = (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
   const existingReplaceState = (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
-  
+
   const originalPushState = existingPushState || history.pushState;
   const originalReplaceState = existingReplaceState || history.replaceState;
 
@@ -795,7 +795,7 @@ onUnmounted(() => {
   // 恢复原始的 history API（只有在当前组件重写的情况下才恢复）
   const originalPushState = (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
   const originalReplaceState = (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
-  
+
   // 检查当前 history API 是否还是我们重写的版本
   // 如果是，则恢复；如果不是，说明其他组件已经重写了，不要覆盖
   if (originalPushState && history.pushState !== originalPushState) {
@@ -825,8 +825,9 @@ onUnmounted(() => {
   height: 47px;
   min-height: 47px;
   width: 100%; // 明确设置宽度为 100%，确保延伸到最右侧
-  background-color: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color);
+  background-color: var(--btc-surface-panel); // 使用玻璃态面板背景
+  backdrop-filter: blur(var(--btc-effect-blur)); // 添加毛玻璃效果
+  border-bottom: 1px solid var(--btc-border-muted); // 使用柔和边框
   display: flex;
   align-items: center;
   box-sizing: border-box;
@@ -840,8 +841,8 @@ onUnmounted(() => {
     align-items: stretch;
     width: 255px; // 与侧边栏宽度一致
     height: 47px;
-    border-right: 1px solid var(--el-border-color); // 右侧分隔线
-    border-bottom: 1px solid var(--el-border-color); // 底部分隔线（logo区域和搜索区域之间），与顶栏底部分隔线保持一致
+    border-right: 1px solid var(--btc-border-muted); // 右侧分隔线
+    border-bottom: 1px solid var(--btc-border-muted); // 底部分隔线（logo区域和搜索区域之间），与顶栏底部分隔线保持一致
     position: relative;
     transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
@@ -957,16 +958,16 @@ onUnmounted(() => {
                 background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     // 默认浅色背景（根据菜单风格配置）
-    background-color: #FFFFFF;
+    background-color: transparent; // 移除硬编码，使用透明或由 JS 控制
 
     // 暗色系统主题下强制使用深色背景
     html.dark & {
-      background-color: #0a0a0a !important;
+      background-color: transparent !important; // 移除硬编码，让 JS 控制的变量生效
     }
 
     // 深色菜单风格下（浅色系统主题）使用深色背景
     &.is-dark-menu:not(.is-dark-theme) {
-      background-color: #0a0a0a !important;
+      // background-color: #0a0a0a !important; // 移除硬编码
     }
   }
 

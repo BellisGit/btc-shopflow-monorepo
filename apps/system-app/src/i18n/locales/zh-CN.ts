@@ -1,8 +1,8 @@
 /**
  * system-app 中文业务词条
+ * 注意：所有翻译现在都在 config.ts 中，通过 getLocaleMessages() 获取
  */
 import type { SystemAppLocaleMessages } from '../types';
-import systemAppZhCN from '../../locales/zh-CN.json';
 
-export const zhCN: SystemAppLocaleMessages = systemAppZhCN as SystemAppLocaleMessages;
+export const zhCN: SystemAppLocaleMessages = {} as SystemAppLocaleMessages;
 

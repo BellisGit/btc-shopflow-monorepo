@@ -31,7 +31,6 @@ const criticalPaths = {
     personnelApp: { path: join(rootDir, 'apps/personnel-app'), name: '人事应用', displayName: '人事应用 (personnel-app)' },
     dashboardApp: { path: join(rootDir, 'apps/dashboard-app'), name: '仪表盘应用', displayName: '仪表盘应用 (dashboard-app)' },
     homeApp: { path: join(rootDir, 'apps/home-app'), name: '首页应用', displayName: '首页应用 (home-app)' },
-    mobileApp: { path: join(rootDir, 'apps/mobile-app'), name: '移动应用', displayName: '移动应用 (mobile-app)' },
     docsApp: { path: join(rootDir, 'apps/docs-app'), name: '文档应用', displayName: '文档应用 (docs-app)' },
   },
   packages: {
@@ -115,7 +114,7 @@ sidebar_order: 4
 
   content += `\n### 其他应用\n\n| 应用名称 | README | CHANGELOG |\n|---------|--------|-----------|\n`;
 
-  const otherApps = ['mobileApp', 'docsApp'];
+  const otherApps = ['docsApp'];
   for (const key of otherApps) {
     const app = criticalPaths.apps[key];
     if (!existsSync(app.path)) continue;

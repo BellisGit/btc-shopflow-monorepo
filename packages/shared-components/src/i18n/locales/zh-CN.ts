@@ -1,73 +1,24 @@
 /**
  * 中文全局通用词条
+ * 
+ * 注意：所有国际化定义都从 @btc/shared-core/locales 引用，确保单一数据源
+ * 这里将 shared-core 的扁平结构转换为嵌套结构，以兼容 createAppI18n 的嵌套格式要求
  */
 import type { GlobalLocaleMessages } from '../types';
+import { unflattenObject } from '@btc/shared-core/utils/i18n/locale-utils';
+import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 
+// 从 shared-core 获取扁平结构的国际化消息
+const sharedCoreZhMessages = (sharedCoreZh as any)?.default ?? sharedCoreZh;
+
+// 将 shared-core 的扁平结构转换为嵌套结构
+// 只提取 common、layout、app 相关的键，转换为嵌套格式
+const nestedMessages = unflattenObject(sharedCoreZhMessages as Record<string, any>);
+
+// 提取 common、layout、app 部分（如果存在）
 export const zhCN: GlobalLocaleMessages = {
-  common: {
-    button: {
-      confirm: '确认',
-      cancel: '取消',
-      save: '保存',
-      delete: '删除',
-      search: '搜索',
-      reset: '重置',
-      add: '新增',
-      edit: '编辑',
-      refresh: '刷新',
-      submit: '提交',
-      back: '返回',
-      close: '关闭',
-      export: '导出',
-      custom: '自定义',
-      sort: '拖动排序',
-    },
-    refresh: '刷新',
-    refresh_success: '刷新成功',
-    fullscreen: '全屏',
-    exit_fullscreen: '退出全屏',
-    profile: '个人资料',
-    settings: '设置',
-    logout: '退出登录',
-    logout_confirm: '确定要退出登录吗？',
-    logout_success: '退出成功',
-    tip: '提示',
-    close_current: '关闭当前',
-    close_other: '关闭其他',
-    close_all: '关闭全部',
-    close_left: '关闭左侧',
-    close_right: '关闭右侧',
-    pin: '固定标签',
-    unpin: '取消固定',
-    search_menu: '搜索菜单',
-    global_search_placeholder: '搜索菜单、页面、文档...',
-    no_search_results: '没有找到相关结果',
-    try_different_keywords: '尝试使用不同的关键词',
-    recent_searches: '最近搜索',
-    quick_access: '快速访问',
-    menu_items: '菜单项',
-    pages: '页面',
-    documents: '文档',
-    menu: '菜单',
-    page: '页面',
-    document: '文档',
-    parent_menu: '菜单',
-    route: '路由',
-    navigate: '导航',
-    select: '选择',
-    close: '关闭',
-    cancel: '取消',
-    clear_search: '清空搜索',
-    login: '登录',
-  },
-  layout: {
-    header: '顶部导航',
-    sidebar: '侧边栏',
-    content: '内容区域',
-  },
-  app: {
-    title: '拜里斯科技',
-    slogan: 'BTC Shopflow - 企业级工作流管理平台',
-  },
+  common: nestedMessages.common || {},
+  layout: nestedMessages.layout || {},
+  app: nestedMessages.app || {},
 };
 

@@ -84,14 +84,14 @@ const setAllSettings = (settings: Record<string, any>): void => {
 // 先定义 user 对象，以便在 auth 中引用
 const userStorage = {
     get: () => {
-    // 关键：在读取之前先检查存储有效性
-    // 如果关键 cookie 不存在，说明存储被清除，需要退出
-    if (!checkStorageValidity()) {
-      // 异步触发退出，不阻塞当前读取操作
-      triggerAutoLogout().catch(() => {
-        // 静默失败
-      });
-      return null;
+    // 已删除：禁用存储有效性检查和自动退出逻辑
+    // 直接读取用户信息，不进行有效性检查
+    if (import.meta.env.DEV) {
+      // 仅记录日志，不触发退出
+      const isValid = checkStorageValidity();
+      if (!isValid) {
+        console.warn('[appStorage.user.get] ⚠️ 存储有效性检查失败，但已禁用自动退出');
+      }
     }
 
     // 优先从 Cookie 读取

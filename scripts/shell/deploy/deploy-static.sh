@@ -61,7 +61,6 @@ APPS=(
     "personnel-app"
     "production-app"
     "quality-app"
-    "mobile-app"
     "layout-app"
 )
 
@@ -229,9 +228,6 @@ get_app_deploy_path() {
             ;;
         finance-app)
             echo "/www/wwwroot/finance.bellis.com.cn"
-            ;;
-        mobile-app)
-            echo "/www/wwwroot/mobile.bellis.com.cn"
             ;;
         layout-app)
             echo "/www/wwwroot/layout.bellis.com.cn"

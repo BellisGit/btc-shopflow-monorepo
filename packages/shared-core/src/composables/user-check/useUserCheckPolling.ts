@@ -17,6 +17,13 @@ let isChecking = false; // 防止 performCheck 并发执行（虽然只有一个
  * 执行退出逻辑
  */
 async function performLogout(): Promise<void> {
+  // 已删除：禁用所有自动退出和重定向逻辑
+  stopPolling();
+  if (import.meta.env.DEV) {
+    console.warn('[useUserCheckPolling] ⚠️ 已禁用自动退出和重定向，不再跳转到登录页');
+  }
+  return;
+
   // 停止轮询
   stopPolling();
 
@@ -82,24 +89,32 @@ function startExitProcess(): void {
  * 计算实际剩余时间（使用当前时间，而不是存储的服务器时间）
  * @param credentialExpireTime 凭证过期时间（ISO 8601）
  * @param serverCurrentTime 服务器当前时间（ISO 8601，仅用于验证，不用于计算）
- * @returns 实际剩余时间（秒）
+ * @returns 实际剩余时间（秒），如果时间无效返回 -1
  */
 function calculateActualRemainingTime(
   credentialExpireTime: string,
   serverCurrentTime: string
 ): number {
   try {
+    // 验证输入参数
+    if (!credentialExpireTime || typeof credentialExpireTime !== 'string') {
+      logger.warn('[useUserCheckPolling] credentialExpireTime is invalid:', credentialExpireTime);
+      return -1;
+    }
+
     const expireTime = new Date(credentialExpireTime).getTime();
     // 关键：使用当前时间计算，而不是存储的服务器时间
     // 因为存储的服务器时间是旧的，使用它会导致计算不准确
     const currentTime = Date.now();
 
     if (isNaN(expireTime)) {
+      logger.warn('[useUserCheckPolling] Failed to parse credentialExpireTime:', credentialExpireTime);
       return -1; // 无效时间
     }
 
     // 计算实际剩余时间（秒）
-    const actualRemainingTime = Math.max(0, Math.floor((expireTime - currentTime) / 1000));
+    // 注意：不在这里使用 Math.max(0, ...)，保留负数以便上层判断凭证已过期
+    const actualRemainingTime = Math.floor((expireTime - currentTime) / 1000);
     return actualRemainingTime;
   } catch (error) {
     logger.error('[useUserCheckPolling] Failed to calculate actual remaining time:', error);
@@ -167,7 +182,19 @@ async function performCheck(): Promise<void> {
 
     // 4. 验证实际剩余时间的有效性（0-86400秒）
     if (!isValidRemainingTime(actualRemainingTime)) {
-      // 异常情况，使用默认间隔（5分钟）重新检查
+      // 已删除：禁用自动退出逻辑
+      if (actualRemainingTime < 0) {
+        // 凭证已过期，但已禁用自动退出
+        if (import.meta.env.DEV) {
+          console.warn(
+            `[useUserCheckPolling] 实际剩余时间异常（已过期）: ${actualRemainingTime}秒，但已禁用自动退出`
+          );
+        }
+        stopPolling();
+        return;
+      }
+      
+      // 其他异常情况（如 NaN、undefined 等），使用默认间隔（5分钟）重新检查
       if (import.meta.env.DEV) {
         console.warn(
           `[useUserCheckPolling] 实际剩余时间异常: ${actualRemainingTime}秒，使用默认间隔重新检查`
@@ -183,39 +210,36 @@ async function performCheck(): Promise<void> {
 
     // 5. 结合用户状态判断
     if (status === 'expired' || status === 'unauthorized') {
-      // 立即退出
+      // 已删除：禁用自动退出逻辑
       if (import.meta.env.DEV) {
-        console.info(`[useUserCheckPolling] 用户状态：${status}，立即退出`);
+        console.warn(`[useUserCheckPolling] 用户状态：${status}，但已禁用自动退出`);
       }
       stopPolling();
-      startExitProcess();
       return;
     }
 
     if (status === 'soon_expire' && actualRemainingTime < 30) {
-      // 停止轮询，进入退出流程
+      // 已删除：禁用自动退出逻辑
       if (import.meta.env.DEV) {
-        console.info(
-          `[useUserCheckPolling] 用户状态：${status}，实际剩余时间：${actualRemainingTime}秒 < 30秒，进入退出流程`
+        console.warn(
+          `[useUserCheckPolling] 用户状态：${status}，实际剩余时间：${actualRemainingTime}秒 < 30秒，但已禁用自动退出`
         );
       }
       stopPolling();
-      startExitProcess();
       return;
     }
 
     // 6. 计算下一次调用时间：actualRemainingTime - 30秒（留30秒缓冲）
     const nextCallTime = actualRemainingTime - 30;
 
-    // 如果剩余时间 <= 30秒，不再安排下一次调用（进入退出流程）
+    // 如果剩余时间 <= 30秒，不再安排下一次调用（但已禁用自动退出）
     if (nextCallTime <= 0) {
       if (import.meta.env.DEV) {
-        console.info(
-          `[useUserCheckPolling] 剩余时间：${actualRemainingTime}秒 <= 30秒，进入退出流程`
+        console.warn(
+          `[useUserCheckPolling] 剩余时间：${actualRemainingTime}秒 <= 30秒，但已禁用自动退出`
         );
       }
       stopPolling();
-      startExitProcess();
       return;
     }
 

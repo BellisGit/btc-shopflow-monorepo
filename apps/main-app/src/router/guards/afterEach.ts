@@ -8,7 +8,7 @@ import { isAuthenticated } from '../utils/auth';
 /**
  * 处理路由匹配调试
  */
-function handleRouteMatching(to: RouteLocationNormalized, router: Router) {
+async function handleRouteMatching(to: RouteLocationNormalized, router: Router) {
   if (!import.meta.env.PROD || to.matched.length > 0) {
     return;
   }
@@ -34,33 +34,18 @@ function handleRouteMatching(to: RouteLocationNormalized, router: Router) {
     const isAuth = isAuthenticated();
 
     if (!isAuth) {
-      // 未认证，重定向到登录页
-      try {
-        const loginRoute = router.resolve('/login');
-        if (loginRoute && loginRoute.matched.length > 0) {
-          router.replace({
-            path: '/login',
-            query: { oauth_callback: to.fullPath },
-          }).catch(() => {
-            window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-          });
-        } else {
-          window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-        }
-      } catch (error) {
-        window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-      } finally {
-        const loadingEl = document.getElementById('Loading');
-        if (loadingEl) {
-          loadingEl.style.setProperty('display', 'none', 'important');
-        }
+      // 未认证，不再重定向到登录页（已禁用）
+      if (import.meta.env.DEV) {
+        console.log('[handleRouteMatching] ❌ 未认证，但已禁用重定向到登录页:', {
+          targetPath: to.fullPath,
+        });
       }
-    } else {
-      // 已认证但路由未匹配，可能是路由配置问题
-      const loadingEl = document.getElementById('Loading');
-      if (loadingEl) {
-        loadingEl.style.setProperty('display', 'none', 'important');
-      }
+    }
+    
+    // 无论是否认证，都隐藏 loading
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
     }
   }
 }
@@ -340,8 +325,8 @@ function handleMainAppRouteUpdate(to: RouteLocationNormalized) {
  */
 export function setupAfterEachGuard(router: Router) {
   // 第一个 afterEach：处理路由匹配调试
-  router.afterEach((to) => {
-    handleRouteMatching(to, router);
+  router.afterEach(async (to) => {
+    await handleRouteMatching(to, router);
   });
 
   // 第二个 afterEach：处理标签页、面包屑、最近访问等

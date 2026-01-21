@@ -19,10 +19,27 @@ function getRootDir() {
 }
 
 /**
+ * 获取父目录（用于查找 .cursor/skills）
+ */
+function getParentDir() {
+  const rootDir = getRootDir();
+  return join(rootDir, '../');
+}
+
+/**
  * 获取skills目录
+ * 优先查找父目录的 .cursor/skills，如果不存在则查找项目根目录的 .claude/skills
  */
 export function getSkillsDir() {
-  return join(getRootDir(), '.claude', 'skills');
+  // 优先查找父目录的 .cursor/skills
+  const parentCursorSkills = join(getParentDir(), '.cursor', 'skills');
+  if (existsSync(parentCursorSkills)) {
+    return parentCursorSkills;
+  }
+  
+  // 如果不存在，查找项目根目录的 .claude/skills
+  const projectClaudeSkills = join(getRootDir(), '.claude', 'skills');
+  return projectClaudeSkills;
 }
 
 /**

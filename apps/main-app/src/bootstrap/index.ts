@@ -214,17 +214,21 @@ export async function bootstrap(app: App) {
       }
       
       // 退出成功后重定向到登录页
+      // 使用 buildLogoutUrl 构建退出登录 URL，自动包含 clearRedirectCookie=1 参数
+      const { buildLogoutUrlWithFullUrl } = await import('@btc/shared-core/utils/redirect');
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
-      const currentPath = window.location.pathname + window.location.search;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
       
       if (isProductionSubdomain) {
         // 生产环境子域名，跳转到主域名登录页
-        window.location.href = `${protocol}//bellis.com.cn/login?oauth_callback=${encodeURIComponent(currentPath)}`;
+        const loginUrl = `${protocol}//bellis.com.cn/login`;
+        const logoutUrl = await buildLogoutUrlWithFullUrl(loginUrl);
+        window.location.href = logoutUrl;
       } else {
         // 开发环境或主域名，跳转到本地登录页
-        window.location.href = `/login?oauth_callback=${encodeURIComponent(currentPath)}`;
+        const logoutUrl = await buildLogoutUrlWithFullUrl('/login');
+        window.location.href = logoutUrl;
       }
     } catch (error) {
       logger.error('[bootstrap] Failed to execute logout:', error);

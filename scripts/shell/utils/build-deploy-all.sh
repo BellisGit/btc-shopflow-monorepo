@@ -180,7 +180,6 @@ REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
     log_info "  - production-app"
     log_info "  - engineering-app"
     log_info "  - finance-app"
-    log_info "  - mobile-app"
     log_info ""
     log_warning "注意：以下应用未包含在并行工作流中："
     log_info "  - operations-app（需要添加到工作流）"

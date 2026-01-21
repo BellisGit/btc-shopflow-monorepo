@@ -3021,19 +3021,150 @@ jobs:
             echo "✅ Deployment completed!"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  build-deploy-mobile-app:
-    name: Deploy Mobile App
-    needs: [detect-image-tag, build-shared-deps]
+  # 步骤3: 总结成功和失败的应用
+  summary:
+    name: Summary
+    needs:
+      - detect-image-tag
+      - build-deploy-system-app
+      - build-deploy-admin-app
+      - build-deploy-logistics-app
+      - build-deploy-quality-app
+      - build-deploy-production-app
+      - build-deploy-engineering-app
+      - build-deploy-finance-app
+    if: always()
     runs-on: ubuntu-latest
-    env:
-      APP_NAME: mobile-app
-      APP_DIR: apps/mobile-app
-      APP_PORT: "30091"
-      CONTAINER_NAME: btc-mobile-app
-      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
-      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    permissions:
+      contents: read
+    outputs:
+      successful_apps: ${{ steps.collect.outputs.successful_apps }}
+      failed_apps: ${{ steps.collect.outputs.failed_apps }}
+      total_apps: ${{ steps.collect.outputs.total_apps }}
+      success_count: ${{ steps.collect.outputs.success_count }}
+      fail_count: ${{ steps.collect.outputs.fail_count }}
     steps:
-      - name: Checkout code
+      - name: Collect results
+        id: collect
+        run: |
+          SUCCESSFUL_APPS=()
+          FAILED_APPS=()
+          
+          echo "🔍 开始收集各应用的构建和部署结果..."
+          
+          # 直接读取每个job的结果
+          check_app() {
+            local app_name=$1
+            local job_result=$2
+            
+            if [ -z "$job_result" ]; then
+              job_result="unknown"
+            fi
+            
+            echo "  $app_name: $job_result"
+            
+            if [ "$job_result" = "success" ]; then
+              SUCCESSFUL_APPS+=("$app_name")
+              echo "✅ $app_name: 构建和部署都成功"
+            else
+              FAILED_APPS+=("$app_name")
+              echo "❌ $app_name: 状态 = $job_result"
+            fi
+          }
+          
+          check_app "system-app" "${{ needs.build-deploy-system-app.result }}"
+          check_app "admin-app" "${{ needs.build-deploy-admin-app.result }}"
+          check_app "logistics-app" "${{ needs.build-deploy-logistics-app.result }}"
+          check_app "quality-app" "${{ needs.build-deploy-quality-app.result }}"
+          check_app "production-app" "${{ needs.build-deploy-production-app.result }}"
+          check_app "engineering-app" "${{ needs.build-deploy-engineering-app.result }}"
+          check_app "finance-app" "${{ needs.build-deploy-finance-app.result }}"
+          
+          # 注意：layout-app 使用静态文件部署，不在此 Docker 部署工作流中
+          APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app")
+          
+          # 生成输出
+          if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then
+            SUCCESSFUL_APPS_STR=$(IFS=','; echo "${SUCCESSFUL_APPS[*]}")
+            echo "successful_apps=$SUCCESSFUL_APPS_STR" >> $GITHUB_OUTPUT
+          else
+            echo "successful_apps=" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ ${#FAILED_APPS[@]} -gt 0 ]; then
+            FAILED_APPS_STR=$(IFS=','; echo "${FAILED_APPS[*]}")
+            echo "failed_apps=$FAILED_APPS_STR" >> $GITHUB_OUTPUT
+          else
+            echo "failed_apps=" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "total_apps=${#APPS[@]}" >> $GITHUB_OUTPUT
+          echo "success_count=${#SUCCESSFUL_APPS[@]}" >> $GITHUB_OUTPUT
+          echo "fail_count=${#FAILED_APPS[@]}" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 构建和部署结果汇总"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "总应用数: ${#APPS[@]}"
+          echo "成功: ${#SUCCESSFUL_APPS[@]}"
+          echo "失败: ${#FAILED_APPS[@]}"
+          echo ""
+          if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then
+            echo "✅ 成功应用:"
+            for app in "${SUCCESSFUL_APPS[@]}"; do
+              echo "  - $app"
+            done
+          fi
+          if [ ${#FAILED_APPS[@]} -gt 0 ]; then
+            echo "❌ 失败应用:"
+            for app in "${FAILED_APPS[@]}"; do
+              echo "  - $app"
+            done
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const successfulApps = '${{ steps.collect.outputs.successful_apps }}'.split(',').filter(Boolean);
+            const failedApps = '${{ steps.collect.outputs.failed_apps }}'.split(',').filter(Boolean);
+            const totalApps = parseInt('${{ steps.collect.outputs.total_apps }}');
+            const successCount = parseInt('${{ steps.collect.outputs.success_count }}');
+            const failCount = parseInt('${{ steps.collect.outputs.fail_count }}');
+            
+            let comment = '## 📊 构建和部署结果汇总\n\n';
+            comment += `总应用数: ${totalApps}\n`;
+            comment += `✅ 成功: ${successCount}\n`;
+            comment += `❌ 失败: ${failCount}\n\n`;
+            
+            if (successfulApps.length > 0) {
+              comment += '### ✅ 成功应用\n';
+              successfulApps.forEach(app => {
+                comment += `- ${app}\n`;
+              });
+              comment += '\n';
+            }
+            
+            if (failedApps.length > 0) {
+              comment += '### ❌ 失败应用\n';
+              failedApps.forEach(app => {
+                comment += `- ${app}\n`;
+              });
+              comment += '\n';
+            }
+            
+            comment += '---\n';
+            comment += '> 此评论由 GitHub Actions 自动生成';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
         uses: actions/checkout@v4
       
       - name: Setup Node.js
@@ -3433,7 +3564,6 @@ jobs:
       - build-deploy-production-app
       - build-deploy-engineering-app
       - build-deploy-finance-app
-      - build-deploy-mobile-app
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -3480,10 +3610,9 @@ jobs:
           check_app "production-app" "${{ needs.build-deploy-production-app.result }}"
           check_app "engineering-app" "${{ needs.build-deploy-engineering-app.result }}"
           check_app "finance-app" "${{ needs.build-deploy-finance-app.result }}"
-          check_app "mobile-app" "${{ needs.build-deploy-mobile-app.result }}"
           
           # 注意：layout-app 使用静态文件部署，不在此 Docker 部署工作流中
-          APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+          APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app")
           
           # 生成输出
           if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then

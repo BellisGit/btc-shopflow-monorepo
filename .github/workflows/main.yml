@@ -24,7 +24,6 @@ on:
           - production-app
           - engineering-app
           - finance-app
-          - mobile-app
 
 permissions:
   contents: read

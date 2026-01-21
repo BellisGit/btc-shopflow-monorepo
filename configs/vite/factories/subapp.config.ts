@@ -281,7 +281,9 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     // 关键：禁用代码压缩，避免 Terser 压缩导致的对象属性分隔符丢失问题
     minify: false,
 
-    assetsInlineLimit: 10 * 1024,
+    // 关键：禁止资源内联，确保 CSS 被提取到独立文件中（qiankun 要求）
+    // 与 layout-app 保持一致，避免内联 CSS 导致样式丢失
+    assetsInlineLimit: 0,
     outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     // 关键：禁用 Vite 的自动清理，因为我们已经有 cleanDistPlugin 在构建前清理

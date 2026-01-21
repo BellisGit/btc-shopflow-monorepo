@@ -7,11 +7,11 @@ import { isAuthenticated } from './utils/auth';
  * 路由配置
  */
 export const routes: RouteRecordRaw[] = [
-  // 登录页面（不在 Layout 中）- 使用根目录 auth 包
+  // 登录页面（不在 Layout 中）- 使用主应用 pages 目录
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@auth/login/index.vue'),
+    component: () => import('@/pages/login/index.vue'),
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
@@ -20,11 +20,11 @@ export const routes: RouteRecordRaw[] = [
       pageType: 'login'
     }
   },
-  // 忘记密码页面（不在 Layout 中）- 使用根目录 auth 包
+  // 忘记密码页面（不在 Layout 中）- 使用主应用 pages 目录
   {
     path: '/forget-password',
     name: 'ForgetPassword',
-    component: () => import('@auth/forget-password/index.vue'),
+    component: () => import('@/pages/forget-password/index.vue'),
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
@@ -32,11 +32,11 @@ export const routes: RouteRecordRaw[] = [
       isPage: true
     }
   },
-  // 注册页面（不在 Layout 中）- 使用根目录 auth 包
+  // 注册页面（不在 Layout 中）- 使用主应用 pages 目录
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@auth/register/index.vue'),
+    component: () => import('@/pages/register/index.vue'),
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
@@ -305,12 +305,15 @@ export const routes: RouteRecordRaw[] = [
       // 检查是否已登录
       const isAuthenticatedUser = isAuthenticated();
 
-      // 如果未登录，重定向到登录页
+      // 如果未登录，不再重定向到登录页（已禁用）
       if (!isAuthenticatedUser) {
-        next({
-          path: '/login',
-          query: { oauth_callback: to.fullPath },
-        });
+        if (import.meta.env.DEV) {
+          console.log('[catch-all route] ❌ 未认证，但已禁用重定向到登录页:', {
+            targetPath: to.fullPath,
+          });
+        }
+        // 未登录但路由未匹配，重定向到 404 页面
+        next('/404');
         return;
       }
 

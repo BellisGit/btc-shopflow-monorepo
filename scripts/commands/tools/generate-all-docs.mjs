@@ -35,7 +35,6 @@ const pathsToGenerate = [
   { path: 'apps/personnel-app', type: 'app' },
   { path: 'apps/dashboard-app', type: 'app' },
   { path: 'apps/home-app', type: 'app' },
-  { path: 'apps/mobile-app', type: 'app' },
   { path: 'apps/docs-app', type: 'app' },
   // 共享包
   { path: 'packages/shared-core', type: 'package' },

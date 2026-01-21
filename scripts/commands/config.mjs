@@ -50,11 +50,6 @@ export const APPS = {
     displayName: '布局应用',
     packageName: 'layout-app',
   },
-  mobile: {
-    name: 'mobile',
-    displayName: '移动应用',
-    packageName: 'mobile-app',
-  },
   docs: {
     name: 'docs',
     displayName: '文档站点',

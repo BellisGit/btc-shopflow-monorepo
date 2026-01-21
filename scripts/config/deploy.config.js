@@ -9,6 +9,18 @@ export const deployConfig = {
       name: '开发环境',
       baseUrl: process.env.DEV_BASE_URL || '',
     },
+    poc: {
+      name: 'POC 环境',
+      baseUrl: process.env.POC_BASE_URL || '',
+    },
+    sit: {
+      name: 'SIT 环境',
+      baseUrl: process.env.SIT_BASE_URL || '',
+    },
+    uat: {
+      name: 'UAT 环境',
+      baseUrl: process.env.UAT_BASE_URL || '',
+    },
     test: {
       name: '测试环境',
       baseUrl: process.env.TEST_BASE_URL || '',

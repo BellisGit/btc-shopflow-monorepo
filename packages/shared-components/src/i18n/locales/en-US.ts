@@ -1,73 +1,24 @@
 /**
  * English global common messages
+ * 
+ * Note: All i18n definitions are referenced from @btc/shared-core/locales to ensure single source of truth
+ * Here we convert shared-core's flat structure to nested structure for compatibility with createAppI18n's nested format requirements
  */
 import type { GlobalLocaleMessages } from '../types';
+import { unflattenObject } from '@btc/shared-core/utils/i18n/locale-utils';
+import sharedCoreEn from '@btc/shared-core/locales/en-US';
 
+// Get flat structure i18n messages from shared-core
+const sharedCoreEnMessages = (sharedCoreEn as any)?.default ?? sharedCoreEn;
+
+// Convert shared-core's flat structure to nested structure
+// Only extract keys related to common, layout, app, convert to nested format
+const nestedMessages = unflattenObject(sharedCoreEnMessages as Record<string, any>);
+
+// Extract common, layout, app parts (if they exist)
 export const enUS: GlobalLocaleMessages = {
-  common: {
-    button: {
-      confirm: 'Confirm',
-      cancel: 'Cancel',
-      save: 'Save',
-      delete: 'Delete',
-      search: 'Search',
-      reset: 'Reset',
-      add: 'Add',
-      edit: 'Edit',
-      refresh: 'Refresh',
-      submit: 'Submit',
-      back: 'Back',
-      close: 'Close',
-      export: 'Export',
-      custom: 'Custom',
-      sort: 'Drag to Sort',
-    },
-    refresh: 'Refresh',
-    refresh_success: 'Refresh successful',
-    fullscreen: 'Fullscreen',
-    exit_fullscreen: 'Exit fullscreen',
-    profile: 'Profile',
-    settings: 'Settings',
-    logout: 'Logout',
-    logout_confirm: 'Are you sure you want to logout?',
-    logout_success: 'Logout successful',
-    tip: 'Tip',
-    close_current: 'Close current',
-    close_other: 'Close others',
-    close_all: 'Close all',
-    close_left: 'Close Left',
-    close_right: 'Close Right',
-    pin: 'Pin Tab',
-    unpin: 'Unpin Tab',
-    search_menu: 'Search menu',
-    global_search_placeholder: 'Search menus, pages, documents...',
-    no_search_results: 'No results found',
-    try_different_keywords: 'Try different keywords',
-    recent_searches: 'Recent searches',
-    quick_access: 'Quick access',
-    menu_items: 'Menu items',
-    pages: 'Pages',
-    documents: 'Documents',
-    menu: 'Menu',
-    page: 'Page',
-    document: 'Document',
-    parent_menu: 'Menu',
-    route: 'Route',
-    navigate: 'Navigate',
-    select: 'Select',
-    close: 'Close',
-    cancel: 'Cancel',
-    clear_search: 'Clear search',
-    login: 'Login',
-  },
-  layout: {
-    header: 'Header',
-    sidebar: 'Sidebar',
-    content: 'Content Area',
-  },
-  app: {
-    title: 'Bellis Technology',
-    slogan: 'BTC Shopflow - Enterprise Workflow Management Platform',
-  },
+  common: nestedMessages.common || {},
+  layout: nestedMessages.layout || {},
+  app: nestedMessages.app || {},
 };
 

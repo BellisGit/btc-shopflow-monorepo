@@ -23,7 +23,6 @@ const pathsToClean = [
   'apps/quality-app/node_modules/.vite',
   'apps/production-app/node_modules/.vite',
   'apps/finance-app/node_modules/.vite',
-  'apps/mobile-app/node_modules/.vite',
   'apps/system-app/node_modules/.vite',
   'apps/layout-app/node_modules/.vite',
   'apps/docs-app/node_modules/.vite',
@@ -36,7 +35,6 @@ const pathsToClean = [
   'apps/quality-app/dist',
   'apps/production-app/dist',
   'apps/finance-app/dist',
-  'apps/mobile-app/dist',
   'apps/system-app/dist',
   'apps/layout-app/dist',
   'apps/docs-app/dist',
@@ -49,7 +47,6 @@ const pathsToClean = [
   'apps/quality-app/.vite',
   'apps/production-app/.vite',
   'apps/finance-app/.vite',
-  'apps/mobile-app/.vite',
   'apps/system-app/.vite',
   'apps/layout-app/.vite',
   'apps/docs-app/.vite',
@@ -60,10 +57,13 @@ const pathsToClean = [
   'packages/shared-components/node_modules/.vite',
   'packages/shared-utils/node_modules/.vite',
   
-  // 包的构建输出
-  'packages/shared-core/dist',
-  'packages/shared-components/dist',
-  'packages/shared-utils/dist',
+  // 注意：不清理共享包的 dist 目录，因为：
+  // 1. 共享包需要被其他应用依赖，删除 dist 会导致应用启动失败
+  // 2. 共享包应该通过 build:share 命令单独构建和管理
+  // 3. 如果需要清理，应该使用 pnpm --filter @btc/shared-core run clean（如果存在）
+  // 'packages/shared-core/dist',
+  // 'packages/shared-components/dist',
+  // 'packages/shared-utils/dist',
   
   // Turbo 缓存（可选，如果需要强制重新构建所有应用）
   // '.turbo',

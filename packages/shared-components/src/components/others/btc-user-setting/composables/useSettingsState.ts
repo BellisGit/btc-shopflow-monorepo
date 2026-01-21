@@ -3,7 +3,7 @@
 
 import { ref, computed } from 'vue';
 import { storage } from '@btc/shared-core/utils';
-import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType, StylePresetEnum } from '../config/enums';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 
 /**
@@ -63,6 +63,17 @@ export function useSettingsState() {
   const pageTransition = ref<string>(initialSettings.pageTransition || storage.get('pageTransition') || 'slide-left');
   const customRadius = ref<string>(initialSettings.customRadius || storage.get('customRadius') || '0.25');
 
+  // 全局风格套件
+  const storedStylePreset = initialSettings.stylePreset as StylePresetEnum | null;
+  const resolvedStylePreset: StylePresetEnum =
+    storedStylePreset && Object.values(StylePresetEnum).includes(storedStylePreset)
+      ? storedStylePreset
+      : StylePresetEnum.MINIMAL;
+  const stylePreset = ref<StylePresetEnum>(resolvedStylePreset);
+  if (!initialSettings.stylePreset || !Object.values(StylePresetEnum).includes(initialSettings.stylePreset)) {
+    storage.set('settings', { ...initialSettings, stylePreset: resolvedStylePreset });
+  }
+
   // 按钮风格设置
   // 只从统一的 settings 存储中读取，不再读取旧的独立键
   const storedButtonStyle = initialSettings.buttonStyle as ButtonStyle | null;
@@ -101,12 +112,32 @@ export function useSettingsState() {
 
   applyButtonStyle(buttonStyle.value);
 
+  const applyStylePreset = (preset: StylePresetEnum) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-style', preset);
+    }
+  };
+
+  applyStylePreset(stylePreset.value);
+
   function setButtonStyle(style: ButtonStyle) {
     if (buttonStyle.value === style) return;
     buttonStyle.value = style;
     const settings = getSettings();
     storage.set('settings', { ...settings, buttonStyle: style });
     applyButtonStyle(style);
+  }
+
+  /**
+   * 设置全局风格套件
+   */
+  function setStylePreset(preset: StylePresetEnum) {
+    if (stylePreset.value === preset) return;
+    stylePreset.value = preset;
+    const settings = getSettings();
+    storage.set('settings', { ...settings, stylePreset: preset });
+    applyStylePreset(preset);
+    window.dispatchEvent(new CustomEvent('style-preset-change', { detail: { preset } }));
   }
 
   /**
@@ -419,6 +450,7 @@ export function useSettingsState() {
     customRadius,
     buttonStyle,
     loadingStyle,
+    stylePreset,
     isDark,
     switchMenuLayouts,
     switchMenuStyles,
@@ -441,6 +473,7 @@ export function useSettingsState() {
     setCustomRadius,
     setButtonStyle,
     setLoadingStyle,
+    setStylePreset,
     setMenuOpenWidth,
     toggleGlobalSearch,
   };

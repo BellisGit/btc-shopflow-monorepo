@@ -1,7 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
-import { scanRoutesFromConfigFiles, logger } from '@btc/shared-core/utils/route-scanner';
+import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
+import { logger } from '@btc/shared-core/utils/logger';
 ;
 
 /**

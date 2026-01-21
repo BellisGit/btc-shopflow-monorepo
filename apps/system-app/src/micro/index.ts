@@ -1043,7 +1043,7 @@ export async function setupQiankun() {
         if (entryMatch) {
           const protocol = window.location.protocol;
           // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
-          // 这样可以支持通过 IP 地址访问（如 10.80.8.199）
+          // 这样可以支持通过 IP 地址访问（使用当前页面的 hostname，支持 devHost）
           const currentHost = window.location.hostname;
           const port = entryMatch[4] || '';
           const baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
@@ -1855,7 +1855,7 @@ export async function setupQiankun() {
           let fixedHtml = html;
 
           // 从 URL 推断应用的入口地址
-          // URL 格式可能是：http://10.80.8.199:4182/ 或 //10.80.8.199:4182/
+          // URL 格式可能是：http://{devHost}:4182/ 或 //{devHost}:4182/（使用配置中的 devHost）
           // 需要匹配子应用的入口地址
           let matchedAppEntry: string | null = null;
           let matchedAppName: string | null = null;
@@ -2104,7 +2104,7 @@ export async function setupQiankun() {
 
           if (entryUrl) {
             // 关键：如果 entry 是完整 URL（包含子域名），使用 entry 中的 hostname
-            // 否则使用当前页面的 hostname（支持通过 IP 地址访问，如 10.80.8.199）
+            // 否则使用当前页面的 hostname（支持通过 IP 地址访问，使用配置中的 devHost）
             const port = entryUrl.port || '';
             let finalHost = entryUrl.hostname;
 

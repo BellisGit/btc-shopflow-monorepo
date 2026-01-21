@@ -3,7 +3,7 @@ import type { Plugin, ResolvedConfig } from 'vite';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
-import { logger } from '@btc/shared-core';
+// logger 已移除，使用 console 替代
 
 const __filename = fileURLToPath(import.meta.url);
 // @ts-expect-error: __dirname 未使用，保留用于未来功能
@@ -68,7 +68,7 @@ export function copyLogoPlugin(): Plugin {
         copyFileSync(logoSourcePath, logoDestPath);
         console.info(`[copy-logo] 已复制 logo.png 到: ${logoDestPath}`);
       } catch (error) {
-        logger.error('[copy-logo] 复制 logo.png 失败:', error);
+        console.error('[copy-logo] 复制 logo.png 失败:', error);
       }
     },
   } as unknown as Plugin;

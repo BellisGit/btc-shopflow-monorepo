@@ -34,7 +34,6 @@ const criticalPaths = {
     personnelApp: { path: join(rootDir, 'apps/personnel-app'), name: '人事应用', required: true },
     dashboardApp: { path: join(rootDir, 'apps/dashboard-app'), name: '仪表盘应用', required: true },
     homeApp: { path: join(rootDir, 'apps/home-app'), name: '首页应用', required: true },
-    mobileApp: { path: join(rootDir, 'apps/mobile-app'), name: '移动应用', required: true },
     docsApp: { path: join(rootDir, 'apps/docs-app'), name: '文档应用', required: true },
   },
   packages: {

@@ -6,7 +6,8 @@
 
 import { storage } from '@btc/shared-utils';
 import type { UserStorage, AppSettingsStorage } from '../storage-manager';
-import { checkStorageValidity, triggerAutoLogout, logger } from '@btc/shared-core/utils/storage-validity-check';
+import { checkStorageValidity, triggerAutoLogout } from '@btc/shared-core/utils/storage-validity-check';
+import { logger } from '@btc/shared-core/utils/logger';
 
 /**
  * 存储键名常量

@@ -26,6 +26,16 @@ export interface CaptchaResponse {
 }
 
 /**
+ * 二维码登录响应类型
+ */
+export interface QrCodeResponse {
+  qrCode: string; // 二维码图片数据（base64 或 URL）
+  qrCodeId?: string; // 二维码ID（用于轮询扫码状态）
+  expireTime?: number; // 过期时间（秒）
+  [key: string]: any;
+}
+
+/**
  * 用户检查响应类型
  */
 export interface UserCheckResponse {

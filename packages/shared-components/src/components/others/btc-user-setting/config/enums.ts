@@ -36,3 +36,10 @@ export enum BoxStyleType {
   SHADOW = 'shadow-mode',
 }
 
+// 全局风格套件
+export enum StylePresetEnum {
+  MINIMAL = 'minimal',
+  GLASS = 'glass',
+  CYBER = 'cyber',
+}
+

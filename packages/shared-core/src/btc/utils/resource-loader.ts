@@ -1116,8 +1116,6 @@ function inferAppNameFromUrl(): string | null {
     return 'production-app';
   } else if (hostname.includes('operations.')) {
     return 'operations-app';
-  } else if (hostname.includes('mobile.')) {
-    return 'mobile-app';
   } else if (hostname.includes('dashboard.')) {
     return 'dashboard-app';
   } else if (hostname.includes('personnel.')) {

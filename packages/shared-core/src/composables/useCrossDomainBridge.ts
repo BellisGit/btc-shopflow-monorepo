@@ -666,7 +666,7 @@ export function useCrossDomainBridge(
         instance.broadcastChannel.postMessage(message);
         // 直接 Broadcast Channel 发送成功，也通过 iframe 发送（确保兼容性）
       } catch (error) {
-        // 静默失败
+        logger.error(`[useCrossDomainBridge] Failed to send ${type} message via BroadcastChannel:`, error);
       }
     }
 
@@ -893,6 +893,13 @@ export function useCrossDomainBridge(
     getOrCreateIframe();
   }
 
+  // 暴露全局函数，供非组件上下文使用（如 createLogoutFunction）
+  if (typeof window !== 'undefined') {
+    (window as any).__APP_BRIDGE_SEND_MESSAGE__ = (type: string, payload?: any) => {
+      sendMessage(type, payload);
+    };
+  }
+
   return {
     sendMessage,
     subscribe,
@@ -908,9 +915,10 @@ export function useCrossDomainBridge(
 export function broadcastLoginMessage(): void {
   try {
     // 方法1: 使用 BroadcastChannel（同源标签页通信）
+    // 关键修复：统一使用 'bellis-auth-channel'，与 useCrossDomainBridge 保持一致
     if (typeof BroadcastChannel !== 'undefined') {
       try {
-        const channel = new BroadcastChannel('btc-auth-bridge');
+        const channel = new BroadcastChannel('bellis-auth-channel');
         channel.postMessage({
           type: 'login',
           payload: { timestamp: Date.now() },

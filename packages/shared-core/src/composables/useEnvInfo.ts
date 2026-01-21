@@ -16,6 +16,9 @@ export interface EnvInfo {
   environment: Environment;
   isDev: boolean;
   isPreview: boolean;
+  isPoc: boolean;
+  isSit: boolean;
+  isUat: boolean;
   isTest: boolean;
   isProduction: boolean;
   currentApp: string | null;
@@ -38,6 +41,9 @@ export function useEnvInfo() {
   // 计算属性
   const isDev = computed(() => environment.value === 'development');
   const isPreview = computed(() => environment.value === 'preview');
+  const isPoc = computed(() => environment.value === 'poc');
+  const isSit = computed(() => environment.value === 'sit');
+  const isUat = computed(() => environment.value === 'uat');
   const isTest = computed(() => environment.value === 'test');
   const isProduction = computed(() => environment.value === 'production');
 
@@ -160,6 +166,9 @@ export function useEnvInfo() {
     environment,
     isDev,
     isPreview,
+    isPoc,
+    isSit,
+    isUat,
     isTest,
     isProduction,
     currentApp,

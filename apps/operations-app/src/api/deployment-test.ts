@@ -219,7 +219,6 @@ async function loadDeployConfig(): Promise<DeployConfig> {
         'production-app': { domain: 'production.bellis.com.cn', description: '生产应用' },
         'engineering-app': { domain: 'engineering.bellis.com.cn', description: '工程应用' },
         'finance-app': { domain: 'finance.bellis.com.cn', description: '财务应用' },
-        'mobile-app': { domain: 'mobile.bellis.com.cn', description: '移动应用' },
       },
     };
   }

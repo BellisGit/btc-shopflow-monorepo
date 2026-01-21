@@ -8,9 +8,10 @@ import type { Plugin, ResolvedConfig } from 'vite';
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { logger } from '@btc/shared-core';
+// logger 已移除，使用 console 替代
 
 const __filename = fileURLToPath(import.meta.url);
+// @ts-expect-error: __dirname 未使用，保留用于未来功能
 const __dirname = dirname(__filename);
 
 /**
@@ -45,7 +46,7 @@ function loadAppsConfig(root: string): AppsConfig | null {
     const configContent = readFileSync(configPath, 'utf-8');
     return JSON.parse(configContent) as AppsConfig;
   } catch (error) {
-    logger.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
+    console.error('[inject-fallback-title] 加载 apps.config.json 失败:', error);
     return null;
   }
 }
@@ -148,9 +149,9 @@ export function injectFallbackTitle(options: {
           const root = viteConfig.root || process.cwd();
           
           // 获取应用 ID
-          let appId = options.appId;
+          let appId: string | null = options.appId || null;
           if (!appId) {
-            appId = getAppIdFromContext(root, options.packageName) || null;
+            appId = getAppIdFromContext(root, options.packageName);
           }
 
           // 加载应用配置
@@ -180,7 +181,7 @@ export function injectFallbackTitle(options: {
 
           return updatedHtml;
         } catch (error) {
-          logger.error('[inject-fallback-title] 注入标题失败:', error);
+          console.error('[inject-fallback-title] 注入标题失败:', error);
           return html;
         }
       },

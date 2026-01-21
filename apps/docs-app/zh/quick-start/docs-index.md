@@ -37,7 +37,6 @@ sidebar_order: 4
 
 | 应用名称 | README | CHANGELOG |
 |---------|--------|-----------|
-| **移动应用 (mobile-app)** | [README.md](https://github.com/BellisGit/btc-shopflow-monorepo/blob/develop/apps/mobile-app/README.md) | [CHANGELOG.md](https://github.com/BellisGit/btc-shopflow-monorepo/blob/develop/apps/mobile-app/CHANGELOG.md) |
 | **文档应用 (docs-app)** | [README.md](https://github.com/BellisGit/btc-shopflow-monorepo/blob/develop/apps/docs-app/README.md) | [CHANGELOG.md](https://github.com/BellisGit/btc-shopflow-monorepo/blob/develop/apps/docs-app/CHANGELOG.md) |
 
 ## 📦 共享包文档

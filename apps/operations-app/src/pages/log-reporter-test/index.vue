@@ -85,10 +85,10 @@
 <script setup lang="ts">
 import { BtcMessage } from '@btc/shared-components';
 import { Promotion, DocumentCopy, Refresh } from '@element-plus/icons-vue';
-import { reportLog, getLogReporter, getQueueLength, type LogEntry, type LogLevel, logger } from '@btc/shared-core/utils/log-reporter';
-import { getFullAppId, convertToServerLogEntry, toISOString } from '@btc/shared-core/utils/log-reporter';
+import { reportLog, getLogReporter, getQueueLength, type LogEntry, type LogLevel } from '@btc/shared-core/utils/log-reporter';
+import { getFullAppId, getSimpleAppName, convertToServerLogEntry, toISOString } from '@btc/shared-core/utils/log-reporter';
 import { getCurrentAppId } from '@btc/shared-core/utils/env-info';
-import { getAllApps } from '@btc/shared-core';
+import { getAllApps, logger } from '@btc/shared-core';
 import { isBusinessApp } from '@btc/shared-core/configs/app-env.config';
 import { tSync } from '@/i18n/getters';
 import type { LogReportRequest, ServerLogEntry } from '@btc/shared-core/utils/log-reporter';
@@ -101,7 +101,7 @@ const qpsTestCount = ref(20); // QPS测试次数，默认20次
 // 应用列表（只包含业务应用 + 测试用的不存在应用）
 const appList = computed(() => {
   const businessApps = getAllApps().filter(app => {
-    // 只显示业务应用，过滤掉特殊应用（main-app, layout-app, docs-app, home-app, mobile-app）
+    // 只显示业务应用，过滤掉特殊应用（main-app, layout-app, docs-app, home-app）
     const appName = app.id.endsWith('-app') ? app.id : `${app.id}-app`;
     return isBusinessApp(appName);
   });
@@ -209,11 +209,13 @@ const previewData = computed<LogReportRequest>(() => {
   const testLogEntry = generateTestLogEntry(0);
   const serverLog = convertToServerLogEntry(testLogEntry);
   const fullAppId = getFullAppId(selectedAppName.value);
+  const simpleAppName = getSimpleAppName(fullAppId);
 
   return {
     appId: fullAppId,
+    appName: simpleAppName,
     timestamp: toISOString(Date.now()),
-    logs: JSON.stringify([serverLog]),
+    logs: [serverLog],
   };
 });
 
@@ -229,12 +231,7 @@ const formatData = (data: any): string => {
 // 格式化请求数据（用于显示完整请求体）
 const formatRequestData = (data: LogReportRequest): string => {
   try {
-    // 解析 logs 字符串以便格式化显示
-    const parsedData = {
-      ...data,
-      logs: typeof data.logs === 'string' ? JSON.parse(data.logs) : data.logs,
-    };
-    return JSON.stringify(parsedData, null, 2);
+    return JSON.stringify(data, null, 2);
   } catch {
     return JSON.stringify(data, null, 2);
   }
@@ -255,11 +252,7 @@ const getLogLevelType = (level: string): string => {
 // 解析预览数据中的日志（用于显示）
 const previewLogs = computed<ServerLogEntry[]>(() => {
   try {
-    const logsStr = previewData.value.logs;
-    if (typeof logsStr === 'string') {
-      return JSON.parse(logsStr);
-    }
-    return [];
+    return previewData.value.logs || [];
   } catch {
     return [];
   }
@@ -338,12 +331,14 @@ const sendQpsTestLogs = async () => {
       // 转换为服务器格式
       const serverLog = convertToServerLogEntry(logEntry);
       const fullAppId = getFullAppId(selectedAppName.value);
+      const simpleAppName = getSimpleAppName(fullAppId);
 
       // 构建请求体
       const requestBody = {
         appId: fullAppId,
+        appName: simpleAppName,
         timestamp: toISOString(Date.now()),
-        logs: JSON.stringify([serverLog]),
+        logs: [serverLog],
       };
 
       // URL 使用不带 -app 后缀的应用名

@@ -113,6 +113,17 @@ export function getFullAppId(appName: string): string {
 }
 
 /**
+ * 从完整应用ID提取简化应用名称（如从 "btc-shopflow-admin-app" 提取 "admin"）
+ */
+export function getSimpleAppName(fullAppId: string): string {
+  // 移除 "btc-shopflow-" 前缀
+  let appName = fullAppId.replace(/^btc-shopflow-/, '');
+  // 移除 "-app" 后缀
+  appName = appName.replace(/-app$/, '');
+  return appName;
+}
+
+/**
  * 获取微前端应用信息
  */
 export function getMicroAppInfo(appName?: string): MicroAppInfo {

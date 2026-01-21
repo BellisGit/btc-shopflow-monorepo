@@ -34,12 +34,7 @@ const allApps = [
 ];
 
 // 只包含实际存在的应用目录（单独生成日志）- 使用简短的名称，对应 scripts/commands/lint.mjs 中的格式
-// 排除 mobile-app
 const apps = allApps.filter(app => {
-  // 排除 mobile-app
-  if (app.packageName === 'mobile-app') {
-    return false;
-  }
   const appPath = resolve(rootDir, `apps/${app.packageName}`);
   return existsSync(appPath);
 });

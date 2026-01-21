@@ -10,7 +10,10 @@ import {
   ElDescriptions, ElDescriptionsItem
 } from 'element-plus';
 import BtcCascader from '@btc-components/navigation/btc-cascader/index.vue';
-import BtcUpload from '@btc-components/form/btc-upload/index.vue';
+// 注意：BtcUpload 使用动态解析以避免循环依赖
+// BtcUpload 组件导入了 @btc/shared-components，而 useFormRenderer 也在同一个包中
+// 通过在运行时使用 resolveComponent 动态解析可以打破循环依赖
+// 这样避免了顶层导入导致的 "Cannot access 'BtcUpload' before initialization" 错误
 
 // 组件映射表
 export const componentMap: Record<string, any> = {
@@ -35,7 +38,7 @@ export const componentMap: Record<string, any> = {
   'el-descriptions': ElDescriptions,
   'el-descriptions-item': ElDescriptionsItem,
   'btc-cascader': BtcCascader,
-  'btc-upload': BtcUpload
+  // 'btc-upload' 通过 resolveComponent 动态解析，避免循环依赖
 };
 
 // 组件定义缓存
@@ -47,7 +50,19 @@ export function useFormRenderer() {
     const componentName = item.component?.name;
     if (!componentName) return null;
 
-    const Component = componentMap[componentName] || resolveComponent(componentName);
+    // 动态获取组件，对于 btc-upload 使用延迟解析以避免循环依赖
+    let Component = componentMap[componentName];
+    
+    // 特殊处理 btc-upload，使用 resolveComponent 动态解析以避免循环依赖
+    // 这避免了顶层导入导致的初始化顺序问题
+    if (componentName === 'btc-upload') {
+      // 使用 resolveComponent 动态解析组件，避免顶层导入导致的循环依赖
+      // resolveComponent 会在运行时查找组件，此时组件应该已经通过 index.ts 导出
+      Component = resolveComponent('BtcUpload') as any;
+    } else if (!Component) {
+      // 如果组件不在映射表中，尝试解析
+      Component = resolveComponent(componentName);
+    }
 
     // 使用 item.prop + componentName 作为缓存 key，确保组件定义稳定
     const cacheKey = `${item.prop || 'unknown'}_${componentName}`;

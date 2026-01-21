@@ -249,7 +249,7 @@ import type { BtcTableButtonConfig } from '@btc/shared-components';
 import { ElTable } from 'element-plus';
 import { BtcMessage, BtcConfirm } from '@btc/shared-components';
 import { Check, Close, View, Download, Loading, Warning } from '@element-plus/icons-vue';
-import { startTest as startDeploymentTestAPI, getTestStatus as getDeploymentTestStatus, getTestReport as getDeploymentTestReport } from '../api/deployment-test';
+import { startTest as startDeploymentTestAPI, getTestStatus as getDeploymentTestStatus, getTestReport as getDeploymentTestReport } from '../../../api/deployment-test';
 
 defineOptions({
   name: 'DeploymentTest',
@@ -266,7 +266,6 @@ const availableApps = ref([
   { name: 'production-app', label: '生产应用' },
   { name: 'engineering-app', label: '工程应用' },
   { name: 'finance-app', label: '财务应用' },
-  { name: 'mobile-app', label: '移动应用' },
 ]);
 
 // 选中的应用

@@ -6,7 +6,7 @@
 // 使用延迟加载避免循环依赖
 // 静态导入会导致模块加载时立即执行，可能形成循环依赖
 ;
-import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
+import { BoxStyleType, ContainerWidthEnum, StylePresetEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 
@@ -160,6 +160,13 @@ export function useSettingsHandlers() {
     },
   };
 
+  // 全局风格套件处理器
+  const stylePresetHandlers = {
+    setPreset: (preset: StylePresetEnum) => {
+      settingsState.setStylePreset(preset);
+    },
+  };
+
   // 主题风格处理器
   const themeStyleHandlers = {
     // 切换主题风格
@@ -193,6 +200,7 @@ export function useSettingsHandlers() {
     colorHandlers,
     containerHandlers,
     buttonStyleHandlers,
+    stylePresetHandlers,
     themeStyleHandlers,
     menuLayoutHandlers,
     menuStyleHandlers,
