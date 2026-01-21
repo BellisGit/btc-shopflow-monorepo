@@ -1,6 +1,6 @@
 ;
 import { ref, computed } from 'vue';
-import { storage } from '@btc/shared-core/utils';
+import { storage, logger } from '@btc/shared-core/utils';
 
 /**
  * 用户信息接口
@@ -36,7 +36,7 @@ export function useUser() {
         return user;
       }
     } catch (err) {
-      console.error('获取用户信息失败:', err);
+      logger.error('获取用户信息失败:', err);
     }
     return null;
   };
@@ -50,7 +50,7 @@ export function useUser() {
       storage.set('user', user);
       userInfo.value = user;
     } catch (err) {
-      console.error('设置用户信息失败:', err);
+      logger.error('设置用户信息失败:', err);
     }
   };
 

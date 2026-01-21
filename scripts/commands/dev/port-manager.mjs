@@ -50,7 +50,6 @@ function loadPortConfigs() {
       { appName: 'operations-app', devPort: 5109 },
       { appName: 'dashboard-app', devPort: 5110 },
       { appName: 'personnel-app', devPort: 5111 },
-      { appName: 'mobile-app', devPort: 5112 },
       { appName: 'docs-app', devPort: 5113 },
       { appName: 'home-app', devPort: 5114 }
     ];
@@ -139,7 +138,7 @@ function killProcess(pid) {
  */
 export function checkAndKillPorts(autoKill = true) {
   const configs = loadPortConfigs();
-  const excludedApps = ['mobile-app']; // 排除移动应用
+  const excludedApps = []; // 已移除移动应用
   
   const occupiedPorts = [];
   const killedProcesses = [];

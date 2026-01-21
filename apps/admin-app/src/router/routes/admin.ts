@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout } from '@btc/shared-components';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
+import { logger } from '@btc/shared-core/utils/logger';
 ;
 
 /**
@@ -37,7 +38,7 @@ export const getAdminRoutes = (): RouteRecordRaw[] => {
       console.warn('[AdminRouter] Route conflicts:', autoRoutes.conflicts);
     }
   } catch (error) {
-    console.error('[AdminRouter] Failed to scan routes from modules:', error);
+    logger.error('[AdminRouter] Failed to scan routes from modules:', error);
     // 如果扫描失败，返回空数组
     pageRoutes = [];
   }

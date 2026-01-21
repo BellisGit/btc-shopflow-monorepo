@@ -1,10 +1,11 @@
-﻿/**
+/**
  * EPS 工具函数
  * 参考 cool-admin 的工具函数实现
  */
 ;
 
 import type { EpsColumn, EpsEntity, TypeMapping } from './types';
+// logger 已移除，使用 console 替代
 
 /**
  * 默认类型映射配置

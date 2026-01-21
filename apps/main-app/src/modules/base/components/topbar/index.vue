@@ -80,7 +80,7 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
@@ -216,11 +216,11 @@ onMounted(async () => {
           component: markRaw(component.default || component)
         });
       } catch (error) {
-        console.error('Failed to load toolbar component:', error);
+        logger.error('Failed to load toolbar component:', error);
       }
     }
   } catch (error) {
-    console.error('Failed to get toolbar components:', error);
+    logger.error('Failed to get toolbar components:', error);
   }
 
 });

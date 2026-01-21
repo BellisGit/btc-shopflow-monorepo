@@ -20,7 +20,6 @@ on:
           - personnel-app
           - production-app
           - quality-app
-          - mobile-app
           - layout-app
       skip_build:
         description: '跳过构建步骤（仅部署）'
@@ -69,7 +68,7 @@ jobs:
           fi
           
           if [ "$APP_INPUT" = "all" ]; then
-            APPS="system-app admin-app dashboard-app engineering-app finance-app logistics-app operations-app personnel-app production-app quality-app mobile-app layout-app"
+            APPS="system-app admin-app dashboard-app engineering-app finance-app logistics-app operations-app personnel-app production-app quality-app layout-app"
             BUILD_ALL=true
           else
             APPS="$APP_INPUT"

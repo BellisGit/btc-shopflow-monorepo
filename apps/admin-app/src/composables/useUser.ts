@@ -1,7 +1,7 @@
 ;
 import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 
 /**
  * 用户信息接口
@@ -36,7 +36,7 @@ export function useUser() {
       }
     } catch (err) {
       const { t } = useI18n();
-      console.error(t('common.error.get_user_info_failed'), err);
+      logger.error(t('common.error.get_user_info_failed'), err);
     }
     return null;
   };
@@ -50,7 +50,7 @@ export function useUser() {
       userInfo.value = user;
     } catch (err) {
       const { t } = useI18n();
-      console.error(t('common.error.set_user_info_failed'), err);
+      logger.error(t('common.error.set_user_info_failed'), err);
     }
   };
 

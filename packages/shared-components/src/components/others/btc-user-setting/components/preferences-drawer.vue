@@ -20,6 +20,9 @@
       <!-- 主题风格（切换深浅主题） -->
       <ThemeStyleSettings />
 
+      <!-- 全局风格套件 -->
+      <StylePresetSettings />
+
       <!-- 菜单布局 -->
       <MenuLayoutSettings />
 
@@ -56,6 +59,7 @@ import SettingHeader from './shared/SettingHeader.vue';
 import MenuLayoutSettings from '../settings/menu-layout/index.vue';
 import MenuStyleSettings from '../settings/menu-style/index.vue';
 import ThemeStyleSettings from '../settings/theme-style/index.vue';
+import StylePresetSettings from '../settings/style-preset/index.vue';
 import ColorSettings from '../settings/color-settings/index.vue';
 import ButtonStyleSettings from '../settings/button-style/index.vue';
 import LoadingStyleSettings from '../settings/loading-style/index.vue';

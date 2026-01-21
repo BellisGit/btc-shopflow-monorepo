@@ -206,7 +206,7 @@
 // Theme Brand Red Body Background
 // =========================
 body.theme-brand-red {
-	background-color: var(--el-bg-color-page);
+	background-color: var(--btc-surface-page);
 }
 
 
@@ -244,11 +244,11 @@ body.theme-brand-red {
 	.el-scrollbar__bar {
 		&.is-vertical {
 			right: 0;
-			width: 6px;
+			width: var(--btc-spacing-1-5);
 
 			.el-scrollbar__thumb {
-				background-color: rgba(0, 0, 0, 0.2);
-				border-radius: 3px;
+				background-color: color-mix(in srgb, var(--el-text-color-primary) 20%, transparent);
+				border-radius: var(--btc-spacing-1);
 				opacity: 0; // 默认完全透明
 				transition: opacity 0.3s ease-in-out;
 			}
@@ -264,7 +264,7 @@ body.theme-brand-red {
 	// 暗色模式滚动条
 	@media (prefers-color-scheme: dark) {
 		.el-scrollbar__bar.is-vertical .el-scrollbar__thumb {
-			background-color: rgba(255, 255, 255, 0.2);
+			background-color: color-mix(in srgb, var(--el-text-color-primary) 28%, transparent);
 		}
 	}
 
@@ -273,7 +273,7 @@ body.theme-brand-red {
 	@media only screen and (max-width: 768px) {
 		// 移动端保持相同的布局逻辑，但可能需要调整滚动条宽度
 		.el-scrollbar__bar.is-vertical {
-			width: 4px; // 移动端使用更窄的滚动条
+			width: var(--btc-spacing-1); // 移动端使用更窄的滚动条
 		}
 	}
 }
@@ -310,7 +310,7 @@ body.theme-brand-red {
 	// 注意：ElRow 的 gutter 属性只设置水平间距，需要手动设置垂直间距
 	:deep(.btc-chart-gallery__container .el-col),
 	:deep(.btc-chart-demo .el-col) {
-		margin-bottom: 10px;
+		margin-bottom: var(--btc-spacing-2-5);
 	}
 	
 	// 针对 btc-container 中的子元素（使用 CSS Grid 布局，gap 属性已经处理了间距）

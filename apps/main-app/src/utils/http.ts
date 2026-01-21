@@ -11,6 +11,7 @@ import { responseInterceptor, storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { processURL } from '@btc/shared-core';
 import { getCookie, setCookie, getCookieDomain } from '@btc/shared-core/utils/cookie';
+import { syncSettingsToCookie } from '@btc/shared-core/utils/storage/cross-domain';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -170,8 +171,20 @@ export class Http {
 
         if (isLoginSuccess) {
           // 登录成功，设置登录状态标记到统一的 settings 存储中
-          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
-          appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+          // 关键：直接使用 storage.get 和 syncSettingsToCookie，避免触发存储有效性检查
+          // 因为登录成功后，profile 信息是异步加载的（延迟 500ms），需要给足够的时间
+          try {
+            // 直接读取 settings，不通过 appStorage.settings.get()，避免触发存储有效性检查
+            const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+            // 设置 is_logged_in 标记
+            const updatedSettings = { ...currentSettings, is_logged_in: true };
+            // 直接同步到 Cookie，不触发存储有效性检查
+            syncSettingsToCookie(updatedSettings);
+          } catch (error) {
+            // 如果设置失败，使用 appStorage（回退方案）
+            const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+            appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+          }
           
           // 记录登录时间，用于存储有效性检查的宽限期
           try {
@@ -241,9 +254,6 @@ export class Http {
                 }
               } catch (error) {
                 // 静默失败，不影响登录流程
-                if (import.meta.env.DEV) {
-                  console.warn('[http] Failed to load profile info after login:', error);
-                }
               }
             }, 500); // 延迟 500ms 确保 EPS 服务已初始化
           } catch (error) {

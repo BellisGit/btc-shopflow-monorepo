@@ -197,7 +197,7 @@ if [ "$SKIP_DEPLOY" != true ]; then
         log_info "检测需要部署的应用..."
         
         # 使用构建脚本的检测逻辑
-        ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app")
         CHANGED_APPS=()
         
         if [ "$DEPLOY_ALL" = true ]; then

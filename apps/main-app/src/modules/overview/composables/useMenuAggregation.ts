@@ -9,7 +9,7 @@
 ;
 
 import { computed, ref } from 'vue';
-import { getAllManifests, getManifest, type MenuConfigItem, type MenuConfig } from '@btc/shared-core/manifest';
+import { getAllManifests, getManifest, type MenuConfigItem, type MenuConfig, logger } from '@btc/shared-core/manifest';
 import { tSync } from '@/i18n/getters';
 
 /**
@@ -105,7 +105,7 @@ export function useMenuAggregation() {
       // 5. 排序并设置
       overviewMenus.value = merged.sort((a, b) => a.sort - b.sort);
     } catch (error) {
-      console.error('[useMenuAggregation] 加载菜单失败:', error);
+      logger.error('[useMenuAggregation] 加载菜单失败:', error);
       overviewMenus.value = [];
     } finally {
       isLoading.value = false;

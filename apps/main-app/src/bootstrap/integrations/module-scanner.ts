@@ -226,7 +226,7 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       }
 
     } catch (error) {
-      console.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
+      logger.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
     }
   }
 

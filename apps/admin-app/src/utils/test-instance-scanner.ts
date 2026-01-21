@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ;
 /**
  * 测试实例扫描器
@@ -108,7 +109,7 @@ export async function loadTestInstanceComponent(instanceName: string) {
     const module = await import(`../modules/test/views/${instanceName}/index.vue`);
     return module.default;
   } catch (error) {
-    console.error(`Failed to load test instance: ${instanceName}`, error);
+    logger.error(`Failed to load test instance: ${instanceName}`, error);
     throw error;
   }
 }

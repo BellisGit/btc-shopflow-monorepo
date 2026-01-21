@@ -1,5 +1,7 @@
 ;
 import { mixColor } from '../../../composables/useTheme';
+import { logger } from '../../../../utils/logger/index';
+import { generateContrastVariants } from '../../../utils/color-contrast';
 
 /**
  * 将 RGB/RGBA 颜色转换为十六进制格式
@@ -66,6 +68,15 @@ export function syncThemeColorToSubApps(): void {
       if (lightVar) container.style.setProperty(`${pre}-light-${i}`, lightVar);
       if (darkVar) container.style.setProperty(`${pre}-dark-${i}`, darkVar);
     }
+    // 同步高对比度变体
+    const contrastLight = el.style.getPropertyValue(`${pre}-contrast-light`) || getComputedStyle(el).getPropertyValue(`${pre}-contrast-light`).trim();
+    const contrastDark = el.style.getPropertyValue(`${pre}-contrast-dark`) || getComputedStyle(el).getPropertyValue(`${pre}-contrast-dark`).trim();
+    const contrastAA = el.style.getPropertyValue(`${pre}-contrast-aa`) || getComputedStyle(el).getPropertyValue(`${pre}-contrast-aa`).trim();
+    const contrastAAA = el.style.getPropertyValue(`${pre}-contrast-aaa`) || getComputedStyle(el).getPropertyValue(`${pre}-contrast-aaa`).trim();
+    if (contrastLight) container.style.setProperty(`${pre}-contrast-light`, contrastLight);
+    if (contrastDark) container.style.setProperty(`${pre}-contrast-dark`, contrastDark);
+    if (contrastAA) container.style.setProperty(`${pre}-contrast-aa`, contrastAA);
+    if (contrastAAA) container.style.setProperty(`${pre}-contrast-aaa`, contrastAAA);
   };
 
   // 设置到子应用容器
@@ -111,11 +122,19 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
     const normalizedColor = colorToHex(color);
     const normalizedCurrentColor = currentColor ? colorToHex(currentColor) : null;
     
+    // 检查高对比度变量是否已设置
+    const contrastLight = el.style.getPropertyValue(`${pre}-contrast-light`).trim();
+    const contrastDark = el.style.getPropertyValue(`${pre}-contrast-dark`).trim();
+    const contrastAA = el.style.getPropertyValue(`${pre}-contrast-aa`).trim();
+    const contrastAAA = el.style.getPropertyValue(`${pre}-contrast-aaa`).trim();
+    const hasContrastVariants = contrastLight && contrastDark && contrastAA && contrastAAA;
+    
     if (normalizedCurrentColor && normalizedCurrentColor === normalizedColor) {
       // 颜色相同，但仍然需要检查暗黑模式是否相同
-      // 如果都相同，直接返回
       const currentDark = document.documentElement.classList.contains('dark');
-      if (currentDark === dark) {
+      // 如果颜色和暗黑模式都相同，且高对比度变量已存在，才提前返回
+      // 如果高对比度变量不存在，即使颜色相同也要生成
+      if (currentDark === dark && hasContrastVariants) {
         isSettingThemeColor = false;
         return;
       }
@@ -126,7 +145,7 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
 
     // 确保 hexColor 是有效的十六进制格式（必须是 #RRGGBB 格式，长度为 7）
     if (!hexColor.startsWith('#') || hexColor.length !== 7) {
-      console.error('[Theme] Invalid color format after conversion:', {
+      logger.error('[Theme] Invalid color format after conversion:', {
         original: color,
         converted: hexColor,
         expected: 'format like #RRGGBB'
@@ -137,6 +156,13 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
         el.style.setProperty(`${pre}-light-${i}`, '#ecf5ff');
         el.style.setProperty(`${pre}-dark-${i}`, '#ecf5ff');
       }
+      // 即使转换失败，也尝试设置高对比度变量的默认值
+      const defaultLight = dark ? '#ffffff' : '#000000';
+      const defaultDark = dark ? '#ffffff' : '#000000';
+      el.style.setProperty(`${pre}-contrast-light`, defaultLight);
+      el.style.setProperty(`${pre}-contrast-dark`, defaultDark);
+      el.style.setProperty(`${pre}-contrast-aa`, defaultDark);
+      el.style.setProperty(`${pre}-contrast-aaa`, defaultDark);
       isSettingThemeColor = false;
       return;
     }
@@ -161,9 +187,29 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
         el.style.setProperty(lightVarName, lightColor);
         el.style.setProperty(darkVarName, darkColor);
       }
+
+      // ========== 生成高对比度变体 ==========
+      // 基于 WCAG 2.1 标准生成满足对比度要求的颜色变体
+      try {
+        const contrastVariants = generateContrastVariants(hexColor, dark);
+        
+        // 设置高对比度变体 CSS 变量
+        el.style.setProperty(`${pre}-contrast-light`, contrastVariants.contrastLight);
+        el.style.setProperty(`${pre}-contrast-dark`, contrastVariants.contrastDark);
+        el.style.setProperty(`${pre}-contrast-aa`, contrastVariants.contrastAA);
+        el.style.setProperty(`${pre}-contrast-aaa`, contrastVariants.contrastAAA);
+      } catch (error) {
+        // 如果生成失败，设置默认值
+        const defaultLight = dark ? '#ffffff' : '#000000';
+        const defaultDark = dark ? '#ffffff' : '#000000';
+        el.style.setProperty(`${pre}-contrast-light`, defaultLight);
+        el.style.setProperty(`${pre}-contrast-dark`, defaultDark);
+        el.style.setProperty(`${pre}-contrast-aa`, defaultDark);
+        el.style.setProperty(`${pre}-contrast-aaa`, defaultDark);
+      }
     } catch (error) {
-      console.error('[Theme] Error setting theme color variables:', error);
-      console.error('[Theme] Details:', {
+      logger.error('[Theme] Error setting theme color variables:', error);
+      logger.error('[Theme] Details:', {
         originalColor: color,
         convertedHex: hexColor,
         hexColorLength: hexColor?.length,
@@ -174,6 +220,11 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
         el.style.setProperty(`${pre}-light-${i}`, '#ecf5ff');
         el.style.setProperty(`${pre}-dark-${i}`, '#ecf5ff');
       }
+      // 设置高对比度变体的默认值
+      el.style.setProperty(`${pre}-contrast-light`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-dark`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-aa`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-aaa`, dark ? '#ffffff' : '#000000');
     }
 
     // ========== 关键：在微前端环境下，确保主题色变量也设置到子应用容器 ==========
@@ -197,6 +248,21 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
 
           container.style.setProperty(lightVarName, lightColor);
           container.style.setProperty(darkVarName, darkColor);
+        }
+
+        // 同步高对比度变体到容器
+        try {
+          const contrastVariants = generateContrastVariants(hexColor, dark);
+          container.style.setProperty(`${pre}-contrast-light`, contrastVariants.contrastLight);
+          container.style.setProperty(`${pre}-contrast-dark`, contrastVariants.contrastDark);
+          container.style.setProperty(`${pre}-contrast-aa`, contrastVariants.contrastAA);
+          container.style.setProperty(`${pre}-contrast-aaa`, contrastVariants.contrastAAA);
+        } catch (error) {
+          // 如果生成失败，设置默认值
+          container.style.setProperty(`${pre}-contrast-light`, dark ? '#ffffff' : '#000000');
+          container.style.setProperty(`${pre}-contrast-dark`, dark ? '#ffffff' : '#000000');
+          container.style.setProperty(`${pre}-contrast-aa`, dark ? '#ffffff' : '#000000');
+          container.style.setProperty(`${pre}-contrast-aaa`, dark ? '#ffffff' : '#000000');
         }
       } catch (error) {
         // 如果出错，至少设置主颜色

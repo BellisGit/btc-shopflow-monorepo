@@ -81,7 +81,7 @@ defineOptions({
 });
 
 import { useI18n } from 'vue-i18n';
-import { usePluginManager } from '@btc/shared-core';
+import { usePluginManager, logger } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -215,11 +215,11 @@ onMounted(async () => {
           component: markRaw(component.default || component)
         });
       } catch (error) {
-        console.error('Failed to load toolbar component:', error);
+        logger.error('Failed to load toolbar component:', error);
       }
     }
   } catch (error) {
-    console.error('Failed to get toolbar components:', error);
+    logger.error('Failed to get toolbar components:', error);
   }
 
 });

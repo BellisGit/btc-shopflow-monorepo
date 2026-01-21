@@ -15,7 +15,7 @@ const appName = args.find(arg => !arg.startsWith('--'));
 
 if (!appName) {
   // 所有应用：使用 turbo
-  const result = executeCommand('node scripts/turbo.js run type-check');
+  const result = executeCommand('node scripts/commands/tools/turbo.js run type-check');
   if (!result.success) {
     process.exit(result.exitCode);
   }

@@ -230,13 +230,6 @@ const logoutGuard = createLogoutGuard({
   appName: 'main',
 });
 
-const loginRedirectGuard = createLoginRedirectGuard({
-  appName: 'main',
-  homeRoute: '/workbench/overview',
-  getMainAppHomeRoute: () => getMainAppHomeRoute(),
-  isAuthenticated,
-});
-
 const authGuard = createAuthGuard({
   appName: 'main',
   publicPages: PUBLIC_PAGES,
@@ -260,21 +253,22 @@ function handleAuthentication(
 
   const isAuthenticatedUser = isAuthenticated();
 
+  if (import.meta.env.DEV) {
+    console.log('[handleAuthentication] 认证检查:', {
+      path: to.path,
+      isPublic: publicPage,
+      isAuthenticated: isAuthenticatedUser,
+    });
+  }
+
   if (!isAuthenticatedUser) {
-    try {
-      const loginRoute = router.resolve('/login');
-      if (loginRoute && loginRoute.matched.length > 0) {
-        next({
-          path: '/login',
-          query: { oauth_callback: to.fullPath },
-        });
-      } else {
-        window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
-      }
-    } catch (error) {
-      window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
+    if (import.meta.env.DEV) {
+      console.log('[handleAuthentication] ❌ 未认证，但已禁用重定向到登录页:', {
+        targetPath: to.fullPath,
+      });
     }
-    return true;
+    // 不再重定向，允许继续导航
+    return false;
   }
 
   return false;
@@ -356,11 +350,14 @@ function handleUnmatchedRoute(
   const isAuthenticatedUser = isAuthenticated();
 
   if (!isAuthenticatedUser) {
-    next({
-      path: '/login',
-      query: { oauth_callback: to.fullPath },
-    });
-    return true;
+    // 未认证，不再重定向到登录页（已禁用）
+    if (import.meta.env.DEV) {
+      console.log('[handleUnmatchedRoute] ❌ 未认证，但已禁用重定向到登录页:', {
+        targetPath: to.fullPath,
+      });
+    }
+    // 继续处理，不重定向
+    // 不返回 true，让后续逻辑继续处理（可能会重定向到 404）
   }
 
   // 检查是否是子应用路由
@@ -382,6 +379,15 @@ function handleUnmatchedRoute(
 export function setupBeforeEachGuard(router: Router) {
   // 初始化 qiankun 事件监听器
   setupQiankunEventListener();
+
+  // 创建登录页重定向守卫（需要 router 实例，所以在这里创建）
+  const loginRedirectGuard = createLoginRedirectGuard({
+    appName: 'main',
+    homeRoute: '/workbench/overview',
+    getMainAppHomeRoute: () => getMainAppHomeRoute(),
+    isAuthenticated,
+    router, // 传递 router 实例，用于同应用内跳转
+  });
 
   router.beforeEach(async (to, _from, next) => {
     // 监控系统：路由导航开始
@@ -458,8 +464,13 @@ export function setupBeforeEachGuard(router: Router) {
     }
 
     // 处理应用特定的认证检查（保留原有逻辑作为兜底）
-    if (handleAuthentication(to, next, router)) {
-      return;
+    // 关键：如果访问的是登录页，且已经通过了 loginRedirectGuard，不应该再执行认证检查
+    // 因为 loginRedirectGuard 已经处理了登录页的重定向逻辑
+    if (to.path !== '/login' && handleAuthentication(to, wrappedNext, router)) {
+      // handleAuthentication 返回 true 表示已经处理了（调用了 next）
+      if (nextCalled) {
+        return;
+      }
     }
 
     // 处理未匹配路由

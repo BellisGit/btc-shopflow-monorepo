@@ -4,6 +4,7 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor, storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { logger } from '@btc/shared-core/utils/logger';
 import { processURL } from '@btc/shared-core';
 import { getCookie, setCookie, getCookieDomain } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
@@ -52,13 +53,13 @@ export class Http {
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
         // 检查 config.baseURL
         if (config.baseURL && config.baseURL.startsWith('http://')) {
-          console.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP baseURL:', config.baseURL);
+          logger.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP baseURL:', config.baseURL);
           config.baseURL = '/api';
           this.axiosInstance.defaults.baseURL = '/api';
         }
         // 检查 config.url（完整 URL）
         if (config.url && config.url.startsWith('http://')) {
-          console.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP url:', config.url);
+          logger.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复 HTTP url:', config.url);
           // 提取路径部分
           try {
             const urlObj = new URL(config.url);
@@ -75,7 +76,7 @@ export class Http {
         // 检查最终的完整 URL（baseURL + url）
         const finalURL = (config.baseURL || '') + (config.url || '');
         if (finalURL.startsWith('http://')) {
-          console.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复最终 URL:', finalURL);
+          logger.error('[HTTP] 全局拦截器：检测到 HTTPS 页面，强制修复最终 URL:', finalURL);
           config.baseURL = '/api';
           this.axiosInstance.defaults.baseURL = '/api';
           // 移除 url 中的 http:// 前缀
@@ -129,7 +130,7 @@ export class Http {
 
           // 最终验证：确保 baseURL 不是 HTTP
           if (config.baseURL && config.baseURL.startsWith('http://')) {
-            console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+            logger.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
             config.baseURL = '/api';
             this.axiosInstance.defaults.baseURL = '/api';
           }
@@ -493,7 +494,7 @@ function getInitialBaseURL(): string {
   // 最终验证：在 HTTPS 页面下，绝对不允许 HTTP URL
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     if (baseURL.startsWith('http://')) {
-      console.error('[HTTP] 初始化：检测到 HTTPS 页面，强制修复 HTTP baseURL:', baseURL);
+      logger.error('[HTTP] 初始化：检测到 HTTPS 页面，强制修复 HTTP baseURL:', baseURL);
       return '/api';
     }
     if (baseURL && baseURL !== '/api') {

@@ -6,6 +6,7 @@
 ;
 
 import { loadResource, type ResourceLoaderOptions } from './resource-loader';
+import { logger } from '../../utils/logger/index';
 
 /**
  * 模块缓存
@@ -55,8 +56,6 @@ function getCurrentAppName(): string {
     return 'production-app';
   } else if (hostname.includes('operations.')) {
     return 'operations-app';
-  } else if (hostname.includes('mobile.')) {
-    return 'mobile-app';
   } else if (hostname.includes('dashboard.')) {
     return 'dashboard-app';
   } else if (hostname.includes('personnel.')) {
@@ -111,7 +110,7 @@ async function executeModule(code: string, url: string): Promise<any> {
     // 返回模块导出
     return moduleModule.exports.default || moduleModule.exports;
   } catch (error) {
-    console.error(`[dynamic-import-interceptor] 执行模块失败: ${url}`, error);
+    logger.error(`[dynamic-import-interceptor] 执行模块失败: ${url}`, error);
     throw error;
   }
 }
@@ -158,7 +157,7 @@ async function loadModuleWithResourceLoader(
       
       return moduleExports;
     } catch (error) {
-      console.error(`[dynamic-import-interceptor] 加载模块失败: ${specifier}`, error);
+      logger.error(`[dynamic-import-interceptor] 加载模块失败: ${specifier}`, error);
       throw error;
     } finally {
       // 清除加载中的标记

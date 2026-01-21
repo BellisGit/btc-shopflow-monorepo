@@ -1,6 +1,6 @@
 // ref 未使用，已移除
 // import { ref } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { getEpsServiceNode } from './useFinanceInventoryService';
@@ -604,7 +604,7 @@ export function useFinanceInventoryExport() {
 
       BtcMessage.success(t('platform.common.export_success'));
     } catch (error: any) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       BtcMessage.error(error.message || t('platform.common.export_failed'));
     }
   };

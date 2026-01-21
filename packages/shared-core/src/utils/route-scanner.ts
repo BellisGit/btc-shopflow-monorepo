@@ -4,6 +4,7 @@
  */
 import type { RouteRecordRaw, Router } from '../types/vue-router';
 import type { ModuleConfig } from '../types/module';
+import { logger } from './logger/index';
 ;
 
 /**
@@ -223,7 +224,7 @@ export function scanRoutesFromConfigFiles(
         config,
       });
     } catch (error) {
-      console.error(`[RouteScanner] Failed to parse module config from "${filePath}":`, error);
+      logger.error(`[RouteScanner] Failed to parse module config from "${filePath}":`, error);
     }
   }
 
@@ -327,7 +328,7 @@ export function registerRoutes(
         console.info(`[RouteScanner] Registered route: ${route.path} (${route.name || 'unnamed'})`);
       }
     } catch (error) {
-      console.error(`[RouteScanner] Failed to register route "${route.path}":`, error);
+      logger.error(`[RouteScanner] Failed to register route "${route.path}":`, error);
     }
   }
 }

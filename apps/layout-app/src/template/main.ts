@@ -108,7 +108,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('[{{APP_NAME}}-app] 渲染失败:', error);
+    logger.error('[{{APP_NAME}}-app] 渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -127,7 +127,7 @@ const render = async (props: QiankunProps = {}) => {
   }
 };
 
-import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { removeLoadingElement, clearNavigationFlag, logger } from '@btc/shared-core';
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 function bootstrap() {
@@ -270,10 +270,10 @@ if (shouldRunStandalone()) {
                     console.warn('[{{APP_NAME}}-app] 成功挂载到 layout-app');
                   }
                 }).catch((error) => {
-                  console.error('[{{APP_NAME}}-app] 挂载到 layout-app 失败:', error);
+                  logger.error('[{{APP_NAME}}-app] 挂载到 layout-app 失败:', error);
                 });
               } else {
-                console.error('[{{APP_NAME}}-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                logger.error('[{{APP_NAME}}-app] 等待 #subapp-viewport 超时，尝试独立渲染');
                 if (import.meta.env.PROD) {
                   console.warn('[{{APP_NAME}}-app] 诊断信息', {
                     viewportElement: document.querySelector('#subapp-viewport'),
@@ -282,35 +282,35 @@ if (shouldRunStandalone()) {
                   });
                 }
                 render().catch((error) => {
-                  console.error('[{{APP_NAME}}-app] 独立运行失败:', error);
+                  logger.error('[{{APP_NAME}}-app] 独立运行失败:', error);
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
             render().catch((error) => {
-              console.error('[{{APP_NAME}}-app] 独立运行失败:', error);
+              logger.error('[{{APP_NAME}}-app] 独立运行失败:', error);
             });
           }
         })
         .catch((error) => {
-          console.error('[{{APP_NAME}}-app] 初始化 layout-app 失败:', error);
+          logger.error('[{{APP_NAME}}-app] 初始化 layout-app 失败:', error);
           // layout-app 加载失败，独立渲染
           render().catch((error) => {
-            console.error('[{{APP_NAME}}-app] 独立运行失败:', error);
+            logger.error('[{{APP_NAME}}-app] 独立运行失败:', error);
           });
         });
     }).catch((error) => {
-      console.error('[{{APP_NAME}}-app] 导入 init-layout-app 失败:', error);
+      logger.error('[{{APP_NAME}}-app] 导入 init-layout-app 失败:', error);
       // 导入失败，直接渲染
       render().catch((error) => {
-        console.error('[{{APP_NAME}}-app] 独立运行失败:', error);
+        logger.error('[{{APP_NAME}}-app] 独立运行失败:', error);
       });
     });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
     render().catch((error) => {
-      console.error('[{{APP_NAME}}-app] 独立运行失败:', error);
+      logger.error('[{{APP_NAME}}-app] 独立运行失败:', error);
     });
   }
 }

@@ -20,7 +20,6 @@ APPS=(
     "quality-app"
     "production-app"
     "engineering-app"
-    "mobile-app"
 )
 
 # 构建函数

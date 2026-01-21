@@ -35,11 +35,6 @@
       "domain": "finance.bellis.com.cn",
       "description": "财务应用"
     },
-    "mobile-app": {
-      "deployPath": "/www/wwwroot/mobile.bellis.com.cn",
-      "domain": "mobile.bellis.com.cn",
-      "description": "移动应用"
-    }
   },
   "server": {
     "backupPath": "/www/backups",

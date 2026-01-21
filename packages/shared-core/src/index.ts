@@ -45,6 +45,7 @@ export { useServiceWithConfirm } from './composables/useServiceWithConfirm';
 export { logoutCore } from './auth/logoutCore';
 export type { LogoutCoreOptions } from './auth/logoutCore';
 export { checkStorageValidity, triggerAutoLogout, recordLoginTime } from './utils/storage-validity-check';
+export { logRedirectTrace, getRedirectTraceLogs, clearRedirectTraceLogs, exportRedirectTraceLogs } from './utils/redirect-logger';
 export { registerSubAppI18n } from './composables/subapp-i18n/registerSubAppI18n';
 // 导出国际化工具函数（供各应用使用，统一处理逻辑）
 export { mergeConfigFiles, deepMerge, unflattenObject, flattenObject, isObject, mergeMessages } from './utils/i18n/locale-utils';
@@ -57,6 +58,8 @@ export { setupAppI18n } from './utils/i18n/setup-app-i18n';
 export type { SetupAppI18nOptions } from './utils/i18n/setup-app-i18n';
 export { loadFlatI18nMessages } from './utils/i18n/simple-flat-loader';
 export type { FlatLocaleSource, FlatLocaleMessages } from './utils/i18n/simple-flat-loader';
+export { loadLocaleFromCDN, loadHybridLocale, clearCDNCache, preloadCDNLocales } from './utils/i18n/cdn-locale-loader';
+export type { CDNLocaleConfig } from './utils/i18n/cdn-locale-loader';
 export { useCrossDomainBridge, broadcastLoginMessage } from './composables/useCrossDomainBridge';
 export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';
@@ -71,6 +74,23 @@ export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
 export { getMainAppId, isMainAppRoute, isRouteClosable, shouldSkipTabbar, getMainAppHomeRoute, getAppIdFromPath, getMainAppRoutes } from './utils/app-route-utils';
 export { getEnvInfo, getCurrentEnvironment, getCurrentAppId, getCurrentAppConfig } from './utils/env-info';
 export { getMainAppLoginUrl } from './utils/get-main-app-login-url';
+// 重定向工具函数导出
+export {
+  clearRedirectCache,
+  clearRedirectCookie,
+  getCurrentUnifiedPath,
+  getCurrentUnifiedPathSync,
+  saveLogoutRedirectPath,
+  getAndClearLogoutRedirectPath,
+  validateAndNormalizeRedirectPath,
+  getTargetAppInfo,
+  getCurrentAppInfo,
+  isCrossAppRedirect,
+  convertPathToFullUrl,
+  buildLogoutUrl,
+  buildLogoutUrlWithFullUrl,
+  handleCrossAppRedirect,
+} from './utils/redirect';
 // EnvInfo 类型已在上面从 './composables/useEnvInfo' 导出，避免重复导出
 export { initGlobalStateManager, getGlobalState, waitForGlobalState, setGlobalState, getGlobalStateValue, onGlobalStateChange, cleanupAllListeners, useGlobalState, isGlobalStateInitialized } from './composables/useGlobalState';
 export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './eps';
@@ -141,11 +161,9 @@ export * from './eps';
 // ========== 从 shared-utils 迁移的工具模块 ==========
 export * from './utils';
 export { getCookieDomain } from './utils/storage/cookie';
-// 日志模块已移除，请直接使用 console
-// 但保留错误上报功能（reportError）
-export { reportError } from './utils/logger';
-// export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
-// export type { LogContext, LogLevel, LoggerOptions, Logger } from './utils/logger';
+// 日志模块导出
+export { logger, getLogger, setLogContext, getLogContext, clearLogContext, reinitializeLogger } from './utils/logger';
+export type { LogContext, LogLevel } from './utils/logger/types';
 // 显式导出存储工具（确保 Pinia 插件正确导出）
 export { persistedStatePlugin, persistedStatePluginSession, createPersistedStatePlugin } from './utils/storage/pinia-persist';
 export type { PersistedStatePluginOptions } from './utils/storage/pinia-persist';
@@ -212,6 +230,7 @@ export type { RequestAdapter } from './utils/api-center/client';
 // ========== 日志上报中心导出 ==========
 export * from './utils/log-reporter';
 export { getLogReporter, initLogReporter, reportLog, getQueueLength, getLogFilterOptions } from './utils/log-reporter';
-export type { LogEntry, LogLevel, ErrorInfo, LogReporterOptions, LogReportResponse } from './utils/log-reporter/types';
+// LogLevel 已在上面从 logger/types 导出，这里不再重复导出
+export type { LogEntry, ErrorInfo, LogReporterOptions, LogReportResponse } from './utils/log-reporter/types';
 export type { LogFilterOptions } from './utils/log-reporter/utils';
 

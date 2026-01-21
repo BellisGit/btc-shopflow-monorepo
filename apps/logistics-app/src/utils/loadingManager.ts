@@ -2,6 +2,7 @@
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import { useMessage } from './use-message';
+import { logger } from '@btc/shared-core';
 
 // 配置 NProgress
 NProgress.configure({
@@ -89,6 +90,6 @@ export function loadingError(appName: string, error?: Error) {
   const message = useMessage();
   message.error('common.other.loading_failed', { name: appName });
 
-  console.error('common.other.app_load_failed', `${appName}:`, error);
+  logger.error('common.other.app_load_failed', `${appName}:`, error);
 }
 

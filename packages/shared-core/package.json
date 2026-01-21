@@ -5,13 +5,19 @@
   "description": "BTC ShopFlow 共享核心库，主要是逻辑层面共享（区别于组件共享）",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
+      "types": "./dist/index.d.ts",
       "development": "./src/index.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
+      "import": {
+        "development": "./src/index.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "development": "./src/index.ts",
+        "default": "./dist/index.js"
+      },
       "default": "./dist/index.mjs"
     },
     "./utils": {
@@ -85,6 +91,12 @@
       "development": "./src/utils/format/index.ts",
       "import": "./dist/utils/format/index.mjs",
       "require": "./dist/utils/format/index.js"
+    },
+    "./utils/i18n/locale-utils": {
+      "types": "./src/utils/i18n/locale-utils.d.ts",
+      "development": "./src/utils/i18n/locale-utils.ts",
+      "import": "./dist/utils/i18n/locale-utils.mjs",
+      "require": "./dist/utils/i18n/locale-utils.js"
     },
     "./utils/profile-info-cache": {
       "types": "./src/utils/profile-info-cache.d.ts",
@@ -172,10 +184,11 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "prebuild": "node ../../scripts/check-src-artifacts.mjs packages/shared-core && node scripts/generate-overview-i18n.mjs",
-    "build": "vite build && node scripts/create-dist-src-index.mjs",
+    "prebuild": "node scripts/generate-overview-i18n.mjs",
+    "build": "vite build && node scripts/create-dist-src-index.mjs && node scripts/verify-build.mjs",
     "postbuild": "node scripts/create-dist-src-index.mjs",
-    "type-check": "tsc --noEmit --project tsconfig.type-check.json"
+    "type-check": "tsc --noEmit --project tsconfig.type-check.json",
+    "verify-build": "node scripts/verify-build.mjs"
   },
   "peerDependencies": {
     "@vueuse/core": "^12.0.0 || ^13.0.0",

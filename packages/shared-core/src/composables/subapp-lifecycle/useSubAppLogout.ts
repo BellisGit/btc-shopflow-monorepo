@@ -1,6 +1,7 @@
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { sessionStorage } from '../../utils/storage/session';
 import type { SubAppContext } from './types';
+import { logger } from '../../utils/logger/index';
 
 /**
  * 创建退出登录函数（标准化模板）
@@ -15,6 +16,43 @@ export function createLogoutFunction(
 ): () => Promise<void> {
   return async () => {
     try {
+      // 关键：先发送退出消息到其他标签页（通过 useCrossDomainBridge 的全局实例）
+      // 这样可以确保其他标签页能够同步退出
+      try {
+        // 优先使用全局的 sendMessage 函数（如果 useCrossDomainBridge 已初始化）
+        if (typeof window !== 'undefined' && (window as any).__APP_BRIDGE_SEND_MESSAGE__) {
+          logger.info('[createLogoutFunction] Sending logout message via global bridge:', {
+            currentPathname: window.location.pathname
+          });
+          (window as any).__APP_BRIDGE_SEND_MESSAGE__('logout', { timestamp: Date.now() });
+          logger.info('[createLogoutFunction] Logout message sent successfully via global bridge');
+          // 给消息发送足够的时间，确保消息已经发送到所有标签页
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } else if (typeof BroadcastChannel !== 'undefined') {
+          // 兜底方案：如果全局函数不存在，使用 BroadcastChannel（向后兼容）
+          const channel = new BroadcastChannel('bellis-auth-channel');
+          const message = {
+            type: 'logout',
+            payload: { timestamp: Date.now() },
+            origin: window.location.origin,
+            timestamp: Date.now()
+          };
+          logger.info('[createLogoutFunction] Sending logout message via BroadcastChannel (fallback):', {
+            message,
+            channelName: 'bellis-auth-channel',
+            currentPathname: window.location.pathname
+          });
+          channel.postMessage(message);
+          logger.info('[createLogoutFunction] Logout message sent successfully via BroadcastChannel');
+          // 给消息发送足够的时间，确保消息已经发送到所有标签页
+          await new Promise(resolve => setTimeout(resolve, 200));
+          channel.close();
+        }
+      } catch (error) {
+        logger.error('[createLogoutFunction] Failed to send logout message:', error);
+        // 即使消息发送失败，也继续执行退出逻辑
+      }
+
       // 调用后端 logout API（优先使用全局 authApi，如果没有则使用自定义获取函数）
       try {
         let authApi = (window as any).__APP_AUTH_API__;
@@ -171,7 +209,7 @@ export function createLogoutFunction(
       try {
         // 使用统一的环境检测
         const { getEnvironment, getCurrentSubApp } = await import('../../configs/unified-env-config');
-        const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+        const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/shared-core/utils/redirect');
 
         const env = getEnvironment();
         const currentSubApp = getCurrentSubApp();
@@ -208,7 +246,7 @@ export function createLogoutFunction(
         }
       } catch (error) {
         // 如果导入失败，使用兜底方案
-        console.error('[useSubAppLogout] Failed to build logout URL:', error);
+        logger.error('[useSubAppLogout] Failed to build logout URL:', error);
         context.router.replace({
           path: '/login',
           query: { logout: '1' }
@@ -216,7 +254,7 @@ export function createLogoutFunction(
       }
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
 
       // 关键：先清除登录状态标记，确保 isAuthenticated() 立即返回 false
       const getAppStorage = () => {
@@ -336,7 +374,7 @@ export function createLogoutFunction(
       try {
         // 使用统一的环境检测
         const { getEnvironment, getCurrentSubApp } = await import('../../configs/unified-env-config');
-        const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+        const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/shared-core/utils/redirect');
 
         const env = getEnvironment();
         const currentSubApp = getCurrentSubApp();
@@ -373,7 +411,7 @@ export function createLogoutFunction(
         }
       } catch (error) {
         // 如果导入失败，使用兜底方案
-        console.error('[useSubAppLogout] Failed to build logout URL:', error);
+        logger.error('[useSubAppLogout] Failed to build logout URL:', error);
         context.router.replace({
           path: '/login',
           query: { logout: '1' }

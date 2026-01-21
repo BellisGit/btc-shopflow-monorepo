@@ -68,8 +68,8 @@ if (!turboPath) {
 
 // 如果还是找不到，报错
 if (!turboPath) {
-  logger.error('Cannot find turbo. Please run: pnpm install');
-  logger.error('Searched in:', rootNodeModules);
+  console.error('Cannot find turbo. Please run: pnpm install');
+  console.error('Searched in:', rootNodeModules);
   process.exit(1);
 }
 
@@ -94,7 +94,7 @@ child.on('close', (code) => {
 });
 
 child.on('error', (err) => {
-  logger.error('Failed to start turbo:', err);
+  console.error('Failed to start turbo:', err);
   process.exit(1);
 });
 

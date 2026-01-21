@@ -165,10 +165,10 @@ export async function getData(
           const resourceDict = dictData[entity.resource];
           
           // 遍历 columns，找到 dict: true 的字段
-          if (entity.columns && Array.isArray(entity.columns)) {
-            entity.columns.forEach((column) => {
+          if (entity.columns && Array.isArray(entity.columns) && resourceDict) {
+            entity.columns.forEach((column: any) => {
               // 如果字段标记为字典字段（dict === true）
-              if (column.dict === true) {
+              if (column.dict === true && column.propertyName) {
                 // 通过 propertyName 在字典数据中查找对应的字典选项数组
                 const dictOptions = resourceDict[column.propertyName];
                 if (Array.isArray(dictOptions) && dictOptions.length > 0) {

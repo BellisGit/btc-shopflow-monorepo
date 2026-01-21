@@ -1,6 +1,6 @@
 ;
 import { ref } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableProps } from '../types';
 
@@ -125,7 +125,7 @@ export function useTableContextMenu(crud: UseCrudReturn<any>, props: TableProps,
     const row = currentRow.value;
 
     if (!crud) {
-      console.error('[useTableContextMenu] crud is not available');
+      logger.error('[useTableContextMenu] crud is not available');
       return;
     }
 
@@ -143,21 +143,21 @@ export function useTableContextMenu(crud: UseCrudReturn<any>, props: TableProps,
         if (typeof crud.handleEdit === 'function') {
           crud.handleEdit(row);
         } else {
-          console.error('[useTableContextMenu] crud.handleEdit is not available');
+          logger.error('[useTableContextMenu] crud.handleEdit is not available');
         }
         break;
       case 'delete':
         if (typeof crud.handleDelete === 'function') {
           crud.handleDelete(row);
         } else {
-          console.error('[useTableContextMenu] crud.handleDelete is not available');
+          logger.error('[useTableContextMenu] crud.handleDelete is not available');
         }
         break;
       case 'info':
         if (typeof crud.handleView === 'function') {
           crud.handleView(row);
         } else {
-          console.error('[useTableContextMenu] crud.handleView is not available');
+          logger.error('[useTableContextMenu] crud.handleView is not available');
         }
         break;
       case 'order-asc':

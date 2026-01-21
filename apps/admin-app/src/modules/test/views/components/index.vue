@@ -78,7 +78,7 @@
 import { Search } from '@element-plus/icons-vue';
 import { BtcMessage, BtcCrudRow, BtcCrudFlex1 } from '@btc/shared-components';
 import { BtcDialog } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import {
   getAllTestInstanceConfigs,
   loadTestInstanceComponent,
@@ -134,7 +134,7 @@ const loadTestInstances = async () => {
     // 过滤掉加载失败的实例
     testInstances.value = testModules.filter(Boolean) as TestInstance[];
   } catch (error) {
-    console.error('加载测试实例失败:', error);
+    logger.error('加载测试实例失败:', error);
     BtcMessage.error('加载测试实例失败');
   }
 };

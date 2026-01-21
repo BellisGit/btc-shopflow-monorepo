@@ -78,6 +78,7 @@ function shouldRetry(error: any, retryCount: number, maxRetries: number): boolea
 ;
 
 import { ref, readonly } from 'vue';
+import { logger } from '@btc/shared-core';
 
 /**
  * 指数退避重试Hook
@@ -143,7 +144,7 @@ export function useRetry(config: RetryConfig = {}) {
 
         // 检查是否应该重试
         if (!shouldRetry(error, attempt, operationConfig.maxRetries)) {
-          console.error('common.error.not_retrying', error);
+          logger.error('common.error.not_retrying', error);
           break;
         }
 

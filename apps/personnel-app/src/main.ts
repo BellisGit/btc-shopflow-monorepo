@@ -12,7 +12,7 @@ import {
 } from './bootstrap';
 import type { PersonnelAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
-import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { removeLoadingElement, clearNavigationFlag, logger } from '@btc/shared-core';
 
 let context: PersonnelAppContext | null = null;
 
@@ -109,7 +109,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('[personnel-app] 渲染失败:', error);
+    logger.error('[personnel-app] 渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
@@ -253,40 +253,40 @@ if (shouldRunStandalone()) {
                 // 挂载到 layout-app 的 #subapp-viewport
                 render({ container: viewport } as any).then(() => {
                 }).catch((error) => {
-                  console.error('[personnel-app] 挂载到 layout-app 失败:', error);
+                  logger.error('[personnel-app] 挂载到 layout-app 失败:', error);
                 });
               } else {
-                console.error('[personnel-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                logger.error('[personnel-app] 等待 #subapp-viewport 超时，尝试独立渲染');
                 render().catch((error) => {
-                  console.error('[personnel-app] 独立运行失败:', error);
+                  logger.error('[personnel-app] 独立运行失败:', error);
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
             render().catch((error) => {
-              console.error('[personnel-app] 独立运行失败:', error);
+              logger.error('[personnel-app] 独立运行失败:', error);
             });
           }
         })
         .catch((error) => {
-      console.error('[personnel-app] 初始化 layout-app 失败:', error);
+      logger.error('[personnel-app] 初始化 layout-app 失败:', error);
           // layout-app 加载失败，独立渲染
           render().catch((error) => {
-            console.error('[personnel-app] 独立运行失败:', error);
+            logger.error('[personnel-app] 独立运行失败:', error);
           });
         });
     }).catch((error) => {
-      console.error('[personnel-app] 导入 init-layout-app 失败:', error);
+      logger.error('[personnel-app] 导入 init-layout-app 失败:', error);
       // 导入失败，直接渲染
       render().catch((error) => {
-        console.error('[personnel-app] 独立运行失败:', error);
+        logger.error('[personnel-app] 独立运行失败:', error);
     });
   });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
   render().catch((error) => {
-    console.error('[personnel-app] 独立运行失败:', error);
+    logger.error('[personnel-app] 独立运行失败:', error);
   });
   }
 }

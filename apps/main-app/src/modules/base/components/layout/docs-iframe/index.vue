@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { storage } from '@btc/shared-utils';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 
 interface Props {
   visible?: boolean;
@@ -154,7 +154,7 @@ function onIframeLoad() {
       }, '*');
 
     } catch (e) {
-      console.error('[Main App] Failed to update themes on load:', e);
+      logger.error('[Main App] Failed to update themes on load:', e);
     }
   }
 

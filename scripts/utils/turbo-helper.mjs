@@ -88,6 +88,11 @@ export function runTurbo(args = [], options = {}, nodeArgs = []) {
     if (isWindows) {
       delete env.NODE_PATH;
     }
+    // 关键：设置 NODE_ENV=development，确保 Node.js 能识别 package.json exports 中的 development 条件
+    // 这样 shared-components 等包在开发环境下会使用源码路径（./src/index.ts）而不是构建产物（./dist/index.mjs）
+    if (!env.NODE_ENV) {
+      env.NODE_ENV = 'development';
+    }
 
     // 合并 Node.js 参数（如果提供）
     const finalNodeArgs = nodeArgs.length > 0 

@@ -9,7 +9,7 @@
 // console 是全局对象，在模块加载时就已经存在，不会受到循环依赖的影响
 
 import { getAllApps, getAppById } from './app-scanner';
-import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost, isSpecialAppById } from './app-env.config';
+import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost, getAppConfigByPocHost, getAppConfigBySitHost, getAppConfigByUatHost, isSpecialAppById, MAIN_APP_CONFIG } from './app-env.config';
 
 // 安全的 logger 访问函数，避免循环依赖问题
 // 在模块加载早期，直接使用 console，因为 logger 可能还未初始化
@@ -19,7 +19,7 @@ function safeLoggerWarn(message: string, ...args: any[]) {
   console.warn(`[unified-env-config] ${message}`, ...args);
 }
 
-export type Environment = 'development' | 'preview' | 'test' | 'production';
+export type Environment = 'development' | 'preview' | 'poc' | 'sit' | 'uat' | 'test' | 'production';
 export type ConfigScheme = 'default' | 'custom'; // 可以通过 .env 切换
 
 export interface EnvironmentConfig {
@@ -68,7 +68,7 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
         backendTarget: 'http://10.80.9.76:8115',
       },
       microApp: {
-        baseURL: '//10.80.8.199',
+        baseURL: `//${MAIN_APP_CONFIG.devHost}`,
         entryPrefix: '',
       },
       docs: {
@@ -106,6 +106,78 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       },
       cdn: {
         staticAssetsUrl: '',
+      },
+    },
+    poc: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        backendTarget: 'http://poc-api.bellis.com.cn',
+      },
+      microApp: {
+        baseURL: 'https://poc.bellis.com.cn',
+        entryPrefix: '',
+      },
+      docs: {
+        url: 'https://docs.poc.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.poc.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
+      },
+    },
+    sit: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        backendTarget: 'http://sit-api.bellis.com.cn',
+      },
+      microApp: {
+        baseURL: 'https://sit.bellis.com.cn',
+        entryPrefix: '',
+      },
+      docs: {
+        url: 'https://docs.sit.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.sit.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
+      },
+    },
+    uat: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        backendTarget: 'http://uat-api.bellis.com.cn',
+      },
+      microApp: {
+        baseURL: 'https://uat.bellis.com.cn',
+        entryPrefix: '',
+      },
+      docs: {
+        url: 'https://docs.uat.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.uat.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
       },
     },
     test: {
@@ -165,7 +237,7 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
         backendTarget: 'http://10.80.9.76:8115',
       },
       microApp: {
-        baseURL: '//10.80.8.199',
+        baseURL: `//${MAIN_APP_CONFIG.devHost}`,
         entryPrefix: '',
       },
       docs: {
@@ -203,6 +275,78 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       },
       cdn: {
         staticAssetsUrl: '',
+      },
+    },
+    poc: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        backendTarget: 'http://poc-api.bellis.com.cn',
+      },
+      microApp: {
+        baseURL: 'https://poc.bellis.com.cn',
+        entryPrefix: '',
+      },
+      docs: {
+        url: 'https://docs.poc.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.poc.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
+      },
+    },
+    sit: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        backendTarget: 'http://sit-api.bellis.com.cn',
+      },
+      microApp: {
+        baseURL: 'https://sit.bellis.com.cn',
+        entryPrefix: '',
+      },
+      docs: {
+        url: 'https://docs.sit.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.sit.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
+      },
+    },
+    uat: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+        backendTarget: 'http://uat-api.bellis.com.cn',
+      },
+      microApp: {
+        baseURL: 'https://uat.bellis.com.cn',
+        entryPrefix: '',
+      },
+      docs: {
+        url: 'https://docs.uat.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.uat.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
       },
     },
     test: {
@@ -272,6 +416,24 @@ export function getEnvironment(): Environment {
   if (typeof window === 'undefined') {
     // 在 Node.js 环境中（如 Vite 配置文件），import.meta.env 可能未定义
     // 使用防御性检查，提供后备方案
+    
+    // 优先检查显式的环境变量（VITE_ENV 或 APP_ENV）
+    // 这样可以支持 poc、sit、uat 等新环境
+    const explicitEnv = 
+      (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_ENV) ||
+      (typeof process !== 'undefined' && process.env?.VITE_ENV) ||
+      (typeof process !== 'undefined' && process.env?.APP_ENV);
+    
+    if (explicitEnv) {
+      const env = explicitEnv.toLowerCase();
+      // 验证是否为有效的环境类型
+      const validEnvs: Environment[] = ['development', 'preview', 'poc', 'sit', 'uat', 'test', 'production'];
+      if (validEnvs.includes(env as Environment)) {
+        return env as Environment;
+      }
+    }
+    
+    // 如果没有显式指定，则根据 NODE_ENV 或 import.meta.env.PROD 判断
     const prodFlag =
       (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) ??
       (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production');
@@ -281,17 +443,39 @@ export function getEnvironment(): Environment {
   const hostname = window.location.hostname;
   const port = window.location.port || '';
 
-  // 测试环境：hostname 为 test.bellis.com.cn 或以 .test.bellis.com.cn 结尾
+  // POC 环境：hostname 为 poc.bellis.com.cn 或以 poc- 开头且以 .bellis.com.cn 结尾
+  // 例如：poc.bellis.com.cn, poc-xxx.bellis.com.cn, admin.poc.bellis.com.cn
+  if (hostname === 'poc.bellis.com.cn' || hostname.endsWith('.poc.bellis.com.cn') || 
+      (hostname.startsWith('poc-') && hostname.endsWith('.bellis.com.cn'))) {
+    return 'poc';
+  }
+
+  // SIT 环境：hostname 为 sit.bellis.com.cn 或以 .sit.bellis.com.cn 结尾
+  // 例如：sit.bellis.com.cn, admin.sit.bellis.com.cn
+  if (hostname === 'sit.bellis.com.cn' || hostname.endsWith('.sit.bellis.com.cn')) {
+    return 'sit';
+  }
+
+  // UAT 环境：hostname 为 uat.bellis.com.cn 或以 .uat.bellis.com.cn 结尾
+  // 例如：uat.bellis.com.cn, admin.uat.bellis.com.cn
+  if (hostname === 'uat.bellis.com.cn' || hostname.endsWith('.uat.bellis.com.cn')) {
+    return 'uat';
+  }
+
+  // 测试环境：hostname 为 test.bellis.com.cn 或以 .test.bellis.com.cn 结尾（向后兼容，作为 UAT 的别名）
   // 例如：test.bellis.com.cn, admin.test.bellis.com.cn
   if (hostname === 'test.bellis.com.cn' || hostname.endsWith('.test.bellis.com.cn')) {
     return 'test';
   }
 
-  // 生产环境：hostname 为 bellis.com.cn 或以 .bellis.com.cn 结尾，但不包含 .test.bellis.com.cn
+  // 生产环境：hostname 为 bellis.com.cn 或以 .bellis.com.cn 结尾，但不包含 .test.bellis.com.cn、.poc.bellis.com.cn、.sit.bellis.com.cn、.uat.bellis.com.cn
   // 注意：只检查 hostname，避免路径中的 /test/ 被误判
   if (
     (hostname === 'bellis.com.cn' || hostname.endsWith('.bellis.com.cn')) &&
-    !hostname.includes('.test.bellis.com.cn')
+    !hostname.includes('.test.bellis.com.cn') &&
+    !hostname.includes('.poc.bellis.com.cn') &&
+    !hostname.includes('.sit.bellis.com.cn') &&
+    !hostname.includes('.uat.bellis.com.cn')
   ) {
     return 'production';
   }
@@ -456,7 +640,52 @@ export function isMainApp(
     return false;
   }
 
-  // 测试环境：通过子域名判断（类似生产环境）
+  // POC 环境：通过子域名判断（类似生产环境）
+  if (env === 'poc' && hostname) {
+    const appConfig = getAppConfigByPocHost(hostname);
+    if (appConfig) {
+      // 通过 POC 域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub') {
+        return false;
+      }
+    }
+    // POC 环境主域名（poc.bellis.com.cn）或其他未匹配的域名，判断为主应用
+    return true;
+  }
+
+  // SIT 环境：通过子域名判断（类似生产环境）
+  if (env === 'sit' && hostname) {
+    const appConfig = getAppConfigBySitHost(hostname);
+    if (appConfig) {
+      // 通过 SIT 域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub') {
+        return false;
+      }
+    }
+    // SIT 环境主域名（sit.bellis.com.cn）或其他未匹配的域名，判断为主应用
+    return true;
+  }
+
+  // UAT 环境：通过子域名判断（类似生产环境）
+  if (env === 'uat' && hostname) {
+    const appConfig = getAppConfigByUatHost(hostname);
+    if (appConfig) {
+      // 通过 UAT 域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub') {
+        return false;
+      }
+    }
+    // UAT 环境主域名（uat.bellis.com.cn）或其他未匹配的域名，判断为主应用
+    return true;
+  }
+
+  // 测试环境：通过子域名判断（类似生产环境，作为 UAT 的别名）
   if (env === 'test' && hostname) {
     const appConfig = getAppConfigByTestHost(hostname);
     if (appConfig) {
@@ -611,7 +840,52 @@ export function getCurrentSubApp(): string | null {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const port = typeof window !== 'undefined' ? window.location.port || '' : '';
 
-  // 测试环境：通过子域名判断（类似生产环境）
+  // POC 环境：通过子域名判断（类似生产环境）
+  if (env === 'poc' && hostname) {
+    const appConfig = getAppConfigByPocHost(hostname);
+    if (appConfig) {
+      // 通过 POC 域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub' && app.enabled) {
+        return app.id;
+      }
+    }
+    // POC 环境主域名（poc.bellis.com.cn）或其他未匹配的域名，返回 null
+    return null;
+  }
+
+  // SIT 环境：通过子域名判断（类似生产环境）
+  if (env === 'sit' && hostname) {
+    const appConfig = getAppConfigBySitHost(hostname);
+    if (appConfig) {
+      // 通过 SIT 域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub' && app.enabled) {
+        return app.id;
+      }
+    }
+    // SIT 环境主域名（sit.bellis.com.cn）或其他未匹配的域名，返回 null
+    return null;
+  }
+
+  // UAT 环境：通过子域名判断（类似生产环境）
+  if (env === 'uat' && hostname) {
+    const appConfig = getAppConfigByUatHost(hostname);
+    if (appConfig) {
+      // 通过 UAT 域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub' && app.enabled) {
+        return app.id;
+      }
+    }
+    // UAT 环境主域名（uat.bellis.com.cn）或其他未匹配的域名，返回 null
+    return null;
+  }
+
+  // 测试环境：通过子域名判断（类似生产环境，作为 UAT 的别名）
   if (env === 'test' && hostname) {
     const appConfig = getAppConfigByTestHost(hostname);
     if (appConfig) {
@@ -721,8 +995,38 @@ export function getSubAppEntry(appId: string): string {
   }
 
   switch (env) {
+    case 'poc':
+      // POC 环境：直接使用 POC 子域名根路径，构建产物直接部署到子域名根目录
+      if (appEnvConfig.pocHost) {
+        const protocol = typeof window !== 'undefined' && window.location.protocol
+          ? window.location.protocol
+          : 'https:';
+        return `${protocol}//${appEnvConfig.pocHost}/`;
+      }
+      return `/${appId}/`;
+
+    case 'sit':
+      // SIT 环境：直接使用 SIT 子域名根路径，构建产物直接部署到子域名根目录
+      if (appEnvConfig.sitHost) {
+        const protocol = typeof window !== 'undefined' && window.location.protocol
+          ? window.location.protocol
+          : 'https:';
+        return `${protocol}//${appEnvConfig.sitHost}/`;
+      }
+      return `/${appId}/`;
+
+    case 'uat':
+      // UAT 环境：直接使用 UAT 子域名根路径，构建产物直接部署到子域名根目录
+      if (appEnvConfig.uatHost) {
+        const protocol = typeof window !== 'undefined' && window.location.protocol
+          ? window.location.protocol
+          : 'https:';
+        return `${protocol}//${appEnvConfig.uatHost}/`;
+      }
+      return `/${appId}/`;
+
     case 'test':
-      // 测试环境：直接使用测试子域名根路径，构建产物直接部署到子域名根目录（与生产环境一致）
+      // 测试环境：直接使用测试子域名根路径，构建产物直接部署到子域名根目录（与生产环境一致，作为 UAT 的别名）
       if (appEnvConfig.testHost) {
         const protocol = typeof window !== 'undefined' && window.location.protocol
           ? window.location.protocol
@@ -763,10 +1067,28 @@ export function getSubAppActiveRule(appId: string): string | ((location: Locatio
   const env = getEnvironment();
   const appEnvConfig = getAppConfig(`${appId}-app`);
 
-  // 测试环境和生产环境：通过子域名判断
-  if ((env === 'test' || env === 'production') && appEnvConfig) {
+  // POC、SIT、UAT、测试和生产环境：通过子域名判断
+  if ((env === 'poc' || env === 'sit' || env === 'uat' || env === 'test' || env === 'production') && appEnvConfig) {
     return (location: Location) => {
-      // 测试环境：检查是否为测试子域名
+      // POC 环境：检查是否为 POC 子域名
+      if (env === 'poc' && appEnvConfig.pocHost) {
+        if (location.hostname === appEnvConfig.pocHost) {
+          return true;
+        }
+      }
+      // SIT 环境：检查是否为 SIT 子域名
+      if (env === 'sit' && appEnvConfig.sitHost) {
+        if (location.hostname === appEnvConfig.sitHost) {
+          return true;
+        }
+      }
+      // UAT 环境：检查是否为 UAT 子域名
+      if (env === 'uat' && appEnvConfig.uatHost) {
+        if (location.hostname === appEnvConfig.uatHost) {
+          return true;
+        }
+      }
+      // 测试环境：检查是否为测试子域名（作为 UAT 的别名）
       if (env === 'test' && appEnvConfig.testHost) {
         if (location.hostname === appEnvConfig.testHost) {
           return true;
@@ -825,5 +1147,5 @@ export const envConfig: EnvironmentConfig = getCurrentEnvConfig();
 // 请使用 getCurrentSubApp() 和 isMainApp() 函数来获取当前值
 
 // 从 app-env.config 重新导出，以便从 unified-env-config 统一导入
-export { getAppConfig, getAppConfigByTestHost, getAppConfigByPrePort, getAppConfigByDevPort, isSpecialAppById, isSpecialApp, isBusinessApp } from './app-env.config';
+export { getAppConfig, getAppConfigByTestHost, getAppConfigByPocHost, getAppConfigBySitHost, getAppConfigByUatHost, getAppConfigByPrePort, getAppConfigByDevPort, isSpecialAppById, isSpecialApp, isBusinessApp } from './app-env.config';
 export type { AppEnvConfig } from './app-env.config';

@@ -168,7 +168,7 @@ if (typeof window !== 'undefined') {
         return;
       }
     }
-    // 使用 logger 统一输出，支持日志上报和格式统一
+    // 使用 console 统一输出，支持日志上报和格式统一
     const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
     const errorArg = args.find(arg => arg instanceof Error) || args[1];
     console.error(message, errorArg, ...args);
@@ -1043,7 +1043,7 @@ export async function setupQiankun() {
         if (entryMatch) {
           const protocol = window.location.protocol;
           // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
-          // 这样可以支持通过 IP 地址访问（如 10.80.8.199）
+          // 这样可以支持通过 IP 地址访问（使用当前页面的 hostname，支持 devHost）
           const currentHost = window.location.hostname;
           const port = entryMatch[4] || '';
           const baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
@@ -1408,7 +1408,7 @@ export async function setupQiankun() {
                     setTimeout(() => ensureContainer(), retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-              // console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
+              // logger.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
               reject(new Error(`容器缺失，无法加载应用 ${app.name}`));
                 }
           };
@@ -1855,7 +1855,7 @@ export async function setupQiankun() {
           let fixedHtml = html;
 
           // 从 URL 推断应用的入口地址
-          // URL 格式可能是：http://10.80.8.199:4182/ 或 //10.80.8.199:4182/
+          // URL 格式可能是：http://{devHost}:4182/ 或 //{devHost}:4182/（使用配置中的 devHost）
           // 需要匹配子应用的入口地址
           let matchedAppEntry: string | null = null;
           let matchedAppName: string | null = null;
@@ -2104,7 +2104,7 @@ export async function setupQiankun() {
 
           if (entryUrl) {
             // 关键：如果 entry 是完整 URL（包含子域名），使用 entry 中的 hostname
-            // 否则使用当前页面的 hostname（支持通过 IP 地址访问，如 10.80.8.199）
+            // 否则使用当前页面的 hostname（支持通过 IP 地址访问，使用配置中的 devHost）
             const port = entryUrl.port || '';
             let finalHost = entryUrl.hostname;
 
@@ -2480,11 +2480,11 @@ export async function setupQiankun() {
 
   if (isSystemPath) {
     // 动态导入避免循环依赖（这些函数已经是异步的）
-    registerManifestTabsForApp('system').catch(console.error);
-    registerManifestMenusForApp('system').catch(console.error);
+    registerManifestTabsForApp('system').catch((err) => console.error('注册系统应用标签页失败', err));
+    registerManifestMenusForApp('system').catch((err) => console.error('注册系统应用菜单失败', err));
   } else if (isAdminPath) {
-    registerManifestTabsForApp('admin').catch(console.error);
-    registerManifestMenusForApp('admin').catch(console.error);
+    registerManifestTabsForApp('admin').catch((err) => console.error('注册管理应用标签页失败', err));
+    registerManifestMenusForApp('admin').catch((err) => console.error('注册管理应用菜单失败', err));
   }
 
   // 监听全局错误

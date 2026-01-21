@@ -43,6 +43,13 @@
         "type": "color",
         "description": "表格工具栏按钮的颜色，默认继承主色"
       }
+    },
+    "accent": {
+      "jade": {
+        "value": "#CFEAD6",
+        "type": "color",
+        "description": "玉色强调色"
+      }
     }
   }
 }

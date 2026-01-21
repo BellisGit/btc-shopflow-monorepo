@@ -6,6 +6,7 @@
 
 import { storage } from '@btc/shared-utils';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { logger } from '@btc/shared-core/utils/logger';
 import type { } from '@btc/shared-components';
 import { deleteCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
@@ -71,7 +72,7 @@ function handleLogout() {
       }
     }, 100);
   } catch (error) {
-    console.error('[getDomainList] Logout error:', error);
+    logger.error('[getDomainList] Logout error:', error);
     // 即使出错也尝试跳转到登录页
     if (typeof window !== 'undefined') {
       setTimeout(() => {

@@ -14,7 +14,7 @@
 ;
 
 import type { App } from 'vue';
-import { usePluginManager } from '@btc/shared-core';
+import { usePluginManager, logger } from '@btc/shared-core';
 import router from '../router';
 import { discoverSystemPlugins } from './auto-discover';
 import { tSync } from '../i18n/getters';
@@ -40,7 +40,7 @@ export async function registerLayoutPlugins(app: App) {
         await pluginManager.install(plugin.name);
       }
     } catch (error) {
-      console.error(`[layout-app] ${tSync('common.error.plugin_register_failed')}: ${plugin.name}`, error);
+      logger.error(`[layout-app] ${tSync('common.error.plugin_register_failed')}: ${plugin.name}`, error);
     }
   }
   

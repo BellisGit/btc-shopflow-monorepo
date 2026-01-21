@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
-import { useLogout } from '@btc/shared-core';
+import { useLogout } from '@/composables/useLogout';
 import { useProcessStore } from '@/store/process';
 import { isPageRoute, getPageClass as getPageClassName } from '@btc/shared-router';
 

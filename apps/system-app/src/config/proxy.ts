@@ -1,5 +1,15 @@
 ;
 import type { IncomingMessage, ServerResponse } from 'http';
+// 注意：在 Vite 配置加载阶段，不能直接导入 @btc/shared-core
+// 因为此时 Vite 的 resolve.conditions 可能还没有应用，会尝试加载构建产物
+// 而构建产物中的 chunk 文件（如 index-DD6oEX8b.mjs）在开发环境中可能无法正确解析
+// 因此在这里直接使用 console，避免模块解析问题
+// 如果需要使用 logger，可以在运行时动态导入
+const logger = {
+  error: (...args: any[]) => console.error('[Proxy]', ...args),
+  warn: (...args: any[]) => console.warn('[Proxy]', ...args),
+  info: (...args: any[]) => console.info('[Proxy]', ...args),
+};
 
 // Vite 代理配置类型
 interface ProxyOptions {
@@ -72,7 +82,7 @@ const proxy: Record<string, string | ProxyOptions> = {
               let fixedCookie = cookie;
 
               // 关键：移除 Domain 设置，稍后会根据环境重新设置
-              // 如果后端设置了 Domain=10.80.8.199 或其他值，会导致 JavaScript 无法读取
+              // 如果后端设置了 Domain={devHost} 或其他值，会导致 JavaScript 无法读取
               fixedCookie = fixedCookie.replace(/;\s*Domain=[^;]+/gi, '');
 
               // 确保 Path=/，让 cookie 在整个域名下可用
@@ -86,7 +96,7 @@ const proxy: Record<string, string | ProxyOptions> = {
               // 修复 SameSite 设置
               // 关键区别：
               // - localhost: 浏览器将不同端口视为同一站点，SameSite=Lax 可能允许跨端口 cookie
-              // - IP 地址（如 10.80.8.199）: 浏览器将不同端口视为不同站点，SameSite=Lax 不允许跨站点 cookie
+              // - IP 地址（如 devHost）: 浏览器将不同端口视为不同站点，SameSite=Lax 不允许跨站点 cookie
               // 所以在 IP 地址环境下，即使使用 SameSite=Lax，跨端口 cookie 也可能失败
               const forwardedProto = req.headers['x-forwarded-proto'];
               const isHttps = forwardedProto === 'https' ||
@@ -186,7 +196,7 @@ const proxy: Record<string, string | ProxyOptions> = {
                 res.end(newBody);
               } catch (error) {
                 // eslint-disable-next-line i18n/no-chinese-character
-                console.error('[Proxy] ✗ 处理登录响应时出错:', error);
+                logger.error('[Proxy] ✗ 处理登录响应时出错:', error);
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
                 res.end(Buffer.concat(chunks));
               }
@@ -199,7 +209,7 @@ const proxy: Record<string, string | ProxyOptions> = {
 
           proxyRes.on('error', (err: Error) => {
             // eslint-disable-next-line i18n/no-chinese-character
-            console.error('[Proxy] ✗ 读取响应流时出错:', err);
+            logger.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
@@ -214,9 +224,9 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 处理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        console.error('[Proxy] Error:', err.message);
-        console.error('[Proxy] Request URL:', req.url);
-        console.error('[Proxy] Target:', backendTarget);
+        logger.error('[Proxy] Error:', err.message);
+        logger.error('[Proxy] Request URL:', req.url);
+        logger.error('[Proxy] Target:', backendTarget);
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',
@@ -233,12 +243,30 @@ const proxy: Record<string, string | ProxyOptions> = {
     },
   },
   // 代理 home-app 到开发服务器（Vue SPA）
-  '/home': {
-    target: 'http://10.80.8.199:8095',
-    changeOrigin: true,
-    secure: false,
-    rewrite: (path: string) => path.replace(/^\/home/, ''),
-  },
+  // 使用 home-app 的配置获取开发服务器地址
+  '/home': (() => {
+    try {
+      const { getAppConfig } = require('@btc/shared-core/configs/app-env.config');
+      const homeAppConfig = getAppConfig('home-app');
+      if (homeAppConfig) {
+        return {
+          target: `http://${homeAppConfig.devHost}:${homeAppConfig.devPort}`,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path: string) => path.replace(/^\/home/, ''),
+        };
+      }
+    } catch (error) {
+      // 如果导入失败，使用默认值
+    }
+    // 兜底配置（如果无法获取配置）
+    return {
+      target: 'http://localhost:8085',
+      changeOrigin: true,
+      secure: false,
+      rewrite: (path: string) => path.replace(/^\/home/, ''),
+    };
+  })(),
 };
 
 // 导出函数，延迟创建 proxy 配置

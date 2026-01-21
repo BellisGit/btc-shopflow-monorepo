@@ -6,6 +6,7 @@
 ;
 
 import { LocaleConfigSchema, validateConfig } from '../../configs/schemas';
+import { logger } from '../../utils/logger';
 
 /**
  * 深度合并对象
@@ -562,7 +563,7 @@ function extractI18nFromConfigFiles(
  *
  * @example
  * 在子应用的 i18n/getters.ts 中使用：
- * import { registerSubAppI18n } from '@btc/shared-core/composables/subapp-i18n';
+ * import { registerSubAppI18n, logger } from '@btc/shared-core/composables/subapp-i18n';
  * const configFiles = import.meta.glob('../locales/config.ts', { eager: true });
  * registerSubAppI18n('system', configFiles);
  */
@@ -620,6 +621,6 @@ export function registerSubAppI18n(
 
     (window as any).__SUBAPP_I18N_GETTERS__.set(appId, getLocaleMessages);
   } catch (error) {
-    console.error(`[registerSubAppI18n] 注册 ${appId} 的国际化消息获取器失败:`, error);
+    logger.error(`[registerSubAppI18n] 注册 ${appId} 的国际化消息获取器失败:`, error);
   }
 }

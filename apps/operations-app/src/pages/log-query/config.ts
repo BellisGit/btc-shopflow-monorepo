@@ -25,14 +25,31 @@ const formatTime = (time: string | null | undefined) => {
   }
 };
 
-// 日志级别字典配置
+// 格式化 JSON 数据
+const formatJson = (data: any) => {
+  if (data === null || data === undefined) return '-';
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return data;
+    }
+  }
+  try {
+    return JSON.stringify(data, null, 2);
+  } catch {
+    return String(data);
+  }
+};
+
+// 日志级别字典配置（使用国际化键）
 const logLevelDict = [
-  { label: '错误', value: 'ERROR', type: 'danger' as const },
-  { label: '警告', value: 'WARN', type: 'warning' as const },
-  { label: '信息', value: 'INFO', type: 'info' as const },
-  { label: '调试', value: 'DEBUG', type: 'info' as const },
-  { label: '致命', value: 'FATAL', type: 'danger' as const },
-  { label: '跟踪', value: 'TRACE', type: 'info' as const },
+  { label: 'log.query.log_level.error', value: 'ERROR', type: 'danger' as const },
+  { label: 'log.query.log_level.warn', value: 'WARN', type: 'warning' as const },
+  { label: 'log.query.log_level.info', value: 'INFO', type: 'info' as const },
+  { label: 'log.query.log_level.debug', value: 'DEBUG', type: 'info' as const },
+  { label: 'log.query.log_level.fatal', value: 'FATAL', type: 'danger' as const },
+  { label: 'log.query.log_level.trace', value: 'TRACE', type: 'info' as const },
 ];
 
 const config: PageConfig = {
@@ -50,6 +67,20 @@ const config: PageConfig = {
       { prop: 'loggerName', label: 'log.query.fields.logger_name', minWidth: 150 },
       { prop: 'message', label: 'log.query.fields.message', minWidth: 250, showOverflowTooltip: true },
       { prop: 'microAppLifecycle', label: 'log.query.fields.micro_app_lifecycle', width: 100 },
+      {
+        prop: 'data',
+        label: 'log.query.fields.data',
+        minWidth: 200,
+        showOverflowTooltip: true,
+        formatter: (row: any) => formatJson(row.data),
+      },
+      {
+        prop: 'extensions',
+        label: 'log.query.fields.extensions',
+        minWidth: 200,
+        showOverflowTooltip: true,
+        formatter: (row: any) => formatJson(row.extensions),
+      },
       {
         prop: 'timestamp',
         label: 'log.query.fields.timestamp',

@@ -9,6 +9,7 @@ import axios from 'axios';
 // 导入 Zod 验证工具（可选）
 import { createApiResponseSchema, safeValidateResponse } from '../../utils/http/schemas';
 import { z } from 'zod';
+import { logger } from '../../utils/logger/index';
 // axios 1.x 类型导入：直接使用 any 类型作为临时解决方案
 // 注意：axios 1.12.2 的类型导出在不同 TypeScript 配置下可能表现不同
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -209,7 +210,7 @@ export function createRequest(baseURL: string = ''): Request {
 
         // 最终验证：确保 baseURL 不是 HTTP
         if (config.baseURL && config.baseURL.startsWith('http://')) {
-          console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+          logger.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
           config.baseURL = '/api';
           axiosInstance.defaults.baseURL = '/api';
         }
@@ -342,7 +343,7 @@ export function createRequest(baseURL: string = ''): Request {
                 BtcMessage.error(errorMessage);
               } else {
                 // 最后的兜底：使用 console.error
-                console.error(errorMessage);
+                logger.error(errorMessage);
               }
             }
           }
@@ -412,7 +413,7 @@ export function createRequest(baseURL: string = ''): Request {
               if (BtcMessage && BtcMessage.error) {
                 BtcMessage.error(errorMessage);
               } else {
-                console.error('[EPS Request]', errorMessage);
+                logger.error('[EPS Request]', errorMessage);
               }
             }
           }

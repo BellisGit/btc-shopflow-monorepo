@@ -7,7 +7,7 @@ import { computed } from 'vue';
 import { useI18n, useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 import { configImages as defaultConfigImages } from '../config/images';
-import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType, StylePresetEnum } from '../config/enums';
 
 /**
  * 修复图片路径：如果路径是 /assets/layout/ 开头，且当前不在 layout-app 域名下，转换为完整 URL
@@ -149,25 +149,25 @@ export function useSettingsConfig() {
     {
       name: t('setting.theme.list[0]') || 'Light',
       theme: SystemThemeEnum.LIGHT,
-      color: ['#fff', '#fff'],
-      leftLineColor: '#EDEEF0',
-      rightLineColor: '#EDEEF0',
+      color: ['var(--el-bg-color)', 'var(--el-bg-color)'],
+      leftLineColor: 'var(--el-border-color-light)',
+      rightLineColor: 'var(--el-border-color-light)',
       img: configImages.themeStyles.light,
     },
     {
       name: t('setting.theme.list[1]') || 'Dark',
       theme: SystemThemeEnum.DARK,
-      color: ['#22252A'],
-      leftLineColor: '#3F4257',
-      rightLineColor: '#3F4257',
+      color: ['var(--btc-surface-panel)'],
+      leftLineColor: 'var(--el-border-color)',
+      rightLineColor: 'var(--el-border-color)',
       img: configImages.themeStyles.dark,
     },
     {
       name: t('setting.theme.list[2]') || 'System',
       theme: SystemThemeEnum.AUTO,
-      color: ['#fff', '#22252A'],
-      leftLineColor: '#EDEEF0',
-      rightLineColor: '#3F4257',
+      color: ['var(--el-bg-color)', 'var(--btc-surface-panel)'],
+      leftLineColor: 'var(--el-border-color-light)',
+      rightLineColor: 'var(--el-border-color)',
       img: configImages.themeStyles.system,
     },
   ]);
@@ -184,45 +184,61 @@ export function useSettingsConfig() {
   const menuStyleList = computed(() => [
     {
       theme: MenuThemeEnum.DESIGN,
-      background: '#FFFFFF',
+      background: 'var(--el-bg-color)',
       systemNameColor: 'var(--el-text-color-primary)',
-      iconColor: '#6B6B6B',
-      textColor: '#29343D',
-      textActiveColor: '#3F8CFF',
-      iconActiveColor: '#333333',
-      tabBarBackground: '#FAFBFC',
-      systemBackground: '#FAFBFC',
-      leftLineColor: '#EDEEF0',
-      rightLineColor: '#EDEEF0',
+      iconColor: 'var(--el-text-color-regular)',
+      textColor: 'var(--el-text-color-primary)',
+      textActiveColor: 'var(--el-color-primary)',
+      iconActiveColor: 'var(--el-text-color-primary)',
+      tabBarBackground: 'var(--el-bg-color-page)',
+      systemBackground: 'var(--el-bg-color-page)',
+      leftLineColor: 'var(--el-border-color-light)',
+      rightLineColor: 'var(--el-border-color-light)',
       img: configImages.menuStyles.design,
     },
     {
       theme: MenuThemeEnum.DARK,
-      background: '#191A23',
-      systemNameColor: '#BABBBD',
-      iconColor: '#BABBBD',
-      textColor: '#BABBBD',
-      textActiveColor: '#FFFFFF',
-      iconActiveColor: '#FFFFFF',
-      tabBarBackground: '#FFFFFF',
-      systemBackground: '#F8F8F8',
-      leftLineColor: '#3F4257',
-      rightLineColor: '#EDEEF0',
+      background: 'var(--btc-surface-panel)',
+      systemNameColor: 'var(--el-text-color-regular)',
+      iconColor: 'var(--el-text-color-regular)',
+      textColor: 'var(--el-text-color-regular)',
+      textActiveColor: 'var(--el-text-color-primary)',
+      iconActiveColor: 'var(--el-text-color-primary)',
+      tabBarBackground: 'var(--el-bg-color)',
+      systemBackground: 'var(--el-bg-color-page)',
+      leftLineColor: 'var(--el-border-color)',
+      rightLineColor: 'var(--el-border-color-light)',
       img: configImages.menuStyles.dark,
     },
     {
       theme: MenuThemeEnum.LIGHT,
-      background: '#FFFFFF',
+      background: 'var(--el-bg-color)',
       systemNameColor: 'var(--el-text-color-primary)',
-      iconColor: '#6B6B6B',
-      textColor: '#29343D',
-      textActiveColor: '#409eff',
-      iconActiveColor: '#409eff',
-      tabBarBackground: '#FFFFFF',
-      systemBackground: '#FFFFFF',
-      leftLineColor: '#EDEEF0',
-      rightLineColor: '#EDEEF0',
+      iconColor: 'var(--el-text-color-regular)',
+      textColor: 'var(--el-text-color-primary)',
+      textActiveColor: 'var(--el-color-primary)',
+      iconActiveColor: 'var(--el-color-primary)',
+      tabBarBackground: 'var(--el-bg-color)',
+      systemBackground: 'var(--el-bg-color)',
+      leftLineColor: 'var(--el-border-color-light)',
+      rightLineColor: 'var(--el-border-color-light)',
       img: configImages.menuStyles.light,
+    },
+  ]);
+
+  // 全局风格套件选项
+  const stylePresetList = computed(() => [
+    {
+      name: t('setting.style.list[0]') || 'Minimal',
+      value: StylePresetEnum.MINIMAL,
+    },
+    {
+      name: t('setting.style.list[1]') || 'Glass',
+      value: StylePresetEnum.GLASS,
+    },
+    {
+      name: t('setting.style.list[2]') || 'Cyber',
+      value: StylePresetEnum.CYBER,
     },
   ]);
 
@@ -406,6 +422,7 @@ export function useSettingsConfig() {
     menuLayoutList: menuLayoutList.value,
     menuStyleList: menuStyleList.value,
     mainColors: mainColors.value,
+    stylePresetList: stylePresetList.value,
   };
 
   return {
@@ -413,6 +430,7 @@ export function useSettingsConfig() {
     themeList,
     menuLayoutList,
     menuStyleList,
+    stylePresetList,
     mainColors,
     buttonStyleOptions,
     // 配置选项对象（用于兼容旧代码）

@@ -45,7 +45,7 @@ export default defineConfig({
       skipDiagnostics: true,
       logLevel: 'silent',
       tsconfigPath: './tsconfig.build.json',
-      rollupTypes: false,
+      rollupTypes: true,
       bundledPackages: [],
     }),
   ],
@@ -74,6 +74,8 @@ export default defineConfig({
         'vue-router',
         '@btc/shared-core',
         /^@btc\/shared-core\/.*/,
+        '@btc/auth-shared',
+        /^@btc\/auth-shared\/.*/,
       ],
       output: {
         globals: {

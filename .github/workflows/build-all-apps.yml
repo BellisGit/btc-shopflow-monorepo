@@ -30,7 +30,6 @@ jobs:
           - app_name: production-app
           - app_name: engineering-app
           - app_name: finance-app
-          - app_name: mobile-app
       fail-fast: false
       max-parallel: 8
     steps:

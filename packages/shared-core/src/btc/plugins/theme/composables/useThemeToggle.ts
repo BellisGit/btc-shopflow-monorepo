@@ -3,6 +3,7 @@ import { useDark } from '@vueuse/core';
 import type { Ref } from 'vue';
 import type { ThemeConfig } from '../../../composables/useTheme';
 import { storage } from '../../../../utils';
+import { logger } from '../../../../utils/logger/index';
 
 /**
  * 禁用过渡效果（避免主题切换时的水合问题）
@@ -101,7 +102,7 @@ export function createToggleDark(
             }));
           }, 0);
         } catch (e) {
-          console.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
+          logger.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
         }
       });
     } else {
@@ -151,7 +152,7 @@ export function createToggleDark(
           }));
         }, 0);
       } catch (e) {
-        console.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
+        logger.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
       }
 
       requestAnimationFrame(() => {

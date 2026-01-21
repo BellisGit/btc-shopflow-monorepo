@@ -15,10 +15,11 @@
 
 import { createLocaleGetters } from './create-locale-getters';
 import type { CreateLocaleGettersOptions, LocaleGetters } from './create-locale-getters';
+import type { CDNLocaleConfig } from './cdn-locale-loader';
 import { registerConfigsFromGlob } from '../config-loader';
 import { registerSubAppI18n } from '../../composables/subapp-i18n/registerSubAppI18n';
 
-export interface SetupAppI18nOptions extends Omit<CreateLocaleGettersOptions, 'appId'> {
+export interface SetupAppI18nOptions extends Omit<CreateLocaleGettersOptions, 'appId' | 'cdnConfig'> {
   /**
    * 子应用 ID（用于 registerSubAppI18n）
    * 如果提供，会自动调用 registerSubAppI18n
@@ -34,6 +35,11 @@ export interface SetupAppI18nOptions extends Omit<CreateLocaleGettersOptions, 'a
    * 如果为 false，需要手动调用 registerSubAppI18n
    */
   autoRegisterSubAppI18n?: boolean;
+  /**
+   * CDN 配置（可选）
+   * 如果提供，会尝试从 CDN 加载国际化配置并覆盖本地配置
+   */
+  cdnConfig?: CDNLocaleConfig;
 }
 
 /**
@@ -49,6 +55,7 @@ export function setupAppI18n(options: SetupAppI18nOptions): LocaleGetters {
     configFiles,
     autoRegisterConfigs = true,
     autoRegisterSubAppI18n = true,
+    cdnConfig,
     ...restOptions
   } = options;
 
@@ -66,6 +73,7 @@ export function setupAppI18n(options: SetupAppI18nOptions): LocaleGetters {
   return createLocaleGetters({
     appId,
     configFiles,
+    cdnConfig,
     ...restOptions,
   });
 }

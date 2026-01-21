@@ -8,21 +8,34 @@
  */
 export type MonitorEventType =
   | 'app:lifecycle' // 应用生命周期
+  | 'app:unload' // 应用卸载
+  | 'app:communication' // 跨应用通信
   | 'route:navigation' // 路由导航
   | 'api:request' // API 请求
   | 'api:response' // API 响应
   | 'performance:page' // 页面性能
   | 'performance:resource' // 资源性能
+  | 'performance:longtask' // 长任务检测
   | 'error:runtime' // 运行时错误
   | 'error:api' // API 错误
   | 'error:route' // 路由错误
   | 'error:resource' // 资源错误
   | 'error:performance' // 性能错误
+  | 'error:promise' // Promise 错误
+  | 'error:validation' // 表单验证错误
+  | 'error:storage' // 存储错误
   | 'user:action' // 用户操作
   | 'business:event' // 业务事件
   | 'system:memory' // 系统内存
   | 'system:network' // 系统网络
-  | 'system:device'; // 系统设备
+  | 'system:network:change' // 网络状态变化
+  | 'system:device' // 系统设备
+  | 'system:visibility' // 页面可见性
+  | 'console:error' // 控制台错误
+  | 'console:warn' // 控制台警告
+  | 'websocket:connect' // WebSocket 连接
+  | 'websocket:error' // WebSocket 错误
+  | 'websocket:close'; // WebSocket 关闭
 
 /**
  * 应用生命周期事件类型
@@ -49,7 +62,7 @@ export type ResourceType = 'script' | 'stylesheet' | 'image' | 'font' | 'other';
 /**
  * 错误类型
  */
-export type ErrorType = 'runtime' | 'api' | 'route' | 'resource' | 'performance';
+export type ErrorType = 'runtime' | 'api' | 'route' | 'resource' | 'performance' | 'promise' | 'validation' | 'storage';
 
 /**
  * 设备类型
@@ -340,6 +353,10 @@ export interface SystemNetworkInfo {
    * 往返时间（ms）
    */
   rtt?: number;
+  /**
+   * 网络状态变化前的状态
+   */
+  previousState?: boolean;
 }
 
 /**
@@ -381,6 +398,24 @@ export interface SystemDeviceInfo {
 }
 
 /**
+ * 系统可见性信息
+ */
+export interface SystemVisibilityInfo {
+  /**
+   * 是否隐藏
+   */
+  hidden?: boolean;
+  /**
+   * 可见性状态
+   */
+  visibilityState?: 'visible' | 'hidden' | 'prerender';
+  /**
+   * 页面隐藏时长（毫秒）
+   */
+  hiddenTime?: number;
+}
+
+/**
  * 系统信息
  */
 export interface SystemInfo {
@@ -396,6 +431,10 @@ export interface SystemInfo {
    * 设备信息
    */
   device?: SystemDeviceInfo;
+  /**
+   * 可见性信息
+   */
+  visibility?: SystemVisibilityInfo;
 }
 
 /**
@@ -458,6 +497,34 @@ export interface MonitorEvent {
      * 系统信息
      */
     system?: SystemInfo;
+    /**
+     * WebSocket 信息
+     */
+    websocket?: WebSocketInfo;
+    /**
+     * 控制台信息
+     */
+    console?: ConsoleInfo;
+    /**
+     * 表单验证信息
+     */
+    validation?: ValidationInfo;
+    /**
+     * 存储信息
+     */
+    storage?: StorageInfo;
+    /**
+     * 跨应用通信信息
+     */
+    communication?: CommunicationInfo;
+    /**
+     * 长任务信息
+     */
+    longTask?: LongTaskInfo;
+    /**
+     * 卸载信息
+     */
+    unload?: UnloadInfo;
     /**
      * 上下文信息
      */
@@ -611,4 +678,151 @@ export interface SystemEventData {
    * 系统信息
    */
   system: SystemInfo;
+}
+
+/**
+ * WebSocket 信息
+ */
+export interface WebSocketInfo {
+  /**
+   * WebSocket URL
+   */
+  url?: string;
+  /**
+   * 就绪状态（0: CONNECTING, 1: OPEN, 2: CLOSING, 3: CLOSED）
+   */
+  readyState?: number;
+  /**
+   * 错误信息
+   */
+  error?: string;
+  /**
+   * 关闭代码
+   */
+  closeCode?: number;
+  /**
+   * 关闭原因
+   */
+  closeReason?: string;
+}
+
+/**
+ * 控制台信息
+ */
+export interface ConsoleInfo {
+  /**
+   * 控制台级别
+   */
+  level?: 'error' | 'warn' | 'info' | 'debug' | 'log';
+  /**
+   * 控制台参数
+   */
+  args?: any[];
+}
+
+/**
+ * 表单验证信息
+ */
+export interface ValidationInfo {
+  /**
+   * 表单 ID
+   */
+  formId?: string;
+  /**
+   * 字段名
+   */
+  field?: string;
+  /**
+   * 验证规则
+   */
+  rule?: string;
+  /**
+   * 错误消息
+   */
+  message?: string;
+  /**
+   * 字段值
+   */
+  value?: any;
+}
+
+/**
+ * 存储信息
+ */
+export interface StorageInfo {
+  /**
+   * 存储类型
+   */
+  type?: 'localStorage' | 'sessionStorage' | 'indexedDB';
+  /**
+   * 存储键名
+   */
+  key?: string;
+  /**
+   * 操作类型
+   */
+  operation?: 'getItem' | 'setItem' | 'removeItem' | 'clear';
+  /**
+   * 存储大小（字节）
+   */
+  size?: number;
+}
+
+/**
+ * 跨应用通信信息
+ */
+export interface CommunicationInfo {
+  /**
+   * 通信类型
+   */
+  type?: 'postMessage' | 'event' | 'storage';
+  /**
+   * 来源应用
+   */
+  from?: string;
+  /**
+   * 目标应用
+   */
+  to?: string;
+  /**
+   * 消息内容
+   */
+  message?: any;
+  /**
+   * 是否成功
+   */
+  success?: boolean;
+}
+
+/**
+ * 长任务信息
+ */
+export interface LongTaskInfo {
+  /**
+   * 任务名称
+   */
+  name?: string;
+  /**
+   * 任务归属信息
+   */
+  attribution?: Array<{
+    name?: string;
+    entryType?: string;
+    startTime?: number;
+    duration?: number;
+  }>;
+}
+
+/**
+ * 卸载信息
+ */
+export interface UnloadInfo {
+  /**
+   * 卸载类型
+   */
+  type?: 'beforeunload' | 'unload' | 'pagehide';
+  /**
+   * 卸载原因
+   */
+  reason?: 'navigation' | 'close' | 'reload';
 }

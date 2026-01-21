@@ -7,6 +7,7 @@
 
 import { ref, watch, onMounted, type Ref } from 'vue';
 import type { PromiseExtended } from 'dexie';
+import { logger } from '../../logger/index';
 
 /**
  * 响应式查询 Hook
@@ -43,7 +44,7 @@ export function useLiveQuery<T = any>(
       result.value = data as T;
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err));
-      console.error('[useLiveQuery] 查询失败:', err);
+      logger.error('[useLiveQuery] 查询失败:', err);
     } finally {
       isLoading.value = false;
     }
@@ -103,7 +104,7 @@ export function useLiveQueryWithState<T = any>(
       result.value = data as T;
     } catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err));
-      console.error('[useLiveQuery] 查询失败:', err);
+      logger.error('[useLiveQuery] 查询失败:', err);
     } finally {
       isLoading.value = false;
     }

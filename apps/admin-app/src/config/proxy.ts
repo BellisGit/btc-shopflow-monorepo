@@ -1,5 +1,15 @@
 ;
 import type { IncomingMessage, ServerResponse } from 'http';
+// 注意：在 Vite 配置加载阶段，不能直接导入 @btc/shared-core
+// 因为此时 Vite 的 resolve.conditions 可能还没有应用，会尝试加载构建产物
+// 而构建产物中的 chunk 文件（如 index-DD6oEX8b.mjs）在开发环境中可能无法正确解析
+// 因此在这里直接使用 console，避免模块解析问题
+// 如果需要使用 logger，可以在运行时动态导入
+const logger = {
+  error: (...args: any[]) => console.error('[Proxy]', ...args),
+  warn: (...args: any[]) => console.warn('[Proxy]', ...args),
+  info: (...args: any[]) => console.info('[Proxy]', ...args),
+};
 
 // Vite 代理配置类型
 interface ProxyOptions {
@@ -51,15 +61,15 @@ const proxy: Record<string, string | ProxyOptions> = {
         }
         // 记录后端响应状态
         if (proxyRes.statusCode && proxyRes.statusCode >= 500) {
-          console.error(`[Proxy] Backend returned ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+          logger.error(`[Proxy] Backend returned ${proxyRes.statusCode} for ${req.method} ${req.url}`);
         }
       });
 
       // 处理代理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        console.error('[Proxy] Error:', err.message);
-        console.error('[Proxy] Request URL:', req.url);
-        console.error('[Proxy] Target:', 'http://10.80.9.76:8115');
+        logger.error('[Proxy] Error:', err.message);
+        logger.error('[Proxy] Request URL:', req.url);
+        logger.error('[Proxy] Target:', 'http://10.80.9.76:8115');
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',

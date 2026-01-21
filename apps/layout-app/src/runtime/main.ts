@@ -3,7 +3,7 @@ import { createApp, type App as VueApp } from 'vue';
 import App from './App.vue';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { registerMicroApps, start } from 'qiankun';
-import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getAppConfig, logger } from '@btc/shared-core/configs/app-env.config';
 import { registerAppEnvAccessors } from '@btc/shared-core/configs/layout-bridge';
 import { setIsMainAppFn } from '@btc/shared-components';
 // 关键：延迟导入菜单注册表相关函数，避免循环依赖或导入错误导致白屏
@@ -345,10 +345,10 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
           }
         }
       } catch (error) {
-        console.error(`[layout-app] ${tSync('common.error.menu_registry_init_failed')}:`, error);
+        logger.error(`[layout-app] ${tSync('common.error.menu_registry_init_failed')}:`, error);
       }
     }).catch((error) => {
-      console.error('[layout-app] 菜单注册表初始化失败:', error);
+      logger.error('[layout-app] 菜单注册表初始化失败:', error);
     });
   }
   setupEps(appInstance);
@@ -659,7 +659,7 @@ const ensureMicroAppsRegistered = async () => {
         async (error: any, app: any) => {
           // 子应用加载失败：立即清除 loading 状态
           clearLoadingState();
-          console.error(`[layout-app] ${tSync('common.error.subapp_load_failed')} ${app?.name}:`, error);
+          logger.error(`[layout-app] ${tSync('common.error.subapp_load_failed')} ${app?.name}:`, error);
 
           // 设置全局状态，标记加载失败
           (window as any).__LAYOUT_APP_QIANKUN_LOAD_FAILED__ = true;
@@ -923,7 +923,7 @@ async function mount(props: any) {
 
       // 其他错误正常处理（可以记录日志或上报）
       if (import.meta.env.DEV) {
-        console.error(`[layout-app] ${tSync('common.error.vue_error')}:`, err, info);
+        logger.error(`[layout-app] ${tSync('common.error.vue_error')}:`, err, info);
       }
     };
 

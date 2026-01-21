@@ -170,7 +170,7 @@ import BtcCrudSearchKey from '@btc-crud/crud-search-key/index.vue';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import BtcCrudActions from '@btc-crud/actions/index.vue';
 import { useContentHeight } from '../../../composables/content-height';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import type { MasterTableGroupProps, MasterTableGroupEmits, MasterTableGroupExpose } from './types';
 
 defineOptions({
@@ -667,7 +667,7 @@ async function handleFormSubmit(data: any, event: any) {
     } catch (e) {
       // 推断失败，不传递
       if (import.meta.env.DEV) {
-        console.error('[BtcMasterTableGroup] handleFormSubmit 推断失败:', e);
+        logger.error('[BtcMasterTableGroup] handleFormSubmit 推断失败:', e);
       }
     }
   }

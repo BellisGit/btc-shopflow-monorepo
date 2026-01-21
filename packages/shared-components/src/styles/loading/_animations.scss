@@ -4,45 +4,49 @@
 
 // ==================== Circle 样式：圆圈旋转动画 ====================
 // 参考偏好设置中的简洁实现，使用 currentColor 并确保初始颜色值
+// 优化：添加性能优化、改进缓动函数、使用主题变量
 #Loading .preload__loading.loading-style-circle,
 body .btc-app-loading-mask--show .preload__loading.loading-style-circle {
-	height: 44px !important; // 从 30px 增加到 44px，参考偏好设置
-	width: 44px !important; // 从 30px 增加到 44px，参考偏好设置
-	border-radius: 44px !important; // 从 30px 增加到 44px
-	border: 7px solid currentColor !important;
-	// 关键：底部边框使用白色，形成圆环缺口效果（与偏好设置一致）
-	border-bottom-color: #ffffff !important;
+	height: var(--btc-spacing-11) !important;
+	width: var(--btc-spacing-11) !important;
+	border-radius: var(--btc-spacing-11) !important;
+	border: var(--btc-spacing-2) solid currentColor !important;
+	// 关键：缺口使用玉色轮廓
+	border-bottom-color: var(--btc-loading-circle-gap) !important;
 	position: relative !important;
+	// 性能优化：启用硬件加速（不在这里设置 transform，避免与动画冲突）
+	will-change: transform, color !important;
+	// 优化：使用专业缓动函数，更流畅的动画
 	animation:
-		btc-loading-circle-rotate 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
-		btc-loading-circle-color-change 2s infinite ease-in !important;
+		btc-loading-circle-rotate 1s infinite cubic-bezier(0.4, 0, 0.2, 1),
+		btc-loading-circle-color-change 2s infinite cubic-bezier(0.4, 0, 0.2, 1) !important;
 	box-sizing: border-box !important;
 }
 
 @keyframes btc-loading-circle-rotate {
 	from {
-		transform: rotate(0deg);
+		transform: rotate3d(0, 0, 1, 0deg) translateZ(0); // 使用 3D 变换启用硬件加速
 	}
 	to {
-		transform: rotate(360deg);
+		transform: rotate3d(0, 0, 1, 360deg) translateZ(0);
 	}
 }
 
 @keyframes btc-loading-circle-color-change {
 	0% {
-		color: #409eff;
+		color: var(--el-color-primary);
 	}
 	25% {
-		color: #67c23a;
+		color: var(--el-color-success);
 	}
 	50% {
-		color: #e6a23c;
+		color: var(--el-color-warning);
 	}
 	75% {
-		color: #f56c6c;
+		color: var(--el-color-danger);
 	}
 	100% {
-		color: #409eff;
+		color: var(--el-color-primary);
 	}
 }
 
@@ -56,8 +60,8 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-dots {
 	animation: none !important;
 	transform: none !important;
 	color: transparent !important;
-	width: 50px !important; // 从 40px 增加到 50px
-	height: 50px !important; // 从 40px 增加到 50px
+	width: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
+	height: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
@@ -65,52 +69,58 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-dots {
 
 #Loading .preload__loading.loading-style-dots svg,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots svg {
-	width: 50px !important; // 从 40px 增加到 50px
-	height: 50px !important; // 从 40px 增加到 50px
-	color: var(--el-color-primary, #409eff) !important;
+	width: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
+	height: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
+	color: var(--el-color-primary) !important;
 }
 
 #Loading .preload__loading.loading-style-dots .spinner,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .spinner {
 	// SVG viewBox 是 0 0 40 40，中心点是 (20, 20)，transform-origin 使用 SVG 坐标系统
-	transform-origin: 20px 20px !important; // 使用 viewBox 的中心点坐标
-	animation: btc-loading-dots-rotate 1.6s linear infinite !important;
+	transform-origin: var(--btc-spacing-5) var(--btc-spacing-5) !important;
+	// 性能优化：启用硬件加速（不在这里设置 transform，避免与动画冲突）
+	will-change: transform !important;
+	// 优化：使用专业缓动函数，更流畅的旋转
+	animation: btc-loading-dots-rotate 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot {
+	// 性能优化
+	will-change: opacity, fill !important;
+	// 优化：使用专业缓动函数
 	animation:
-		btc-loading-dots-fade 1.6s linear infinite,
-		btc-loading-dots-color-change 3.2s linear infinite !important;
+		btc-loading-dots-fade 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+		btc-loading-dots-color-change 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot-1,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-1 {
-	fill: #409eff !important;
+	fill: var(--el-color-primary) !important;
 	animation-delay: 0s, 0s !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot-2,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-2 {
-	fill: #67c23a !important;
+	fill: var(--el-color-success) !important;
 	animation-delay: 0.4s, 0.8s !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot-3,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-3 {
-	fill: #e6a23c !important;
+	fill: var(--el-color-warning) !important;
 	animation-delay: 0.8s, 1.6s !important;
 }
 
 #Loading .preload__loading.loading-style-dots .dot-4,
 body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-4 {
-	fill: #f56c6c !important;
+	fill: var(--el-color-danger) !important;
 	animation-delay: 1.2s, 2.4s !important;
 }
 
 @keyframes btc-loading-dots-rotate {
 	100% {
-		transform: rotate(360deg);
+		transform: rotate3d(0, 0, 1, 360deg) translateZ(0); // 使用 3D 变换启用硬件加速
 	}
 }
 
@@ -126,19 +136,19 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-4 {
 
 @keyframes btc-loading-dots-color-change {
 	0% {
-		fill: #409eff;
+		fill: var(--el-color-primary);
 	}
 	25% {
-		fill: #67c23a;
+		fill: var(--el-color-success);
 	}
 	50% {
-		fill: #e6a23c;
+		fill: var(--el-color-warning);
 	}
 	75% {
-		fill: #f56c6c;
+		fill: var(--el-color-danger);
 	}
 	100% {
-		fill: #409eff;
+		fill: var(--el-color-primary);
 	}
 }
 
@@ -162,8 +172,8 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-gradient {
 		display: block !important;
 	}
 	position: relative !important;
-	width: 50px !important; // 从 40px 增加到 50px
-	height: 50px !important; // 从 40px 增加到 50px
+	width: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
+	height: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
@@ -177,28 +187,38 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-gradient {
 body .btc-app-loading-mask--show .preload__loading.loading-style-gradient::before {
 	content: '' !important;
 	position: absolute !important;
-	width: 50px !important; // 从 40px 增加到 50px
-	height: 50px !important; // 从 40px 增加到 50px
+	width: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
+	height: calc(var(--btc-spacing-12) + var(--btc-spacing-0-5)) !important;
 	border-radius: 50% !important;
-	background: conic-gradient(from 0deg, #2196f3, #e91e63, #2196f3) !important;
-	animation: btc-loading-gradient-rotate 2s linear infinite !important;
+	// 优化：使用主题变量，支持暗色模式
+	background: conic-gradient(
+		from 0deg,
+		var(--el-color-primary),
+		var(--el-color-danger),
+		var(--el-color-primary)
+	) !important;
+	// 性能优化：启用硬件加速（不在这里设置 transform，避免与动画冲突）
+	will-change: transform !important;
+	// 优化：使用专业缓动函数
+	animation: btc-loading-gradient-rotate 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
 
 #Loading .preload__loading.loading-style-gradient::after,
 body .btc-app-loading-mask--show .preload__loading.loading-style-gradient::after {
 	content: '' !important;
 	position: absolute !important;
-	inset: 7px !important; // 从 6px 增加到 7px，保持比例
-	background: #0a0a0a !important;
+	inset: var(--btc-spacing-2) !important;
+	// 优化：使用主题变量，支持暗色模式
+	background: var(--btc-surface-page) !important;
 	border-radius: 50% !important;
 }
 
 @keyframes btc-loading-gradient-rotate {
 	0% {
-		transform: rotate(0deg);
+		transform: rotate3d(0, 0, 1, 0deg) translateZ(0); // 使用 3D 变换启用硬件加速
 	}
 	100% {
-		transform: rotate(360deg);
+		transform: rotate3d(0, 0, 1, 360deg) translateZ(0);
 	}
 }
 
@@ -218,8 +238,8 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress {
 		content: none !important;
 		display: none !important;
 	}
-	width: 300px !important; // 进度条宽度
-	height: 24px !important; // 进度条高度
+	width: calc(var(--btc-spacing-72) + var(--btc-spacing-3)) !important;
+	height: var(--btc-spacing-6) !important;
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
@@ -233,7 +253,7 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress {
 body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-bar-container {
 	display: flex !important;
 	align-items: center !important;
-	gap: 8px !important; // 从 16px 减小到 8px，缩小与百分比数字的间距
+	gap: var(--btc-spacing-2) !important;
 	width: 100% !important;
 	height: 100% !important;
 }
@@ -244,13 +264,13 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progr
 	position: relative !important;
 	flex: 1 !important;
 	height: 8px !important;
-	background: rgba(255, 255, 255, 0.1) !important;
+	background: color-mix(in srgb, var(--el-text-color-primary) 12%, transparent) !important;
 	border-radius: 4px !important;
 	overflow: hidden !important;
 	// 立体效果：使用 box-shadow 创建深度感
 	box-shadow:
-		inset 0 1px 2px rgba(0, 0, 0, 0.3),
-		0 1px 0 rgba(255, 255, 255, 0.1) !important;
+		inset 0 var(--btc-spacing-0-5) var(--btc-spacing-1) color-mix(in srgb, var(--el-text-color-primary) 18%, transparent),
+		0 var(--btc-spacing-0-5) 0 color-mix(in srgb, var(--el-text-color-primary) 8%, transparent) !important;
 }
 
 // 进度条填充
@@ -258,24 +278,28 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progr
 body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-bar-fill {
 	position: relative !important;
 	height: 100% !important;
-	// 炫彩渐变：使用多色渐变创建炫彩效果
+	// 炫彩渐变：使用主题变量，支持暗色模式
 	background: linear-gradient(
 		90deg,
-		#409eff 0%,
-		#67c23a 25%,
-		#e6a23c 50%,
-		#f56c6c 75%,
-		#409eff 100%
+		var(--el-color-primary) 0%,
+		var(--el-color-success) 25%,
+		var(--el-color-warning) 50%,
+		var(--el-color-danger) 75%,
+		var(--el-color-primary) 100%
 	) !important;
 	background-size: 200% 100% !important;
 	border-radius: 4px !important;
-	// 动画：让渐变流动
-	animation: btc-loading-progress-gradient 2s linear infinite !important;
+	// 性能优化：启用硬件加速
+	will-change: background-position, width !important;
+	transform: translateZ(0) !important;
+	// 优化：使用专业缓动函数
+	animation: btc-loading-progress-gradient 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 	// 立体效果：使用 box-shadow 创建高光
 	box-shadow:
-		0 0 10px rgba(64, 158, 255, 0.5),
-		inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-	transition: width 0.3s ease !important;
+		0 0 var(--btc-spacing-2-5) color-mix(in srgb, var(--el-color-primary) 35%, transparent),
+		inset 0 var(--btc-spacing-0-5) 0 color-mix(in srgb, var(--el-text-color-primary) 12%, transparent) !important;
+	// 优化：使用专业缓动函数
+	transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 	overflow: hidden !important;
 }
 
@@ -291,11 +315,13 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progr
 	background: linear-gradient(
 		90deg,
 		transparent 0%,
-		rgba(255, 255, 255, 0.3) 50%,
+		color-mix(in srgb, var(--el-text-color-primary) 22%, transparent) 50%,
 		transparent 100%
 	) !important;
-	// 光泽动画：从左到右移动
-	animation: btc-loading-progress-shine 1.5s ease-in-out infinite !important;
+	// 性能优化：启用硬件加速（不在这里设置 transform，避免与动画冲突）
+	will-change: transform !important;
+	// 优化：使用专业缓动函数
+	animation: btc-loading-progress-shine 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 	border-radius: 4px !important;
 }
 
@@ -304,10 +330,11 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progr
 body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-percentage {
 	font-size: 16px !important;
 	font-weight: 700 !important; // 加粗
-	color: #fff !important;
+	// 优化：使用主题变量，支持暗色模式
+	color: var(--el-text-color-primary) !important;
 	min-width: 45px !important; // 固定宽度，避免数字跳动
 	text-align: right !important;
-	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; // 文字阴影增强可读性
+	text-shadow: 0 var(--btc-spacing-0-5) var(--btc-spacing-1) color-mix(in srgb, var(--el-text-color-primary) 28%, transparent) !important; // 文字阴影增强可读性
 }
 
 // 进度条渐变流动动画
@@ -323,10 +350,10 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progr
 // 进度条光泽移动动画
 @keyframes btc-loading-progress-shine {
 	0% {
-		transform: translateX(-100%);
+		transform: translate3d(-100%, 0, 0) translateZ(0); // 使用 3D 变换启用硬件加速
 	}
 	100% {
-		transform: translateX(200%);
+		transform: translate3d(200%, 0, 0) translateZ(0);
 	}
 }
 
@@ -372,7 +399,10 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-flower svg {
 #Loading .preload__loading.loading-style-flower .flower-group,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .flower-group {
 	transform-origin: 0 0 !important;
-	animation: btc-loading-flower-rotate 3s linear infinite !important;
+	// 性能优化：启用硬件加速（不在这里设置 transform，避免与动画冲突）
+	will-change: transform !important;
+	// 优化：使用专业缓动函数
+	animation: btc-loading-flower-rotate 3s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
 
 // 花瓣圆圈颜色动画（每个花瓣单独设置延迟）
@@ -380,73 +410,76 @@ body .btc-app-loading-mask--show .preload__loading.loading-style-flower .flower-
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-circle {
 	stroke-width: 2.5 !important;
 	stroke-dasharray: none !important;
-	animation: btc-loading-flower-petal-pulse 2s ease-in-out infinite !important;
+	// 性能优化：启用硬件加速
+	will-change: opacity !important;
+	// 优化：使用专业缓动函数
+	animation: btc-loading-flower-petal-pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
 
 // 每个花瓣的颜色和动画延迟（使用更亮的颜色）
 #Loading .preload__loading.loading-style-flower .petal-1,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-1 {
-	stroke: #ff8a80 !important;
-	fill: #ff8a80 !important;
+	stroke: var(--el-color-primary) !important;
+	fill: var(--el-color-primary) !important;
 	animation-delay: 0s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-2,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-2 {
-	stroke: #ff9800 !important;
-	fill: #ff9800 !important;
+	stroke: var(--el-color-warning) !important;
+	fill: var(--el-color-warning) !important;
 	animation-delay: 0.25s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-3,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-3 {
-	stroke: #ffeb3b !important;
-	fill: #ffeb3b !important;
+	stroke: color-mix(in srgb, var(--el-color-warning) 70%, var(--el-color-primary)) !important;
+	fill: color-mix(in srgb, var(--el-color-warning) 70%, var(--el-color-primary)) !important;
 	animation-delay: 0.5s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-4,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-4 {
-	stroke: #4caf50 !important;
-	fill: #4caf50 !important;
+	stroke: var(--el-color-success) !important;
+	fill: var(--el-color-success) !important;
 	animation-delay: 0.75s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-5,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-5 {
-	stroke: #00bcd4 !important;
-	fill: #00bcd4 !important;
+	stroke: var(--el-color-info) !important;
+	fill: var(--el-color-info) !important;
 	animation-delay: 1s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-6,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-6 {
-	stroke: #2196f3 !important;
-	fill: #2196f3 !important;
+	stroke: var(--el-color-primary) !important;
+	fill: var(--el-color-primary) !important;
 	animation-delay: 1.25s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-7,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-7 {
-	stroke: #9c27b0 !important;
-	fill: #9c27b0 !important;
+	stroke: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-color-danger)) !important;
+	fill: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-color-danger)) !important;
 	animation-delay: 1.5s !important;
 }
 
 #Loading .preload__loading.loading-style-flower .petal-8,
 body .btc-app-loading-mask--show .preload__loading.loading-style-flower .petal-8 {
-	stroke: #e91e63 !important;
-	fill: #e91e63 !important;
+	stroke: var(--el-color-danger) !important;
+	fill: var(--el-color-danger) !important;
 	animation-delay: 1.75s !important;
 }
 
 // 花朵整体旋转动画
 @keyframes btc-loading-flower-rotate {
 	0% {
-		transform: rotate(0deg);
+		transform: rotate3d(0, 0, 1, 0deg) translateZ(0); // 使用 3D 变换启用硬件加速
 	}
 	100% {
-		transform: rotate(360deg);
+		transform: rotate3d(0, 0, 1, 360deg) translateZ(0);
 	}
 }
 

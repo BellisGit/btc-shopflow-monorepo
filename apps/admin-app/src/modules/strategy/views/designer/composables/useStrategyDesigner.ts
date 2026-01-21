@@ -6,6 +6,7 @@ import { useNodeManagement } from './useNodeManagement';
 import { useConnectionManagement } from './connection';
 import { useComponentLibrary } from './useComponentLibrary';
 import { useStrategyOperations } from './useStrategyOperations';
+import { logger } from '@btc/shared-core';
 
 /**
  * 策略设计器主要逻辑
@@ -165,7 +166,7 @@ export function useStrategyDesigner() {
         // 添加节点
         await addNode(component, { x, y });
       } catch (error) {
-        console.error('Failed to parse component data:', error);
+        logger.error('Failed to parse component data:', error);
       }
     }
   };
@@ -262,7 +263,7 @@ export function useStrategyDesigner() {
 
         selectedNodeId.value = '';
       } catch (error) {
-        console.error('Failed to delete node:', error);
+        logger.error('Failed to delete node:', error);
       }
     } else if (selectedConnection.value) {
       try {
@@ -272,7 +273,7 @@ export function useStrategyDesigner() {
         }
         selectedConnectionId.value = '';
       } catch (error) {
-        console.error('Failed to delete connection:', error);
+        logger.error('Failed to delete connection:', error);
       }
     }
   };

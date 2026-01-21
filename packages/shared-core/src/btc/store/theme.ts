@@ -2,9 +2,11 @@
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
-import { storage } from '@btc/shared-core/utils';
+import { storage } from '../../utils';
+import { logger } from '../../utils/logger';
 import { THEME_PRESETS, type ThemeConfig, mixColor } from '../composables/useTheme';
 import { setBodyClassName } from '../utils/body-class';
+import { generateContrastVariants } from '../utils/color-contrast';
 
 /**
  * 主题 Store
@@ -71,6 +73,24 @@ export const useThemeStore = defineStore('theme', () => {
         el.style.setProperty(`${pre}-light-${i}`, mixColor(color, mixWhite, i * 0.1));
         el.style.setProperty(`${pre}-dark-${i}`, mixColor(color, mixBlack, i * 0.1));
       }
+    }
+
+    // 生成高对比度变体
+    try {
+      const hexColor = color.startsWith('#') && color.length === 7 ? color : `#${color.replace('#', '')}`;
+      if (hexColor.length === 7) {
+        const contrastVariants = generateContrastVariants(hexColor, dark);
+        el.style.setProperty(`${pre}-contrast-light`, contrastVariants.contrastLight);
+        el.style.setProperty(`${pre}-contrast-dark`, contrastVariants.contrastDark);
+        el.style.setProperty(`${pre}-contrast-aa`, contrastVariants.contrastAA);
+        el.style.setProperty(`${pre}-contrast-aaa`, contrastVariants.contrastAAA);
+      }
+    } catch (error) {
+      // 如果生成失败，设置默认值
+      el.style.setProperty(`${pre}-contrast-light`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-dark`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-aa`, dark ? '#ffffff' : '#000000');
+      el.style.setProperty(`${pre}-contrast-aaa`, dark ? '#ffffff' : '#000000');
     }
   }
 
@@ -304,7 +324,7 @@ export const useThemeStore = defineStore('theme', () => {
         detail: { theme: newTheme, isDark: newDarkValue }
       }));
     } catch (e) {
-      console.error('[ThemeStore] 触发 theme-toggle 事件失败', e);
+      logger.error('[ThemeStore] 触发 theme-toggle 事件失败', e);
     }
 
     // 获取菜单文本颜色信息

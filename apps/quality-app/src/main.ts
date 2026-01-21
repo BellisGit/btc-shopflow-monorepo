@@ -12,7 +12,7 @@ import {
 } from './bootstrap';
 import type { QualityAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
-import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { removeLoadingElement, clearNavigationFlag, logger } from '@btc/shared-core';
 import { tSync } from './i18n/getters';
 
 let context: QualityAppContext | null = null;
@@ -110,7 +110,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error(`${tSync('common.error.render_failed')}:`, error);
+    logger.error(`${tSync('common.error.render_failed')}:`, error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading

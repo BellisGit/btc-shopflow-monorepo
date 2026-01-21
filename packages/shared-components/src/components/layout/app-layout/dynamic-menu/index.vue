@@ -30,7 +30,7 @@ defineOptions({
 
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, logger } from '@btc/shared-core';
 import { getCurrentEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
@@ -172,7 +172,7 @@ const currentMenuItems = computed(() => {
         }
       } catch (error) {
         if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_ERROR_${app}__`]) {
-          console.error(`[DynamicMenu] 菜单注册失败: ${app}`, error);
+          logger.error(`[DynamicMenu] 菜单注册失败: ${app}`, error);
           (window as any)[`__MENU_REGISTER_ERROR_${app}__`] = true;
         }
       }
@@ -1338,7 +1338,7 @@ const handleMenuSelect = (index: string) => {
     router.push(routePath).catch((err: unknown) => {
       // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
       // 这通常发生在点击分组节点时，虽然我们已经过滤了，但作为兜底处理
-      console.error('[dynamic-menu] 路由跳转失败:', {
+      logger.error('[dynamic-menu] 路由跳转失败:', {
         absolutePath,
         routePath,
         error: err,
@@ -1360,7 +1360,7 @@ const handleMenuSelect = (index: string) => {
             console.warn('[dynamic-menu] 主应用路由未匹配，可能路由配置有问题:', routePath);
           }
         } catch (resolveErr) {
-          console.error('[dynamic-menu] 路由解析异常:', resolveErr);
+          logger.error('[dynamic-menu] 路由解析异常:', resolveErr);
         }
       }
     });

@@ -6,6 +6,7 @@ import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 import { getCookie, deleteCookie } from '@btc/shared-core/utils/cookie';
+import { logger } from '@btc/shared-core';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -394,7 +395,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      console.error('Failed to log request:', error);
+      logger.error('Failed to log request:', error);
     }
   }
 
@@ -467,7 +468,7 @@ export class Http {
     try {
       const result = interceptor.onFulfilled(mockResponse);
     } catch (error) {
-      console.error('Interceptor error:', error);
+      logger.error('Interceptor error:', error);
     }
   }
 

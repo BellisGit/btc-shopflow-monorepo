@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ;
 // 注意：不在这里导入 createHttpRetry 和 RETRY_CONFIGS，改为动态导入
 // 避免在生产环境构建时 Vue 的 ref 还未初始化就被访问
@@ -198,7 +199,7 @@ class RequestLogQueue {
         this.tryFlush();
       }
     } catch (error) {
-        console.error('Failed to send request logs in batch (retried):', error);
+        logger.error('Failed to send request logs in batch (retried):', error);
 
       // 重试机制已经处理了重试，这里只需要暂停发送
       this.isPaused = true;

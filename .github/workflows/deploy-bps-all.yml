@@ -76,7 +76,7 @@ jobs:
           # 验证构建产物
           echo ""
           echo "📦 构建产物验证:"
-          for app in system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app layout-app; do
+          for app in system-app admin-app logistics-app quality-app production-app engineering-app finance-app layout-app; do
             if [ -d "apps/$app/dist" ] && [ "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
               file_count=$(find "apps/$app/dist" -type f 2>/dev/null | wc -l)
               size=$(du -sh "apps/$app/dist" 2>/dev/null | awk '{print $1}')

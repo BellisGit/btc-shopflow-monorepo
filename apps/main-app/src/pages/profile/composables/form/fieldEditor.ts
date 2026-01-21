@@ -5,6 +5,7 @@ import type { PhoneSmsState } from './phoneVerification';
 import { resolveFieldConfig } from './fieldConfig';
 import { createFieldFormData } from './fieldForm';
 import { submitFieldUpdate } from './fieldSubmit';
+import { logger } from '@btc/shared-core';
 
 interface FieldEditorOptions {
   Form: Ref<any>;
@@ -74,7 +75,7 @@ export function useFieldEditor({
             resetEmailUpdateCountdown();
             await loadUserInfo(showFullInfo.value);
           } catch (error: any) {
-            console.error('保存用户信息失败:', error);
+            logger.error('保存用户信息失败:', error);
             BtcMessage.error(error?.message || '保存失败');
             done();
           }

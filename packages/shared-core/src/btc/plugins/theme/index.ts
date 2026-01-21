@@ -8,6 +8,7 @@ import { setBodyClassName } from '../../utils/body-class';
 import { setThemeColor, syncThemeColorToSubApps } from './composables/useThemeColor';
 import { migrateThemeConfig } from './composables/useThemeMigration';
 import { createToggleDark } from './composables/useThemeToggle';
+import { logger } from '../../../utils/logger/index';
 
 /**
  * 主题插件实例
@@ -236,7 +237,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
           }
         );
       }).catch((error: any) => {
-        console.error('[ThemePlugin] View Transition 错误:', error);
+        logger.error('[ThemePlugin] View Transition 错误:', error);
       });
     } else {
       // 不支持动画，直接执行回调

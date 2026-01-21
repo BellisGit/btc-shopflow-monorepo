@@ -1,5 +1,6 @@
 ;
 import { ref, readonly } from 'vue';
+import { logger } from '@btc/shared-core';
 
 /**
  * 指数退避重试机制
@@ -152,7 +153,7 @@ export function useRetry(config: RetryConfig = {}) {
 
         // 检查是否应该重试
         if (!shouldRetry(error, attempt, operationConfig.maxRetries)) {
-          console.error('Request failed, not retrying:', error);
+          logger.error('Request failed, not retrying:', error);
           break;
         }
 

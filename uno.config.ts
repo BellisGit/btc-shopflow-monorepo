@@ -6,7 +6,7 @@ export default defineConfig({
     presetAttributify(),
     presetIcons({
       scale: 1.2,
-      warn: true,
+      warn: false, // 关闭警告，避免无效图标名称（如 "-"）导致的警告
     }),
   ],
 

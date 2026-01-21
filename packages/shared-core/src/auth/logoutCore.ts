@@ -3,6 +3,7 @@
  * 负责清理凭证、调用API、设置标记等，但不处理路由重定向
  */
 import { sessionStorage } from '../utils/storage/session';
+import { logger } from '../utils/logger/index';
 
 export interface LogoutCoreOptions {
   /**
@@ -106,6 +107,14 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
       // 静默失败
     }
 
+    // 关键：停止用户检查轮询（避免退出后继续检查）
+    try {
+      const { stopUserCheckPolling } = await import('../composables/user-check');
+      stopUserCheckPolling();
+    } catch (e) {
+      // 静默失败（可能模块未加载）
+    }
+
     // 清除标签页（Process Store）
     if (getProcessStore) {
       try {
@@ -136,7 +145,7 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
 
     return true;
   } catch (error: any) {
-    console.error('[logoutCore] Logout cleanup error:', error);
+    logger.error('[logoutCore] Logout cleanup error:', error);
     return false;
   }
 }

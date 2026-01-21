@@ -9,7 +9,7 @@
   flex-direction: column;
   min-height: 0;
   position: relative;
-  background-color: var(--el-bg-color);
+  background-color: var(--btc-surface-page);
   
   // 关键：确保子元素正确继承高度
   > * {
@@ -19,8 +19,8 @@
   // BEM 子元素命名规范
   &__header {
     flex-shrink: 0;
-    padding: 16px;
-    background-color: var(--el-bg-color);
+    padding: var(--btc-spacing-4);
+    background-color: var(--btc-surface-panel);
   }
   
   &__body {
@@ -33,13 +33,13 @@
   
   &__footer {
     flex-shrink: 0;
-    padding: 16px;
-    background-color: var(--el-bg-color);
+    padding: var(--btc-spacing-4);
+    background-color: var(--btc-surface-panel);
   }
   
   // 内容区域（带内边距）
   &__content {
-    padding: 16px;
+    padding: var(--btc-spacing-4);
     flex: 1;
     min-height: 0;
     overflow: auto;
@@ -54,12 +54,12 @@
     
     // 滚动条样式（参考 cool-admin-vue）
     &::-webkit-scrollbar {
-      width: 6px;
+      width: var(--btc-spacing-1-5);
     }
     
     &::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
-      border-radius: 3px;
+      background-color: color-mix(in srgb, var(--el-text-color-primary) 20%, transparent);
+      border-radius: var(--btc-spacing-1);
       opacity: 0;
       transition: opacity 0.3s ease-in-out;
     }
@@ -72,7 +72,7 @@
     // 暗色模式
     @media (prefers-color-scheme: dark) {
       &::-webkit-scrollbar-thumb {
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: color-mix(in srgb, var(--el-text-color-primary) 28%, transparent);
       }
     }
   }
@@ -97,12 +97,12 @@
   
   // 响应式适配
   @media only screen and (max-width: 768px) {
-    padding: 8px;
+    padding: var(--btc-spacing-2);
     
     &__header,
     &__footer,
     &__content {
-      padding: 12px;
+      padding: var(--btc-spacing-3);
     }
   }
 }

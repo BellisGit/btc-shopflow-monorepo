@@ -35,6 +35,7 @@ interface FrontmatterData {
  */
 function getGroupDisplayName(groupName: string): string {
   const groupNameMap: Record<string, string> = {
+    'quick-start': '快速开始',
     'guides': '开发指南',
     'components': '组件开发',
     'forms': '表单处理',
@@ -96,14 +97,18 @@ function scanMarkdownFiles(dir: string): string[] {
 /**
  * 从文件路径解析 frontmatter
  */
-function parseFrontmatter(filePath: string): { data: FrontmatterData; relativePath: string; fileName: string; displayPath: string } | null {
+function parseFrontmatter(filePath: string, locale: string = 'zh'): { data: FrontmatterData; relativePath: string; fileName: string; displayPath: string } | null {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     const { data } = matter(content);
 
-    const relativePath = path.relative(docsRoot, filePath)
+    // 计算相对于 docsRoot 的路径
+    let relativePath = path.relative(docsRoot, filePath)
       .replace(/\\/g, '/')
       .replace(/\.md$/, '');
+
+    // 移除语言前缀（zh/ 或 en/）
+    relativePath = relativePath.replace(/^(zh|en)\//, '');
 
     const fileName = path.basename(filePath, '.md');
 
@@ -125,22 +130,31 @@ function parseFrontmatter(filePath: string): { data: FrontmatterData; relativePa
 
 /**
  * 生成侧边栏配置（按文件夹）
+ * @param locale 语言代码，如 'zh' 或 'en'，默认为 'zh'
  */
-export function generateSidebar(): Record<string, SidebarItem[]> {
+export function generateSidebar(locale: string = 'zh'): Record<string, SidebarItem[]> {
   const sidebar: Record<string, SidebarItem[]> = {};
+  const localePrefix = locale === 'zh' ? '/zh' : locale === 'en' ? '/en' : '';
 
-  // 主要文件夹列表
+  // 主要文件夹列表（顺序即为侧边栏显示顺序）
   const mainFolders = [
+    'quick-start',
     'guides',
     'adr',
     'rfc',
     'sop',
     'packages',
     'components',
+    'changelog',
   ];
 
   for (const folder of mainFolders) {
-    const folderPath = path.join(docsRoot, folder);
+    // 根据 locale 查找文件夹路径
+    const folderPath = locale === 'zh'
+      ? path.join(docsRoot, 'zh', folder)
+      : locale === 'en'
+      ? path.join(docsRoot, 'en', folder)
+      : path.join(docsRoot, folder);
 
     if (!fs.existsSync(folderPath)) {
       continue;
@@ -155,7 +169,7 @@ export function generateSidebar(): Record<string, SidebarItem[]> {
 
     // 解析所有文件的 frontmatter
     const fileData = markdownFiles
-      .map(file => parseFrontmatter(file))
+      .map(file => parseFrontmatter(file, locale))
       .filter((data): data is NonNullable<typeof data> => data !== null);
 
     // 按 sidebar_group 分组
@@ -168,9 +182,14 @@ export function generateSidebar(): Record<string, SidebarItem[]> {
         continue;
       }
 
+      // 生成带语言前缀的链接
+      const linkPath = displayPath.startsWith(localePrefix)
+        ? `/${displayPath}`
+        : `${localePrefix}/${displayPath}`;
+
       const item: SidebarItem = {
         text: data.sidebar_label || data.title || fileName,
-        link: `/${displayPath}`, // 使用 displayPath 而不是 relativePath，生成简洁的 URL
+        link: linkPath, // 使用带语言前缀的路径
         order: data.sidebar_order || data.order || 999,
       };
 
@@ -213,7 +232,7 @@ export function generateSidebar(): Record<string, SidebarItem[]> {
       });
     }
 
-    sidebar[`/${folder}/`] = sidebarItems;
+    sidebar[`${localePrefix}/${folder}/`] = sidebarItems;
   }
 
   return sidebar;

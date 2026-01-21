@@ -12,7 +12,7 @@ const logger = {
   debug: (...args: any[]) => console.debug('[public-images]', ...args),
 };
 
-import type { Plugin } from 'vite';
+import type { Plugin, ResolvedConfig } from 'vite';
 import type { OutputOptions, OutputBundle } from 'rollup';
 import { resolve, join, extname, basename } from 'path';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -21,6 +21,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
   const imageMap = new Map<string, string>();
   const emittedFiles = new Map<string, string>();
   const publicImageFiles = new Map<string, string>();
+  let isProductionBuild = false;
   
   // 需要特殊处理的文件列表：放在根目录，不使用 hash（仅用于 CSS 路径替换）
   const rootImageFiles = ['logo.png', 'login_cut_dark.png', 'login_cut_light.png'];
@@ -42,7 +43,18 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
 
   return {
     name: 'public-images-to-assets',
+    configResolved(config: ResolvedConfig) {
+      // Vite 的 isProduction 是最可靠的判断（避免 NODE_ENV / DEV 等环境变量在 CI 中不一致）
+      isProductionBuild = !!config.isProduction;
+    },
     buildStart() {
+      // 在开发模式下，Vite 会直接服务 public 目录的文件，不需要处理
+      // 只在构建模式下才需要处理图片
+      if (!isProductionBuild) {
+        // 开发模式，静默跳过
+        return;
+      }
+
       const publicDir = resolve(appDir, 'public');
       if (!existsSync(publicDir)) {
         return;
@@ -56,6 +68,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       for (const file of files) {
         // 跳过排除的文件
         if (excludedFiles.includes(file)) {
+          // 构建模式下才输出日志
           console.info(`[public-images-to-assets] ⏭️  跳过 ${file}（统一使用 logo.png 作为 favicon）`);
           continue;
         }
@@ -64,6 +77,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         if (imageExtensions.includes(ext)) {
           // 根目录图片需要特殊处理：保持在根目录，文件名不变，不使用哈希值
           if (rootImageFiles.includes(file)) {
+            // 构建模式下才输出日志
             console.info(`[public-images-to-assets] 📦 处理 ${file}，将复制到根目录（无哈希值）`);
             // 记录文件的路径，在 writeBundle 阶段复制到根目录
             publicImageFiles.set(file, join(publicDir, file));
@@ -85,6 +99,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
               source: fileContent,
             });
             emittedFiles.set(file, referenceId);
+            // 构建模式下才输出日志
             console.info(`[public-images-to-assets] 📦 将 ${file} 打包 (referenceId: ${referenceId})`);
           }
         }

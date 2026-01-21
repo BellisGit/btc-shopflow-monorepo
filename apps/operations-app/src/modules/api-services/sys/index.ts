@@ -94,9 +94,40 @@ export const sysApi = {
           const isAlreadyExpanded = data.list && data.list.length > 0 && !data.list[0].logs;
           
           if (isAlreadyExpanded) {
-            // 后端已经展开，直接返回
+            // 后端已经展开，需要解析 data 和 extensions 字段（它们是 JSON 字符串）
+            const parsedList = data.list.map((item: any) => {
+              const parsedItem = { ...item };
+              
+              // 字段映射：将 logTimestamp 映射为 timestamp（向后兼容）
+              if (parsedItem.logTimestamp && !parsedItem.timestamp) {
+                parsedItem.timestamp = parsedItem.logTimestamp;
+              }
+              
+              // 解析 data 字段（如果存在且是字符串）
+              if (parsedItem.data && typeof parsedItem.data === 'string') {
+                try {
+                  parsedItem.data = JSON.parse(parsedItem.data);
+                } catch (e) {
+                  // 解析失败，保持原值
+                  console.warn('[LogService] Failed to parse data field:', e);
+                }
+              }
+              
+              // 解析 extensions 字段（如果存在且是字符串）
+              if (parsedItem.extensions && typeof parsedItem.extensions === 'string') {
+                try {
+                  parsedItem.extensions = JSON.parse(parsedItem.extensions);
+                } catch (e) {
+                  // 解析失败，保持原值
+                  console.warn('[LogService] Failed to parse extensions field:', e);
+                }
+              }
+              
+              return parsedItem;
+            });
+            
             return {
-              list: data.list,
+              list: parsedList,
               total: data.total || 0,
             };
           }
@@ -127,6 +158,28 @@ export const sysApi = {
             } else {
               // 将批次下的每条日志展开为一条记录
               for (const log of batch.logs) {
+                // 解析 data 字段（如果存在且是字符串）
+                let parsedData = log.data || null;
+                if (parsedData && typeof parsedData === 'string') {
+                  try {
+                    parsedData = JSON.parse(parsedData);
+                  } catch (e) {
+                    // 解析失败，保持原值
+                    console.warn('[LogService] Failed to parse log data field:', e);
+                  }
+                }
+                
+                // 解析 extensions 字段（如果存在且是字符串）
+                let parsedExtensions = log.extensions || null;
+                if (parsedExtensions && typeof parsedExtensions === 'string') {
+                  try {
+                    parsedExtensions = JSON.parse(parsedExtensions);
+                  } catch (e) {
+                    // 解析失败，保持原值
+                    console.warn('[LogService] Failed to parse log extensions field:', e);
+                  }
+                }
+                
                 expandedList.push({
                   batchId: batch.id,
                   appId: batch.appId,
@@ -140,7 +193,8 @@ export const sysApi = {
                   microAppName: log.microApp?.microAppName || null,
                   microAppInstanceId: log.microApp?.microAppInstanceId || null,
                   microAppLifecycle: log.microApp?.microAppLifecycle || null,
-                  logData: log.data || null,
+                  data: parsedData,
+                  extensions: parsedExtensions,
                 });
               }
             }

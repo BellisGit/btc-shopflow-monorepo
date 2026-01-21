@@ -3,7 +3,7 @@ import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor, storage } from '@btc/shared-utils';
-import { processURL } from '@btc/shared-core';
+import { processURL, logger } from '@btc/shared-core';
 import { getCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { envConfig } from '@btc/shared-core/configs/unified-env-config';
@@ -59,7 +59,7 @@ export class Http {
           }
 
           if (config.baseURL && config.baseURL.startsWith('http://')) {
-            console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+            logger.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
             config.baseURL = '/api';
             this.axiosInstance.defaults.baseURL = '/api';
           }

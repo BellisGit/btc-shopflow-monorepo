@@ -93,6 +93,7 @@ export default defineConfig({
         'utils/storage/index': resolve(__dirname, 'src/utils/storage/index.ts'),
         'utils/storage/session/index': resolve(__dirname, 'src/utils/storage/session/index.ts'),
         'utils/storage/cookie/index': resolve(__dirname, 'src/utils/storage/cookie/index.ts'),
+        'utils/i18n/locale-utils': resolve(__dirname, 'src/utils/i18n/locale-utils.ts'),
         'configs/layout-bridge': resolve(__dirname, 'src/configs/layout-bridge.ts'),
         'configs/app-env.config': resolve(__dirname, 'src/configs/app-env.config.ts'),
         'configs/app-scanner': resolve(__dirname, 'src/configs/app-scanner.ts'),
@@ -153,6 +154,9 @@ export default defineConfig({
             if (chunkInfo.name === 'utils/storage/cookie/index') {
               return 'utils/storage/cookie/index.mjs';
             }
+            if (chunkInfo.name === 'utils/i18n/locale-utils') {
+              return 'utils/i18n/locale-utils.mjs';
+            }
             if (chunkInfo.name.startsWith('configs/')) {
               return `configs/${chunkInfo.name.replace('configs/', '')}.mjs`;
             }
@@ -200,6 +204,9 @@ export default defineConfig({
             }
             if (chunkInfo.name === 'utils/profile-info-cache') {
               return 'utils/profile-info-cache.js';
+            }
+            if (chunkInfo.name === 'utils/i18n/locale-utils') {
+              return 'utils/i18n/locale-utils.js';
             }
             if (chunkInfo.name.startsWith('configs/')) {
               return `configs/${chunkInfo.name.replace('configs/', '')}.js`;

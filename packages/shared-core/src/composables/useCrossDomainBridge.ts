@@ -10,6 +10,7 @@
 ;
 
 import { ref, onUnmounted, type Ref } from 'vue';
+import { logger } from '../utils/logger/index';
 
 /**
  * 通信桥消息类型
@@ -205,7 +206,7 @@ export function useCrossDomainBridge(
                 try {
                   handler(message.payload, message.origin);
                 } catch (error) {
-                  console.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
+                  logger.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
                 }
               });
             }
@@ -440,7 +441,7 @@ export function useCrossDomainBridge(
               try {
                 handler(message.payload, message.origin);
               } catch (error) {
-                console.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
+                logger.error(`[useCrossDomainBridge] Error in subscriber for ${message.type}:`, error);
               }
             });
           }
@@ -551,7 +552,7 @@ export function useCrossDomainBridge(
               // 检查重试次数，避免无限重试
               if (instance.retryCount >= instance.maxRetries) {
                 if (import.meta.env.DEV) {
-                  console.error('[useCrossDomainBridge] Max retries reached, giving up on iframe bridge. Will use BroadcastChannel only.');
+                  logger.error('[useCrossDomainBridge] Max retries reached, giving up on iframe bridge. Will use BroadcastChannel only.');
                 }
                 // 标记为就绪（即使失败），避免阻塞应用
                 isReady.value = true;
@@ -633,13 +634,13 @@ export function useCrossDomainBridge(
     instance.iframe.onerror = () => {
       const errorMsg = `[useCrossDomainBridge] Iframe failed to load: ${finalBridgeUrl}`;
       if (import.meta.env.DEV) {
-        console.error(errorMsg);
-        console.error('[useCrossDomainBridge] This usually means bridge.html does not exist or is not accessible.');
-        console.error('[useCrossDomainBridge] Please check:');
-        console.error('  1. Is bridge.html deployed to the server?');
-        console.error('  2. Is Nginx configured correctly?');
-        console.error('  3. Are file permissions correct?');
-        console.error('  4. Try accessing the URL directly in browser:', finalBridgeUrl);
+        logger.error(errorMsg);
+        logger.error('[useCrossDomainBridge] This usually means bridge.html does not exist or is not accessible.');
+        logger.error('[useCrossDomainBridge] Please check:');
+        logger.error('  1. Is bridge.html deployed to the server?');
+        logger.error('  2. Is Nginx configured correctly?');
+        logger.error('  3. Are file permissions correct?');
+        logger.error('  4. Try accessing the URL directly in browser:', finalBridgeUrl);
       } else {
         // 生产环境也记录错误，但使用 console.warn 避免过于显眼
         console.warn(errorMsg);
@@ -665,7 +666,7 @@ export function useCrossDomainBridge(
         instance.broadcastChannel.postMessage(message);
         // 直接 Broadcast Channel 发送成功，也通过 iframe 发送（确保兼容性）
       } catch (error) {
-        // 静默失败
+        logger.error(`[useCrossDomainBridge] Failed to send ${type} message via BroadcastChannel:`, error);
       }
     }
 
@@ -741,7 +742,7 @@ export function useCrossDomainBridge(
           // 检查重试次数，避免无限重试
           if (instance.retryCount >= instance.maxRetries) {
             if (import.meta.env.DEV) {
-              console.error('[useCrossDomainBridge] Max retries reached in sendMessage, giving up on iframe bridge.');
+              logger.error('[useCrossDomainBridge] Max retries reached in sendMessage, giving up on iframe bridge.');
             }
             // 标记为就绪（即使失败），避免阻塞应用
             isReady.value = true;
@@ -892,6 +893,13 @@ export function useCrossDomainBridge(
     getOrCreateIframe();
   }
 
+  // 暴露全局函数，供非组件上下文使用（如 createLogoutFunction）
+  if (typeof window !== 'undefined') {
+    (window as any).__APP_BRIDGE_SEND_MESSAGE__ = (type: string, payload?: any) => {
+      sendMessage(type, payload);
+    };
+  }
+
   return {
     sendMessage,
     subscribe,
@@ -907,9 +915,10 @@ export function useCrossDomainBridge(
 export function broadcastLoginMessage(): void {
   try {
     // 方法1: 使用 BroadcastChannel（同源标签页通信）
+    // 关键修复：统一使用 'bellis-auth-channel'，与 useCrossDomainBridge 保持一致
     if (typeof BroadcastChannel !== 'undefined') {
       try {
-        const channel = new BroadcastChannel('btc-auth-bridge');
+        const channel = new BroadcastChannel('bellis-auth-channel');
         channel.postMessage({
           type: 'login',
           payload: { timestamp: Date.now() },

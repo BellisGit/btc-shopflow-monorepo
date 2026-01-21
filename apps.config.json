@@ -73,13 +73,6 @@
       "packageName": "layout-app"
     },
     {
-      "id": "mobile",
-      "name": "mobile-app",
-      "displayName": "移动应用",
-      "category": "business",
-      "packageName": "mobile-app"
-    },
-    {
       "id": "docs",
       "name": "docs-app",
       "displayName": "文档站点",

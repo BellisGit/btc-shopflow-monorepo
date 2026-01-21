@@ -12,7 +12,7 @@ import type { App } from 'vue';
 import 'virtual:svg-register';
 
 // 资源加载器初始化（必须在应用启动前初始化）
-import { initResourceLoader, initDynamicImportInterceptor } from '@btc/shared-core';
+import { initResourceLoader, initDynamicImportInterceptor, logger } from '@btc/shared-core';
 
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
@@ -205,7 +205,7 @@ export async function bootstrap(app: App) {
       });
       
       if (!success) {
-        console.error('[bootstrap] Logout core failed');
+        logger.error('[bootstrap] Logout core failed');
         // 即使失败，也执行兜底逻辑
         appStorage.auth?.clear();
         appStorage.user?.clear();
@@ -214,20 +214,24 @@ export async function bootstrap(app: App) {
       }
       
       // 退出成功后重定向到登录页
+      // 使用 buildLogoutUrl 构建退出登录 URL，自动包含 clearRedirectCookie=1 参数
+      const { buildLogoutUrlWithFullUrl } = await import('@btc/shared-core/utils/redirect');
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
-      const currentPath = window.location.pathname + window.location.search;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
       
       if (isProductionSubdomain) {
         // 生产环境子域名，跳转到主域名登录页
-        window.location.href = `${protocol}//bellis.com.cn/login?oauth_callback=${encodeURIComponent(currentPath)}`;
+        const loginUrl = `${protocol}//bellis.com.cn/login`;
+        const logoutUrl = await buildLogoutUrlWithFullUrl(loginUrl);
+        window.location.href = logoutUrl;
       } else {
         // 开发环境或主域名，跳转到本地登录页
-        window.location.href = `/login?oauth_callback=${encodeURIComponent(currentPath)}`;
+        const logoutUrl = await buildLogoutUrlWithFullUrl('/login');
+        window.location.href = logoutUrl;
       }
     } catch (error) {
-      console.error('[bootstrap] Failed to execute logout:', error);
+      logger.error('[bootstrap] Failed to execute logout:', error);
       // 简单的兜底逻辑
       try {
         const authApi = (window as any).__APP_AUTH_API__;

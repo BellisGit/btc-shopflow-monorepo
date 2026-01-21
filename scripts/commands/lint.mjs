@@ -36,7 +36,6 @@ if (!appName) {
     production: 'apps/production-app',
     monitor: 'apps/monitor-app',
     layout: 'apps/layout-app',
-    mobile: 'apps/mobile-app',
     docs: 'apps/docs-app',
   };
   

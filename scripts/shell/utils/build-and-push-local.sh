@@ -499,14 +499,9 @@ if [ "$AUTO_DEPLOY" = true ]; then
             TARGET_WORKFLOW="deploy-finance-app.yml"
             TARGET_WORKFLOW_NAME="Deploy Finance App"
             ;;
-        mobile-app)
-            EVENT_TYPE="deploy-mobile-app"
-            TARGET_WORKFLOW="deploy-mobile-app.yml"
-            TARGET_WORKFLOW_NAME="Deploy Mobile App"
-            ;;
         *)
             log_error "未知的应用名称: $APP_NAME"
-            log_info "支持的应用: system-app, admin-app, logistics-app, quality-app, production-app, engineering-app, finance-app, mobile-app"
+            log_info "支持的应用: system-app, admin-app, logistics-app, quality-app, production-app, engineering-app, finance-app"
             exit 1
             ;;
     esac

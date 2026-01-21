@@ -7,7 +7,7 @@ import {
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout as AppLayout } from '@btc/shared-components';
-import { getMainAppLoginUrl } from '@btc/shared-core';
+import { getMainAppLoginUrl, logger } from '@btc/shared-core';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
 
 /**
@@ -34,7 +34,7 @@ function getOperationsRoutes() {
 
     pageRoutes = [...autoRoutes.views, ...autoRoutes.pages];
   } catch (error) {
-    console.error('[OperationsRouter] Failed to scan routes from modules:', error);
+    logger.error('[OperationsRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 

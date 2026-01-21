@@ -74,7 +74,7 @@ export async function loadProfileInfoOnLogin(service: any): Promise<any> {
     if (!profileService || !profileService.info) {
       return null;
     }
-
+    
     const response = await profileService.info();
 
     // 保存到持久化存储

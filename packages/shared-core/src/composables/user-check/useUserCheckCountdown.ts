@@ -3,6 +3,7 @@
  */
 import { getCredentialExpireTime, getUserCheckDataFromStorage } from './useUserCheckStorage';
 import { stopPolling } from './useUserCheckPolling';
+import { logger } from '../../utils/logger/index';
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 let countdownActive = false;
@@ -12,6 +13,14 @@ let warningShown = false;
  * 执行退出逻辑
  */
 async function performLogout(): Promise<void> {
+  // 已删除：禁用所有自动退出和重定向逻辑
+  stopPolling();
+  stopCountdown();
+  if (import.meta.env.DEV) {
+    console.warn('[useUserCheckCountdown] ⚠️ 已禁用自动退出和重定向，不再跳转到登录页');
+  }
+  return;
+
   // 停止轮询
   stopPolling();
   // 停止倒计时
@@ -25,7 +34,7 @@ async function performLogout(): Promise<void> {
         await globalLogout();
         return;
       } catch (error) {
-        console.error('[useUserCheckCountdown] Logout function failed:', error);
+        logger.error('[useUserCheckCountdown] Logout function failed:', error);
       }
     }
   }
@@ -63,10 +72,10 @@ function showWarning(): void {
         warningShown = true;
       }
     }).catch((error) => {
-      console.error('[useUserCheckCountdown] Failed to import BtcMessage:', error);
+      logger.error('[useUserCheckCountdown] Failed to import BtcMessage:', error);
     });
   } catch (error) {
-    console.error('[useUserCheckCountdown] Failed to show warning:', error);
+    logger.error('[useUserCheckCountdown] Failed to show warning:', error);
   }
 }
 
@@ -103,7 +112,7 @@ function checkCountdown(): void {
     // 如果剩余时间为0且状态为expired，执行退出
     if (remainingTime <= 0 && status === 'expired') {
       performLogout().catch((error) => {
-        console.error('[useUserCheckCountdown] Failed to perform logout:', error);
+        logger.error('[useUserCheckCountdown] Failed to perform logout:', error);
       });
       return;
     }
@@ -114,7 +123,7 @@ function checkCountdown(): void {
       warningShown = false;
     }
   } catch (error) {
-    console.error('[useUserCheckCountdown] Countdown check failed:', error);
+    logger.error('[useUserCheckCountdown] Countdown check failed:', error);
   }
 }
 

@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue';
-import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, logger } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcDoubleLayout, BtcMasterList, BtcCrud, BtcCrudRow, BtcRefreshBtn, BtcCrudFlex1, BtcCrudSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
@@ -121,7 +121,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      console.error('[LogisticsInventoryResult] 获取盘点列表失败:', error);
+      logger.error('[LogisticsInventoryResult] 获取盘点列表失败:', error);
       return {
         list: [],
         pagination: {

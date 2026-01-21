@@ -7,6 +7,7 @@ import { useConnectionPointSelector } from './point-selector';
 import { useConnectionPathGenerator } from './path-generator';
 import { useOrphanedConnection } from './orphaned';
 import { useConnectionStyle } from './style';
+import { logger } from '@btc/shared-core';
 
 /**
  * 连接管理主入口
@@ -50,7 +51,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     if (canvasRef) {
       updateTempConnection(event, canvasRef);
     } else {
-      console.error('Canvas element not found');
+      logger.error('Canvas element not found');
     }
   };
 

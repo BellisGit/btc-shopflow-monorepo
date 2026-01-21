@@ -18,7 +18,8 @@ export type {
   SmsLoginRequest,
   RegisterRequest,
   ResetPasswordRequest,
-  LogoutBatchRequest
+  LogoutBatchRequest,
+  QrCodeResponse
 } from '@btc/shared-core/utils/api-center';
 
 // 使用统一的 API 中心创建认证 API 服务

@@ -42,10 +42,9 @@ export function getViteAppConfig(appName: string): {
  * @param appName 应用名称
  * @returns 应用类型
  */
-export function getAppType(appName: string): 'main' | 'sub' | 'layout' | 'mobile' {
+export function getAppType(appName: string): 'main' | 'sub' | 'layout' {
   if (appName === 'main-app') return 'main';
   if (appName === 'layout-app') return 'layout';
-  if (appName === 'mobile-app') return 'mobile';
   return 'sub'; // 其他都是子应用
 }
 
@@ -78,8 +77,8 @@ export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): st
  * @returns publicDir 路径或 false
  */
 export function getPublicDir(appName: string, appDir: string): string | false {
-  // main-app、admin-app、mobile-app 和 system-app 使用自己的 public 目录
-  if (appName === 'main-app' || appName === 'admin-app' || appName === 'mobile-app' || appName === 'system-app') {
+  // main-app、admin-app 和 system-app 使用自己的 public 目录
+  if (appName === 'main-app' || appName === 'admin-app' || appName === 'system-app') {
     return resolve(appDir, 'public');
   }
   

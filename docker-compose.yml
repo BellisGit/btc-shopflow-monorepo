@@ -102,16 +102,4 @@ services:
       - "8087:80"
     restart: unless-stopped
 
-  mobile-app:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-      args:
-        APP_DIR: apps/mobile-app
-    image: btc-shopflow/mobile-app:latest
-    container_name: btc-mobile-app
-    ports:
-      - "8091:80"
-    restart: unless-stopped
-
 

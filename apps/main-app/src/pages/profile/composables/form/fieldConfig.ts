@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
 import { BtcMessage, BtcButton } from '@btc/shared-components';
-import BtcSmsCodeInput from '@auth/shared/components/sms-code-input/index.vue';
+import BtcSmsCodeInput from '@/pages/auth/shared/components/sms-code-input/index.vue';
 import type { PhoneSmsState } from './phoneVerification';
 
 interface FieldConfigContext {

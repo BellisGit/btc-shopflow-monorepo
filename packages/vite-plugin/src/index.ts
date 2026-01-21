@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @btc/vite-plugin - BTC Vite 插件集合
  *
  * 包含功能：
@@ -46,7 +46,7 @@ export function btc(options: Partial<BtcPluginConfig> & { proxy?: any } = {}) {
         epsUrl: config.eps?.api || '/api/login/eps/contract',
         outputDir: config.eps?.dist || 'build/eps',
         reqUrl: config.reqUrl || '',
-        dictApi: config.eps?.dictApi,
+        ...(config.eps?.dictApi !== undefined ? { dictApi: config.eps.dictApi } : {}),
         ...(config.eps?.sharedEpsDir !== undefined ? { sharedEpsDir: config.eps.sharedEpsDir } : {}),
       })
     );

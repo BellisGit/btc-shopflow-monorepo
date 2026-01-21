@@ -18,7 +18,7 @@ import {
   watchEffect,
   watch,
 } from 'vue';
-import { useCrud } from '@btc/shared-core';
+import { useCrud, logger } from '@btc/shared-core';
 import { BtcMessage } from '../../components/feedback/btc-message';
 import {
   crudLayoutKey,
@@ -94,7 +94,7 @@ const crud = useCrud(crudOptions);
 // 关键：确保 crud 实例有效
 if (!crud) {
   const error = new Error('[BtcCrud] useCrud returned undefined or null');
-  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+  logger.error('[BtcCrud] CRITICAL ERROR:', error.message, {
     service: props.service,
     options: props.options,
     timestamp: new Date().toISOString(),
@@ -105,7 +105,7 @@ if (!crud) {
 // 确保 crud.handleAdd 是函数
 if (typeof crud.handleAdd !== 'function') {
   const error = new Error('[BtcCrud] crud.handleAdd is not a function');
-  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+  logger.error('[BtcCrud] CRITICAL ERROR:', error.message, {
     crud,
     handleAdd: crud.handleAdd,
     crudKeys: Object.keys(crud),

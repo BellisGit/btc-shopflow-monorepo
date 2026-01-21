@@ -14,6 +14,9 @@ export interface EnvInfo {
   environment: Environment;
   isDev: boolean;
   isPreview: boolean;
+  isPoc: boolean;
+  isSit: boolean;
+  isUat: boolean;
   isTest: boolean;
   isProduction: boolean;
   currentApp: string | null;
@@ -32,6 +35,9 @@ export function getEnvInfo(): EnvInfo {
     environment,
     isDev: environment === 'development',
     isPreview: environment === 'preview',
+    isPoc: environment === 'poc',
+    isSit: environment === 'sit',
+    isUat: environment === 'uat',
     isTest: environment === 'test',
     isProduction: environment === 'production',
     currentApp,

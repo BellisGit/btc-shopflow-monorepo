@@ -86,6 +86,9 @@ export default defineConfig({
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     // 确保只有一个 Vue 实例和插件实例，避免依赖解析问题和循环引用
     dedupe: ['vue', '@vitejs/plugin-vue'],
+    // 关键：添加 'development' 条件，确保在开发环境中使用源码
+    // 这样在构建时，如果 NODE_ENV=development，会使用源码路径而不是构建产物路径
+    conditions: ['development', 'import', 'module', 'browser', 'default'],
   },
   plugins: [
     buildLogPlugin(), // 添加构建日志插件

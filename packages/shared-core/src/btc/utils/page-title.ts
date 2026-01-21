@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger/index';
 ;
 /**
  * 浏览器标题设置工具
@@ -85,7 +86,7 @@ async function loadAppsConfig(): Promise<AppsConfig> {
       appsConfigCache = { apps: [] };
       return appsConfigCache;
     } catch (error) {
-      console.error('[page-title] 加载应用配置失败:', error);
+      logger.error('[page-title] 加载应用配置失败:', error);
       appsConfigCache = { apps: [] };
       return appsConfigCache;
     } finally {

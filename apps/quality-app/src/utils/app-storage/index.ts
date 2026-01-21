@@ -7,6 +7,7 @@
 import { storage } from '@btc/shared-utils';
 import type { UserStorage, AppSettingsStorage } from '../storage-manager';
 import { checkStorageValidity, triggerAutoLogout } from '@btc/shared-core/utils/storage-validity-check';
+import { logger } from '@btc/shared-core/utils/logger';
 
 /**
  * 存储键名常量
@@ -369,7 +370,7 @@ class AppStorageManager {
         try {
           listener(key, newValue, oldValue);
         } catch (error) {
-          console.error(`[AppStorage] 监听器执行出错 (key: ${key}):`, error);
+          logger.error(`[AppStorage] 监听器执行出错 (key: ${key}):`, error);
         }
       });
     }

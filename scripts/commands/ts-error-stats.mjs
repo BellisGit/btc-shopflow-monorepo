@@ -19,7 +19,7 @@ const rootDir = resolve(__dirname, '../..');
 logger.info('正在运行 TypeScript 类型检查...\n');
 
 // 使用 spawn 确保捕获所有输出（包括 stdout 和 stderr）
-const child = spawn('node', ['scripts/turbo.js', 'run', 'type-check'], {
+const child = spawn('node', ['scripts/commands/tools/turbo.js', 'run', 'type-check'], {
   cwd: rootDir,
   shell: true,
   stdio: ['pipe', 'pipe', 'pipe']
@@ -137,7 +137,7 @@ function processStats(fullOutput, exitCode) {
   const appNames = [
     'admin-app', 'logistics-app', 'system-app', 'finance-app',
     'engineering-app', 'quality-app', 'production-app', 'monitor-app',
-    'layout-app', 'mobile-app', 'docs-app', '@btc/mobile-app'
+    'layout-app', 'docs-app'
   ];
   
   lines.forEach(line => {

@@ -149,14 +149,6 @@ jobs:
       image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
     secrets: inherit
 
-  deploy-mobile-app:
-    name: Deploy Mobile App
-    needs: [validate, detect-image-tag]
-    uses: ./.github/workflows/deploy-app-reusable.yml
-    with:
-      app_name: mobile-app
-      app_port: "30091"
-      container_name: btc-mobile-app
       image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
     secrets: inherit
 

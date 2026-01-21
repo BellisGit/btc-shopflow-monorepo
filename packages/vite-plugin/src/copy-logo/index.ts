@@ -3,6 +3,7 @@ import type { Plugin, ResolvedConfig } from 'vite';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
+// logger 已移除，使用 console 替代
 
 const __filename = fileURLToPath(import.meta.url);
 // @ts-expect-error: __dirname 未使用，保留用于未来功能

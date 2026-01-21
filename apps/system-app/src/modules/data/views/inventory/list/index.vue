@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService, logger } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcMasterTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
@@ -107,7 +107,7 @@ const domainService = {
       // 返回域列表
       return Array.from(domainMap.values());
     } catch (error) {
-      console.error('[InventoryList] Failed to load domains from position service:', error);
+      logger.error('[InventoryList] Failed to load domains from position service:', error);
       return [];
     }
   }
@@ -261,7 +261,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     tableGroupRef.value?.crudRef?.refresh?.();
     close();
   } catch (error: any) {
-    console.error('[InventoryList] import failed:', error);
+    logger.error('[InventoryList] import failed:', error);
     // 优先从错误对象中提取后端返回的 msg
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.data_source.list.import.failed');
     message.error(errorMsg);
@@ -381,7 +381,7 @@ const handleExport = async () => {
 
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
-    console.error('[InventoryList] Export failed:', error);
+    logger.error('[InventoryList] Export failed:', error);
     const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
     BtcMessage.error(errorMsg);
   } finally {

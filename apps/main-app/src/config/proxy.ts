@@ -1,5 +1,14 @@
 ;
 import type { IncomingMessage, ServerResponse } from 'http';
+// 注意：在 Vite 配置加载阶段，不能直接导入 @btc/shared-core
+// 因为此时 Vite 的 resolve.conditions 可能还没有应用，会尝试加载构建产物
+// 而构建产物中的 chunk 文件（如 index-DD6oEX8b.mjs）在开发环境中可能无法正确解析
+// 已移除所有控制台输出，避免日志噪音
+const logger = {
+  error: () => {},
+  warn: () => {},
+  info: () => {},
+};
 
 // Vite 代理配置类型
 interface ProxyOptions {
@@ -43,8 +52,31 @@ const proxy: Record<string, string | ProxyOptions> = {
         const origin = req.headers.origin || '*';
         const isLoginRequest = req.url?.includes('/login');
         let extractedToken: string | null = null;
+        
+        // 安全地检查是否为开发环境（在 Vite 配置中，import.meta.env 可能不可用）
+        const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
+        
+        // 登录请求响应处理（已移除调试日志）
 
         if (proxyRes.headers) {
+          // 关键：如果是登录请求，移除 Location 响应头，避免浏览器自动重定向
+          // 后端可能返回 302 重定向，但前端应该自己处理导航，而不是让浏览器自动跳转
+          if (isLoginRequest && proxyRes.headers['location']) {
+            if (isDev) {
+              logger.warn('[Proxy] 检测到登录响应包含 Location 头，已移除以避免浏览器自动重定向:', proxyRes.headers['location']);
+            }
+            delete proxyRes.headers['location'];
+            delete proxyRes.headers['Location'];
+          }
+          
+          // 关键：如果是登录请求且状态码是 302，改为 200，避免浏览器自动重定向
+          if (isLoginRequest && proxyRes.statusCode === 302) {
+            if (isDev) {
+              logger.warn('[Proxy] 检测到登录响应状态码为 302，已改为 200 以避免浏览器自动重定向');
+            }
+            // 状态码会在 res.writeHead 时设置，这里先记录
+          }
+          
           proxyRes.headers['Access-Control-Allow-Origin'] = origin as string;
           proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
           proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
@@ -70,7 +102,7 @@ const proxy: Record<string, string | ProxyOptions> = {
               let fixedCookie = cookie;
 
               // 关键：移除 Domain 设置，稍后会根据环境重新设置
-              // 如果后端设置了 Domain=10.80.8.199 或其他值，会导致 JavaScript 无法读取
+              // 如果后端设置了 Domain={devHost} 或其他值，会导致 JavaScript 无法读取
               fixedCookie = fixedCookie.replace(/;\s*Domain=[^;]+/gi, '');
 
               // 确保 Path=/，让 cookie 在整个域名下可用
@@ -84,7 +116,7 @@ const proxy: Record<string, string | ProxyOptions> = {
               // 修复 SameSite 设置
               // 关键区别：
               // - localhost: 浏览器将不同端口视为同一站点，SameSite=Lax 可能允许跨端口 cookie
-              // - IP 地址（如 10.80.8.199）: 浏览器将不同端口视为不同站点，SameSite=Lax 不允许跨站点 cookie
+              // - IP 地址（如 devHost）: 浏览器将不同端口视为不同站点，SameSite=Lax 不允许跨站点 cookie
               // 所以在 IP 地址环境下，即使使用 SameSite=Lax，跨端口 cookie 也可能失败
               const forwardedProto = req.headers['x-forwarded-proto'];
               const isHttps = forwardedProto === 'https' ||
@@ -151,7 +183,8 @@ const proxy: Record<string, string | ProxyOptions> = {
               const originalHeaders: Record<string, string | string[] | undefined> = {};
               Object.keys(proxyRes.headers).forEach(key => {
                 const lowerKey = key.toLowerCase();
-                if (lowerKey !== 'content-length') {
+                // 移除 content-length（会重新计算）和 location（避免浏览器自动重定向）
+                if (lowerKey !== 'content-length' && lowerKey !== 'location') {
                   originalHeaders[key] = proxyRes.headers[key];
                 }
               });
@@ -164,7 +197,9 @@ const proxy: Record<string, string | ProxyOptions> = {
                   responseData = JSON.parse(body);
                 } catch {
                   // 如果不是 JSON，直接返回原始响应
-                  res.writeHead(proxyRes.statusCode || 200, originalHeaders);
+                  // 关键：如果是登录请求且状态码是 302，改为 200，避免浏览器自动重定向
+                  const statusCode = (isLoginRequest && proxyRes.statusCode === 302) ? 200 : (proxyRes.statusCode || 200);
+                  res.writeHead(statusCode, originalHeaders);
                   res.end(body);
                   return;
                 }
@@ -180,22 +215,40 @@ const proxy: Record<string, string | ProxyOptions> = {
                 originalHeaders['content-length'] = Buffer.byteLength(newBody).toString();
 
                 // 发送修改后的响应
-                res.writeHead(proxyRes.statusCode || 200, originalHeaders);
+                // 关键：如果是登录请求且状态码是 302，改为 200，避免浏览器自动重定向
+                const statusCode = (isLoginRequest && proxyRes.statusCode === 302) ? 200 : (proxyRes.statusCode || 200);
+                res.writeHead(statusCode, originalHeaders);
                 res.end(newBody);
               } catch (error) {
-                console.error('[Proxy] ✗ 处理登录响应时出错:', error);
-                res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+                logger.error('[Proxy] ✗ 处理登录响应时出错:', error);
+                // 关键：如果是登录请求且状态码是 302，改为 200，避免浏览器自动重定向
+                const statusCode = (isLoginRequest && proxyRes.statusCode === 302) ? 200 : (proxyRes.statusCode || 200);
+                const errorHeaders = { ...proxyRes.headers };
+                // 如果是登录请求，移除 Location 响应头
+                if (isLoginRequest) {
+                  delete errorHeaders['location'];
+                  delete errorHeaders['Location'];
+                }
+                res.writeHead(statusCode, errorHeaders);
                 res.end(Buffer.concat(chunks));
               }
             } else {
               // 非登录请求或没有 token 时，正常转发响应
-              res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+              // 关键：如果是登录请求且状态码是 302，改为 200，避免浏览器自动重定向
+              const statusCode = (isLoginRequest && proxyRes.statusCode === 302) ? 200 : (proxyRes.statusCode || 200);
+              const headers = { ...proxyRes.headers };
+              // 如果是登录请求，移除 Location 响应头
+              if (isLoginRequest) {
+                delete headers['location'];
+                delete headers['Location'];
+              }
+              res.writeHead(statusCode, headers);
               res.end(Buffer.concat(chunks));
             }
           });
 
           proxyRes.on('error', (err: Error) => {
-            console.error('[Proxy] ✗ 读取响应流时出错:', err);
+            logger.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
@@ -209,9 +262,9 @@ const proxy: Record<string, string | ProxyOptions> = {
 
       // 处理错误
       proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-        console.error('[Proxy] Error:', err.message);
-        console.error('[Proxy] Request URL:', req.url);
-        console.error('[Proxy] Target:', backendTarget);
+        logger.error('[Proxy] Error:', err.message);
+        logger.error('[Proxy] Request URL:', req.url);
+        logger.error('[Proxy] Target:', backendTarget);
         if (res && !res.headersSent) {
           res.writeHead(500, {
             'Content-Type': 'application/json',
@@ -227,12 +280,30 @@ const proxy: Record<string, string | ProxyOptions> = {
     },
   },
   // 代理 home-app 到开发服务器（Vue SPA）
-  '/home': {
-    target: 'http://10.80.8.199:8095',
-    changeOrigin: true,
-    secure: false,
-    rewrite: (path: string) => path.replace(/^\/home/, ''),
-  },
+  // 使用 home-app 的配置获取开发服务器地址
+  '/home': (() => {
+    try {
+      const { getAppConfig } = require('@btc/shared-core/configs/app-env.config');
+      const homeAppConfig = getAppConfig('home-app');
+      if (homeAppConfig) {
+        return {
+          target: `http://${homeAppConfig.devHost}:${homeAppConfig.devPort}`,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path: string) => path.replace(/^\/home/, ''),
+        };
+      }
+    } catch (error) {
+      // 如果导入失败，使用默认值
+    }
+    // 兜底配置（如果无法获取配置）
+    return {
+      target: 'http://localhost:8085',
+      changeOrigin: true,
+      secure: false,
+      rewrite: (path: string) => path.replace(/^\/home/, ''),
+    };
+  })(),
 };
 
 export { proxy };

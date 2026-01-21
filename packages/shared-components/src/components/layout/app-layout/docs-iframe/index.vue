@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
-import { storage } from '@btc/shared-core/utils';
+import { storage, logger } from '@btc/shared-core/utils';
 import { useI18n } from '@btc/shared-core';
 import { useRoute } from 'vue-router';
 
@@ -147,7 +147,7 @@ function onIframeLoad() {
       }, '*');
 
     } catch (e) {
-      console.error('[Main App] Failed to update themes on load:', e);
+      logger.error('[Main App] Failed to update themes on load:', e);
     }
   }
 

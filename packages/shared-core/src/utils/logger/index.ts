@@ -5,7 +5,6 @@
 
 import type { LogContext, LogLevel } from './types';
 import { getCurrentAppId } from '../env-info';
-import { reportError } from './error-reporter';
 import { reportLog, type LogEntry } from '../log-reporter';
 import { isDevelopment } from '../../env';
 
@@ -150,26 +149,6 @@ export const logger = {
             // 上报失败不影响日志记录，静默处理
           }
         }, 0);
-
-        // 同时保留原有的错误上报机制（向后兼容）
-        try {
-          const errorReport = {
-            msg: message,
-            level: 50, // error 级别
-            appId,
-            timestamp: Date.now(),
-            errorMessage: message,
-            error: error instanceof Error ? {
-              name: error.name,
-              message: error.message,
-              stack: error.stack,
-            } : error,
-            ...args,
-          };
-          reportError(errorReport);
-        } catch (e) {
-          // 忽略错误
-        }
       } catch (reportErr) {
         // 上报失败不影响日志记录，静默处理
       }
@@ -222,27 +201,6 @@ export const logger = {
             // 上报失败不影响日志记录，静默处理
           }
         }, 0);
-
-        // 同时保留原有的错误上报机制（向后兼容）
-        try {
-          const errorReport = {
-            msg: message,
-            level: 60, // fatal 级别
-            appId,
-            timestamp: Date.now(),
-            severity: 'critical', // Fatal 级别标记为严重
-            errorMessage: message,
-            error: error instanceof Error ? {
-              name: error.name,
-              message: error.message,
-              stack: error.stack,
-            } : error,
-            ...args,
-          };
-          reportError(errorReport);
-        } catch (e) {
-          // 忽略错误
-        }
       } catch (reportErr) {
         // 上报失败不影响日志记录，静默处理
       }
@@ -309,5 +267,3 @@ export function getLogger(context?: LogContext) {
   return logger;
 }
 
-// 导出错误上报相关函数（保留错误上报功能，但不导出 logger）
-export { reportError } from './error-reporter';

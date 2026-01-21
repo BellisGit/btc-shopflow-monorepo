@@ -1,6 +1,7 @@
 ;
 import { epsState, type EpsState } from './state';
 import { checkName, firstUpperCase, formatName, toCamel } from './utils';
+// logger 已移除，使用 console 替代
 // config 未使用，已移除导入
 
 export function createService(_epsUrl: string, state: EpsState = epsState) {

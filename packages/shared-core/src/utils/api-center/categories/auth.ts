@@ -13,7 +13,8 @@ import type {
   SmsLoginRequest,
   RegisterRequest,
   ResetPasswordRequest,
-  LogoutBatchRequest
+  LogoutBatchRequest,
+  QrCodeResponse
 } from '../types/auth';
 
 /**
@@ -136,6 +137,14 @@ export function createAuthApi(apiClient: ApiClient) {
      */
     verifyEmailCode(data: { email: string; emailCode: string; type?: string }): Promise<void> {
       return apiClient.post<void>('auth', '/verify/email', data, { notifySuccess: false });
+    },
+
+    /**
+     * 生成二维码（用于扫码登录）
+     * @returns 二维码信息（包含二维码图片和ID）
+     */
+    generateQrCode(): Promise<QrCodeResponse> {
+      return apiClient.get<QrCodeResponse>('system', '/qrcode/generate', {}, { notifySuccess: false });
     },
   };
 }

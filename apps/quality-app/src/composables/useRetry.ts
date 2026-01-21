@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ;
 /**
  * 指数退避重试机制
@@ -150,7 +151,7 @@ export function useRetry(config: RetryConfig = {}) {
 
         // 检查是否应该重试
         if (!shouldRetry(error, attempt, operationConfig.maxRetries)) {
-          console.error(`请求失败，不进行重试:`, error);
+          logger.error(`请求失败，不进行重试:`, error);
           break;
         }
 

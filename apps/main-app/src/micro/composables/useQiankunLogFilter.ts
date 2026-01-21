@@ -64,12 +64,43 @@ export function setupQiankunLogFilter(): void {
 
   // 检查是否是表单验证错误（不打印，但允许上报）
   const isFormValidationError = (...args: any[]): boolean => {
+    // 检查是否是 async-validator 的警告格式：console.warn("async-validator:", errorList)
+    if (args.length >= 1) {
+      const firstArg = args[0];
+      // 检查第一个参数是否是 "async-validator:" 字符串
+      if (typeof firstArg === 'string' && firstArg.includes('async-validator:')) {
+        return true;
+      }
+      // 检查参数中是否包含 "async-validator:" 字符串
+      for (const arg of args) {
+        if (typeof arg === 'string' && arg.includes('async-validator:')) {
+          return true;
+        }
+      }
+    }
     // 检查参数是否是对象格式 {字段名: Array(...)}
     if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
       const obj = args[0];
       // 检查对象是否包含 Array 类型的值（表单验证错误格式）
       for (const key in obj) {
         if (Array.isArray(obj[key])) {
+          return true;
+        }
+      }
+    }
+    // 检查参数中是否包含数组格式的错误列表（async-validator 的第二个参数通常是数组）
+    for (const arg of args) {
+      if (Array.isArray(arg) && arg.length > 0) {
+        // 如果数组中的元素是字符串，且包含常见的验证错误消息，则认为是表单验证错误
+        const firstItem = arg[0];
+        if (typeof firstItem === 'string' && (
+          firstItem.includes('is required') ||
+          firstItem.includes('required') ||
+          firstItem.includes('格式') ||
+          firstItem.includes('格式不正确') ||
+          firstItem.includes('长度') ||
+          firstItem.includes('不能为空')
+        )) {
           return true;
         }
       }

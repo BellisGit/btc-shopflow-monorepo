@@ -4,6 +4,7 @@
 ;
 
 import type { QueuedMessage, MessageDisplayHandler } from './types';
+import { logger } from '@btc/shared-core';
 
 interface MessageLifecycleState {
   phase: 'increment' | 'waiting' | 'countdown' | 'cleanup';
@@ -114,7 +115,7 @@ export class LifecycleManager {
 
         return;
       } catch (error) {
-        console.error('[LifecycleManager] Failed to update badge:', error);
+        logger.error('[LifecycleManager] Failed to update badge:', error);
         // 如果更新徽章失败，说明消息实例无效，抛出错误让上层处理
         throw new Error('Message instance is invalid, cannot update badge');
       }

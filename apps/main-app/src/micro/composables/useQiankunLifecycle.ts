@@ -89,6 +89,42 @@ export function createBeforeLoadHook() {
       const targetApp = microApps.find(item => item.name === app.name);
       if (targetApp) {
         showLoading(targetApp);
+        
+        // 关键：设置超时保护，确保 loading 在超时后自动隐藏
+        // 开发环境 15 秒，生产环境 20 秒
+        const timeoutMs = import.meta.env.DEV ? 15000 : 20000;
+        const timeoutKey = `__qiankun_loading_timeout_${app.name}__`;
+        
+        // 清除之前的超时定时器（如果存在）
+        const existingTimeout = (window as any)[timeoutKey];
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+        
+        // 设置新的超时定时器
+        const timeoutId = setTimeout(() => {
+          if (import.meta.env.DEV) {
+            console.warn(`[QiankunLifecycle] ⚠️ 子应用 ${app.name} 加载超时（${timeoutMs}ms），强制隐藏 loading`);
+          }
+          
+          // 强制隐藏 loading
+          hideLoading();
+          
+          // 清除容器上的 loading 标记
+          const container = document.querySelector('#subapp-viewport') as HTMLElement;
+          if (container) {
+            container.removeAttribute('data-qiankun-loading');
+            container.style.removeProperty('display');
+            container.style.removeProperty('visibility');
+            container.style.removeProperty('opacity');
+          }
+          
+          // 清除超时定时器引用
+          delete (window as any)[timeoutKey];
+        }, timeoutMs);
+        
+        // 保存超时定时器引用，以便在 afterMount 时清除
+        (window as any)[timeoutKey] = timeoutId;
       }
     }
 
@@ -384,12 +420,21 @@ export function createAfterMountHook() {
     // 清除可能存在的 #Loading 元素
     clearLoadingElement();
 
-    // 清除超时保护
+    // 清除超时保护（清除两种可能的超时定时器）
+    // 1. 旧的超时定时器（如果存在）
     const timeoutKey = `__qiankun_timeout_${_app.name}__`;
     const timeoutId = (window as any)[timeoutKey];
     if (timeoutId) {
       clearTimeout(timeoutId);
       delete (window as any)[timeoutKey];
+    }
+    
+    // 2. 新的 loading 超时定时器（在 beforeLoad 中设置的）
+    const loadingTimeoutKey = `__qiankun_loading_timeout_${_app.name}__`;
+    const loadingTimeoutId = (window as any)[loadingTimeoutKey];
+    if (loadingTimeoutId) {
+      clearTimeout(loadingTimeoutId);
+      delete (window as any)[loadingTimeoutKey];
     }
 
     // 清理加载标记和隐藏样式

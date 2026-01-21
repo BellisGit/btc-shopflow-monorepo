@@ -150,18 +150,6 @@ apps:
     autoscaling:
       enabled: false
 
-  mobile:
-    enabled: true
-    name: mobile-app
-    port: 8091
-    replicas: 1
-    resources:
-      requests:
-        memory: "32Mi"
-        cpu: "25m"
-      limits:
-        memory: "128Mi"
-        cpu: "100m"
     autoscaling:
       enabled: false
 

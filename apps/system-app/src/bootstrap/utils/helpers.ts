@@ -1,3 +1,4 @@
+import { logger } from '@btc/shared-core';
 ;
 /**
  * 辅助函数模块
@@ -21,7 +22,7 @@ export const safeExecute = async <T>(
   try {
     return await fn();
   } catch (error) {
-    console.error(errorMessage, error);
+    logger.error(errorMessage, error);
     return null;
   }
 };

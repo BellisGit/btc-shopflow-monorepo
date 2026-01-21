@@ -243,13 +243,13 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from '@btc/shared-core';
+import { useI18n, logger } from '@btc/shared-core';
 import { BtcCrudRow, BtcCrudFlex1, BtcTableButton, BtcEmpty } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
 import { ElTable } from 'element-plus';
 import { BtcMessage, BtcConfirm } from '@btc/shared-components';
 import { Check, Close, View, Download, Loading, Warning } from '@element-plus/icons-vue';
-import { startTest as startDeploymentTestAPI, getTestStatus as getDeploymentTestStatus, getTestReport as getDeploymentTestReport } from '../api/deployment-test';
+import { startTest as startDeploymentTestAPI, getTestStatus as getDeploymentTestStatus, getTestReport as getDeploymentTestReport } from '../../../api/deployment-test';
 
 defineOptions({
   name: 'DeploymentTest',
@@ -266,7 +266,6 @@ const availableApps = ref([
   { name: 'production-app', label: '生产应用' },
   { name: 'engineering-app', label: '工程应用' },
   { name: 'finance-app', label: '财务应用' },
-  { name: 'mobile-app', label: '移动应用' },
 ]);
 
 // 选中的应用
@@ -418,7 +417,7 @@ const startTest = async () => {
     console.info('[DeploymentTest] 开始轮询测试状态...');
     await pollTestStatus(testId);
   } catch (error: unknown) {
-    console.error('[DeploymentTest] 启动测试失败:', error);
+    logger.error('[DeploymentTest] 启动测试失败:', error);
     ElMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.startFailed'));
     testing.value = false;
   }
@@ -428,7 +427,7 @@ const startTest = async () => {
 const pollTestStatus = async (testId: string) => {
   // 如果testId无效，直接返回错误
   if (!testId) {
-    console.error('[DeploymentTest] testId无效，无法轮询状态');
+    logger.error('[DeploymentTest] testId无效，无法轮询状态');
     ElMessage.error(t('monitor.deploymentTest.errors.startFailed') + ': 测试ID无效');
     testing.value = false;
     return;
@@ -460,7 +459,7 @@ const pollTestStatus = async (testId: string) => {
 
       // 检查状态对象是否有效
       if (!status || typeof status !== 'object' || !status.status) {
-        console.error('[DeploymentTest] 无效的状态对象:', status);
+        logger.error('[DeploymentTest] 无效的状态对象:', status);
         cleanup();
         testing.value = false;
         BtcMessage.error(t('monitor.deploymentTest.errors.statusCheckFailed') + ': 状态格式错误');
@@ -515,7 +514,7 @@ const pollTestStatus = async (testId: string) => {
         BtcMessage.error(status.error || t('monitor.deploymentTest.errors.testFailed'));
       }
     } catch (error: unknown) {
-      console.error('检查测试状态失败:', error);
+      logger.error('检查测试状态失败:', error);
       cleanup();
       testing.value = false;
       BtcMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.statusCheckFailed'));

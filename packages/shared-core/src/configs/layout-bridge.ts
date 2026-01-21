@@ -17,6 +17,7 @@ import { storage } from '../utils';
 import { assignIconsToMenuTree } from '../utils/menu-icon-assigner';
 import { getAppBySubdomain, getAppById } from './app-scanner';
 import { getEnvConfig } from './unified-env-config';
+import { logger } from '../utils/logger/index';
 
 declare global {
   interface Window {
@@ -279,7 +280,7 @@ export function registerManifestMenusForApp(appId: string) {
         // 菜单注册成功，无需操作
       } else {
         // 使用 console，避免在应用启动早期出现循环依赖
-        console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
+        logger.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
       }
     } else {
       // 生产环境也输出成功日志
@@ -287,7 +288,7 @@ export function registerManifestMenusForApp(appId: string) {
   } catch (error) {
     // 生产环境也输出错误信息，帮助调试
     // 使用 console，避免在应用启动早期出现循环依赖
-    console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败:`, error);
+    logger.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败:`, error);
   }
 }
 

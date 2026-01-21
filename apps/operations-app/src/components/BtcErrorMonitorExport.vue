@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
-import { useI18n, exportTableToExcel } from '@btc/shared-core';
+import { useI18n, exportTableToExcel, logger } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-utils';
 import { BtcForm, BtcSvg, BtcMessage } from '@btc/shared-components';
 import type { BtcFormItem } from '@btc/shared-components';
@@ -420,7 +420,7 @@ const handleSubmit = async (data: FormData, callbacks: SubmitCallbacks) => {
     BtcMessage.success(t('platform.common.export_success'));
     close();
   } catch (error) {
-    console.error('导出失败:', error);
+    logger.error('导出失败:', error);
     BtcMessage.error(t('platform.common.export_failed'));
   } finally {
     loading.value = false;

@@ -1,6 +1,31 @@
 /**
  * 主题设置共享翻译
+ * 
+ * 注意：theme.presets.* 的国际化定义在 @btc/shared-core/locales 中
+ * 这里只定义 shared-core 中没有的主题相关翻译，避免重复定义
  */
+
+// 从 shared-core 引用主题预设的国际化
+import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
+import sharedCoreEn from '@btc/shared-core/locales/en-US';
+
+// 提取 shared-core 中的主题预设翻译
+const getThemePresetsFromSharedCore = (locale: 'zh-CN' | 'en-US') => {
+  const sharedCore = locale === 'zh-CN' ? sharedCoreZh : sharedCoreEn;
+  const sharedCoreDefault = (sharedCore as any)?.default ?? sharedCore;
+  
+  return {
+    'theme.presets.brand_red': sharedCoreDefault['theme.presets.brand_red'],
+    'theme.presets.brand_gray': sharedCoreDefault['theme.presets.brand_gray'],
+    'theme.presets.lake_blue': sharedCoreDefault['theme.presets.lake_blue'],
+    'theme.presets.green': sharedCoreDefault['theme.presets.green'],
+    'theme.presets.purple': sharedCoreDefault['theme.presets.purple'],
+    'theme.presets.orange': sharedCoreDefault['theme.presets.orange'],
+    'theme.presets.mint': sharedCoreDefault['theme.presets.mint'],
+    'theme.presets.blue': sharedCoreDefault['theme.presets.blue'],
+    'theme.presets.custom': sharedCoreDefault['theme.presets.custom'],
+  };
+};
 
 export const theme = {
   'zh-CN': {
@@ -12,16 +37,9 @@ export const theme = {
     'theme.default': '默认',
     'theme.custom': '自定义',
 
-    // 主题预设颜色
-    'theme.presets.brand_red': '品牌红',
-    'theme.presets.brand_gray': '品牌灰',
-    'theme.presets.lake_blue': '湖蓝',
-    'theme.presets.green': '绿色',
-    'theme.presets.purple': '紫色',
-    'theme.presets.orange': '橙色',
-    'theme.presets.mint': '薄荷绿',
-    'theme.presets.blue': '蓝色',
-    'theme.presets.pink': '粉色',
+    // 主题预设颜色（从 shared-core 引用，确保单一数据源）
+    ...getThemePresetsFromSharedCore('zh-CN'),
+    'theme.presets.pink': '粉色', // shared-core 中没有，保留在这里
 
     // 按钮风格
     'theme.buttonStyles.title': '按钮风格',
@@ -94,16 +112,9 @@ export const theme = {
     'theme.default': 'Default',
     'theme.custom': 'Custom',
 
-    // Theme Preset Colors
-    'theme.presets.brand_red': 'Brand Red',
-    'theme.presets.brand_gray': 'Brand Gray',
-    'theme.presets.lake_blue': 'Lake Blue',
-    'theme.presets.green': 'Green',
-    'theme.presets.purple': 'Purple',
-    'theme.presets.orange': 'Orange',
-    'theme.presets.mint': 'Mint',
-    'theme.presets.blue': 'Blue',
-    'theme.presets.pink': 'Pink',
+    // Theme Preset Colors (referenced from shared-core to ensure single source of truth)
+    ...getThemePresetsFromSharedCore('en-US'),
+    'theme.presets.pink': 'Pink', // Not in shared-core, keep here
 
     // Button Styles
     'theme.buttonStyles.title': 'Button Style',

@@ -35,11 +35,10 @@ declare -A DEPLOYMENT_NAMES=(
     ["production-app"]="btc-production-app"
     ["engineering-app"]="btc-engineering-app"
     ["finance-app"]="btc-finance-app"
-    ["mobile-app"]="btc-mobile-app"
 )
 
 # 所有应用列表
-ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app")
 
 # 解析命令行参数
 while [[ $# -gt 0 ]]; do

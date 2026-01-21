@@ -3,7 +3,7 @@ import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { BtcAppLayout as AppLayout } from '@btc/shared-components';
-import { getMainAppLoginUrl } from '@btc/shared-core';
+import { getMainAppLoginUrl, logger } from '@btc/shared-core';
 import { scanRoutesFromConfigFiles } from '@btc/shared-core/utils/route-scanner';
 ;
 
@@ -28,7 +28,7 @@ function getQualityRoutes() {
       console.warn(`[QualityRouter] Route conflicts:`, autoRoutes.conflicts);
     }
   } catch (error) {
-    console.error('[QualityRouter] Failed to scan routes from modules:', error);
+    logger.error('[QualityRouter] Failed to scan routes from modules:', error);
     pageRoutes = [];
   }
 

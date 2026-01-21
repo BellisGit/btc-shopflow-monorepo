@@ -17,7 +17,6 @@ const APP_USAGE: Record<string, { echarts: boolean; monaco: boolean; three: bool
   'production-app': { echarts: true, monaco: false, three: false },
   'engineering-app': { echarts: true, monaco: false, three: false },
   'monitor-app': { echarts: true, monaco: false, three: false },
-  'mobile-app': { echarts: false, monaco: false, three: false },
 };
 
 /**

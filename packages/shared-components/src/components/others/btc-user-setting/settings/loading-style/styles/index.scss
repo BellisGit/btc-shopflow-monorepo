@@ -1,7 +1,7 @@
 .loading-style-settings {
   .setting-box-wrap {
-    margin-top: 20px;
-    gap: 10px 16px;
+    margin-top: var(--btc-spacing-5);
+    gap: var(--btc-spacing-2-5) var(--btc-spacing-4);
   }
 
   .setting-item {
@@ -36,9 +36,9 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100px; // 从 80px 增加到 100px，增加高度
-    border: 2px solid var(--el-border-color-light);
-    border-radius: 10px;
+    height: calc(var(--btc-spacing-24) + var(--btc-spacing-1)); // 96px + 4px
+    border: var(--btc-spacing-0-5) solid var(--el-border-color-light);
+    border-radius: var(--btc-spacing-2-5);
     transition: border-color 0.2s ease;
   }
 
@@ -51,37 +51,37 @@
   }
 
   .loading-preview-circle {
-    width: 44px;
-    height: 44px;
-    border: 7px solid currentColor;
-    border-bottom-color: #ffffff;
-    border-radius: 30px;
+    width: var(--btc-spacing-11);
+    height: var(--btc-spacing-11);
+    border: var(--btc-spacing-2) solid currentColor;
+    border-bottom-color: var(--btc-loading-circle-gap);
+    border-radius: var(--btc-spacing-8);
     position: relative;
     animation:
       loading-spin 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
       loading-color-change 2s infinite ease-in;
     transform: rotate(0deg);
     box-sizing: border-box;
-    color: #409eff;
+    color: var(--el-color-primary);
 
     &::before,
     &::after {
       content: '';
       display: inline-block;
       position: absolute;
-      bottom: -2px;
-      height: 7px;
-      width: 7px;
-      border-radius: 10px;
+      bottom: calc(0px - var(--btc-spacing-0-5));
+      height: var(--btc-spacing-2);
+      width: var(--btc-spacing-2);
+      border-radius: var(--btc-spacing-2-5);
       background-color: currentColor;
     }
 
     &::before {
-      left: -1px;
+      left: calc(0px - var(--btc-spacing-0-5));
     }
 
     &::after {
-      right: -1px;
+      right: calc(0px - var(--btc-spacing-0-5));
     }
   }
 
@@ -89,8 +89,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--btc-spacing-10);
+    height: var(--btc-spacing-10);
 
     svg {
       color: currentColor;
@@ -98,7 +98,7 @@
 
     .spinner {
       // SVG viewBox 是 0 0 40 40，中心点是 (20, 20)，transform-origin 使用 SVG 坐标系统
-      transform-origin: 20px 20px;
+      transform-origin: var(--btc-spacing-5) var(--btc-spacing-5);
       animation: loading-dots-rotate 1.6s linear infinite;
     }
 
@@ -108,22 +108,22 @@
         loading-dots-color-change 3.2s linear infinite;
 
       &.dot-1 {
-        fill: #409eff;
+        fill: var(--el-color-primary);
         animation-delay: 0s, 0s;
       }
 
       &.dot-2 {
-        fill: #67c23a;
+        fill: var(--el-color-success);
         animation-delay: 0.4s, 0.8s;
       }
 
       &.dot-3 {
-        fill: #e6a23c;
+        fill: var(--el-color-warning);
         animation-delay: 0.8s, 1.6s;
       }
 
       &.dot-4 {
-        fill: #f56c6c;
+        fill: var(--el-color-danger);
         animation-delay: 1.2s, 2.4s;
       }
     }
@@ -140,19 +140,19 @@
 
   @keyframes loading-color-change {
     0% {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
     25% {
-      color: #67c23a;
+      color: var(--el-color-success);
     }
     50% {
-      color: #e6a23c;
+      color: var(--el-color-warning);
     }
     75% {
-      color: #f56c6c;
+      color: var(--el-color-danger);
     }
     100% {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
   }
 
@@ -174,36 +174,36 @@
 
   @keyframes loading-dots-color-change {
     0% {
-      fill: #409eff;
+      fill: var(--el-color-primary);
     }
     25% {
-      fill: #67c23a;
+      fill: var(--el-color-success);
     }
     50% {
-      fill: #e6a23c;
+      fill: var(--el-color-warning);
     }
     75% {
-      fill: #f56c6c;
+      fill: var(--el-color-danger);
     }
     100% {
-      fill: #409eff;
+      fill: var(--el-color-primary);
     }
   }
 
   .loading-preview-gradient {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: var(--btc-spacing-10);
+    height: var(--btc-spacing-10);
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .loading-preview-gradient-circle {
-    width: 40px;
-    height: 40px;
+    width: var(--btc-spacing-10);
+    height: var(--btc-spacing-10);
     border-radius: 50%;
-    background: conic-gradient(from 0deg, #2196f3, #e91e63, #2196f3);
+    background: conic-gradient(from 0deg, var(--el-color-primary), var(--el-color-danger), var(--el-color-primary));
     animation: loading-gradient-rotate 2s linear infinite;
     position: relative;
   }
@@ -211,8 +211,8 @@
   .loading-preview-gradient-circle::before {
     content: '';
     position: absolute;
-    inset: 6px;
-    background: var(--el-bg-color, #ffffff);
+    inset: var(--btc-spacing-1-5);
+    background: var(--el-bg-color);
     border-radius: 50%;
   }
 
@@ -221,26 +221,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 10px;
+    padding: 0 var(--btc-spacing-2-5);
   }
 
   .loading-preview-progress .progress-bar-container {
     display: flex;
     align-items: center;
     width: 100%;
-    max-width: 280px; // 从 200px 增加到 280px，增加进度条长度
+    max-width: var(--btc-spacing-72); // 288px
   }
 
   .loading-preview-progress .progress-bar-track {
     position: relative;
     flex: 1;
-    height: 6px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
+    height: var(--btc-spacing-1-5);
+    background: color-mix(in srgb, var(--el-text-color-primary) 10%, transparent);
+    border-radius: var(--btc-spacing-1);
     overflow: hidden;
     box-shadow:
-      inset 0 1px 2px rgba(0, 0, 0, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.1);
+      inset 0 var(--btc-spacing-0-5) var(--btc-spacing-1) color-mix(in srgb, var(--el-text-color-primary) 18%, transparent),
+      0 var(--btc-spacing-0-5) 0 color-mix(in srgb, var(--el-text-color-primary) 8%, transparent);
   }
 
   .loading-preview-progress .progress-bar-fill {
@@ -248,18 +248,18 @@
     height: 100%;
     background: linear-gradient(
       90deg,
-      #409eff 0%,
-      #67c23a 25%,
-      #e6a23c 50%,
-      #f56c6c 75%,
-      #409eff 100%
+      var(--el-color-primary) 0%,
+      var(--el-color-success) 25%,
+      var(--el-color-warning) 50%,
+      var(--el-color-danger) 75%,
+      var(--el-color-primary) 100%
     );
     background-size: 200% 100%;
-    border-radius: 3px;
+    border-radius: var(--btc-spacing-1);
     animation: loading-progress-gradient 2s linear infinite;
     box-shadow:
-      0 0 8px rgba(64, 158, 255, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      0 0 var(--btc-spacing-2) color-mix(in srgb, var(--el-color-primary) 35%, transparent),
+      inset 0 var(--btc-spacing-0-5) 0 color-mix(in srgb, var(--el-text-color-primary) 12%, transparent);
     overflow: hidden;
   }
 
@@ -272,21 +272,21 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.3) 50%,
+      color-mix(in srgb, var(--el-text-color-primary) 22%, transparent) 50%,
       transparent 100%
     );
     animation: loading-progress-shine 1.5s ease-in-out infinite;
-    border-radius: 3px;
+    border-radius: var(--btc-spacing-1);
   }
 
   .loading-preview-progress .progress-percentage {
-    font-size: 14px;
+    font-size: var(--btc-spacing-3-5);
     font-weight: 700;
-    color: var(--el-text-color-primary, #303133);
-    min-width: 40px;
+    color: var(--el-text-color-primary);
+    min-width: var(--btc-spacing-10);
     text-align: right;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    margin-left: 8px; // 使用 margin-left 替代 gap，保持与进度条的间距
+    text-shadow: 0 var(--btc-spacing-0-5) var(--btc-spacing-1) color-mix(in srgb, var(--el-text-color-primary) 20%, transparent);
+    margin-left: var(--btc-spacing-2); // 使用 margin-left 替代 gap，保持与进度条的间距
   }
 
   @keyframes loading-progress-gradient {
@@ -320,13 +320,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--btc-spacing-10);
+    height: var(--btc-spacing-10);
     margin: 0 auto;
 
     svg {
-      width: 40px;
-      height: 40px;
+      width: var(--btc-spacing-10);
+      height: var(--btc-spacing-10);
       display: block;
       // 确保 SVG 居中，与 dots 预览保持一致
       vertical-align: middle;
@@ -347,50 +347,50 @@
     }
 
     .petal-1 {
-      stroke: #ff8a80;
-      fill: #ff8a80;
+      stroke: var(--el-color-primary);
+      fill: var(--el-color-primary);
       animation-delay: 0s;
     }
 
     .petal-2 {
-      stroke: #ff9800;
-      fill: #ff9800;
+      stroke: var(--el-color-warning);
+      fill: var(--el-color-warning);
       animation-delay: 0.25s;
     }
 
     .petal-3 {
-      stroke: #ffeb3b;
-      fill: #ffeb3b;
+      stroke: color-mix(in srgb, var(--el-color-warning) 70%, var(--el-color-primary));
+      fill: color-mix(in srgb, var(--el-color-warning) 70%, var(--el-color-primary));
       animation-delay: 0.5s;
     }
 
     .petal-4 {
-      stroke: #4caf50;
-      fill: #4caf50;
+      stroke: var(--el-color-success);
+      fill: var(--el-color-success);
       animation-delay: 0.75s;
     }
 
     .petal-5 {
-      stroke: #00bcd4;
-      fill: #00bcd4;
+      stroke: var(--el-color-info);
+      fill: var(--el-color-info);
       animation-delay: 1s;
     }
 
     .petal-6 {
-      stroke: #2196f3;
-      fill: #2196f3;
+      stroke: var(--el-color-primary);
+      fill: var(--el-color-primary);
       animation-delay: 1.25s;
     }
 
     .petal-7 {
-      stroke: #9c27b0;
-      fill: #9c27b0;
+      stroke: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-color-danger));
+      fill: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-color-danger));
       animation-delay: 1.5s;
     }
 
     .petal-8 {
-      stroke: #e91e63;
-      fill: #e91e63;
+      stroke: var(--el-color-danger);
+      fill: var(--el-color-danger);
       animation-delay: 1.75s;
     }
   }

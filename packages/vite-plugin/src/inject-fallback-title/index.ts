@@ -8,8 +8,10 @@ import type { Plugin, ResolvedConfig } from 'vite';
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+// logger 已移除，使用 console 替代
 
 const __filename = fileURLToPath(import.meta.url);
+// @ts-expect-error: __dirname 未使用，保留用于未来功能
 const __dirname = dirname(__filename);
 
 /**
@@ -147,9 +149,9 @@ export function injectFallbackTitle(options: {
           const root = viteConfig.root || process.cwd();
           
           // 获取应用 ID
-          let appId = options.appId;
+          let appId: string | null = options.appId || null;
           if (!appId) {
-            appId = getAppIdFromContext(root, options.packageName) || null;
+            appId = getAppIdFromContext(root, options.packageName);
           }
 
           // 加载应用配置

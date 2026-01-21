@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { storage } from '@btc/shared-utils';
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
@@ -121,24 +121,61 @@ const formRef = ref<FormInstance>();
 let isSubmitting = false;
 
 // 提交函数
-const handleSubmit = async () => {
-  if (!formRef.value) return;
+const handleSubmit = async (event?: Event) => {
+  if (import.meta.env.DEV) {
+    console.log('[PasswordForm] handleSubmit 被调用', { hasEvent: !!event });
+  }
+  
+  // 关键：确保阻止默认表单提交行为
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    if (import.meta.env.DEV) {
+      console.log('[PasswordForm] 已阻止默认表单提交行为');
+    }
+  }
+  
+  if (!formRef.value) {
+    if (import.meta.env.DEV) {
+      console.warn('[PasswordForm] formRef 不存在，无法提交');
+    }
+    return;
+  }
   
   // 防止重复提交
   if (isSubmitting) {
+    if (import.meta.env.DEV) {
+      console.warn('[PasswordForm] 正在提交中，忽略重复提交');
+    }
     return;
   }
   
   try {
     isSubmitting = true;
+    if (import.meta.env.DEV) {
+      console.log('[PasswordForm] 开始验证表单');
+    }
+    
     await formRef.value.validate();
+    
+    if (import.meta.env.DEV) {
+      console.log('[PasswordForm] 表单验证通过，emit submit 事件', { username: form.username, hasPassword: !!form.password });
+    }
+    
     emit('submit', { ...form });
-  } catch {
+  } catch (error) {
     // 验证失败，不继续执行
+    if (import.meta.env.DEV) {
+      console.warn('[PasswordForm] 表单验证失败:', error);
+    }
   } finally {
     // 延迟重置标记，确保异步操作完成
     setTimeout(() => {
       isSubmitting = false;
+      if (import.meta.env.DEV) {
+        console.log('[PasswordForm] 重置 isSubmitting 标记');
+      }
     }, 100);
   }
 };
@@ -151,6 +188,58 @@ const { handleEnterKey } = useFormEnterKey({
 
 // 使用禁用自动填充 Composable
 useDisableAutofill();
+
+// 在组件挂载时，直接拦截原生表单的 submit 事件
+let nativeSubmitHandler: ((e: Event) => void) | null = null;
+onMounted(async () => {
+  await nextTick();
+  // 等待 DOM 更新
+  await nextTick();
+  const formElement = formRef.value?.$el as HTMLFormElement | undefined;
+  if (formElement) {
+    // 关键：确保表单没有 action 和 method 属性（防止默认提交）
+    // 如果 action 是当前页面 URL，会导致页面刷新
+    formElement.removeAttribute('action');
+    formElement.setAttribute('action', 'javascript:void(0)');
+    formElement.setAttribute('method', 'post');
+    formElement.setAttribute('onsubmit', 'return false;');
+    
+    // 直接拦截原生表单的 submit 事件（使用捕获阶段，确保最先执行）
+    nativeSubmitHandler = (e: Event) => {
+      // 关键：必须在这里调用 preventDefault，否则表单会提交
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      // 调用我们的处理函数
+      handleSubmit(e);
+      // 返回 false 作为额外保护
+      return false;
+    };
+    formElement.addEventListener('submit', nativeSubmitHandler, { capture: true, passive: false });
+    
+    // 额外保护：直接覆盖表单的 submit 方法（如果存在）
+    if (formElement.submit) {
+      const originalSubmit = formElement.submit;
+      formElement.submit = function() {
+        const event = new Event('submit', { bubbles: true, cancelable: true });
+        if (nativeSubmitHandler) {
+          nativeSubmitHandler(event);
+        }
+        return false;
+      };
+    }
+  }
+});
+
+onBeforeUnmount(() => {
+  if (nativeSubmitHandler) {
+    const formElement = formRef.value?.$el as HTMLFormElement | undefined;
+    if (formElement) {
+      formElement.removeEventListener('submit', nativeSubmitHandler, { capture: true });
+    }
+    nativeSubmitHandler = null;
+  }
+});
 
 // 暴露表单数据和方法供父组件使用
 defineExpose({

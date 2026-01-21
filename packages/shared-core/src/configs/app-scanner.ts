@@ -17,6 +17,7 @@ import { AppIdentitySchema, validateConfig } from './schemas';
  * 这些配置在构建时已经被内联为 JSON，不需要运行时动态导入
  */
 import { appConfigsMap } from './app-configs-collected';
+import { logger } from '../utils/logger/index';
 
 /**
  * 应用注册表
@@ -111,7 +112,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       } catch (e) {
         // 如果重新初始化也失败，继续使用当前 registry（虽然可能有问题）
         // 直接使用 console.error，避免循环依赖
-        console.error('[app-scanner] 无法重新初始化 registry', e);
+        logger.error('[app-scanner] 无法重新初始化 registry', e);
       }
     }
   } else {
@@ -125,7 +126,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       }
     } catch (e) {
       // 直接使用 console.error，避免循环依赖
-      console.error('[app-scanner] 无法初始化 registry', e);
+      logger.error('[app-scanner] 无法初始化 registry', e);
     }
   }
 
@@ -166,7 +167,7 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       finalRegistry.set(identity.id, identity);
     } catch (error) {
       // 直接使用 console.error，避免循环依赖
-      console.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
+      logger.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
     }
   }
 

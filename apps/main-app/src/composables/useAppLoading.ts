@@ -7,6 +7,7 @@
 import { ref } from 'vue';
 import type { MicroAppConfig } from '../micro/apps';
 import { microApps } from '../micro/apps';
+import { logger } from '@btc/shared-core';
 
 // 当前加载中的应用信息
 export const loadingApp = ref<Partial<MicroAppConfig>>({});
@@ -85,7 +86,7 @@ export function retryLoadingApp() {
       window.location.reload();
     }
   } catch (error) {
-    console.error('[useAppLoading] 重试加载失败:', error);
+    logger.error('[useAppLoading] 重试加载失败:', error);
     // 如果出错，刷新页面
     window.location.reload();
   }
